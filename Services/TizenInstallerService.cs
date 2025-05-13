@@ -66,11 +66,11 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
+            var studioRoot = Directory.GetParent(Directory.GetParent(Path.GetDirectoryName(TizenCliPath)).FullName).FullName;
+            var sdbPath = Path.Combine(studioRoot, "sdb.exe");
+
             try
             {
-                var studioRoot = Directory.GetParent(Directory.GetParent(Path.GetDirectoryName(TizenCliPath)).FullName).FullName;
-                var sdbPath = Path.Combine(studioRoot, "sdb.exe");
-
                 updateStatus("Connecting to device...");
                 await RunCommandAsync(sdbPath, $"connect {tvIpAddress}");
 
@@ -88,7 +88,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- {packageUrl}");
 
                 updateStatus("Installing package on device...");
-                string installOutput = await RunCommandAsync(TizenCliPath, $"install -n {packageUrl} -t {tvName}");
+
+                string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
                 {
@@ -104,13 +105,17 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("Installation failed");
                 return InstallResult.FailureResult(ex.Message);
             }
+            finally
+            {
+                await RunCommandAsync(sdbPath, $"disconnect {tvIpAddress}");
+            }
         }
         private static async Task<string> GetTvNameAsync(string sdbPath)
         {
             var output = await RunCommandAsync(sdbPath, "devices");
-            var match = Regex.Match(output, @"(?<=\n)(?<device>[^\s]+)\s+device");
+            var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
-            return match.Success ? match.Groups["device"].Value.Trim() : "";
+            return match.Success ? match.Groups["name"].Value.Trim() : "";
         }
 
         private static void UpdateProfileCertificatePaths()
