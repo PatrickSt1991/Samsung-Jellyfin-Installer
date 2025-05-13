@@ -16,8 +16,8 @@ namespace Samsung_Jellyfin_Installer.Services
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "TizenStudio"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "TizenStudioCli"),
             "C:\\tizen-studio",
-            "C:\\TizenStudioCli",
             Environment.GetEnvironmentVariable("TIZEN_STUDIO_HOME") ?? string.Empty
         ];
 
@@ -212,7 +212,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 {
                     const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
                     installerPath = await DownloadPackageAsync(installerUrl);
-                    string installPath = Path.Combine("C:", "TizenStudioCli");
+                    string installPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Programs",
+                        "TizenStudioCli"
+                    );
 
                     var startInfo = new ProcessStartInfo
                     {
