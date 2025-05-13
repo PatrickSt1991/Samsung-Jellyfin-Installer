@@ -1,6 +1,45 @@
 # Jellyfin 2 Samsung  (Samsung-Jellyfin-Installer)
 
-Tool for installing Jellyfin on your Samsung Smart TV
+A simple tool to install Jellyfin on your Samsung Smart TV with ease.
+
+## How It Works
+
+Follow these steps to get Jellyfin up and running on your TV:
+
+### 1. Launch the Tool
+
+![Start screen](https://github.com/user-attachments/assets/42769191-32b9-42da-baf1-75e5cd459f07)  
+_The start screen of the installer._
+
+---
+
+### 2. Select a Release
+
+![Choose the release](https://github.com/user-attachments/assets/8e85b079-fdc0-4fba-bd4d-94ba9f00d9da)  
+_Pick the desired Jellyfin release._
+
+---
+
+### 3. Pick a Version
+
+![Choose the version](https://github.com/user-attachments/assets/10849d7b-313a-454b-addf-f0e6e348f63f)  
+_Select the version you want to install._
+
+---
+
+### 4. Enter Your TVâ€™s IP Address
+
+![Fill in the IP address](https://github.com/user-attachments/assets/740cb166-b77d-4991-90a7-f6fcd09cc840)  
+_Provide the IP address of your Samsung Smart TV._
+
+---
+
+### 5. Sit Back and Watch the Magic Happen âœ¨
+
+![See the magic happen](https://github.com/user-attachments/assets/40e28dca-f741-4df1-904b-e2db975f68d6)  
+_Installation begins. Your TV will handle the rest!_
+
+---
 
 ## Requirements
 - Samsung Tizen TV (with developer mode enabled)  
@@ -18,9 +57,9 @@ Follow these steps to enable developer mode:
    - This will open a new menu  
 4. Turn **Developer Mode** on  
 5. Under the "IP address" option, enter the IP address of your computer (the one running Jellyfin 2 Samsung)  
-   - If you don’t know it, open Command Prompt and run `ipconfig` (on Windows) or open Terminal and run `ifconfig` (on Mac/Linux) to find your local IP address  
+   - If you donâ€™t know it, open Command Prompt and run `ipconfig` (on Windows) or open Terminal and run `ifconfig` (on Mac/Linux) to find your local IP address  
 
-### 2. Find the TV’s IP Address
+### 2. Find the TVâ€™s IP Address
 
 1. Go to **Settings** > **General** > **Network** > **Network Status**  
 2. The IP address will be shown under "IP Address" or "Network Information"  
@@ -29,7 +68,7 @@ Follow these steps to enable developer mode:
 ### 3. Using Jellyfin 2 Samsung
 
 1. Make sure your computer is connected to the same network as the TV  
-2. Enter the TV’s IP address into the tool  
+2. Enter the TVâ€™s IP address into the tool  
 3. If the app is installed, it will automatically launch on the TV  
 
 ## Support
