@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Samsung_Jellyfin_Installer"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:viewmodels="clr-namespace:Samsung_Jellyfin_Installer.ViewModels"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
         Background="{DynamicResource MaterialDesign.Brush.Background}"
@@ -24,8 +24,8 @@
         <Label Content="Version" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableAssets}" SelectedItem="{Binding SelectedAsset}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="377" HorizontalAlignment="Left" Margin="95,125,0,0" VerticalAlignment="Top"/>
 
-        <Label Content="TV IP" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
-        <TextBox HorizontalAlignment="Left" Margin="95,175,0,0" TextWrapping="Wrap" Text="{Binding TvIpAddress}" VerticalAlignment="Top" Width="377"/>
+        <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
+        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="377" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" />
 
         <materialDesign:Card Padding="12" Margin="0,215,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
