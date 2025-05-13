@@ -1,11 +1,9 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls.Primitives;
 using System.Xml.Linq;
 
 namespace Samsung_Jellyfin_Installer.Services
@@ -19,7 +17,7 @@ namespace Samsung_Jellyfin_Installer.Services
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "TizenStudio"),
             "C:\\tizen-studio",
-            "C:\\Program Files\\TizenStudioCli",
+            "C:\\TizenStudioCli",
             Environment.GetEnvironmentVariable("TIZEN_STUDIO_HOME") ?? string.Empty
         ];
 
@@ -85,6 +83,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 UpdateProfileCertificatePaths();
 
                 updateStatus("Packaging the wgt file with certificate...");
+
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- {packageUrl}");
 
                 updateStatus("Installing package on device...");
@@ -160,6 +159,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(fileName)
             };
 
             using var proc = new Process
@@ -212,7 +212,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 {
                     const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
                     installerPath = await DownloadPackageAsync(installerUrl);
-                    string installPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudioCli");
+                    string installPath = Path.Combine("C:", "TizenStudioCli");
 
                     var startInfo = new ProcessStartInfo
                     {
@@ -224,8 +224,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
                     using var process = Process.Start(startInfo);
                     await process.WaitForExitAsync();
-
-                    MessageBox.Show(process.ExitCode.ToString());
 
                     if (process.ExitCode == 0)
                     {
