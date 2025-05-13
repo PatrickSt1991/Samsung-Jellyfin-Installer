@@ -42,9 +42,12 @@ _Installation begins. Your TV will handle the rest!_
 ---
 
 ## Requirements
-- Samsung Tizen TV (with developer mode enabled)  
-- The IP address of the TV  
-- Network connection between your computer and the TV
+To use this tool, make sure you have the following:
+
+- A **Samsung Tizen TV** with **Developer Mode enabled**  
+- The **IP address** of your TV  
+- A **network connection** between your computer and the TV (both must be on the same network)  
+- **Tizen Web CLI 5.5** — if not found in the usual locations, the tool will automatically download and install it for you
 
 ## Steps for Use
 
