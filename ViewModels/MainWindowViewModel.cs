@@ -91,6 +91,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
 
         public ICommand RefreshCommand { get; }
+        public ICommand RefreshDevicesCommand { get; }
         public ICommand DownloadCommand { get; }
 
         public MainWindowViewModel(
@@ -105,6 +106,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             _networkService = networkService;
 
             RefreshCommand = new RelayCommand(async () => await LoadReleasesAsync());
+            RefreshDevicesCommand = new RelayCommand(async () => await LoadDevicesAsync());
             DownloadCommand = new RelayCommand<GitHubRelease>(async r => await DownloadReleaseAsync(r));
 
             InitializeAsync();
@@ -214,12 +216,25 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             AvailableDevices.Clear();
             try
             {
+                string? selectedIp = null;
+                if (SelectedDevice is not null)
+                {
+                    selectedIp = SelectedDevice.IpAddress;
+                }
                 var devices = await _networkService.GetLocalTizenAddresses();
 
                 foreach (NetworkDevice device in devices)
                 {
                     AvailableDevices.Add(device);
                 }
+
+                SelectedDevice = AvailableDevices.Count switch
+                {
+                    > 0 when SelectedDevice is null => AvailableDevices[0],
+                    > 0 when selectedIp is not null =>
+                        AvailableDevices.FirstOrDefault(it => it.IpAddress == selectedIp),
+                    _ => SelectedDevice
+                };
             }
             catch (Exception ex)
             {
