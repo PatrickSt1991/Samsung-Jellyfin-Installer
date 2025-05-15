@@ -84,7 +84,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus("Packaging the wgt file with certificate...");
 
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- {packageUrl}");
+                await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- \"{packageUrl}\"");
 
                 updateStatus("Installing package on device...");
 
