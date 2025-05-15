@@ -72,7 +72,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("Connecting to device...");
                 await RunCommandAsync(sdbPath, $"connect {tvIpAddress}");
 
-
                 updateStatus("Retrieving device adress...");
                 string tvName = await GetTvNameAsync(sdbPath);
 
