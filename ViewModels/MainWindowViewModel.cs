@@ -15,6 +15,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
     {
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
+        private readonly ITizenCertificateService _certService;
         private readonly HttpClient _httpClient;
 
         private ObservableCollection<GitHubRelease> _releases = new ObservableCollection<GitHubRelease>();

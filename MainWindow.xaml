@@ -12,7 +12,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Jellyfin 2 Samsung" Height="375" Width="500">
+        Title="Jellyfin 2 Samsung" Height="395" Width="500" ResizeMode="NoResize">
     <Grid Background="#19000B25">
         <materialDesign:Card Padding="12" Margin="0,10,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
             <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Jellyfin Installer for Samsung (Tizen)</TextBlock>
@@ -31,7 +31,7 @@
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
         </materialDesign:Card>
         
-        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="Download &amp; Installeer" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
-        <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
+        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="Download &amp; Installeer" HorizontalAlignment="Center" Margin="0,290,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
+        <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,325,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
     </Grid>
 </Window>

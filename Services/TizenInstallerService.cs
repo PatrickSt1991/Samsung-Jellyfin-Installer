@@ -79,8 +79,32 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult("TV Naam kon niet worden gevonden...");
 
-                updateStatus("Updating certificate profile...");
-                UpdateProfileCertificatePaths();
+                updateStatus("Checking Tizen OS version...");
+                string tizenOs = await FetchTizenOsVersion(sdbPath);
+
+                if(new Version(tizenOs) >= new Version("7.0"))
+                {
+                    //return InstallResult.FailureResult("Tizen 7.0 en hoger wordt momenteel niet ondersteund vanwege certificaatproblemen.");
+                    updateStatus("Generating certificate for Tizen 7.0+...");
+
+                    // 1. Initialize services
+                    var captchaSolver = new TwoCaptchaService("your_2captcha_api_key");
+                    var certService = new TizenCertificateService(captchaSolver);
+
+                    // 2. Generate certificate
+                    await certService.GenerateCertificateAsync(
+                        "88CWsbpsz33keBte!",
+                        "88CWsbpsz33keBte!",
+                        new[] { "device123" }, // Replace with actual device IDs comming from sdb.exe?!
+                        updateStatus);
+                }
+                else
+                {
+                    updateStatus("Updating certificate profile...");
+                    UpdateProfileCertificatePaths();
+                }
+
+                await RemoveOldJellyfin(sdbPath);
 
                 updateStatus("Packaging the wgt file with certificate...");
 
@@ -116,7 +140,40 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return match.Success ? match.Groups["name"].Value.Trim() : "";
         }
+        private static async Task RemoveOldJellyfin(string sdbPath)
+        {
+            string appId = null;
+            var output = await RunCommandAsync(sdbPath, "shell 0 vd_applist");
+            var appBlocks = output.Split("--------------app_id", StringSplitOptions.RemoveEmptyEntries);
+            foreach (var block in appBlocks)
+            {
+                if (block.Contains("app_title                             =Jellyfin"))
+                {
+                    var idMatch = Regex.Match(block, @"=\s*([^\r\n-]+)");
+                    if (idMatch.Success)
+                    {
+                        appId = idMatch.Groups[1].Value.Trim();
+                        break;
+                    }
+                }
+            }
 
+            if (!string.IsNullOrEmpty(appId))
+            {
+                var deleteOld = MessageBox.Show("Oude Jellyfin gevonden", "Jellyfin gevonden!", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (deleteOld == MessageBoxResult.Yes)
+                    await RunCommandAsync(sdbPath, $"uninstall {appId}");
+            }
+        }
+
+        private static async Task<string> FetchTizenOsVersion(string sdbPath)
+        {
+            var output = await RunCommandAsync(sdbPath, "capability");
+            var match = Regex.Match(output, @"platform_version:([\d.]+)");
+            
+            
+            return match.Success ? match.Groups[1].Value.Trim() : "";
+        }
         private static void UpdateProfileCertificatePaths()
         {
             string profilePath = Path.GetFullPath("TizenProfile/profiles.xml");
@@ -195,16 +252,15 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return outputBuilder.ToString();
         }
-
         private async Task<bool> InstallMinimalCli()
         {
             string installerPath = null;
             try
             {
-                var InstallCLI = MessageBox.Show("Tizen CLI 5.5 is required to continue.\n\n" +
-                                    "We will now download and install Tizen CLI 5.5.\n" +
+                var InstallCLI = MessageBox.Show("Tizen CLI is required to continue.\n\n" +
+                                    "We will now download and install Tizen CLI.\n" +
                                     "This may take a few minutes. Please be patient during the installation process.",
-                                    "Tizen CLI 5.5 Required",
+                                    "Tizen CLI Required",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
 
