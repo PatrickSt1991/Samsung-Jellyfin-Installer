@@ -25,8 +25,8 @@
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableAssets}" SelectedItem="{Binding SelectedAsset}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="377" HorizontalAlignment="Left" Margin="95,125,0,0" VerticalAlignment="Top"/>
 
         <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="342" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" />
-        <Button Command="{Binding RefreshDevicesCommand}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" />
+        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="342" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
+        <Button Command="{Binding RefreshDevicesCommand}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
         
         <materialDesign:Card Padding="12" Margin="0,215,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>

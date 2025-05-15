@@ -24,7 +24,8 @@ namespace Samsung_Jellyfin_Installer.Services
         private readonly HttpClient _httpClient;
         private readonly string _downloadDirectory;
 
-        public string TizenCliPath { get; private set; }
+        public string? TizenCliPath { get; private set; }
+        public string? TizenSdbPath { get; private set; }
 
         public TizenInstallerService(HttpClient httpClient)
         {
@@ -36,15 +37,67 @@ namespace Samsung_Jellyfin_Installer.Services
                 "Downloads");
 
             Directory.CreateDirectory(_downloadDirectory);
-            TizenCliPath = FindTizenCliPath();
+            string? tizenRoot = FindTizenRoot();
+
+            if (tizenRoot is not null)
+            {
+                TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
+                TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+            }
         }
 
         public async Task<bool> EnsureTizenCliAvailable()
         {
-            if (File.Exists(TizenCliPath))
+            if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
                 return true;
 
             return await InstallMinimalCli();
+        }
+
+        public async Task<bool> ConnectToTvAsync(string tvIpAddress)
+        {
+            if (TizenSdbPath is null)
+            {
+                return false;
+            }
+
+            try
+            {
+                var result = await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
+                return result.Contains($"connected to {tvIpAddress}");
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        
+        public async Task<string?> GetTvNameAsync(string tvIpAddress)
+        {
+            if (TizenSdbPath is null)
+            {
+                return null;
+            }
+            
+            try
+            {
+                await ConnectToTvAsync(tvIpAddress);
+                
+                var output = await RunCommandAsync(TizenSdbPath, "devices");
+                var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
+
+                return match.Success ? match.Groups["name"].Value.Trim() : null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to get TV name: {ex}");
+            }
+            finally
+            {
+                await RunCommandAsync(TizenSdbPath, $"disconnect {tvIpAddress}");
+            }
+
+            return null;
         }
 
         public async Task<string> DownloadPackageAsync(string downloadUrl)
@@ -64,17 +117,20 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
-            var studioRoot = Directory.GetParent(Directory.GetParent(Path.GetDirectoryName(TizenCliPath)).FullName).FullName;
-            var sdbPath = Path.Combine(studioRoot, "sdb.exe");
-
+            if (TizenCliPath is null || TizenSdbPath is null)
+            {
+                updateStatus("Tizen Studio wasn't found");
+                return InstallResult.FailureResult("Tizen Studio wasn't found");
+            }
+            
             try
             {
                 updateStatus("Connecting to device...");
-                await RunCommandAsync(sdbPath, $"connect {tvIpAddress}");
+                await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
 
 
                 updateStatus("Retrieving device adress...");
-                string tvName = await GetTvNameAsync(sdbPath);
+                string tvName = await GetTvNameAsync();
 
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult("TV Naam kon niet worden gevonden...");
@@ -106,15 +162,20 @@ namespace Samsung_Jellyfin_Installer.Services
             }
             finally
             {
-                await RunCommandAsync(sdbPath, $"disconnect {tvIpAddress}");
+                await RunCommandAsync(TizenSdbPath, $"disconnect {tvIpAddress}");
             }
         }
-        private static async Task<string> GetTvNameAsync(string sdbPath)
+        private async Task<string> GetTvNameAsync()
         {
-            var output = await RunCommandAsync(sdbPath, "devices");
+            if (TizenSdbPath is null)
+            {
+                return string.Empty;
+            }
+            
+            var output = await RunCommandAsync(TizenSdbPath, "devices");
             var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
-            return match.Success ? match.Groups["name"].Value.Trim() : "";
+            return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
         }
 
         private static void UpdateProfileCertificatePaths()
@@ -137,7 +198,8 @@ namespace Samsung_Jellyfin_Installer.Services
 
             xml.Save(profilePath);
         }
-        private static string FindTizenCliPath()
+
+        private static string? FindTizenRoot()
         {
             foreach (var basePath in PossibleTizenPaths)
             {
@@ -145,10 +207,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 var possiblePath = Path.Combine(basePath, "tools", "ide", "bin", "tizen.bat");
                 if (File.Exists(possiblePath))
-                    return possiblePath;
+                    return basePath;
             }
+
             return null;
         }
+        
         private static async Task<string> RunCommandAsync(string fileName, string arguments)
         {
             var psi = new ProcessStartInfo
@@ -231,8 +295,10 @@ namespace Samsung_Jellyfin_Installer.Services
 
                     if (process.ExitCode == 0)
                     {
-                        TizenCliPath = FindTizenCliPath();
-                        return TizenCliPath != null;
+                        var tizenRoot = FindTizenRoot() ?? string.Empty;
+                        TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
+                        TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                        return tizenRoot != string.Empty;
                     }
                     return false;
                 }

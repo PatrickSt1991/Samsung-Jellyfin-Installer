@@ -10,6 +10,11 @@ namespace Samsung_Jellyfin_Installer.Services;
 
 public class NetworkService : INetworkService
 {
+    private readonly ITizenInstallerService _tizenInstaller;
+    public NetworkService(ITizenInstallerService tizenInstaller)
+    {
+        _tizenInstaller = tizenInstaller;
+    }
     private bool HasSamePrefix(IPAddress a, IPAddress b)
     {
         // Get the byte arrays from both IP addresses
@@ -83,7 +88,7 @@ public class NetworkService : INetworkService
                             // Set a short connection timeout
                             Task connectTask = tcpClient.ConnectAsync(ip, 26101);
 
-                            if (await Task.WhenAny(connectTask, Task.Delay(2000)) == connectTask)
+                            if (await Task.WhenAny(connectTask, Task.Delay(1500)) == connectTask)
                             {
                                 var manufacturer = await GetManufacturerFromIp(ip);
                                 lock (lockObject)
@@ -122,6 +127,9 @@ public class NetworkService : INetworkService
             {
                 Debug.WriteLine($"- {device.IpAddress}:26101");
                 Debug.WriteLine($"Manufacturer: {device.Manufacturer}");
+                
+                await _tizenInstaller.ConnectToTvAsync(device.IpAddress);
+                device.DeviceName = await _tizenInstaller.GetTvNameAsync(device.IpAddress);
             }
         }
         else

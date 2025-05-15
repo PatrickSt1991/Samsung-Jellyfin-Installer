@@ -20,7 +20,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
         private ObservableCollection<GitHubRelease> _releases = new ObservableCollection<GitHubRelease>();
         private GitHubRelease _selectedRelease;
-        private bool _isLoading;
+        private bool _isLoading, _isLoadingDevices;
         private ObservableCollection<Asset> _availableAssets = new ObservableCollection<Asset>();
         private Asset _selectedAsset;
         private ObservableCollection<NetworkDevice> _availableDevices = new ObservableCollection<NetworkDevice>();
@@ -83,6 +83,21 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+
+        public bool IsLoadingDevices
+        {
+            get => _isLoadingDevices;
+            private set
+            {
+                if (SetField(ref _isLoadingDevices, value))
+                {
+                    OnPropertyChanged(nameof(EnableDevicesInput));
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
+
+        public bool EnableDevicesInput => !IsLoadingDevices;
 
         public string StatusBar
         {
@@ -212,7 +227,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
         private async Task LoadDevicesAsync()
         {
-            IsLoading = true;
+            IsLoadingDevices = true;
             AvailableDevices.Clear();
             try
             {
@@ -244,7 +259,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
             finally
             {
-                IsLoading = false;
+                IsLoadingDevices = false;
             }
         }
     }

@@ -30,8 +30,8 @@ namespace Samsung_Jellyfin_Installer
 
             // Register services
             services.AddSingleton<IDialogService, DialogService>();
-            services.AddSingleton<INetworkService, NetworkService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
+            services.AddSingleton<INetworkService, NetworkService>();
 
             // Register ViewModels
             services.AddSingleton<MainWindowViewModel>();
