@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:Samsung_Jellyfin_Installer"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
         xmlns:viewmodels="clr-namespace:Samsung_Jellyfin_Installer.ViewModels"
+        xmlns:l = "clr-namespace:Samsung_Jellyfin_Installer.Localization"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
         Background="{DynamicResource MaterialDesign.Brush.Background}"
         TextElement.FontWeight="Medium"
@@ -31,7 +32,7 @@
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
         </materialDesign:Card>
         
-        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="Download &amp; Installeer" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
+        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="{x:Static l:Strings.DownloadAndInstall}" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
         <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
     </Grid>
 </Window>

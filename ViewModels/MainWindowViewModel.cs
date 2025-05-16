@@ -8,6 +8,7 @@ using Samsung_Jellyfin_Installer.Services;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Samsung_Jellyfin_Installer.Localization;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
@@ -105,7 +106,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             if (!await _tizenInstaller.EnsureTizenCliAvailable())
             {
                 await _dialogService.ShowErrorAsync(
-                    "Tizen CLI is required but not found. Please install Tizen Studio first.");
+                    Strings.PleaseInstallTizen);
             }
             await LoadReleasesAsync();
         }
@@ -118,7 +119,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             string downloadPath = null;
             try
             {
-                StatusBar = "Downloading package...";
+                StatusBar = Strings.DownloadingPackage;
                 downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
 
                 // Automatically trigger installation if TV IP is set
@@ -132,12 +133,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     if (result.Success)
                     {
                         await _dialogService.ShowMessageAsync(
-                            $"Successfully installed on {TvIpAddress}");
+                            $"{Strings.InstallationSuccessfulOn} {TvIpAddress}");
                     }
                     else
                     {
                         await _dialogService.ShowErrorAsync(
-                            $"Installation failed: {result.ErrorMessage}");
+                            $"{Strings.InstallationFailed}: {result.ErrorMessage}");
                     }
                 }
             }
@@ -145,7 +146,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 Debug.WriteLine($"Download failed: {ex.Message}");
                 await _dialogService.ShowErrorAsync(
-                    $"Download failed: {ex.Message}");
+                    $"{Strings.DownloadFailed} {ex.Message}");
             }
             finally
             {
@@ -188,7 +189,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 Debug.WriteLine($"Release load error: {ex.Message}");
                 await _dialogService.ShowErrorAsync(
-                    $"Failed to load releases: {ex.Message}");
+                    $"{Strings.FailedLoadingReleases} {ex.Message}");
             }
             finally
             {
