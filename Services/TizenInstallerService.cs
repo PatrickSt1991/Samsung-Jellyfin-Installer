@@ -82,20 +82,21 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("Checking Tizen OS version...");
                 string tizenOs = await FetchTizenOsVersion(sdbPath);
 
-                if(new Version(tizenOs) >= new Version("7.0"))
+                MessageBox.Show($"Version is: {tizenOs}, but we are simulating 7");
+                tizenOs = "7.0";
+
+                if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     //return InstallResult.FailureResult("Tizen 7.0 en hoger wordt momenteel niet ondersteund vanwege certificaatproblemen.");
                     updateStatus("Generating certificate for Tizen 7.0+...");
 
-                    // 1. Initialize services
-                    var captchaSolver = new TwoCaptchaService("your_2captcha_api_key");
+                    var captchaSolver = new WebViewCaptchaSolver();
                     var certService = new TizenCertificateService(captchaSolver);
 
-                    // 2. Generate certificate
                     await certService.GenerateCertificateAsync(
-                        "88CWsbpsz33keBte!",
-                        "88CWsbpsz33keBte!",
-                        new[] { "device123" }, // Replace with actual device IDs comming from sdb.exe?!
+                        "ro.se.sa.n.tosna@gmail.com",
+                        "8T6JSdo4l4Pdbyyt!",
+                        tvName,
                         updateStatus);
                 }
                 else
@@ -103,7 +104,8 @@ namespace Samsung_Jellyfin_Installer.Services
                     updateStatus("Updating certificate profile...");
                     UpdateProfileCertificatePaths();
                 }
-
+                //REMOVE THIS LINE LATER
+                return InstallResult.SuccessResult();
                 await RemoveOldJellyfin(sdbPath);
 
                 updateStatus("Packaging the wgt file with certificate...");
@@ -160,7 +162,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             if (!string.IsNullOrEmpty(appId))
             {
-                var deleteOld = MessageBox.Show("Oude Jellyfin gevonden", "Jellyfin gevonden!", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var deleteOld = MessageBox.Show($"Oude Jellyfin gevonden \r\n Wil je deze verwijderen?", "Jellyfin gevonden!", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (deleteOld == MessageBoxResult.Yes)
                     await RunCommandAsync(sdbPath, $"uninstall {appId}");
             }

@@ -1,24 +1,26 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using HtmlAgilityPack;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Operators;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Prng;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
-using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -30,6 +32,7 @@ namespace Samsung_Jellyfin_Installer.Services
         private readonly ICaptchaSolver _captchaSolver;
         private string _csrfToken;
         private string _recaptchaToken;
+        private string _siteKey;
 
         public TizenCertificateService(ICaptchaSolver captchaSolver)
         {
@@ -42,26 +45,27 @@ namespace Samsung_Jellyfin_Installer.Services
             _captchaSolver = captchaSolver;
         }
 
-        public async Task GenerateCertificateAsync(string email, string password, string[] deviceIds, Action<string> updateStatus)
+        public async Task GenerateCertificateAsync(string email, string password, string deviceIds, Action<string> updateStatus)
         {
             try
             {
-                // Generate CSR with key pair
                 updateStatus("Generating CSR with DUIDs...");
                 var csrGenerator = new CsrGenerator();
                 var csr = csrGenerator.GenerateCsr(email, deviceIds, out var keyPair);
-
-                // Save private key securely
                 File.WriteAllText("private.key", ConvertToPem(keyPair.Private));
 
-                // Login to Samsung
                 updateStatus("Authenticating with Samsung...");
                 var authResponse = await ExecuteWithRetry(async () =>
                     await LoginAsync(email, password),
                     maxRetries: 3,
                     updateStatus: updateStatus);
 
-                // Submit CSR
+                if (!authResponse.Success)
+                    throw new Exception($"Login failed: {authResponse.ErrorMessage}");
+
+                Debug.Write(authResponse);
+                return;
+
                 updateStatus("Submitting CSR to distributor API...");
                 var certificate = await ExecuteWithRetry(async () =>
                     await SubmitDistributorRequestV2Async(
@@ -71,7 +75,6 @@ namespace Samsung_Jellyfin_Installer.Services
                     maxRetries: 3,
                     updateStatus: updateStatus);
 
-                // Save certificate
                 updateStatus("Saving certificate...");
                 File.WriteAllText("distributor.p12", certificate);
                 updateStatus("Certificate generated successfully!");
@@ -85,77 +88,186 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<TizenResults> LoginAsync(string email, string password)
         {
-            // Get initial session cookies
-            await _httpClient.GetAsync($"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
-                "?clientId=v285zxnl3h" +
-                "&redirect_uri=http://localhost:4794/signin/callback" +
-                "&state=accountcheckdogeneratedstatetext" +
-                "&tokenType=TOKEN");
-
-            // Submit email
-            await _httpClient.PostAsync(
-                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInIdentificationProc",
-                new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("loginId", email),
-                    new KeyValuePair<string, string>("rememberId", "false")
-                }));
-
-            // Get password page to extract tokens
-            var passwordPage = await _httpClient.GetStringAsync(
-                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
-
-            _csrfToken = ExtractCsrfToken(passwordPage);
-            var (key, iv) = ExtractEncryptionParams(passwordPage);
-
-            // Solve CAPTCHA
-            _recaptchaToken = await _captchaSolver.SolveReCaptchaV2Async(
-                "6Le3CGAUAAAAADgwHP5vnwfsLbIOoxnh07DcaMcq",
-                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
-
-            // Submit encrypted password with CAPTCHA
-            var encryptedPassword = SamsungCrypto.EncryptPassword(password);
-            var authResponse = await _httpClient.PostAsync(
-                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInProc",
-                new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("remIdChkYN", "false"),
-                    new KeyValuePair<string, string>("captchaAnswer", _recaptchaToken),
-                    new KeyValuePair<string, string>("iptLgnID", email),
-                    new KeyValuePair<string, string>("iptLgnPD", encryptedPassword),
-                    new KeyValuePair<string, string>("svcIptLgnKY", key),
-                    new KeyValuePair<string, string>("svcIptLgnIV", iv),
-                    new KeyValuePair<string, string>("_csrf", _csrfToken)
-                }));
-
-            var responseContent = await authResponse.Content.ReadAsStringAsync();
-            if (!authResponse.IsSuccessStatusCode)
+            try
             {
-                throw new Exception($"Login failed: {responseContent}");
+                // Initial request to get session cookies
+                var initialResponse = await _httpClient.GetAsync($"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
+                    "?clientId=v285zxnl3h" +
+                    "&redirect_uri=http://localhost:4794/signin/callback" +
+                    "&state=accountcheckdogeneratedstatetext" +
+                    "&tokenType=TOKEN");
+
+                var initialHtml = await initialResponse.Content.ReadAsStringAsync();
+
+                SamsungCrypto.InitializeFromHtml(initialHtml);
+                _csrfToken = ExtractCsrfToken(initialHtml);
+                _siteKey = ExtractRecaptchaSiteKey(initialHtml);
+
+                // Submit email with CAPTCHA
+                _recaptchaToken = await _captchaSolver.SolveReCaptchaEnterpriseAsync(_siteKey, "login");
+                var emailResponse = await SubmitEmailAsync(email);
+                var emailResult = JsonConvert.DeserializeObject<SamsungResponse>(await emailResponse.Content.ReadAsStringAsync());
+                Debug.Write(emailResult?.rtnCd);
+                if (emailResult?.rtnCd != "VALID")
+                    throw new Exception("Email submission failed");
+
+                // Submit password with new CAPTCHA
+                _recaptchaToken = await _captchaSolver.SolveReCaptchaEnterpriseAsync(_siteKey, "login");
+                var passwordPageResponse = await _httpClient.GetAsync($"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
+                var passwordPageHtml = await passwordPageResponse.Content.ReadAsStringAsync();
+
+                // 4. Update crypto with NEW parameters from password page
+                SamsungCrypto.InitializeFromHtml(passwordPageHtml);
+                _csrfToken = ExtractCsrfToken(passwordPageHtml); // This might also change
+                _siteKey = ExtractRecaptchaSiteKey(passwordPageHtml); // This might be different too
+
+                // 5. Submit password with new encryption context
+                _recaptchaToken = await _captchaSolver.SolveReCaptchaEnterpriseAsync(_siteKey, "login");
+                var passwordResponse = await SubmitPasswordAsync(email, password);
+                string responseContent = await passwordResponse.Content.ReadAsStringAsync();
+                Debug.Write(responseContent);
+                var passwordResult = JsonConvert.DeserializeObject<SamsungResponse>(await passwordResponse.Content.ReadAsStringAsync());
+                Debug.Write(passwordResult?.rtnCd);
+                
+                if (passwordResult?.rtnCd != "SUCCESS")
+                    throw new Exception("Password submission failed");
+
+                // Handle final completion
+                var completionResponse = await _httpClient.GetAsync($"{AccountUrl}{passwordResult.nextURL}");
+                var completionHtml = await completionResponse.Content.ReadAsStringAsync();
+
+                var tokenData = ExtractTokenData(completionHtml) ?? throw new Exception("Token extraction failed");
+
+                return new TizenResults
+                {
+                    Success = true,
+                    AccessToken = tokenData.access_token,
+                    UserId = tokenData.userId,
+                    Email = tokenData.inputEmailID
+                };
+            }
+            catch (Exception ex)
+            {
+                return new TizenResults
+                {
+                    Success = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        private async Task<HttpResponseMessage> SubmitEmailAsync(string email)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post,
+                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInIdentificationProc?v={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+
+            request.Headers.Add("X-CSRF-TOKEN", _csrfToken);
+            request.Headers.Add("x-recaptcha-token", _recaptchaToken);
+
+            request.Content = new StringContent(
+                JsonConvert.SerializeObject(new
+                {
+                    loginId = email,
+                    rememberId = false,
+                    pageSource = "signInIdentification"
+                }),
+                Encoding.UTF8,
+                "application/json");
+
+            return await _httpClient.SendAsync(request);
+        }
+
+        private async Task<HttpResponseMessage> SubmitPasswordAsync(string email, string password)
+        {
+            // Ensure we have a valid CSRF token and recaptcha token
+            if (string.IsNullOrEmpty(_csrfToken) || string.IsNullOrEmpty(_recaptchaToken))
+            {
+                throw new InvalidOperationException("Missing required tokens. Make sure to call GetSignInPageAsync first.");
             }
 
-            return JsonConvert.DeserializeObject<TizenResults>(responseContent);
+            // 1. Encrypt the password using our fixed crypto implementation
+            var passwordData = SamsungCrypto.EncryptPassword(password);
+
+            // 2. Prepare request with the correct URL and timestamp
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var request = new HttpRequestMessage(HttpMethod.Post,
+                $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInProc?v={timestamp}");
+
+            // 3. Add required headers
+            request.Headers.Add("X-CSRF-TOKEN", _csrfToken);
+            request.Headers.Add("x-recaptcha-token", _recaptchaToken);
+            request.Headers.Add("Origin", "https://account.samsung.com");
+            request.Headers.Add("Referer", $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+
+
+            // 4. Add critical headers from browser
+            request.Headers.Add("Accept", "application/json, text/plain, */*");
+            request.Headers.Add("Accept-Language", "en-GB,en;q=0.9,en-US;q=0.8");
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+
+
+            // 5. Create request body with the EXACT format used in the browser
+            var requestBody = new
+            {
+                remIdChkYN = false,
+                captchaAnswer = _recaptchaToken,
+                iptLgnID = email,
+                iptLgnPD = passwordData.EncryptedPassword,
+                svcIptLgnKY = passwordData.Key,
+                svcIptLgnIV = passwordData.IV,  // This is now in the correct hexadecimal format
+                lgnEncTp = "1"
+            };
+
+            // Convert to JSON with the exact same formatting as the browser
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(requestBody, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null,
+                WriteIndented = false
+            });
+
+            request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            // 6. Send request
+            var response = await _httpClient.SendAsync(request);
+
+            // 7. Debug output
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Debug.Write($"Status: {response.StatusCode}");
+            Debug.Write($"Response: {responseContent}");
+
+            return response;
+        }
+        private TokenData ExtractTokenData(string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            var codeInput = doc.DocumentNode.SelectSingleNode("//input[@name='code']");
+            if (codeInput == null) return null;
+
+            var encodedJson = codeInput.GetAttributeValue("value", "");
+            var decodedJson = WebUtility.HtmlDecode(encodedJson);
+            return JsonConvert.DeserializeObject<TokenData>(decodedJson);
         }
 
         private async Task<string> SubmitDistributorRequestV2Async(string accessToken, string userId, string csr)
         {
-            var content = new MultipartFormDataContent("*****")
+            var content = new MultipartFormDataContent("----WebKitFormBoundary7MA4YWxkTrZu0gW")
             {
                 { new StringContent(accessToken), "access_token" },
                 { new StringContent(userId), "user_id" },
                 { new StringContent("Public"), "privilege_level" },
                 { new StringContent("Individual"), "developer_type" },
                 { new StringContent("VD"), "platform" },
-                { new ByteArrayContent(Encoding.UTF8.GetBytes(csr)), "csr", "distributor.csr" }
+                { new StringContent(csr), "csr" }
             };
 
-            var response = await _httpClient.PostAsync(
-                $"{ApiBaseUrl}/apis/v2/distributors",
-                content);
-
+            var response = await _httpClient.PostAsync($"{ApiBaseUrl}/apis/v2/distributors", content);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Certificate request failed: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Certificate request failed ({response.StatusCode}): {errorContent}");
             }
 
             return await response.Content.ReadAsStringAsync();
@@ -164,19 +276,13 @@ namespace Samsung_Jellyfin_Installer.Services
         private string ExtractCsrfToken(string html)
         {
             var match = Regex.Match(html, @"'token':\s*'([^']*)'");
-            return match.Success ? match.Groups[1].Value :
-                throw new Exception("CSRF token not found in response");
+            return match.Success ? match.Groups[1].Value : null;
         }
 
-        private (string Key, string Iv) ExtractEncryptionParams(string html)
+        private string ExtractRecaptchaSiteKey(string html)
         {
-            var keyMatch = Regex.Match(html, @"svcIptLgnKY.*?'([^']*)'");
-            var ivMatch = Regex.Match(html, @"svcIptLgnIV.*?'([^']*)'");
-
-            if (!keyMatch.Success || !ivMatch.Success)
-                throw new Exception("Failed to extract encryption parameters");
-
-            return (keyMatch.Groups[1].Value, ivMatch.Groups[1].Value);
+            var match = Regex.Match(html, @"recaptchaSiteKey\s*=\s*""([^""]+)");
+            return match.Success ? match.Groups[1].Value : "6Leu19YoAAAAABs9aBxlHOs_qGOGYt3qTEFI3vxJ";
         }
 
         private async Task<T> ExecuteWithRetry<T>(Func<Task<T>> action, int maxRetries, Action<string> updateStatus)
@@ -208,9 +314,8 @@ namespace Samsung_Jellyfin_Installer.Services
 
     public class CsrGenerator
     {
-        public string GenerateCsr(string email, string[] deviceIds, out AsymmetricCipherKeyPair keyPair)
+        public string GenerateCsr(string email, string deviceIds, out AsymmetricCipherKeyPair keyPair)
         {
-            // 1. Generate RSA Key Pair
             var randomGenerator = new CryptoApiRandomGenerator();
             var random = new SecureRandom(randomGenerator);
 
@@ -219,50 +324,34 @@ namespace Samsung_Jellyfin_Installer.Services
             keyPairGenerator.Init(keyGenerationParameters);
             keyPair = keyPairGenerator.GenerateKeyPair();
 
-            // 2. Prepare Subject
             var subject = new X509Name($"CN=TizenSDK, O=Individual, emailAddress={email}");
-
-            // 3. Create Attributes (for SAN extensions)
             var attributes = CreateAttributesWithSanExtensions(email, deviceIds);
 
-            // 4. Create and sign the CSR
-            var signatureAlgorithm = "SHA-256WithRSAEncryption";
-            var signingKey = (AsymmetricKeyParameter)keyPair.Private;
-            var publicKey = (AsymmetricKeyParameter)keyPair.Public;
-
             var csr = new Pkcs10CertificationRequest(
-                signatureAlgorithm,
+                "SHA256WithRSA",
                 subject,
-                publicKey,
+                keyPair.Public,
                 attributes,
-                signingKey
-            );
+                keyPair.Private);
 
-            // 5. Convert to PEM format
             return ConvertToPem(csr.GetEncoded());
         }
 
-        private DerSet CreateAttributesWithSanExtensions(string email, string[] deviceIds)
+        private DerSet CreateAttributesWithSanExtensions(string email, string deviceId)
         {
-            // Create SAN extensions
-            var sanNames = new List<Asn1Encodable>();
-            foreach (var duid in deviceIds)
-            {
-                sanNames.Add(new GeneralName(
-                    GeneralName.UniformResourceIdentifier,
-                    $"URN:tizen:deviceid={duid}"));
-            }
+            var sanName = new GeneralName(
+                GeneralName.UniformResourceIdentifier,
+                $"URN:tizen:deviceid={deviceId}");
 
             var sanExtension = new X509Extension(
-                false, // not critical
-                new DerOctetString(new DerSequence(sanNames.ToArray())));
+                false,
+                new DerOctetString(new DerSequence(sanName)));
 
             var extensions = new Dictionary<DerObjectIdentifier, X509Extension>
-        {
-            { X509Extensions.SubjectAlternativeName, sanExtension }
-        };
+            {
+                { X509Extensions.SubjectAlternativeName, sanExtension }
+            };
 
-            // Wrap in Attribute
             var attribute = new AttributePkcs(
                 PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
                 new DerSet(new X509Extensions(extensions)));
@@ -278,8 +367,7 @@ namespace Samsung_Jellyfin_Installer.Services
             var base64 = Convert.ToBase64String(derEncoded);
             for (var i = 0; i < base64.Length; i += 64)
             {
-                var length = Math.Min(64, base64.Length - i);
-                builder.AppendLine(base64.Substring(i, length));
+                builder.AppendLine(base64.Substring(i, Math.Min(64, base64.Length - i)));
             }
 
             builder.AppendLine("-----END CERTIFICATE REQUEST-----");

@@ -2,6 +2,6 @@
 {
     public interface ICaptchaSolver
     {
-        Task<string> SolveReCaptchaV2Async(string siteKey, string pageUrl);
+        Task<string> SolveReCaptchaEnterpriseAsync(string siteKey, string action = "login");
     }
 }

@@ -4,16 +4,30 @@ namespace Samsung_Jellyfin_Installer.Models
 {
     public class TizenResults
     {
-        [JsonProperty("access_token")]
+        public bool Success { get; set; }
+        public string ErrorMessage { get; set; }
         public string AccessToken { get; set; }
-
-        [JsonProperty("user_id")]
         public string UserId { get; set; }
-
-        [JsonProperty("client_id")]
-        public string ClientId { get; set; }
-
-        [JsonProperty("inputEmailID")]
         public string Email { get; set; }
+    }
+    public class TokenData
+    {
+        public string access_token { get; set; }
+        public string token_type { get; set; }
+        public string userId { get; set; }
+        public string inputEmailID { get; set; }
+        // Add other fields as needed
+    }
+    public class SamsungResponse
+    {
+        public string rtnCd {  get; set; }
+        public string nextURL { get; set; }
+    }
+    public class EncryptedPasswordData
+    {
+        public string EncryptedPassword { get; set; }
+        public string Key { get; set; }  // RSA-encrypted AES key
+        public string IV { get; set; }   // Initialization Vector
+        public string Salt { get; set; } // PBKDF2 salt
     }
 }

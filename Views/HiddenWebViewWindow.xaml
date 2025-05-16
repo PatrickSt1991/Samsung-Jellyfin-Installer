@@ -1,0 +1,17 @@
+﻿<Window x:Class="Samsung_Jellyfin_Installer.Views.HiddenWebViewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="HiddenWebViewWindow"
+        Width="800" Height="600"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Visibility="Hidden"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Loaded="Window_Loaded">
+    <Grid>
+        <wv2:WebView2 Name="webView" />
+    </Grid>
+</Window>
