@@ -1,4 +1,17 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Prng;
+using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
+using Samsung_Jellyfin_Installer.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,18 +22,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
-using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Prng;
-using Org.BouncyCastle.Pkcs;
-using Org.BouncyCastle.Security;
-using Samsung_Jellyfin_Installer.Models;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -30,21 +31,50 @@ namespace Samsung_Jellyfin_Installer.Services
         private const string ApiBaseUrl = "https://dev.tizen.samsung.com";
         private readonly HttpClient _httpClient;
         private readonly ICaptchaSolver _captchaSolver;
+        private readonly CookieContainer _cookieContainer = new CookieContainer();
         private string _csrfToken;
         private string _recaptchaToken;
         private string _siteKey;
 
         public TizenCertificateService(ICaptchaSolver captchaSolver)
         {
+
+            var handler = new HttpClientHandler
+            {
+                CookieContainer = _cookieContainer,
+                UseCookies = true,
+                AllowAutoRedirect = false,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+
+            _httpClient = new HttpClient(handler);
+
+            /*
             _httpClient = new HttpClient(new HttpClientHandler
             {
                 UseCookies = true,
                 AllowAutoRedirect = false
             });
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            */
             _captchaSolver = captchaSolver;
         }
+        private async Task DebugRequest(HttpRequestMessage request)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Request: {request.Method} {request.RequestUri}");
+            sb.AppendLine("Headers:");
+            foreach (var header in request.Headers)
+                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
 
+            if (request.Content != null)
+            {
+                sb.AppendLine("Body:");
+                sb.AppendLine(await request.Content.ReadAsStringAsync());
+            }
+
+            Debug.WriteLine(sb.ToString());
+        }
         public async Task GenerateCertificateAsync(string email, string password, string deviceIds, Action<string> updateStatus)
         {
             try
@@ -90,6 +120,7 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             try
             {
+
                 // Initial request to get session cookies
                 var initialResponse = await _httpClient.GetAsync($"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
                     "?clientId=v285zxnl3h" +
@@ -111,24 +142,21 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (emailResult?.rtnCd != "VALID")
                     throw new Exception("Email submission failed");
 
-                // Submit password with new CAPTCHA
-                _recaptchaToken = await _captchaSolver.SolveReCaptchaEnterpriseAsync(_siteKey, "login");
+                // Submit password
                 var passwordPageResponse = await _httpClient.GetAsync($"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
                 var passwordPageHtml = await passwordPageResponse.Content.ReadAsStringAsync();
 
-                // 4. Update crypto with NEW parameters from password page
                 SamsungCrypto.InitializeFromHtml(passwordPageHtml);
-                _csrfToken = ExtractCsrfToken(passwordPageHtml); // This might also change
-                _siteKey = ExtractRecaptchaSiteKey(passwordPageHtml); // This might be different too
 
-                // 5. Submit password with new encryption context
+                _csrfToken = ExtractCsrfToken(passwordPageHtml);
+                _siteKey = ExtractRecaptchaSiteKey(passwordPageHtml);
+
                 _recaptchaToken = await _captchaSolver.SolveReCaptchaEnterpriseAsync(_siteKey, "login");
-                var passwordResponse = await SubmitPasswordAsync(email, password);
-                string responseContent = await passwordResponse.Content.ReadAsStringAsync();
-                Debug.Write(responseContent);
-                var passwordResult = JsonConvert.DeserializeObject<SamsungResponse>(await passwordResponse.Content.ReadAsStringAsync());
-                Debug.Write(passwordResult?.rtnCd);
                 
+                var passwordResponse = await SubmitPasswordAsync(email, password);
+
+                var passwordResult = JsonConvert.DeserializeObject<SamsungResponse>(await passwordResponse.Content.ReadAsStringAsync());
+
                 if (passwordResult?.rtnCd != "SUCCESS")
                     throw new Exception("Password submission failed");
 
@@ -179,47 +207,37 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<HttpResponseMessage> SubmitPasswordAsync(string email, string password)
         {
-            // Ensure we have a valid CSRF token and recaptcha token
+            // Validate required tokens
             if (string.IsNullOrEmpty(_csrfToken) || string.IsNullOrEmpty(_recaptchaToken))
-            {
-                throw new InvalidOperationException("Missing required tokens. Make sure to call GetSignInPageAsync first.");
-            }
+                throw new InvalidOperationException("Missing required tokens");
 
-            // 1. Encrypt the password using our fixed crypto implementation
-            var passwordData = SamsungCrypto.EncryptPassword(password);
+            // Encrypt credentials using proper Samsung flow
+            var encryptedData = SamsungCrypto.EncryptCredentials(email, password);
 
-            // 2. Prepare request with the correct URL and timestamp
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var request = new HttpRequestMessage(HttpMethod.Post,
                 $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInProc?v={timestamp}");
 
-            // 3. Add required headers
+            // Set headers
+            request.Headers.Clear();
             request.Headers.Add("X-CSRF-TOKEN", _csrfToken);
             request.Headers.Add("x-recaptcha-token", _recaptchaToken);
-            request.Headers.Add("Origin", "https://account.samsung.com");
-            request.Headers.Add("Referer", $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
-            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
-
-
-            // 4. Add critical headers from browser
-            request.Headers.Add("Accept", "application/json, text/plain, */*");
-            request.Headers.Add("Accept-Language", "en-GB,en;q=0.9,en-US;q=0.8");
+            request.Headers.TryAddWithoutValidation("Accept", "application/json, text/plain, */*");
+            request.Headers.TryAddWithoutValidation("Referer", $"{AccountUrl}/accounts/be1dce529476c1a6d407c4c7578c31bd/signInPassword");
             request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
 
-
-            // 5. Create request body with the EXACT format used in the browser
-            var requestBody = new
+            // Create request body matching Samsung's format
+            var requestBody = new Dictionary<string, object>
             {
-                remIdChkYN = false,
-                captchaAnswer = _recaptchaToken,
-                iptLgnID = email,
-                iptLgnPD = passwordData.EncryptedPassword,
-                svcIptLgnKY = passwordData.Key,
-                svcIptLgnIV = passwordData.IV,  // This is now in the correct hexadecimal format
-                lgnEncTp = "1"
+                ["remIdChkYN"] = false,
+                ["captchaAnswer"] = _recaptchaToken,
+                ["iptLgnID"] = email,
+                ["iptLgnPD"] = encryptedData.EncryptedPassword,
+                ["svcIptLgnKY"] = encryptedData.Key,
+                ["svcIptLgnIV"] = encryptedData.IV,
+                ["lgnEncTp"] = "1"
             };
 
-            // Convert to JSON with the exact same formatting as the browser
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(requestBody, new System.Text.Json.JsonSerializerOptions
             {
                 PropertyNamingPolicy = null,
@@ -228,13 +246,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
             request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            // 6. Send request
+            // Debug and send request
+            Debug.WriteLine($"Submitting password with: {jsonContent}");
             var response = await _httpClient.SendAsync(request);
 
-            // 7. Debug output
             var responseContent = await response.Content.ReadAsStringAsync();
-            Debug.Write($"Status: {response.StatusCode}");
-            Debug.Write($"Response: {responseContent}");
+            Debug.WriteLine($"Response: {responseContent}");
 
             return response;
         }

@@ -1,6 +1,9 @@
-﻿using Samsung_Jellyfin_Installer.Models;
+﻿using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+using Samsung_Jellyfin_Installer.Models;
 using System;
-using System.IO;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,95 +11,137 @@ using System.Text.RegularExpressions;
 public static class SamsungCrypto
 {
     private static string _publicKey;
-    private static string _encryptionType = "1"; // Default to RSA
     private static bool _initialized = false;
-
-    public static void InitializeWithPublicKey(string publicKey = null)
-    {
-        _publicKey = publicKey ?? @"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCacdQbW2lQai4Lppj5bt4h+r6NmK4Vgd7i/+gqdNdeAgwvsEKPJGI1dekY7oKx81K+vaONU63qpDOKOdNZBRaln2kBoHDr2EQ2rgKH91xbjR8EZ//rtgzRkd5KGROkaZGtSstf6YnmPYPDCPIFbyx48QX/BJaocnSJ5xBFlDMmRQIDAQAB";
-        _encryptionType = "1";
-        _initialized = true;
-    }
-
-    public static EncryptedPasswordData EncryptPassword(string password)
-    {
-        if (!_initialized)
-            throw new InvalidOperationException("Crypto module not initialized! Call InitializeWithPublicKey first.");
-
-        using var aes = Aes.Create();
-        aes.GenerateKey();
-        aes.GenerateIV();
-        aes.Mode = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
-
-        // Encrypt password with AES
-        byte[] encryptedPassword;
-        using (var encryptor = aes.CreateEncryptor())
-        using (var ms = new MemoryStream())
-        {
-            using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-            using (var sw = new StreamWriter(cs, Encoding.UTF8))
-            {
-                sw.Write(password);
-            }
-            encryptedPassword = ms.ToArray();
-        }
-
-        // Encrypt AES key with RSA
-        byte[] encryptedKey;
-        using (var rsa = RSA.Create())
-        {
-            // Try both common public key formats
-            try
-            {
-                rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(_publicKey), out _);
-            }
-            catch
-            {
-                try
-                {
-                    // Some Samsung servers might use PKCS#1 format
-                    var pkcs1PubKey = Convert.FromBase64String(_publicKey);
-                    rsa.ImportRSAPublicKey(pkcs1PubKey, out _);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("Failed to import RSA public key", ex);
-                }
-            }
-
-            encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
-        }
-
-        return new EncryptedPasswordData
-        {
-            EncryptedPassword = Convert.ToBase64String(encryptedPassword),
-            Key = Convert.ToBase64String(encryptedKey),
-            // Samsung appears to expect IV in Base64 (same as other fields)
-            IV = Convert.ToBase64String(aes.IV)
-        };
-    }
+    private static int _pbeKeySpecIterations = 1000; // Default value, will be updated from HTML
 
     public static void InitializeFromHtml(string html)
     {
-        // More robust regex to handle minified JS
+        // Extract wipEnc object
         var wipEncMatch = Regex.Match(html, @"var\s+wipEnc\s*=\s*({[^{}]+})", RegexOptions.Singleline);
         if (!wipEncMatch.Success)
             throw new Exception("Could not find wipEnc object in HTML");
 
         var wipEncJson = wipEncMatch.Groups[1].Value;
+        _publicKey = GetJsonValue(wipEncJson, "pblcKyTxt");
 
-        // Parse with more lenient JSON handling
-        _publicKey = GetJsonValue(wipEncJson, "pblcKyTxt")
-            ?? throw new Exception("Failed to extract public key from wipEnc");
+        // Extract iteration count
+        var iterationsStr = GetJsonValue(wipEncJson, "pbeKySpcIters");
+        if (!string.IsNullOrEmpty(iterationsStr) && int.TryParse(iterationsStr, out int iterations))
+            _pbeKeySpecIterations = iterations;
 
-        _encryptionType = GetJsonValue(wipEncJson, "lgnEncTp") ?? "1";
+        if (string.IsNullOrEmpty(_publicKey))
+            throw new Exception("Failed to extract valid public key from wipEnc");
+
+        Debug.WriteLine($"Public key initialized: {_publicKey}");
+        Debug.WriteLine($"Using iterations: {_pbeKeySpecIterations}");
         _initialized = true;
+    }
+
+    public static EncryptedPasswordData EncryptCredentials(string email, string password, string oldPassword = null)
+    {
+        if (!_initialized)
+            throw new InvalidOperationException("Crypto module not initialized!");
+
+        // Clean input like in JavaScript
+        email = email?.ToLower().Replace(" ", "");
+        password = password?.Replace(" ", "");
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            throw new ArgumentException("Email and password are required");
+
+        // 1. Create SHA256 hash of email (similar to CryptoJS.SHA256(n).toString())
+        byte[] emailBytes = Encoding.UTF8.GetBytes(email);
+        byte[] emailHashBytes;
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            emailHashBytes = sha256.ComputeHash(emailBytes);
+        }
+        string emailHashHex = BitConverter.ToString(emailHashBytes).Replace("-", "").ToLower();
+
+        // 2. Generate random salt (similar to CryptoJS.lib.WordArray.random(16))
+        byte[] salt = new byte[16];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(salt);
+        }
+
+        // 3. Derive key using PBKDF2 (similar to CryptoJS.PBKDF2())
+        byte[] derivedKey = new Rfc2898DeriveBytes(
+            emailHashHex,
+            salt,
+            _pbeKeySpecIterations,
+            HashAlgorithmName.SHA1).GetBytes(16); // 4 keySize = 16 bytes (128 bits)
+
+        // 4. Generate random IV
+        byte[] iv = new byte[16];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(iv);
+        }
+
+        // 5. Encrypt password
+        byte[] encryptedPassword = EncryptAes(Encoding.UTF8.GetBytes(password), derivedKey, iv);
+
+        // 6. Encrypt old password if provided
+        byte[] encryptedOldPassword = null;
+        if (!string.IsNullOrEmpty(oldPassword))
+        {
+            oldPassword = oldPassword.Replace(" ", "");
+            encryptedOldPassword = EncryptAes(Encoding.UTF8.GetBytes(oldPassword), derivedKey, iv);
+        }
+
+        // 7. RSA encrypt the derived key
+        byte[] encryptedKey;
+        using (var rsa = DecodePublicKey(_publicKey))
+        {
+            encryptedKey = rsa.Encrypt(derivedKey, RSAEncryptionPadding.Pkcs1);
+        }
+
+        // Create result object
+        var result = new EncryptedPasswordData
+        {
+            Email = email,
+            EncryptedPassword = Convert.ToBase64String(encryptedPassword),
+            Key = Convert.ToBase64String(encryptedKey),
+            IV = BitConverter.ToString(iv).Replace("-", "").ToLower()
+        };
+
+        if (encryptedOldPassword != null)
+        {
+            result.EncryptedOldPassword = Convert.ToBase64String(encryptedOldPassword);
+        }
+
+        return result;
+    }
+
+    private static byte[] EncryptAes(byte[] data, byte[] key, byte[] iv)
+    {
+        using (var aes = Aes.Create())
+        {
+            aes.Key = key;
+            aes.IV = iv;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7; // Change to PKCS7 padding like CryptoJS
+
+            using (var encryptor = aes.CreateEncryptor())
+            {
+                return encryptor.TransformFinalBlock(data, 0, data.Length);
+            }
+        }
+    }
+
+    private static RSA DecodePublicKey(string publicKeyPem)
+    {
+        publicKeyPem = publicKeyPem.Replace("-----BEGIN PUBLIC KEY-----", "")
+                                   .Replace("-----END PUBLIC KEY-----", "")
+                                   .Trim();
+        byte[] keyBytes = Convert.FromBase64String(publicKeyPem);
+        AsymmetricKeyParameter publicKey = PublicKeyFactory.CreateKey(keyBytes);
+        return DotNetUtilities.ToRSA((RsaKeyParameters)publicKey);
     }
 
     private static string GetJsonValue(string json, string key)
     {
-        // Handles both quoted and unquoted values
         var match = Regex.Match(json, $@"""{key}""\s*:\s*""?([^""\s,}}]+)""?");
         return match.Success ? match.Groups[1].Value.Trim('"') : null;
     }

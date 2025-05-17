@@ -94,8 +94,8 @@ namespace Samsung_Jellyfin_Installer.Services
                     var certService = new TizenCertificateService(captchaSolver);
 
                     await certService.GenerateCertificateAsync(
-                        "ro.se.sa.n.tosna@gmail.com",
-                        "8T6JSdo4l4Pdbyyt!",
+                        "hrzbrkzuwkasyvkvrr@nespf.com",
+                        "88CWsbpsz33keBte!",
                         tvName,
                         updateStatus);
                 }

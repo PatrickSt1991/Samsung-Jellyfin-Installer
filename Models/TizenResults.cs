@@ -25,9 +25,11 @@ namespace Samsung_Jellyfin_Installer.Models
     }
     public class EncryptedPasswordData
     {
+        public string Email { get; set; }
         public string EncryptedPassword { get; set; }
         public string Key { get; set; }  // RSA-encrypted AES key
         public string IV { get; set; }   // Initialization Vector
         public string Salt { get; set; } // PBKDF2 salt
+        public string  EncryptedOldPassword { get; set; }
     }
 }
