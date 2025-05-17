@@ -15,25 +15,107 @@
         mc:Ignorable="d"
         Title="Jellyfin 2 Samsung" Height="375" Width="500">
     <Grid Background="#19000B25">
-        <materialDesign:Card Padding="12" Margin="0,10,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
-            <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Jellyfin Installer for Samsung (Tizen)</TextBlock>
-        </materialDesign:Card>
-
-        <Label Content="Release" HorizontalAlignment="Left" Margin="14,75,0,0" VerticalAlignment="Top" Width="85" Height="25"/>
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding Releases}" SelectedItem="{Binding SelectedRelease}" DisplayMemberPath="Name" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" HorizontalAlignment="Left" Margin="95,75,0,0" VerticalAlignment="Top" Width="377"/>
-
-        <Label Content="Version" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableAssets}" SelectedItem="{Binding SelectedAsset}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="377" HorizontalAlignment="Left" Margin="95,125,0,0" VerticalAlignment="Top"/>
-
-        <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="342" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
-        <Button Command="{Binding RefreshDevicesCommand}" Style="{DynamicResource MaterialDesignFloatingActionLightButton}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" Background="#FF000B25" BorderBrush="#FF000B25" Foreground="White" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10" /> <!-- Top padding -->
+            <RowDefinition Height="Auto" /> <!-- Header -->
+            <RowDefinition Height="20" /> <!-- Spacing -->
+            <RowDefinition Height="Auto" /> <!-- Release row -->
+            <RowDefinition Height="Auto" /> <!-- Version row -->
+            <RowDefinition Height="Auto" /> <!-- Select TV row -->
+            <RowDefinition Height="20" /> <!-- Spacing -->
+            <RowDefinition Height="Auto" /> <!-- Status bar -->
+            <RowDefinition Height="*" /> <!-- Spacing -->
+            <RowDefinition Height="Auto" /> <!-- Button -->
+            <RowDefinition Height="Auto" /> <!-- Copyright -->
+            <RowDefinition Height="10" /> <!-- Bottom padding -->
+        </Grid.RowDefinitions>
+    
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="14" /> <!-- Left padding -->
+            <ColumnDefinition Width="Auto" /> <!-- Labels -->
+            <ColumnDefinition Width="10" /> <!-- Spacing -->
+            <ColumnDefinition Width="*" /> <!-- Controls -->
+            <ColumnDefinition Width="Auto" /> <!-- Refresh button -->
+            <ColumnDefinition Width="14" /> <!-- Right padding -->
+        </Grid.ColumnDefinitions>
         
-        <materialDesign:Card Padding="12" Margin="0,215,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
-            <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
-        </materialDesign:Card>
-        
-        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="{x:Static l:Strings.DownloadAndInstall}" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
-        <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
+        <!-- Header -->
+    <materialDesign:Card Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"
+                         Padding="12" Margin="15 0" Background="#FF000B25" Foreground="White"
+                         HorizontalAlignment="Stretch">
+        <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                   HorizontalAlignment="Center">Jellyfin Installer for Samsung (Tizen)</TextBlock>
+    </materialDesign:Card>
+    
+    <!-- Release row -->
+    <Label Grid.Row="3" Grid.Column="1"
+           Content="Release" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2"
+              Style="{DynamicResource MaterialDesignComboBox}"
+              ItemsSource="{Binding Releases}"
+              SelectedItem="{Binding SelectedRelease}"
+              DisplayMemberPath="Name"
+              materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+              VerticalAlignment="Bottom"
+              Height="30"
+              Margin="0 0 0 10" />
+    
+    <!-- Version row -->
+    <Label Grid.Row="4" Grid.Column="1" 
+           Content="Version" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2"
+              Style="{DynamicResource MaterialDesignComboBox}" 
+              ItemsSource="{Binding AvailableAssets}" 
+              SelectedItem="{Binding SelectedAsset}" 
+              DisplayMemberPath="DisplayText" 
+              materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" 
+              VerticalAlignment="Center"
+              Height="30"
+              Margin="0 0 0 10" />
+    
+    <!-- Select TV row -->
+    <Label Grid.Row="5" Grid.Column="1" 
+           Content="Select TV" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="5" Grid.Column="3"
+              Style="{DynamicResource MaterialDesignComboBox}" 
+              ItemsSource="{Binding AvailableDevices}" 
+              SelectedItem="{Binding SelectedDevice}" 
+              DisplayMemberPath="DisplayText" 
+              materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" 
+              VerticalAlignment="Center" 
+              IsEnabled="{Binding EnableDevicesInput}"
+              Height="30"
+              Margin="0 0 0 10" />
+    <Button Grid.Row="5" Grid.Column="4"
+            Command="{Binding RefreshDevicesCommand}" 
+            Style="{DynamicResource MaterialDesignFloatingActionLightButton}" 
+            Content="⟳" Height="25" Width="25" Padding="0" Margin="10,0,0,0"
+            VerticalAlignment="Center" 
+            IsEnabled="{Binding EnableDevicesInput}"
+            Background="#FF000B25" BorderBrush="#FF000B25" Foreground="White" />
+    
+    <!-- Status bar -->
+    <materialDesign:Card Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="4"
+                         Padding="12" Margin="15 0" Background="#FF000B25" Foreground="White" 
+                         HorizontalAlignment="Stretch">
+        <TextBlock Text="{Binding StatusBar}" 
+                   Style="{DynamicResource MaterialDesignTitleTextBlock}" 
+                   HorizontalAlignment="Center"/>
+    </materialDesign:Card>
+    
+    <!-- Button -->
+    <Button Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="4"
+            Command="{Binding DownloadCommand}"
+            CommandParameter="{Binding SelectedRelease}"
+            Content="{x:Static l:Strings.DownloadAndInstall}"
+            Style="{DynamicResource MaterialDesignRaisedLightButton}"
+            Background="#FF000B25" Foreground="White"
+            Width="328" />
+    
+    <!-- Copyright -->
+    <Label Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="4"
+           Content="Copyright (c) 2025 - MIT License - Patrick Stel" 
+           FontSize="12" HorizontalAlignment="Center" 
+           HorizontalContentAlignment="Center" />
     </Grid>
 </Window>
