@@ -171,4 +171,10 @@
   <data name="ScanningNetwork" xml:space="preserve">
     <value>Scanning network for Samsung TV...</value>
   </data>
+  <data name="CheckTizenOS" xml:space="preserve">
+    <value>Checking Tizen OS version...</value>
+  </data>
+  <data name="SuccessAuthCode" xml:space="preserve">
+    <value>Successfully obtained authorization code</value>
+  </data>
 </root>

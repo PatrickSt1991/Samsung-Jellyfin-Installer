@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Samsung_Jellyfin_Installer.Localization;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -5,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
-using Samsung_Jellyfin_Installer.Localization;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -135,8 +136,33 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
-                updateStatus(Strings.UpdatingCertificateProfile);
-                UpdateProfileCertificatePaths();
+
+                updateStatus(Strings.CheckTizenOS);
+                string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+
+                if (new Version(tizenOs) >= new Version("7.0"))
+                {
+                    try
+                    {
+                        var loginService = new SamsungLoginService();
+                        //var (state, code) = await loginService.PerformLoginAsync();
+
+                        updateStatus(Strings.SuccessAuthCode);
+                        //var token = await ExchangeCodeForToken(code);
+
+                        // Continue with your installation logic...
+                    }
+                    catch (Exception ex)
+                    {
+                        updateStatus($"{Strings.Output}: {ex.Message}");
+                        throw;
+                    }
+                }
+                else
+                {
+                    updateStatus(Strings.UpdatingCertificateProfile);
+                    UpdateProfileCertificatePaths();
+                }
 
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
@@ -259,7 +285,14 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return outputBuilder.ToString();
         }
+        private static async Task<string> FetchTizenOsVersion(string sdbPath)
+        {
+            var output = await RunCommandAsync(sdbPath, "capability");
+            var match = Regex.Match(output, @"platform_version:([\d.]+)");
 
+
+            return match.Success ? match.Groups[1].Value.Trim() : "";
+        }
         private async Task<bool> InstallMinimalCli()
         {
             string installerPath = null;

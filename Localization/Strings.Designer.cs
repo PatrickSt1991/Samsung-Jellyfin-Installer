@@ -61,6 +61,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Checking Tizen OS version....
+        /// </summary>
+        public static string CheckTizenOS {
+            get {
+                return ResourceManager.GetString("CheckTizenOS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting to device....
         /// </summary>
         public static string ConnectingToDevice {
@@ -201,6 +210,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string ScanningNetwork {
             get {
                 return ResourceManager.GetString("ScanningNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Successfully obtained authorization code.
+        /// </summary>
+        public static string SuccessAuthCode {
+            get {
+                return ResourceManager.GetString("SuccessAuthCode", resourceCulture);
             }
         }
         
