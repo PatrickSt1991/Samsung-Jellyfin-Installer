@@ -1,10 +1,11 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
+using Samsung_Jellyfin_Installer.Localization;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -125,38 +126,38 @@ namespace Samsung_Jellyfin_Installer.Services
             
             try
             {
-                updateStatus("Connecting to device...");
+                updateStatus(Strings.ConnectingToDevice);
                 await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
 
-                updateStatus("Retrieving device adress...");
+                updateStatus(Strings.RetrievingDeviceAddress);
                 string tvName = await GetTvNameAsync();
 
                 if (string.IsNullOrEmpty(tvName))
-                    return InstallResult.FailureResult("TV Naam kon niet worden gevonden...");
+                    return InstallResult.FailureResult(Strings.TvNameNotFound);
 
-                updateStatus("Updating certificate profile...");
+                updateStatus(Strings.UpdatingCertificateProfile);
                 UpdateProfileCertificatePaths();
 
-                updateStatus("Packaging the wgt file with certificate...");
+                updateStatus(Strings.PackagingWgtWithCertificate);
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- \"{packageUrl}\"");
 
-                updateStatus("Installing package on device...");
+                updateStatus(Strings.InstallingPackage);
 
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
                 {
-                    updateStatus("Installation succesful");
+                    updateStatus(Strings.InstallationSuccessful);
                     return InstallResult.SuccessResult();
                 }
 
-                updateStatus("Installation failed");
-                return InstallResult.FailureResult($"Installation may have failed. Output: {installOutput}");
+                updateStatus(Strings.InstallationFailed);
+                return InstallResult.FailureResult($"{Strings.InstallationMaybeFailed}. {Strings.Output}: {installOutput}");
             }
             catch (Exception ex)
             {
-                updateStatus("Installation failed");
+                updateStatus(Strings.InstallationFailed);
                 return InstallResult.FailureResult(ex.Message);
             }
             finally
