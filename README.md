@@ -2,6 +2,8 @@
 
 A simple tool to install Jellyfin on your Samsung Smart TV with ease.
 
+Big shoutout to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds) for sharing the Jellyfin Tizen .wgt files—super helpful and much appreciated!
+
 ## How It Works
 
 Follow these steps to get Jellyfin up and running on your TV:
