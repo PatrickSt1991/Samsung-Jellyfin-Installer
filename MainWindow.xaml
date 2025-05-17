@@ -26,13 +26,13 @@
 
         <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="342" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
-        <Button Command="{Binding RefreshDevicesCommand}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
+        <Button Command="{Binding RefreshDevicesCommand}" Style="{DynamicResource MaterialDesignFloatingActionLightButton}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" Background="#FF000B25" BorderBrush="#FF000B25" Foreground="White" />
         
         <materialDesign:Card Padding="12" Margin="0,215,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
         </materialDesign:Card>
         
-        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="Download &amp; Installeer" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
+        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="Download &amp; Installeer" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top" BorderBrush="#FF000B25"/>
         <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
     </Grid>
 </Window>

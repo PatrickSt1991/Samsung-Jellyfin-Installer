@@ -134,8 +134,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     "Tizen CLI is required but not found. Please install Tizen Studio first.");
             }
-            
+            StatusBar = "Loading releases...";
             await LoadReleasesAsync();
+            StatusBar = "Scanning network for Samsung TV...";
             await LoadDevicesAsync();
         }
 
