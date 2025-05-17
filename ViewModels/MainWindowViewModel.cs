@@ -139,6 +139,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             await LoadReleasesAsync();
             StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();
+            StatusBar = $"{Strings.DownloadAndInstall}";
         }
 
         private async Task DownloadReleaseAsync(GitHubRelease release)
