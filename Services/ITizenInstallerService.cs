@@ -9,5 +9,7 @@ namespace Samsung_Jellyfin_Installer.Services
         Task<bool> EnsureTizenCliAvailable();
         Task<string> DownloadPackageAsync(string downloadUrl);
         Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus);
+        Task<string?> GetTvNameAsync(string tvIpAddress);
+        Task<bool> ConnectToTvAsync(string tvIpAddress);
     }
 }

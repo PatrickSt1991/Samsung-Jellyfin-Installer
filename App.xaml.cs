@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.ViewModels;
-using System;
 using System.Net.Http;
 using System.Windows;
 
@@ -32,6 +31,7 @@ namespace Samsung_Jellyfin_Installer
             // Register services
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
+            services.AddSingleton<INetworkService, NetworkService>();
 
             // Register ViewModels
             services.AddSingleton<MainWindowViewModel>();

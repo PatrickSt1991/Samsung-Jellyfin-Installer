@@ -16,13 +16,15 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
         private readonly HttpClient _httpClient;
+        private readonly INetworkService _networkService;
 
         private ObservableCollection<GitHubRelease> _releases = new ObservableCollection<GitHubRelease>();
         private GitHubRelease _selectedRelease;
-        private bool _isLoading;
+        private bool _isLoading, _isLoadingDevices;
         private ObservableCollection<Asset> _availableAssets = new ObservableCollection<Asset>();
         private Asset _selectedAsset;
-        private string _tvIpAddress;
+        private ObservableCollection<NetworkDevice> _availableDevices = new ObservableCollection<NetworkDevice>();
+        private NetworkDevice? _selectedDevice;
         private string _statusBar;
 
         public ObservableCollection<GitHubRelease> Releases
@@ -58,6 +60,18 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             set => SetField(ref _selectedAsset, value);
         }
 
+        public ObservableCollection<NetworkDevice> AvailableDevices
+        {
+            get => _availableDevices;
+            private set => SetField(ref _availableDevices, value);
+        }
+
+        public NetworkDevice? SelectedDevice
+        {
+            get => _selectedDevice;
+            set => SetField(ref _selectedDevice, value);
+        }
+
         public bool IsLoading
         {
             get => _isLoading;
@@ -70,11 +84,20 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
         }
 
-        public string TvIpAddress
+        public bool IsLoadingDevices
         {
-            get => _tvIpAddress;
-            set => SetField(ref _tvIpAddress, value);
+            get => _isLoadingDevices;
+            private set
+            {
+                if (SetField(ref _isLoadingDevices, value))
+                {
+                    OnPropertyChanged(nameof(EnableDevicesInput));
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
         }
+
+        public bool EnableDevicesInput => !IsLoadingDevices;
 
         public string StatusBar
         {
@@ -83,18 +106,22 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
 
         public ICommand RefreshCommand { get; }
+        public ICommand RefreshDevicesCommand { get; }
         public ICommand DownloadCommand { get; }
 
         public MainWindowViewModel(
             ITizenInstallerService tizenInstaller,
             IDialogService dialogService,
-            HttpClient httpClient)
+            HttpClient httpClient,
+            INetworkService networkService)
         {
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
             _httpClient = httpClient;
+            _networkService = networkService;
 
             RefreshCommand = new RelayCommand(async () => await LoadReleasesAsync());
+            RefreshDevicesCommand = new RelayCommand(async () => await LoadDevicesAsync());
             DownloadCommand = new RelayCommand<GitHubRelease>(async r => await DownloadReleaseAsync(r));
 
             InitializeAsync();
@@ -107,7 +134,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     "Tizen CLI is required but not found. Please install Tizen Studio first.");
             }
+            
             await LoadReleasesAsync();
+            await LoadDevicesAsync();
         }
 
         private async Task DownloadReleaseAsync(GitHubRelease release)
@@ -122,17 +151,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
 
                 // Automatically trigger installation if TV IP is set
-                if (!string.IsNullOrWhiteSpace(TvIpAddress))
+                if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
                 {
                     var result = await _tizenInstaller.InstallPackageAsync(
                         downloadPath,
-                        TvIpAddress,
+                        SelectedDevice.IpAddress,
                         status => Application.Current.Dispatcher.Invoke(() => StatusBar = status));
 
                     if (result.Success)
                     {
                         await _dialogService.ShowMessageAsync(
-                            $"Successfully installed on {TvIpAddress}");
+                            $"Successfully installed on {SelectedDevice.IpAddress}");
                     }
                     else
                     {
@@ -193,6 +222,44 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        private async Task LoadDevicesAsync()
+        {
+            IsLoadingDevices = true;
+            AvailableDevices.Clear();
+            try
+            {
+                string? selectedIp = null;
+                if (SelectedDevice is not null)
+                {
+                    selectedIp = SelectedDevice.IpAddress;
+                }
+                var devices = await _networkService.GetLocalTizenAddresses();
+
+                foreach (NetworkDevice device in devices)
+                {
+                    AvailableDevices.Add(device);
+                }
+
+                SelectedDevice = AvailableDevices.Count switch
+                {
+                    > 0 when SelectedDevice is null => AvailableDevices[0],
+                    > 0 when selectedIp is not null =>
+                        AvailableDevices.FirstOrDefault(it => it.IpAddress == selectedIp),
+                    _ => SelectedDevice
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Devices load error: {ex.Message}");
+                await _dialogService.ShowErrorAsync(
+                    $"Failed to load devices: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingDevices = false;
             }
         }
     }
