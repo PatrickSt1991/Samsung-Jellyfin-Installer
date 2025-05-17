@@ -135,8 +135,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     Strings.PleaseInstallTizen);
             }
-            
+            StatusBar = "Loading releases...";
             await LoadReleasesAsync();
+            StatusBar = "Scanning network for Samsung TV...";
             await LoadDevicesAsync();
         }
 
