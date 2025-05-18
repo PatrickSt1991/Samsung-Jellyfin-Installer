@@ -135,11 +135,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     Strings.PleaseInstallTizen);
             }
-            StatusBar = $"{Strings.InstallationFailed}";
+            
             await LoadReleasesAsync();
             StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();
-            StatusBar = $"{Strings.DownloadAndInstall}";
+            StatusBar = $"{Strings.Ready}";
         }
 
         private async Task DownloadReleaseAsync(GitHubRelease release)

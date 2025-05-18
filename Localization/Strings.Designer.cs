@@ -106,6 +106,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login was canceled or failed....
+        /// </summary>
+        public static string FailedAuthCode {
+            get {
+                return ResourceManager.GetString("FailedAuthCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to load releases:.
         /// </summary>
         public static string FailedLoadingReleases {
@@ -192,6 +201,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string PleaseInstallTizen {
             get {
                 return ResourceManager.GetString("PleaseInstallTizen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ready for use....
+        /// </summary>
+        public static string Ready {
+            get {
+                return ResourceManager.GetString("Ready", resourceCulture);
             }
         }
         

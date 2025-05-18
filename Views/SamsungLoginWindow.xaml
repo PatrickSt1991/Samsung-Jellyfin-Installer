@@ -2,8 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="Samsung Login" Height="600" Width="800" WindowStartupLocation="CenterScreen">
+        Title="Samsung Login" Height="1000" Width="800" WindowStartupLocation="CenterScreen">
     <Grid>
         <wv2:WebView2 x:Name="webView" />
+        <TextBlock x:Name="loadingSpinner"
+               Text="Loading..."
+               FontSize="16"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Visibility="Visible"/>
     </Grid>
 </Window>

@@ -1,68 +1,146 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Web.WebView2.Core;
+using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
 using System.Diagnostics;
+using System.Net;
+using System.Text.Json;
+using System.Web;
 using System.Windows;
 
 public class SamsungLoginService
 {
+    private IWebHost _callbackServer;
+    private const string CallbackUrl = "http://localhost:4794/signin/callback";
+    private const string StateValue = "accountcheckdogeneratedstatetext";
+
+    public Action<SamsungAuth> CallbackReceived;
+
     public static bool IsWebView2RuntimeAvailable()
     {
         try
         {
-            // Try to get the WebView2 version
-            string version = CoreWebView2Environment.GetAvailableBrowserVersionString();
-            return !string.IsNullOrEmpty(version);
-        }
-        catch (WebView2RuntimeNotFoundException)
-        {
-            return false;
+            return !string.IsNullOrEmpty(CoreWebView2Environment.GetAvailableBrowserVersionString());
         }
         catch
         {
-            // Other unexpected errors
             return false;
         }
     }
-    public async Task<(string State, string Code)> PerformSamsungLoginAsync()
+
+    public static async Task<SamsungAuth> PerformSamsungLoginAsync()
     {
-        // Check for WebView2 runtime first
         if (!IsWebView2RuntimeAvailable())
         {
-            var wv2result = MessageBox.Show(
+            var result = MessageBox.Show(
                 "Microsoft Edge WebView2 Runtime is required. Install now?",
                 "Runtime Missing",
                 MessageBoxButton.YesNo);
 
-            if (wv2result == MessageBoxResult.Yes)
+            if (result == MessageBoxResult.Yes)
             {
-                // Open WebView2 download page
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
                     UseShellExecute = true
                 });
             }
+
             throw new Exception("WebView2 Runtime not installed");
         }
 
-        // Proceed with login if runtime is available
-        const string callbackUrl = "http://localhost:4794/signin/callback";
-        const string stateValue = "accountcheckdogeneratedstatetext";
+        string loginUrl =
+            $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate?locale=&clientId=v285zxnl3h&redirect_uri={HttpUtility.UrlEncode(CallbackUrl)}&state={StateValue}&tokenType=TOKEN";
 
-        var loginUrl = $"https://account.samsung.com/..."; // Your URL
+        SamsungAuth authResult = null;
+        SamsungLoginWindow loginWindow = null;
 
-        (string State, string Code) result = (null, null);
-        await Application.Current.Dispatcher.InvokeAsync(async () =>
+        await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var loginWindow = new SamsungLoginWindow(callbackUrl, stateValue);
+            loginWindow = new SamsungLoginWindow(CallbackUrl, StateValue);
             loginWindow.StartLogin(loginUrl);
-
-            if (loginWindow.ShowDialog() == true)
-            {
-                result = (loginWindow.State, loginWindow.AuthorizationCode);
-            }
         });
 
-        return result;
+        var service = new SamsungLoginService();
+        await service.StartCallbackServer();
+
+        service.CallbackReceived = auth =>
+        {
+            authResult = auth;
+            loginWindow?.OnExternalCallback(auth.state, auth.access_token);
+        };
+
+        await Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            loginWindow.ShowDialog();
+        });
+
+        await service.StopCallbackServer();
+
+        return authResult;
+    }
+
+    public async Task StartCallbackServer()
+    {
+        _callbackServer = new WebHostBuilder()
+            .UseKestrel()
+            .UseUrls("http://localhost:4794")
+            .Configure(app =>
+            {
+                app.Run(async context =>
+                {
+                    if (context.Request.Path == "/signin/callback" && context.Request.Method == "POST")
+                    {
+                        var form = await context.Request.ReadFormAsync();
+                        var state = form["state"];
+                        var codeJson = form["code"];
+
+                        if (!string.IsNullOrEmpty(codeJson))
+                        {
+                            try
+                            {
+                                var auth = JsonSerializer.Deserialize<SamsungAuth>(codeJson);
+                                if (auth != null)
+                                {
+                                    auth.state = state; // Inject state manually
+
+                                    CallbackReceived?.Invoke(auth);
+
+                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                    await context.Response.WriteAsync("Login successful. You can close this window.");
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"[CallbackServer] JSON parse error: {ex.Message}");
+                            }
+                        }
+
+                        context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        await context.Response.WriteAsync("Invalid login response.");
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        await context.Response.WriteAsync("Not Found");
+                    }
+                });
+            })
+            .Build();
+
+        await _callbackServer.StartAsync();
+    }
+
+    public async Task StopCallbackServer()
+    {
+        if (_callbackServer != null)
+        {
+            await _callbackServer.StopAsync();
+            _callbackServer.Dispose();
+            _callbackServer = null;
+        }
     }
 }

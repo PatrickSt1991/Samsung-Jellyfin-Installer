@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Samsung_Jellyfin_Installer.Localization;
+using Samsung_Jellyfin_Installer.Models;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -121,8 +122,8 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (TizenCliPath is null || TizenSdbPath is null)
             {
-                updateStatus("Tizen Studio wasn't found");
-                return InstallResult.FailureResult("Tizen Studio wasn't found");
+                updateStatus(Strings.PleaseInstallTizen);
+                return InstallResult.FailureResult(Strings.PleaseInstallTizen);
             }
             
             try
@@ -139,18 +140,33 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+                tizenOs = "7.0"; // For testing purposes, set to 7.0
 
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
                     {
-                        var loginService = new SamsungLoginService();
-                        //var (state, code) = await loginService.PerformLoginAsync();
+                        SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
 
-                        updateStatus(Strings.SuccessAuthCode);
-                        //var token = await ExchangeCodeForToken(code);
+                        if (!string.IsNullOrEmpty(auth.access_token))
+                        {
+                            
+                            updateStatus(Strings.SuccessAuthCode);
 
-                        // Continue with your installation logic...
+                            var service = new TizenCertificateService(_httpClient);
+
+                            await service.GenerateDistributorProfileAsync(
+                                duid: tvName,
+                                accessToken: auth.access_token,
+                                userId: auth.userId,
+                                outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
+                                updateStatus
+                            );
+                        }
+                        else
+                        {
+                            updateStatus(Strings.FailedAuthCode);
+                        }
                     }
                     catch (Exception ex)
                     {

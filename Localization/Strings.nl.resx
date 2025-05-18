@@ -177,4 +177,10 @@
   <data name="SuccessAuthCode" xml:space="preserve">
     <value>Autorisatiecode succesvol verkregen</value>
   </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Klaar voor gebruik...</value>
+  </data>
+  <data name="FailedAuthCode" xml:space="preserve">
+    <value>Inloggen is geannuleerd of mislukt...</value>
+  </data>
 </root>

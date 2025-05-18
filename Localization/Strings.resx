@@ -177,4 +177,10 @@
   <data name="SuccessAuthCode" xml:space="preserve">
     <value>Successfully obtained authorization code</value>
   </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Ready for use...</value>
+  </data>
+  <data name="FailedAuthCode" xml:space="preserve">
+    <value>Login was canceled or failed...</value>
+  </data>
 </root>

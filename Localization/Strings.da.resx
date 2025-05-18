@@ -177,4 +177,10 @@
   <data name="SuccessAuthCode" xml:space="preserve">
     <value>Godkendelseskode blev opnået</value>
   </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Klar til brug...</value>
+  </data>
+  <data name="FailedAuthCode" xml:space="preserve">
+    <value>Login blev annulleret eller mislykkedes...</value>
+  </data>
 </root>
