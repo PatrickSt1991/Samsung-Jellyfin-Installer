@@ -11,6 +11,7 @@ using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities;
 using Samsung_Jellyfin_Installer.Services;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -18,14 +19,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 
-public class TizenCertificateService : ITizenCertificateService
+public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateService
 {
-    private readonly HttpClient _httpClient;
-
-    public TizenCertificateService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
+    private readonly HttpClient _httpClient = httpClient;
 
     public async Task GenerateDistributorProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
     {
@@ -65,15 +61,18 @@ public class TizenCertificateService : ITizenCertificateService
         // 9. Export p12 files
         ExportPfx(signedAuthorCsrBytes, keyPair.Private, p12Password, outputPath, "author");
         ExportPfx(signedDistributorCsrBytes, keyPair.Private, p12Password, outputPath, "distributor");
-    }
 
-    private AsymmetricCipherKeyPair GenerateKeyPair()
+        // 10. Copy files to be used in certificate-manager
+
+    //C: \Users\Patrick\SamsungCertificate
+    }
+    private static AsymmetricCipherKeyPair GenerateKeyPair()
     {
         var keyGen = new RsaKeyPairGenerator();
         keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
         return keyGen.GenerateKeyPair();
     }
-    private byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
+    private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
     {
         var oids = new List<DerObjectIdentifier>
     {
@@ -113,8 +112,7 @@ public class TizenCertificateService : ITizenCertificateService
             return ms.ToArray();
         }
     }
-
-    private byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
+    private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
     {
         // Build subject: CN=duid
         var subject = new X509Name(new List<DerObjectIdentifier> { X509Name.CN }, new List<string> { duid });
@@ -175,7 +173,6 @@ public class TizenCertificateService : ITizenCertificateService
 
         return await response.Content.ReadAsByteArrayAsync();
     }
-
     private async Task<byte[]> PostCsrV1Async(string accessToken, string userId, byte[] csrBytes)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v1/distributors");
@@ -197,7 +194,6 @@ public class TizenCertificateService : ITizenCertificateService
 
         return await response.Content.ReadAsByteArrayAsync();
     }
-
     private async Task<byte[]> PostCsrV2Async(string accessToken, string userId, byte[] csrBytes, string csrFilePath, string outputPath)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v2/distributors");
@@ -221,14 +217,12 @@ public class TizenCertificateService : ITizenCertificateService
 
         return await response.Content.ReadAsByteArrayAsync();
     }
-
-    private string GenerateRandomPassword()
+    private static string GenerateRandomPassword()
     {
         var randomBytes = RandomNumberGenerator.GetBytes(16);
         return Convert.ToBase64String(randomBytes);
     }
-
-    private void ExportPfx(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string filename)
+    private static void ExportPfx(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string filename)
     {
         // Convert BouncyCastle private key to RSA
         var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
@@ -242,5 +236,31 @@ public class TizenCertificateService : ITizenCertificateService
         var pfxBytes = finalCert.Export(X509ContentType.Pfx, password);
         var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
         File.WriteAllBytes(pfxPath, pfxBytes);
+    }
+    public static void MoveTizenCertificateFiles()
+    {
+        // Step 1: Get the current user's home directory
+        string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        // Step 2: Create SamsungCertificate\Jelly2Sams
+        string destinationFolder = Path.Combine(userHome, "SamsungCertificate", "Jelly2Sams");
+        Directory.CreateDirectory(destinationFolder);
+
+        // Step 3: Define source folder
+        string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
+
+        // Step 4: Define file extensions to move
+        string[] fileExtensions = { "*.xml", "*.pwd", "*.pri", "*.p12", "*.csr", "*.crt" };
+
+        foreach (var pattern in fileExtensions)
+        {
+            string[] files = Directory.GetFiles(sourceFolder, pattern);
+            foreach (var file in files)
+            {
+                string destFile = Path.Combine(destinationFolder, Path.GetFileName(file));
+                File.Move(file, destFile, overwrite: true);
+                Debug.WriteLine($"Moved {file} -> {destFile}");
+            }
+        }
     }
 }

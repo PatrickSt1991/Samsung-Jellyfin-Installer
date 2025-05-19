@@ -141,6 +141,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
                 tizenOs = "7.0"; // For testing purposes, set to 7.0
+                string packageCertificate = string.Empty;
 
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
@@ -162,6 +163,8 @@ namespace Samsung_Jellyfin_Installer.Services
                                 outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
                                 updateStatus
                             );
+
+                            packageCertificate = "Jelly2Sams";
                         }
                         else
                         {
@@ -178,11 +181,12 @@ namespace Samsung_Jellyfin_Installer.Services
                 {
                     updateStatus(Strings.UpdatingCertificateProfile);
                     UpdateProfileCertificatePaths();
+                    packageCertificate = "custom";
                 }
 
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- \"{packageUrl}\"");
+                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {packageCertificate} -- \"{packageUrl}\"");
 
                 updateStatus(Strings.InstallingPackage);
 
