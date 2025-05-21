@@ -296,7 +296,7 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
 
         // Step 4: Define file extensions to move
-        string[] fileExtensions = { "*.xml", "*.pwd", "*.pri", "*.p12", "*.csr", "*.crt" };
+        string[] fileExtensions = { "*.xml", "*.pwd", "*.pri", "*.p12", "*.csr", "*.crt", "*.txt" };
 
         foreach (var pattern in fileExtensions)
         {
