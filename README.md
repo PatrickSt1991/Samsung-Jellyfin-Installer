@@ -1,6 +1,7 @@
 # Jellyfin 2 Samsung  (Samsung-Jellyfin-Installer)
 
 A simple tool to install Jellyfin on your Samsung Smart TV with ease.
+ - The tool can be used for Tizen 7 and up but it's in beta, please report any errors found.
 
 Big shoutout to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds) for sharing the Jellyfin Tizen .wgt files—super helpful and much appreciated!
 
@@ -10,7 +11,7 @@ Follow these steps to get Jellyfin up and running on your TV:
 
 ### 1. Launch the Tool
 
-![Start screen](https://github.com/user-attachments/assets/42769191-32b9-42da-baf1-75e5cd459f07)  
+![Start screen](https://github.com/user-attachments/assets/3a846291-068b-4c32-9453-27704974ef32)
 _The start screen of the installer._
 
 ---
