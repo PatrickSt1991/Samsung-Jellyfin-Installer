@@ -50,9 +50,9 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         // 6.  POST to /v2/authors
         var signedAuthorCsrBytes = await PostAuthorCsrAsync(authorCsrData, accessToken, userId);
 
-        // 7. POST to /v1/distributors to get deviceProfile.xml
+        // 7. POST to /v1/distributors to get device-profile.xml
         var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
-        var profileXmlPath = Path.Combine(outputPath, "deviceProfile.xml");
+        var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
         await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
 
         // 8. POST to /v2/distributors to get signed CSR (certificate)
