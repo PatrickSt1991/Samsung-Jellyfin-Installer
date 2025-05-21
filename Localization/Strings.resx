@@ -183,4 +183,7 @@
   <data name="FailedAuthCode" xml:space="preserve">
     <value>Login was canceled or failed...</value>
   </data>
+  <data name="NoDevicesFound" xml:space="preserve">
+    <value>No devices found</value>
+  </data>
 </root>

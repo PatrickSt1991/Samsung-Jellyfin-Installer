@@ -29,6 +29,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
+        public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
         {
@@ -140,9 +141,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                tizenOs = "7.0"; // For testing purposes, set to 7.0
-                string packageCertificate = string.Empty;
-
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -154,9 +152,9 @@ namespace Samsung_Jellyfin_Installer.Services
                             
                             updateStatus(Strings.SuccessAuthCode);
 
-                            var service = new TizenCertificateService(_httpClient);
+                            var certificateService = new TizenCertificateService(_httpClient);
 
-                            await service.GenerateDistributorProfileAsync(
+                            await certificateService.GenerateProfileAsync(
                                 duid: tvName,
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
@@ -164,7 +162,7 @@ namespace Samsung_Jellyfin_Installer.Services
                                 updateStatus
                             );
 
-                            packageCertificate = "Jelly2Sams";
+                            PackageCertificate = "Jelly2Sams";
                         }
                         else
                         {
@@ -181,12 +179,12 @@ namespace Samsung_Jellyfin_Installer.Services
                 {
                     updateStatus(Strings.UpdatingCertificateProfile);
                     UpdateProfileCertificatePaths();
-                    packageCertificate = "custom";
+                    PackageCertificate = "custom";
                 }
-
+                
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {packageCertificate} -- \"{packageUrl}\"");
+                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 updateStatus(Strings.InstallingPackage);
 
@@ -226,7 +224,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private static void UpdateProfileCertificatePaths()
         {
-            string profilePath = Path.GetFullPath("TizenProfile/profiles.xml");
+            string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
 
             var xml = XDocument.Load(profilePath);
             var profileItems = xml.Descendants("profileitem").ToList();
@@ -236,10 +234,10 @@ namespace Samsung_Jellyfin_Installer.Services
                 string distributor = item.Attribute("distributor")?.Value;
 
                 if (distributor == "0")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/author.p12"));
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/author.p12"));
 
                 if (distributor == "1")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/distributor.p12"));
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/distributor.p12"));
             }
 
             xml.Save(profilePath);

@@ -139,7 +139,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             await LoadReleasesAsync();
             StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();
-            StatusBar = $"{Strings.Ready}";
         }
 
         private async Task DownloadReleaseAsync(GitHubRelease release)
@@ -245,6 +244,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 {
                     AvailableDevices.Add(device);
                 }
+
+                if (AvailableDevices.Count == 0)
+                    StatusBar = Strings.NoDevicesFound;
+                else
+                    StatusBar = Strings.Ready;
+
 
                 SelectedDevice = AvailableDevices.Count switch
                 {

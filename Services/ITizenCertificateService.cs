@@ -4,6 +4,6 @@ namespace Samsung_Jellyfin_Installer.Services
 {
     public interface ITizenCertificateService
     {
-        Task GenerateDistributorProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus);
+        Task GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus);
     }
 }

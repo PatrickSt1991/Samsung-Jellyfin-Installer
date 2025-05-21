@@ -183,4 +183,7 @@
   <data name="FailedAuthCode" xml:space="preserve">
     <value>Inloggen is geannuleerd of mislukt...</value>
   </data>
+  <data name="NoDevicesFound" xml:space="preserve">
+    <value>Geen apparaten gevonden</value>
+  </data>
 </root>

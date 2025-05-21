@@ -183,4 +183,7 @@
   <data name="FailedAuthCode" xml:space="preserve">
     <value>Login blev annulleret eller mislykkedes...</value>
   </data>
+  <data name="NoDevicesFound" xml:space="preserve">
+    <value>Ingen enheder fundet</value>
+  </data>
 </root>

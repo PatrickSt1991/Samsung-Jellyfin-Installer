@@ -17,13 +17,14 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using System.Windows;
 
 
 public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateService
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task GenerateDistributorProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
+    public async Task GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
     {
         // 1. Ensure output directory exists
         Directory.CreateDirectory(outputPath);
@@ -38,23 +39,24 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         
         // 4. Create Author CSR
         var authorCsrData = GenerateAuthorCsr(keyPair);
+        var authorCsrPath = Path.Combine(outputPath, "author.csr");
+        await File.WriteAllBytesAsync(authorCsrPath, authorCsrData);
+        
+        // 5. Generate Distributor CSR with DUID
+        var distributorCsrData = GenerateDistributorCsr(keyPair, duid);
+        var distributorCsrPath = Path.Combine(outputPath, "distributor.csr");
+        await File.WriteAllBytesAsync(distributorCsrPath, distributorCsrData);
 
-        // 5.  POST to /v2/authors
+        // 6.  POST to /v2/authors
         var signedAuthorCsrBytes = await PostAuthorCsrAsync(authorCsrData, accessToken, userId);
 
-        // 6. Generate Distributor CSR with DUID
-        var csrDistributorBytes = GenerateDistributorCsr(keyPair, duid);
-
-        var csrPath = Path.Combine(outputPath, "distributor.csr");
-        await File.WriteAllBytesAsync(csrPath, csrDistributorBytes);
-
         // 7. POST to /v1/distributors to get deviceProfile.xml
-        var profileXmlBytes = await PostCsrV1Async(accessToken, userId, csrDistributorBytes);
+        var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
         var profileXmlPath = Path.Combine(outputPath, "deviceProfile.xml");
         await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
 
         // 8. POST to /v2/distributors to get signed CSR (certificate)
-        var signedDistributorCsrBytes = await PostCsrV2Async(accessToken, userId, csrDistributorBytes, csrPath, outputPath);
+        var signedDistributorCsrBytes = await PostCsrV2Async(accessToken, userId, distributorCsrData, distributorCsrPath, outputPath);
         var signedDistributorCsrPath = Path.Combine(outputPath, "signed_distributor.cer");
         await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
@@ -63,8 +65,8 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         ExportPfx(signedDistributorCsrBytes, keyPair.Private, p12Password, outputPath, "distributor");
 
         // 10. Copy files to be used in certificate-manager
+        MoveTizenCertificateFiles();
 
-    //C: \Users\Patrick\SamsungCertificate
     }
     private static AsymmetricCipherKeyPair GenerateKeyPair()
     {
@@ -76,20 +78,10 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
     {
         var oids = new List<DerObjectIdentifier>
     {
-        X509Name.C,
-        X509Name.ST,
-        X509Name.L,
-        X509Name.O,
-        X509Name.OU,
         X509Name.CN
     };
         var values = new List<string>
     {
-        "1",    // Country
-        "1",    // State
-        "1",    // Locality
-        "1",    // Organization
-        "1",    // Organizational Unit
         "Jelly2Sams"  // Common Name
     };
 
@@ -112,7 +104,7 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
             return ms.ToArray();
         }
     }
-    private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
+    private static byte[] GenerateDistributorCsrOld(AsymmetricCipherKeyPair keyPair, string duid)
     {
         // Build subject: CN=duid
         var subject = new X509Name(new List<DerObjectIdentifier> { X509Name.CN }, new List<string> { duid });
@@ -155,6 +147,60 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
 
         return csr.GetDerEncoded();
     }
+    private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
+    {
+        // Build subject: CN=duid
+        var subject = new X509Name(new List<DerObjectIdentifier> { X509Name.CN }, new List<string> { "TizenSDK" });
+
+        // Create SAN URIs as GeneralNames
+        var sanUris = new List<GeneralName>
+    {
+        new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
+        new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
+    };
+
+        var subjectAlternativeNames = new DerSequence(sanUris.ToArray());
+
+        // Create Extensions object with SAN extension (critical = false)
+        var extensionsGenerator = new X509ExtensionsGenerator();
+        extensionsGenerator.AddExtension(
+            X509Extensions.SubjectAlternativeName,
+            false,
+            subjectAlternativeNames
+        );
+
+        var extensions = extensionsGenerator.Generate();
+
+        // Create the Attribute for extensionRequest (OID 1.2.840.113549.1.9.14)
+        var attribute = new AttributePkcs(
+            PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
+            new DerSet(extensions)
+        );
+
+        // Create CSR with extensions attribute
+        var csr = new Pkcs10CertificationRequest(
+            "SHA256WITHRSA",
+            subject,
+            keyPair.Public,
+            new DerSet(attribute),
+            keyPair.Private
+        );
+
+        // Write to PEM file
+        using (var writer = new StreamWriter("distributor.csr"))
+            new PemWriter(writer).WriteObject(csr);
+
+        // Return as byte[] in PEM format
+        using (var ms = new MemoryStream())
+        using (var sw = new StreamWriter(ms))
+        {
+            var pemWriter = new PemWriter(sw);
+            pemWriter.WriteObject(csr);
+            sw.Flush();
+            return ms.ToArray();
+        }
+    }
+
     public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v2/authors");

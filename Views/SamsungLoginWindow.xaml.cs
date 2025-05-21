@@ -1,5 +1,5 @@
 ﻿using Microsoft.Web.WebView2.Core;
-using System;
+using Samsung_Jellyfin_Installer.Converters;
 using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Views
@@ -21,6 +21,7 @@ namespace Samsung_Jellyfin_Installer.Views
                 var env = await CoreWebView2Environment.CreateAsync();
                 await webView.EnsureCoreWebView2Async(env);
 
+                webView.CoreWebView2.Settings.UserAgent = UserAgentProvider.GetRandomUserAgent();
                 webView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
 
                 ShowLoading(true);

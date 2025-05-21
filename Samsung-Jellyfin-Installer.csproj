@@ -25,10 +25,10 @@
 
   <ItemGroup>
     <Content Include="jellyfin.ico" />
-    <Content Include="TizenProfile\author.p12">
+    <Content Include="TizenProfile\preSign\author.p12">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TizenProfile\profiles.xml">
+    <Content Include="TizenProfile\preSign\profiles.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
