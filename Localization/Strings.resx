@@ -186,4 +186,37 @@
   <data name="NoDevicesFound" xml:space="preserve">
     <value>No devices found</value>
   </data>
+  <data name="OutputDir" xml:space="preserve">
+    <value>Ensuring that the output directory exists</value>
+  </data>
+  <data name="GenPassword" xml:space="preserve">
+    <value>Generating random password...</value>
+  </data>
+  <data name="GenKeyPair" xml:space="preserve">
+    <value>Generating keypair</value>
+  </data>
+  <data name="CreateAuthorCsr" xml:space="preserve">
+    <value>Creating Author CSR...</value>
+  </data>
+  <data name="CreateDistributorCSR" xml:space="preserve">
+    <value>Generating Distributor CSR with DUID...</value>
+  </data>
+  <data name="PostAuthorCSR" xml:space="preserve">
+    <value>Posting to Samsung endpoint...</value>
+  </data>
+  <data name="PostFirstDistributorCSR" xml:space="preserve">
+    <value>Posting to first Samsung distributor...</value>
+  </data>
+  <data name="PostSecondDistributorCSR" xml:space="preserve">
+    <value>Posting to second Samsung distributor...</value>
+  </data>
+  <data name="CreateNewCertificates" xml:space="preserve">
+    <value>Creating the signed P12 files...</value>
+  </data>
+  <data name="MovingP12Files" xml:space="preserve">
+    <value>Copy files to be used in certificate-manager...</value>
+  </data>
+  <data name="SettingCertificateManager" xml:space="preserve">
+    <value>Fixing Tizen certificate manager...</value>
+  </data>
 </root>

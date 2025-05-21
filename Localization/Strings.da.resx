@@ -186,4 +186,37 @@
   <data name="NoDevicesFound" xml:space="preserve">
     <value>Ingen enheder fundet</value>
   </data>
+  <data name="OutputDir" xml:space="preserve">
+    <value>Sikring af, at output-mappen eksisterer...</value>
+  </data>
+  <data name="GenPassword" xml:space="preserve">
+    <value>Genererer tilfældig adgangskode...</value>
+  </data>
+  <data name="GenKeyPair" xml:space="preserve">
+    <value>Generering af nøglepar...</value>
+  </data>
+  <data name="CreateAuthorCsr" xml:space="preserve">
+    <value>Opretter forfatter-CSR...</value>
+  </data>
+  <data name="CreateDistributorCSR" xml:space="preserve">
+    <value>Generering af distributør-CSR med DUID...</value>
+  </data>
+  <data name="PostAuthorCSR" xml:space="preserve">
+    <value>Sender til Samsung-slutpunktet...</value>
+  </data>
+  <data name="PostFirstDistributorCSR" xml:space="preserve">
+    <value>Sender til den første Samsung-distributør...</value>
+  </data>
+  <data name="PostSecondDistributorCSR" xml:space="preserve">
+    <value>Sender til anden Samsung-distributør...</value>
+  </data>
+  <data name="CreateNewCertificates" xml:space="preserve">
+    <value>Opretter de signerede P12-filer...</value>
+  </data>
+  <data name="MovingP12Files" xml:space="preserve">
+    <value>Kopier filer, der skal bruges i certifikat-manager...</value>
+  </data>
+  <data name="SettingCertificateManager" xml:space="preserve">
+    <value>Retter Tizen certifikat manager...</value>
+  </data>
 </root>

@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
+﻿using Samsung_Jellyfin_Installer.Models;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using Samsung_Jellyfin_Installer.Models;
 
 namespace Samsung_Jellyfin_Installer.Services;
 

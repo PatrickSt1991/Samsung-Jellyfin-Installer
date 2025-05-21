@@ -1,6 +1,6 @@
-using Microsoft.Extensions.Logging;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -29,6 +29,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
+        public string? TizenDataPath { get; private set; }
         public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
@@ -47,6 +48,9 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+
+                string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
+                TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
             }
         }
 
@@ -75,18 +79,18 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        
+
         public async Task<string?> GetTvNameAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
             {
                 return null;
             }
-            
+
             try
             {
                 await ConnectToTvAsync(tvIpAddress);
-                
+
                 var output = await RunCommandAsync(TizenSdbPath, "devices");
                 var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
@@ -126,7 +130,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.PleaseInstallTizen);
                 return InstallResult.FailureResult(Strings.PleaseInstallTizen);
             }
-            
+
             try
             {
                 updateStatus(Strings.ConnectingToDevice);
@@ -149,12 +153,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
                         if (!string.IsNullOrEmpty(auth.access_token))
                         {
-                            
+
                             updateStatus(Strings.SuccessAuthCode);
 
                             var certificateService = new TizenCertificateService(_httpClient);
 
-                            await certificateService.GenerateProfileAsync(
+                            string p12Location = await certificateService.GenerateProfileAsync(
                                 duid: tvName,
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
@@ -163,6 +167,7 @@ namespace Samsung_Jellyfin_Installer.Services
                             );
 
                             PackageCertificate = "Jelly2Sams";
+                            UpdateCertificateManager(p12Location, updateStatus);
                         }
                         else
                         {
@@ -181,7 +186,7 @@ namespace Samsung_Jellyfin_Installer.Services
                     UpdateProfileCertificatePaths();
                     PackageCertificate = "custom";
                 }
-                
+
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
@@ -215,13 +220,73 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 return string.Empty;
             }
-            
+
             var output = await RunCommandAsync(TizenSdbPath, "devices");
             var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
             return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
         }
+        private void UpdateCertificateManager(string p12Location, Action<string> updateStatus)
+        {
+            updateStatus(Strings.SettingCertificateManager);
+            string profileName = "Jelly2Sams";
+            XElement jelly2SamsProfile = new XElement("profile",
+                new XAttribute("name", profileName),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "0"),
+                    new XAttribute("key", Path.Combine(p12Location, "author.p12")),
+                    new XAttribute("password", Path.Combine(p12Location, "author.pwd")),
+                    new XAttribute("rootca", "")
+                ),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "1"),
+                    new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
+                    new XAttribute("password", Path.Combine(p12Location, "distributor.pwd")),
+                    new XAttribute("rootca", "")
+                ),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "2"),
+                    new XAttribute("key", ""),
+                    new XAttribute("password", ""),
+                    new XAttribute("rootca", "")
+                )
+            );
 
+            // Ensure directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(TizenDataPath)!);
+
+            XDocument doc;
+            if (!File.Exists(TizenDataPath))
+            {
+                // Create new XML file
+                doc = new XDocument(
+                    new XDeclaration("1.0", "UTF-8", "no"),
+                    new XElement("profiles",
+                        new XAttribute("active", "Jelly2Sams"),
+                        new XAttribute("version", "3.1"),
+                        jelly2SamsProfile
+                    )
+                );
+            }
+            else
+            {
+                doc = XDocument.Load(TizenDataPath);
+
+                XElement root = doc.Element("profiles")!;
+                bool exists = root.Elements("profile")
+                    .Any(p => p.Attribute("name")?.Value == profileName);
+
+                if (!exists)
+                    root.Add(jelly2SamsProfile);
+                else
+                    return;
+            }
+
+            doc.Save(TizenDataPath);
+        }
         private static void UpdateProfileCertificatePaths()
         {
             string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
@@ -242,7 +307,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
             xml.Save(profilePath);
         }
-
         private static string? FindTizenRoot()
         {
             foreach (var basePath in PossibleTizenPaths)
@@ -256,7 +320,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
-        
         private static async Task<string> RunCommandAsync(string fileName, string arguments)
         {
             var psi = new ProcessStartInfo
@@ -349,6 +412,7 @@ namespace Samsung_Jellyfin_Installer.Services
                         var tizenRoot = FindTizenRoot() ?? string.Empty;
                         TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                         TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+
                         return tizenRoot != string.Empty;
                     }
                     return false;

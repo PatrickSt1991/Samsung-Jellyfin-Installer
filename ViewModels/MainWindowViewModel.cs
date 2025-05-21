@@ -1,14 +1,14 @@
-﻿using System.Collections.ObjectModel;
-using System.Net.Http;
-using System.Windows.Input;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Samsung_Jellyfin_Installer.Commands;
+using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Windows;
-using Samsung_Jellyfin_Installer.Localization;
+using System.Windows.Input;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
@@ -135,7 +135,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     Strings.PleaseInstallTizen);
             }
-            
+
             await LoadReleasesAsync();
             StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();

@@ -3,69 +3,67 @@ using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Utilities;
+using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Services;
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
-using System.Windows;
 
 
 public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateService
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
+    public async Task<string> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
     {
-        // 1. Ensure output directory exists
+        updateStatus(Strings.OutputDir);
         Directory.CreateDirectory(outputPath);
 
-        // 2. Generate random password
+        updateStatus(Strings.GenPassword);
         var p12Password = GenerateRandomPassword();
         var passwordFilePath = Path.Combine(outputPath, "password.txt");
         await File.WriteAllTextAsync(passwordFilePath, p12Password);
 
-        // 3. Generate keypair
+        updateStatus(Strings.GenKeyPair);
         var keyPair = GenerateKeyPair();
-        
-        // 4. Create Author CSR
+
+        updateStatus(Strings.CreateAuthorCsr);
         var authorCsrData = GenerateAuthorCsr(keyPair);
         var authorCsrPath = Path.Combine(outputPath, "author.csr");
         await File.WriteAllBytesAsync(authorCsrPath, authorCsrData);
-        
-        // 5. Generate Distributor CSR with DUID
+
+        updateStatus(Strings.CreateDistributorCSR);
         var distributorCsrData = GenerateDistributorCsr(keyPair, duid);
         var distributorCsrPath = Path.Combine(outputPath, "distributor.csr");
         await File.WriteAllBytesAsync(distributorCsrPath, distributorCsrData);
 
-        // 6.  POST to /v2/authors
+        updateStatus(Strings.PostAuthorCSR);
         var signedAuthorCsrBytes = await PostAuthorCsrAsync(authorCsrData, accessToken, userId);
 
-        // 7. POST to /v1/distributors to get device-profile.xml
+        updateStatus(Strings.PostFirstDistributorCSR);
         var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
         var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
         await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
 
-        // 8. POST to /v2/distributors to get signed CSR (certificate)
+        updateStatus(Strings.PostSecondDistributorCSR);
         var signedDistributorCsrBytes = await PostCsrV2Async(accessToken, userId, distributorCsrData, distributorCsrPath, outputPath);
         var signedDistributorCsrPath = Path.Combine(outputPath, "signed_distributor.cer");
         await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
-        // 9. Export p12 files
+        updateStatus(Strings.CreateNewCertificates);
         ExportPfx(signedAuthorCsrBytes, keyPair.Private, p12Password, outputPath, "author");
         ExportPfx(signedDistributorCsrBytes, keyPair.Private, p12Password, outputPath, "distributor");
 
-        // 10. Copy files to be used in certificate-manager
-        MoveTizenCertificateFiles();
+        updateStatus(Strings.MovingP12Files);
+        string p12Location = MoveTizenCertificateFiles();
+
+        return p12Location;
 
     }
     private static AsymmetricCipherKeyPair GenerateKeyPair()
@@ -77,13 +75,14 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
     private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
     {
         var oids = new List<DerObjectIdentifier>
-    {
-        X509Name.CN
-    };
+        {
+            X509Name.CN
+        };
+
         var values = new List<string>
-    {
-        "Jelly2Sams"  // Common Name
-    };
+        {
+            "Jelly2Sams"  // Common Name
+        };
 
         var subject = new X509Name(oids, values);
 
@@ -103,49 +102,6 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
             sw.Flush();
             return ms.ToArray();
         }
-    }
-    private static byte[] GenerateDistributorCsrOld(AsymmetricCipherKeyPair keyPair, string duid)
-    {
-        // Build subject: CN=duid
-        var subject = new X509Name(new List<DerObjectIdentifier> { X509Name.CN }, new List<string> { duid });
-
-        // Create SAN URIs as GeneralNames
-        var sanUris = new List<GeneralName>
-    {
-        // packageid is empty string
-        new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
-        // deviceid set to duid
-        new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
-    };
-
-        var subjectAlternativeNames = new DerSequence(sanUris.ToArray());
-
-        // Create Extensions object with SAN extension (critical = false)
-        var extensionsGenerator = new X509ExtensionsGenerator();
-        extensionsGenerator.AddExtension(
-            X509Extensions.SubjectAlternativeName,
-            false,
-            subjectAlternativeNames
-        );
-
-        var extensions = extensionsGenerator.Generate();
-
-        // Create the Attribute for extensionRequest (OID 1.2.840.113549.1.9.14)
-        var attribute = new AttributePkcs(
-            PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
-            new DerSet(extensions)
-        );
-
-        // Create CSR with extensions attribute
-        var csr = new Pkcs10CertificationRequest(
-            "SHA256WITHRSA",
-            subject,
-            keyPair.Public,
-            new DerSet(attribute),
-            keyPair.Private
-        );
-
-        return csr.GetDerEncoded();
     }
     private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
     {
@@ -200,7 +156,6 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
             return ms.ToArray();
         }
     }
-
     public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v2/authors");
@@ -279,23 +234,24 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         // Combine cert and private key
         using var finalCert = signedCert.CopyWithPrivateKey(rsaPrivateKey);
 
+        // Export to PFX
         var pfxBytes = finalCert.Export(X509ContentType.Pfx, password);
         var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
         File.WriteAllBytes(pfxPath, pfxBytes);
+
+        // Write password to .pwd file
+        var pwdPath = Path.Combine(outputPath, $"{filename}.pwd");
+        File.WriteAllText(pwdPath, password);
     }
-    public static void MoveTizenCertificateFiles()
+    public static string MoveTizenCertificateFiles()
     {
-        // Step 1: Get the current user's home directory
         string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-        // Step 2: Create SamsungCertificate\Jelly2Sams
         string destinationFolder = Path.Combine(userHome, "SamsungCertificate", "Jelly2Sams");
         Directory.CreateDirectory(destinationFolder);
 
-        // Step 3: Define source folder
         string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
 
-        // Step 4: Define file extensions to move
         string[] fileExtensions = { "*.xml", "*.pwd", "*.pri", "*.p12", "*.csr", "*.crt", "*.txt" };
 
         foreach (var pattern in fileExtensions)
@@ -308,5 +264,6 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
                 Debug.WriteLine($"Moved {file} -> {destFile}");
             }
         }
+        return destinationFolder;
     }
 }
