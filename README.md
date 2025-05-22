@@ -30,10 +30,10 @@ _Select the version you want to install._
 
 ---
 
-### 4. Enter Your TV’s IP Address
+### 4. Choose Your TV
 
 ![Fill in the IP address](https://github.com/user-attachments/assets/740cb166-b77d-4991-90a7-f6fcd09cc840)  
-_Provide the IP address of your Samsung Smart TV._
+_Choose the IP address of your Samsung Smart TV from the list._
 
 ---
 
@@ -44,13 +44,17 @@ _Installation begins. Your TV will handle the rest!_
 
 ---
 
+### 5.1 Tizen 7 and up devices
+_image to follow_
+
+Users will get a popup to login with their Samsung account, this is used to send and receive the certificates
+
 ## Requirements
 To use this tool, make sure you have the following:
 
 - A **Samsung Tizen TV** with **Developer Mode enabled**  
-- The **IP address** of your TV  
-- A **network connection** between your computer and the TV (both must be on the same network)  
-- **Tizen Web CLI 5.5** — if not found in the usual locations, the tool will automatically download and install it for you
+- **Tizen Web CLI** If not found, Install now?
+- **Microsoft Edge WebView2 Runtime** If not found, Install now?
 
 ## Steps for Use
 
@@ -64,19 +68,7 @@ Follow these steps to enable developer mode:
 4. Turn **Developer Mode** on  
 5. Under the "IP address" option, enter the IP address of your computer (the one running Jellyfin 2 Samsung)  
    - If you don’t know it, open Command Prompt and run `ipconfig` (on Windows) or open Terminal and run `ifconfig` (on Mac/Linux) to find your local IP address  
-
-### 2. Find the TV’s IP Address
-
-1. Go to **Settings** > **General** > **Network** > **Network Status**  
-2. The IP address will be shown under "IP Address" or "Network Information"  
-   - For example: `192.168.1.100`
-
-### 3. Using Jellyfin 2 Samsung
-
-1. Make sure your computer is connected to the same network as the TV  
-2. Enter the TV’s IP address into the tool  
-3. If the app is installed, it will automatically launch on the TV  
-
+   
 ## Support
 
 Having issues? Open an issue on our [GitHub repository](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer).
