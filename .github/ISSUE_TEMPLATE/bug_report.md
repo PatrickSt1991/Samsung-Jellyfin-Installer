@@ -13,9 +13,9 @@ Which version of the application did you use?
 
 **Samsung TV Developer Mode**
 Is your Samsung TV in developer mode?  
-- [ ] Yes  
-- [ ] No  
-- [ ] Not sure
+- Yes  
+- No  
+- Not sure
 
 **Tizen Version**
 What Tizen version is your TV running?  
@@ -29,9 +29,9 @@ What IP address is your TV using?
 Was the Tizen CLI installed by the tool at the following location?
 
 `%LocalAppData%\Programs\TizenStudioCli`  
-- [ ] Yes  
-- [ ] No  
-- [ ] Not sure
+- Yes  
+- No  
+- Not sure
 
 **Additional Context**
 Add any other context or logs about the problem here.
