@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Samsung_Jellyfin_Installer.Views;
+using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -20,6 +21,17 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             var result = MessageBox.Show(message, "Confirm", MessageBoxButton.YesNo);
             return await Task.FromResult(result == MessageBoxResult.Yes);
+        }
+        public async Task<string?> PromptForIpAsync(string title, string message)
+        {
+            var dialog = new IpInputDialog(title, message)
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            bool? result = dialog.ShowDialog();
+
+            return await Task.FromResult(result == true ? dialog.EnteredIp : null);
         }
     }
 }
