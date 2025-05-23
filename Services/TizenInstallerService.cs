@@ -134,17 +134,19 @@ namespace Samsung_Jellyfin_Installer.Services
             try
             {
                 updateStatus(Strings.ConnectingToDevice);
-                await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
+                //await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
 
                 updateStatus(Strings.RetrievingDeviceAddress);
-                string tvName = await GetTvNameAsync();
+                //string tvName = await GetTvNameAsync();
+                string tvName = "DevelopTV";
 
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
 
                 updateStatus(Strings.CheckTizenOS);
-                string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+                //string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+                string tizenOs = "7.0";
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -158,7 +160,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                             var certificateService = new TizenCertificateService(_httpClient);
 
-                            string p12Location = await certificateService.GenerateProfileAsync(
+                            (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
                                 duid: tvName,
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
@@ -167,7 +169,7 @@ namespace Samsung_Jellyfin_Installer.Services
                             );
 
                             PackageCertificate = "Jelly2Sams";
-                            UpdateCertificateManager(p12Location, updateStatus);
+                            UpdateCertificateManager(p12Location, p12Password, updateStatus);
                         }
                         else
                         {
@@ -186,6 +188,8 @@ namespace Samsung_Jellyfin_Installer.Services
                     UpdateProfileCertificatePaths();
                     PackageCertificate = "custom";
                 }
+
+                return InstallResult.FailureResult($"dev stop");
 
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
@@ -226,7 +230,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
         }
-        private void UpdateCertificateManager(string p12Location, Action<string> updateStatus)
+        private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
             updateStatus(Strings.SettingCertificateManager);
             string profileName = "Jelly2Sams";
@@ -236,14 +240,14 @@ namespace Samsung_Jellyfin_Installer.Services
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "0"),
                     new XAttribute("key", Path.Combine(p12Location, "author.p12")),
-                    new XAttribute("password", Path.Combine(p12Location, "author.pwd")),
+                    new XAttribute("password", $"{p12Password}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "1"),
                     new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
-                    new XAttribute("password", Path.Combine(p12Location, "distributor.pwd")),
+                    new XAttribute("password", $"{p12Password}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
@@ -254,9 +258,6 @@ namespace Samsung_Jellyfin_Installer.Services
                     new XAttribute("rootca", "")
                 )
             );
-
-            // Ensure directory exists
-            Directory.CreateDirectory(Path.GetDirectoryName(TizenDataPath)!);
 
             XDocument doc;
             if (!File.Exists(TizenDataPath))
@@ -276,13 +277,29 @@ namespace Samsung_Jellyfin_Installer.Services
                 doc = XDocument.Load(TizenDataPath);
 
                 XElement root = doc.Element("profiles")!;
-                bool exists = root.Elements("profile")
-                    .Any(p => p.Attribute("name")?.Value == profileName);
+                XElement? existingProfile = root.Elements("profile")
+                    .FirstOrDefault(p => string.Equals(p.Attribute("name")?.Value, profileName, StringComparison.OrdinalIgnoreCase));
 
-                if (!exists)
+                if (existingProfile is null)
+                {
+                    // Add new profile if it doesn't exist
                     root.Add(jelly2SamsProfile);
-                else
-                    return;
+                }
+                else if (string.Equals(profileName, "Jelly2Sams", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Update password only for specific keys in Jelly2Sams profile
+                    foreach (var item in existingProfile.Elements("profileitem"))
+                    {
+                        string? keyValue = item.Attribute("key")?.Value;
+                        if (!string.IsNullOrEmpty(keyValue) &&
+                            (keyValue.EndsWith("author.p12", StringComparison.OrdinalIgnoreCase) ||
+                             keyValue.EndsWith("distributor.p12", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            item.SetAttributeValue("password", p12Password);
+                        }
+                    }
+                }
+
             }
 
             doc.Save(TizenDataPath);

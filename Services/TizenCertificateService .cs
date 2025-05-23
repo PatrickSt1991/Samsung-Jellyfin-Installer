@@ -7,9 +7,9 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
+using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Services;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -20,15 +20,17 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task<string> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
+    public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
     {
         updateStatus(Strings.OutputDir);
         Directory.CreateDirectory(outputPath);
 
         updateStatus(Strings.GenPassword);
-        var p12Password = GenerateRandomPassword();
+        string p12Plain = CipherUtil.GenerateRandomPassword();
+        string p12Encrypted = CipherUtil.GetEncryptedString(p12Plain);
+
         var passwordFilePath = Path.Combine(outputPath, "password.txt");
-        await File.WriteAllTextAsync(passwordFilePath, p12Password);
+        await File.WriteAllTextAsync(passwordFilePath, p12Plain);
 
         updateStatus(Strings.GenKeyPair);
         var keyPair = GenerateKeyPair();
@@ -57,13 +59,13 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
         updateStatus(Strings.CreateNewCertificates);
-        ExportPfx(signedAuthorCsrBytes, keyPair.Private, p12Password, outputPath, "author");
-        ExportPfx(signedDistributorCsrBytes, keyPair.Private, p12Password, outputPath, "distributor");
+        ExportPfx(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, "author");
+        ExportPfx(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, "distributor");
 
         updateStatus(Strings.MovingP12Files);
         string p12Location = MoveTizenCertificateFiles();
 
-        return p12Location;
+        return (p12Location, p12Encrypted);
 
     }
     private static AsymmetricCipherKeyPair GenerateKeyPair()
@@ -218,11 +220,6 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
 
         return await response.Content.ReadAsByteArrayAsync();
     }
-    private static string GenerateRandomPassword()
-    {
-        var randomBytes = RandomNumberGenerator.GetBytes(16);
-        return Convert.ToBase64String(randomBytes);
-    }
     private static void ExportPfx(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string filename)
     {
         // Convert BouncyCastle private key to RSA
@@ -238,21 +235,29 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
         var pfxBytes = finalCert.Export(X509ContentType.Pfx, password);
         var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
         File.WriteAllBytes(pfxPath, pfxBytes);
-
-        // Write password to .pwd file
-        var pwdPath = Path.Combine(outputPath, $"{filename}.pwd");
-        File.WriteAllText(pwdPath, password);
     }
     public static string MoveTizenCertificateFiles()
     {
         string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         string destinationFolder = Path.Combine(userHome, "SamsungCertificate", "Jelly2Sams");
-        Directory.CreateDirectory(destinationFolder);
+
+        if(Directory.Exists(destinationFolder))
+        {
+            foreach (string file in Directory.GetFiles(destinationFolder))
+                File.Delete(file);
+
+            foreach (string subDirectory in Directory.GetDirectories(destinationFolder))
+                Directory.Delete(subDirectory, recursive: true);
+        }
+        else
+        {
+            Directory.CreateDirectory(destinationFolder);
+        }
 
         string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
 
-        string[] fileExtensions = { "*.xml", "*.pwd", "*.pri", "*.p12", "*.csr", "*.crt", "*.txt" };
+        string[] fileExtensions = { "*.xml", "*.pri", "*.p12", "*.pwd", "*.csr", "*.crt", "*.cer" , "*.txt" };
 
         foreach (var pattern in fileExtensions)
         {
@@ -261,7 +266,6 @@ public class TizenCertificateService(HttpClient httpClient) : ITizenCertificateS
             {
                 string destFile = Path.Combine(destinationFolder, Path.GetFileName(file));
                 File.Move(file, destFile, overwrite: true);
-                Debug.WriteLine($"Moved {file} -> {destFile}");
             }
         }
         return destinationFolder;

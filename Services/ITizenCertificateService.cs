@@ -2,6 +2,6 @@
 {
     public interface ITizenCertificateService
     {
-        Task<string> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus);
+        Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus);
     }
 }
