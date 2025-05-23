@@ -275,12 +275,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 AvailableDevices.Add(new NetworkDevice
                 {
-                    IpAddress = "127.0.0.1",
-                    Manufacturer = "Samsung Development",
-                    DeviceName = "UE14721"
-                });
-                AvailableDevices.Add(new NetworkDevice
-                {
                     IpAddress = "Other",
                     Manufacturer = null,
                     DeviceName = "My IP is not listed..."

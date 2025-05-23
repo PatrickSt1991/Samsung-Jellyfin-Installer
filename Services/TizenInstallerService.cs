@@ -134,19 +134,18 @@ namespace Samsung_Jellyfin_Installer.Services
             try
             {
                 updateStatus(Strings.ConnectingToDevice);
-                //await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
+                await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
 
                 updateStatus(Strings.RetrievingDeviceAddress);
-                //string tvName = await GetTvNameAsync();
-                string tvName = "DevelopTV";
+                string tvName = await GetTvNameAsync();
 
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
 
                 updateStatus(Strings.CheckTizenOS);
-                //string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                string tizenOs = "7.0";
+                string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
