@@ -187,9 +187,6 @@ namespace Samsung_Jellyfin_Installer.Services
                     UpdateProfileCertificatePaths();
                     PackageCertificate = "custom";
                 }
-
-                return InstallResult.FailureResult($"dev stop");
-
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
