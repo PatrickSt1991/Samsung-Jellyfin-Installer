@@ -219,4 +219,7 @@
   <data name="SettingCertificateManager" xml:space="preserve">
     <value>Tizen-certificaatbeheerder repareren...</value>
   </data>
+  <data name="SettingsCaCerts" xml:space="preserve">
+    <value>CA-certificaten instellen...</value>
+  </data>
 </root>

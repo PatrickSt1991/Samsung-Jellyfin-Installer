@@ -145,7 +145,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-
+                tizenOs = "7.0";
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -192,7 +192,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 updateStatus(Strings.InstallingPackage);
-
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))

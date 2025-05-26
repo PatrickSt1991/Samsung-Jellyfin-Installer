@@ -340,6 +340,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Setting CA certificates....
+        /// </summary>
+        public static string SettingsCaCerts {
+            get {
+                return ResourceManager.GetString("SettingsCaCerts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Successfully obtained authorization code.
         /// </summary>
         public static string SuccessAuthCode {
