@@ -1,5 +1,5 @@
 ---
-name: Tizen 6.5- Bug report
+name: Tizen 6.5- Bug
 about: Create a report to help us improve
 title: "[Tizen 6.5-] [Bug] <short description>"
 labels: bug, tizen 6.5-
