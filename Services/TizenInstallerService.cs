@@ -145,7 +145,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                tizenOs = "7.0";
+                
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
