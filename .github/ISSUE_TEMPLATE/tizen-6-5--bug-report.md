@@ -2,7 +2,7 @@
 name: Tizen 6.5- Bug report
 about: Create a report to help us improve
 title: "[Tizen 6.5-] [Bug] <short description>"
-labels: ''
+labels: bug, tizen 6.5-
 assignees: ''
 
 ---
