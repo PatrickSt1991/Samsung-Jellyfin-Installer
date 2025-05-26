@@ -1,8 +1,8 @@
 ---
-name: Bug Report
+name: Tizen 7+ Bug
 about: Create a report to help us improve the application
-title: "[Bug] <short description>"
-labels: bug
+title: "[Tizen 7+] [Bug] <short description>"
+labels: bug, tizen 7+
 assignees: ''
 
 ---
