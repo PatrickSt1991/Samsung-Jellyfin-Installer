@@ -63,11 +63,12 @@ Devices running Tizen 7+ will prompt for Samsung account login. This is required
 
 Before you begin, make sure you have the following:
 
-- A **Samsung Tizen TV** with **Developer Mode enabled**
-- **Tizen Web CLI** installed  
+- A **Samsung Tizen Smart TV** with **Developer Mode enabled**
+- **Tizen Web CLI** installed and available in your system path
 - **Microsoft Edge WebView2 Runtime** installed
+- A registered **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+ installations)
 
-The tool will guide you to install any missing dependencies.
+> ℹ️ The installer will automatically check for missing dependencies and guide you through installing them if needed.
 
 ---
 
