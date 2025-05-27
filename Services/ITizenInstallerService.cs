@@ -1,7 +1,4 @@
-﻿using Samsung_Jellyfin_Installer.Models;
-using System.Threading.Tasks;
-
-namespace Samsung_Jellyfin_Installer.Services
+﻿namespace Samsung_Jellyfin_Installer.Services
 {
     public interface ITizenInstallerService
     {

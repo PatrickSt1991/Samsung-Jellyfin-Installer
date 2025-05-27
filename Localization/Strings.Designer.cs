@@ -61,11 +61,47 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Checking Tizen OS version....
+        /// </summary>
+        public static string CheckTizenOS {
+            get {
+                return ResourceManager.GetString("CheckTizenOS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting to device....
         /// </summary>
         public static string ConnectingToDevice {
             get {
                 return ResourceManager.GetString("ConnectingToDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating Author CSR....
+        /// </summary>
+        public static string CreateAuthorCsr {
+            get {
+                return ResourceManager.GetString("CreateAuthorCsr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating Distributor CSR with DUID....
+        /// </summary>
+        public static string CreateDistributorCSR {
+            get {
+                return ResourceManager.GetString("CreateDistributorCSR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating the signed P12 files....
+        /// </summary>
+        public static string CreateNewCertificates {
+            get {
+                return ResourceManager.GetString("CreateNewCertificates", resourceCulture);
             }
         }
         
@@ -97,11 +133,38 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login was canceled or failed....
+        /// </summary>
+        public static string FailedAuthCode {
+            get {
+                return ResourceManager.GetString("FailedAuthCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to load releases:.
         /// </summary>
         public static string FailedLoadingReleases {
             get {
                 return ResourceManager.GetString("FailedLoadingReleases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating keypair.
+        /// </summary>
+        public static string GenKeyPair {
+            get {
+                return ResourceManager.GetString("GenKeyPair", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating random password....
+        /// </summary>
+        public static string GenPassword {
+            get {
+                return ResourceManager.GetString("GenPassword", resourceCulture);
             }
         }
         
@@ -160,11 +223,38 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Copy files to be used in certificate-manager....
+        /// </summary>
+        public static string MovingP12Files {
+            get {
+                return ResourceManager.GetString("MovingP12Files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No devices found.
+        /// </summary>
+        public static string NoDevicesFound {
+            get {
+                return ResourceManager.GetString("NoDevicesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Output.
         /// </summary>
         public static string Output {
             get {
                 return ResourceManager.GetString("Output", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ensuring that the output directory exists.
+        /// </summary>
+        public static string OutputDir {
+            get {
+                return ResourceManager.GetString("OutputDir", resourceCulture);
             }
         }
         
@@ -187,6 +277,42 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Posting to Samsung endpoint....
+        /// </summary>
+        public static string PostAuthorCSR {
+            get {
+                return ResourceManager.GetString("PostAuthorCSR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Posting to first Samsung distributor....
+        /// </summary>
+        public static string PostFirstDistributorCSR {
+            get {
+                return ResourceManager.GetString("PostFirstDistributorCSR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Posting to second Samsung distributor....
+        /// </summary>
+        public static string PostSecondDistributorCSR {
+            get {
+                return ResourceManager.GetString("PostSecondDistributorCSR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ready for use....
+        /// </summary>
+        public static string Ready {
+            get {
+                return ResourceManager.GetString("Ready", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Retrieving device address....
         /// </summary>
         public static string RetrievingDeviceAddress {
@@ -201,6 +327,33 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string ScanningNetwork {
             get {
                 return ResourceManager.GetString("ScanningNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fixing Tizen certificate manager....
+        /// </summary>
+        public static string SettingCertificateManager {
+            get {
+                return ResourceManager.GetString("SettingCertificateManager", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting CA certificates....
+        /// </summary>
+        public static string SettingsCaCerts {
+            get {
+                return ResourceManager.GetString("SettingsCaCerts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Successfully obtained authorization code.
+        /// </summary>
+        public static string SuccessAuthCode {
+            get {
+                return ResourceManager.GetString("SuccessAuthCode", resourceCulture);
             }
         }
         

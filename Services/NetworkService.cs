@@ -1,10 +1,11 @@
-﻿using System.Diagnostics;
+﻿using Samsung_Jellyfin_Installer.Models;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using Samsung_Jellyfin_Installer.Models;
+using System.Threading;
 
 namespace Samsung_Jellyfin_Installer.Services;
 
@@ -17,23 +18,53 @@ public class NetworkService : INetworkService
         "VirtualBox", "Loopback", "Docker", "Hyper-V",
         "vEthernet", "VPN", "Bluetooth", "vSwitch"
     };
+    private const int tvPort = 26101;
+    private const int scanTimeoutMs = 1000;
 
     public NetworkService(ITizenInstallerService tizenInstaller)
     {
         _tizenInstaller = tizenInstaller;
     }
 
-    public async Task<IEnumerable<NetworkDevice>> GetLocalTizenAddresses()
+    public async Task<IEnumerable<NetworkDevice>> GetLocalTizenAddresses(CancellationToken cancellationToken = default)
     {
-        return await FindTizenTvsAsync();
+        return await FindTizenTvsAsync(cancellationToken);
+    }
+
+    public async Task<NetworkDevice?> ValidateManualTizenAddress(string ip, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(scanTimeoutMs);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                cts.Token, cancellationToken);
+
+            if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
+            {
+                var manufacturer = await GetManufacturerFromIp(ip);
+                var device = new NetworkDevice
+                {
+                    IpAddress = ip,
+                    Manufacturer = manufacturer
+                };
+
+                if (manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) == true)
+                    device.DeviceName = await _tizenInstaller.GetTvNameAsync(ip);
+
+                return device;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ValidateManualTizenAddress] Error validating IP '{ip}': {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<IEnumerable<NetworkDevice>> FindTizenTvsAsync(CancellationToken cancellationToken = default)
     {
-        const int tvPort = 26101;
-        const int scanTimeoutMs = 1000;
-        const int maxParallelScans = 100;
-
         var foundDevices = new List<NetworkDevice>();
         var localIps = GetRelevantLocalIPs();
         var lockObject = new object();

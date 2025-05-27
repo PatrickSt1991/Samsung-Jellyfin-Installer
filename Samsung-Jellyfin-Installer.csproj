@@ -9,26 +9,42 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>jellyfin.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
-  <ItemGroup>
+  <PropertyGroup>
+    <CefSharpAnyCpuSupport>false</CefSharpAnyCpuSupport>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+
+	<ItemGroup>
     <None Remove="TizenProfile\author.p12" />
     <None Remove="TizenProfile\profiles.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="jellyfin.ico" />
-    <Content Include="TizenProfile\author.p12">
+    <Content Include="TizenProfile\preSign\author.p12">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TizenProfile\profiles.xml">
+    <Content Include="TizenProfile\preSign\profiles.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TizenProfile\ca\author_ca.cer">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TizenProfile\ca\public2.crt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3240.44" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

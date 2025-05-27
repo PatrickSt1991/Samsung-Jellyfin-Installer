@@ -1,14 +1,14 @@
-﻿using System.Collections.ObjectModel;
-using System.Net.Http;
-using System.Windows.Input;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Samsung_Jellyfin_Installer.Commands;
+using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Windows;
-using Samsung_Jellyfin_Installer.Localization;
+using System.Windows.Input;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
@@ -70,7 +70,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         public NetworkDevice? SelectedDevice
         {
             get => _selectedDevice;
-            set => SetField(ref _selectedDevice, value);
+            set
+            {
+                if (SetField(ref _selectedDevice, value) && value?.IpAddress == "Other")
+                    _ = PromptForManualIp();
+            }
         }
 
         public bool IsLoading
@@ -123,7 +127,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             RefreshCommand = new RelayCommand(async () => await LoadReleasesAsync());
             RefreshDevicesCommand = new RelayCommand(async () => await LoadDevicesAsync());
-            DownloadCommand = new RelayCommand<GitHubRelease>(async r => await DownloadReleaseAsync(r));
+            DownloadCommand = new RelayCommand<GitHubRelease>(
+                async r => await DownloadReleaseAsync(r),
+                r => CanExecuteDownloadCommand(r)
+            );
 
             InitializeAsync();
         }
@@ -135,13 +142,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync(
                     Strings.PleaseInstallTizen);
             }
-            StatusBar = $"{Strings.InstallationFailed}";
+
             await LoadReleasesAsync();
             StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();
-            StatusBar = $"{Strings.DownloadAndInstall}";
         }
 
+        private bool CanExecuteDownloadCommand(GitHubRelease release)
+        {
+            return release != null
+                && !string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress);
+        }
         private async Task DownloadReleaseAsync(GitHubRelease release)
         {
             if (release?.PrimaryDownloadUrl == null) return;
@@ -153,7 +164,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 StatusBar = Strings.DownloadingPackage;
                 downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
 
-                // Automatically trigger installation if TV IP is set
                 if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
                 {
                     var result = await _tizenInstaller.InstallPackageAsync(
@@ -191,8 +201,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 IsLoading = false;
             }
         }
-
-
         private async Task LoadReleasesAsync()
         {
             IsLoading = true;
@@ -236,15 +244,18 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 string? selectedIp = null;
                 if (SelectedDevice is not null)
-                {
                     selectedIp = SelectedDevice.IpAddress;
-                }
+
                 var devices = await _networkService.GetLocalTizenAddresses();
 
                 foreach (NetworkDevice device in devices)
-                {
                     AvailableDevices.Add(device);
-                }
+
+                if (AvailableDevices.Count == 0)
+                    StatusBar = Strings.NoDevicesFound;
+                else
+                    StatusBar = Strings.Ready;
+
 
                 SelectedDevice = AvailableDevices.Count switch
                 {
@@ -262,8 +273,42 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
             finally
             {
+                AvailableDevices.Add(new NetworkDevice
+                {
+                    IpAddress = "Other",
+                    Manufacturer = null,
+                    DeviceName = "My IP is not listed..."
+                });
+
                 IsLoadingDevices = false;
             }
         }
+        private async Task PromptForManualIp()
+        {
+            string? ip = await _dialogService.PromptForIpAsync("Enter Device IP", "Please enter the device's IP address:");
+
+            if (string.IsNullOrWhiteSpace(ip))
+            {
+                SelectedDevice = AvailableDevices.FirstOrDefault(d => d.IpAddress != "Other");
+                return;
+            }
+
+            var device = await _networkService.ValidateManualTizenAddress(ip);
+
+            if (device != null)
+            {
+                SelectedDevice = device;
+
+                if (!AvailableDevices.Any(d => d.IpAddress == device.IpAddress))
+                    AvailableDevices.Add(device);
+            }
+            else
+            {
+                SelectedDevice = AvailableDevices.FirstOrDefault(d => d.IpAddress != "Other");
+                await _dialogService.ShowErrorAsync("Invalid device IP or device not found.");
+            }
+        }
+
+
     }
 }
