@@ -222,4 +222,13 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>Setting CA certificates...</value>
   </data>
+  <data name="ChooseRelease" xml:space="preserve">
+    <value>Choose release...</value>
+  </data>
+  <data name="ChooseVersion" xml:space="preserve">
+    <value>Choose version...</value>
+  </data>
+  <data name="ChooseTV" xml:space="preserve">
+    <value>Choose TV...</value>
+  </data>
 </root>

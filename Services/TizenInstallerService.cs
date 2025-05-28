@@ -1,3 +1,4 @@
+using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using System.Data;
@@ -127,23 +128,23 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (TizenCliPath is null || TizenSdbPath is null)
             {
-                updateStatus(Strings.PleaseInstallTizen);
-                return InstallResult.FailureResult(Strings.PleaseInstallTizen);
+                updateStatus("PleaseInstallTizen".Localized());
+                return InstallResult.FailureResult("PleaseInstallTizen".Localized());
             }
 
             try
             {
-                updateStatus(Strings.ConnectingToDevice);
+                updateStatus("ConnectingToDevice".Localized());
                 await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
 
-                updateStatus(Strings.RetrievingDeviceAddress);
+                updateStatus("RetrievingDeviceAddress".Localized());
                 string tvName = await GetTvNameAsync();
 
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
 
-                updateStatus(Strings.CheckTizenOS);
+                updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
                 
                 if (new Version(tizenOs) >= new Version("7.0"))
@@ -155,7 +156,7 @@ namespace Samsung_Jellyfin_Installer.Services
                         if (!string.IsNullOrEmpty(auth.access_token))
                         {
 
-                            updateStatus(Strings.SuccessAuthCode);
+                            updateStatus("SuccessAuthCode".Localized());
 
                             var certificateService = new TizenCertificateService(_httpClient);
 
@@ -172,40 +173,40 @@ namespace Samsung_Jellyfin_Installer.Services
                         }
                         else
                         {
-                            updateStatus(Strings.FailedAuthCode);
+                            updateStatus("FailedAuthCode".Localized());
                         }
                     }
                     catch (Exception ex)
                     {
-                        updateStatus($"{Strings.Output}: {ex.Message}");
+                        updateStatus($"Output: {ex.Message}".Localized());
                         throw;
                     }
                 }
                 else
                 {
-                    updateStatus(Strings.UpdatingCertificateProfile);
+                    updateStatus("UpdatingCertificateProfile".Localized());
                     UpdateProfileCertificatePaths();
                     PackageCertificate = "custom";
                 }
-                updateStatus(Strings.PackagingWgtWithCertificate);
+                updateStatus("PackagingWgtWithCertificate".Localized());
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
-                updateStatus(Strings.InstallingPackage);
+                updateStatus("InstallingPackage".Localized());
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
                 {
-                    updateStatus(Strings.InstallationSuccessful);
+                    updateStatus("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
                 }
 
-                updateStatus(Strings.InstallationFailed);
-                return InstallResult.FailureResult($"{Strings.InstallationMaybeFailed}. {Strings.Output}: {installOutput}");
+                updateStatus("InstallationFaile".Localized());
+                return InstallResult.FailureResult($"{"InstallationMaybeFailed".Localized()}. {"Output".Localized()}: {installOutput}");
             }
             catch (Exception ex)
             {
-                updateStatus(Strings.InstallationFailed);
+                updateStatus("InstallationFailed".Localized());
                 return InstallResult.FailureResult(ex.Message);
             }
             finally
@@ -227,7 +228,7 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
-            updateStatus(Strings.SettingCertificateManager);
+            updateStatus("SettingCertificateManager".Localized());
             string profileName = "Jelly2Sams";
             XElement jelly2SamsProfile = new XElement("profile",
                 new XAttribute("name", profileName),

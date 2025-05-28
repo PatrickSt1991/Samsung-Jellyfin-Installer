@@ -1,0 +1,81 @@
+﻿<Window x:Class="Samsung_Jellyfin_Installer.Views.SettingsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Samsung_Jellyfin_Installer.Views"
+        xmlns:l="clr-namespace:Samsung_Jellyfin_Installer.Localization"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        mc:Ignorable="d"
+        Title="Settings" Height="375" Width="500">
+    <Grid Background="#19000B25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <materialDesign:Card Padding="12" Margin="0,10,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" VerticalAlignment="Top">
+            <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Settings</TextBlock>
+        </materialDesign:Card>
+
+        <StackPanel Grid.Row="1" Margin="0,20,0,0" VerticalAlignment="Top"  Width="Auto">
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Label Content="Language"
+                       VerticalAlignment="Center"
+                       Width="120"
+                       Margin="0,0,16,0"/>
+                    <ComboBox Style="{DynamicResource MaterialDesignComboBox}"
+                          ItemsSource="{Binding AvailableLanguages}"
+                          SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                          DisplayMemberPath="Name"
+                          materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                          materialDesign:HintAssist.Hint="Select language"
+                          VerticalAlignment="Center"
+                          Width="320"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
+                    <Label Content="Certificate"
+                       VerticalAlignment="Center"
+                       Width="120"
+                       Margin="0,0,16,0"/>
+                    <ComboBox Style="{DynamicResource MaterialDesignComboBox}"
+                          materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                          materialDesign:HintAssist.Hint="Select certificate"
+                          VerticalAlignment="Center"
+                          Width="320"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
+                    <Label Content="Custom WGT"
+                       VerticalAlignment="Center"
+                       Width="120"
+                       Margin="0,0,16,0"/>
+
+                    <TextBox Style="{DynamicResource MaterialDesignTextBox}"
+                         Text="{Binding CertificatePath, Mode=TwoWay}"
+                         materialDesign:HintAssist.Hint="Select WGT file"
+                         VerticalAlignment="Center"
+                         Width="270"
+                         IsReadOnly="True"
+                         Margin="0,0,16,0"/>
+
+                    <Button Content="📁"
+                        Command="{Binding BrowseCertificateCommand}"
+                        Style="{DynamicResource MaterialDesignToolButton}"
+                        VerticalAlignment="Center"
+                        Width="32"
+                        Height="32"
+                        ToolTip="Browse for file"/>
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -70,6 +70,33 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Choose release....
+        /// </summary>
+        public static string ChooseRelease {
+            get {
+                return ResourceManager.GetString("ChooseRelease", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose TV....
+        /// </summary>
+        public static string ChooseTV {
+            get {
+                return ResourceManager.GetString("ChooseTV", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose version....
+        /// </summary>
+        public static string ChooseVersion {
+            get {
+                return ResourceManager.GetString("ChooseVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting to device....
         /// </summary>
         public static string ConnectingToDevice {

@@ -222,4 +222,13 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>Indstiller CA-certifikater...</value>
   </data>
+  <data name="ChooseRelease" xml:space="preserve">
+    <value>Vælg udgivelse...</value>
+  </data>
+  <data name="ChooseVersion" xml:space="preserve">
+    <value>Vælg version...</value>
+  </data>
+  <data name="ChooseTV" xml:space="preserve">
+    <value>Vælg TV...</value>
+  </data>
 </root>

@@ -3,6 +3,7 @@ using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.ViewModels;
 using System.Net.Http;
 using System.Windows;
+using System.Configuration;
 
 namespace Samsung_Jellyfin_Installer
 {
@@ -41,8 +42,11 @@ namespace Samsung_Jellyfin_Installer
         }
 
         protected override async void OnStartup(StartupEventArgs e)
-        {
+        {   
             base.OnStartup(e);
+
+            string savedLanguage = Config.Default.Language ?? "en";
+            LocalizedStrings.Instance.ChangeLanguage(savedLanguage);
 
             try
             {

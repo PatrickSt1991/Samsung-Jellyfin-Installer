@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Samsung_Jellyfin_Installer.Commands;
+using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
+using Samsung_Jellyfin_Installer.Views;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -113,6 +115,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
         public ICommand DownloadCommand { get; }
+        public ICommand OpenSettingsCommand { get; }
 
         public MainWindowViewModel(
             ITizenInstallerService tizenInstaller,
@@ -131,6 +134,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 async r => await DownloadReleaseAsync(r),
                 r => CanExecuteDownloadCommand(r)
             );
+            OpenSettingsCommand = new RelayCommand(async () => OpenSettings());
 
             InitializeAsync();
         }
@@ -140,12 +144,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             if (!await _tizenInstaller.EnsureTizenCliAvailable())
             {
                 await _dialogService.ShowErrorAsync(
-                    Strings.PleaseInstallTizen);
+                    "PleaseInstallTizen".Localized());
             }
 
             await LoadReleasesAsync();
-            StatusBar = $"{Strings.ScanningNetwork}";
+            StatusBar = "ScanningNetwork".Localized();
             await LoadDevicesAsync();
+        }
+        private void OpenSettings()
+        {
+            var settingsWindow = new SettingsView(new SettingsViewModel());
+            settingsWindow.ShowDialog();
         }
 
         private bool CanExecuteDownloadCommand(GitHubRelease release)
@@ -161,7 +170,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             string downloadPath = null;
             try
             {
-                StatusBar = Strings.DownloadingPackage;
+                StatusBar = "DownloadingPackage".Localized();
                 downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
 
                 if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
@@ -252,9 +261,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     AvailableDevices.Add(device);
 
                 if (AvailableDevices.Count == 0)
-                    StatusBar = Strings.NoDevicesFound;
+                    StatusBar = "NoDevicesFound".Localized();
                 else
-                    StatusBar = Strings.Ready;
+                    StatusBar = "Ready".Localized();
 
 
                 SelectedDevice = AvailableDevices.Count switch

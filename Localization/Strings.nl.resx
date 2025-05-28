@@ -222,4 +222,13 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>CA-certificaten instellen...</value>
   </data>
+  <data name="ChooseRelease" xml:space="preserve">
+    <value>Kies release...</value>
+  </data>
+  <data name="ChooseVersion" xml:space="preserve">
+    <value>Kies versie...</value>
+  </data>
+  <data name="ChooseTV" xml:space="preserve">
+    <value>Kies TV...</value>
+  </data>
 </root>
