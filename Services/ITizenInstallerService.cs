@@ -4,7 +4,7 @@
     {
         string TizenCliPath { get; }
         Task<bool> EnsureTizenCliAvailable();
-        Task<string> DownloadPackageAsync(string downloadUrl);
+        Task<string> DownloadPackageAsync(string downloadUrl, string targetDirectory);
         Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus);
         Task<string?> GetTvNameAsync(string tvIpAddress);
         Task<bool> ConnectToTvAsync(string tvIpAddress);

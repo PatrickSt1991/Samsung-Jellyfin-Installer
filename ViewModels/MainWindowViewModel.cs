@@ -162,7 +162,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             try
             {
                 StatusBar = Strings.DownloadingPackage;
-                downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
+                string downloadDirectory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SamsungJellyfinInstaller",
+                    "Downloads");
+                downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl, downloadDirectory);
 
                 if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
                 {
