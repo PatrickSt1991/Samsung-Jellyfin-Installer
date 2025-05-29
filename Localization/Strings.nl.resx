@@ -144,8 +144,8 @@
   <data name="RetrievingDeviceAddress" xml:space="preserve">
     <value>Apparaatadres ophalen...</value>
   </data>
-  <data name="TvNameNotFound" xml:space="preserve">
-    <value>TV Naam kon niet worden gevonden...</value>
+  <data name="TvDuidNotFound" xml:space="preserve">
+    <value>TV duid kon niet worden gevonden...</value>
   </data>
   <data name="UpdatingCertificateProfile" xml:space="preserve">
     <value>Certificaatprofiel bijwerken...</value>
@@ -224,5 +224,8 @@
   </data>
   <data name="RootCertificate" xml:space="preserve">
     <value>Vereiste rootcertificaten extraheren...</value>
+  </data>
+  <data name="TvNameNotFound" xml:space="preserve">
+    <value>TV naam kon niet worden gevonden...</value>
   </data>
 </root>

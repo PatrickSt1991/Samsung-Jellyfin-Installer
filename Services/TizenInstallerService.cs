@@ -156,6 +156,10 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
+                string tvDuid = await GetTvDuidAsync();
+
+                if(string.IsNullOrEmpty(tvDuid))
+                    return InstallResult.FailureResult(Strings.TvDuidNotFound);
 
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
@@ -175,7 +179,7 @@ namespace Samsung_Jellyfin_Installer.Services
                             await certificateService.ExtractRootCertificateAsync(TizenPluginPath);
 
                             (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
-                                duid: tvName,
+                                duid: tvDuid,
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
                                 outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
@@ -240,6 +244,16 @@ namespace Samsung_Jellyfin_Installer.Services
             var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
             return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
+        }
+
+        private async Task<string> GetTvDuidAsync()
+        {
+            if (TizenSdbPath is null)
+                return string.Empty;
+
+            var output = await RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+
+            return output ?? string.Empty;
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
