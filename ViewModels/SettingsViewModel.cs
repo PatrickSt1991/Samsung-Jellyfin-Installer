@@ -19,8 +19,15 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _selectedCertificate;
             set
             {
-                _selectedCertificate = value;
-                OnPropertyChanged();
+                if(_selectedCertificate != value)
+                {
+                    _selectedCertificate = value;
+                    OnPropertyChanged(nameof(SelectedCertificate));
+
+                    var normalized = value?.Replace(" (default)", "");
+                    Config.Default.Certificate = normalized;
+                    Config.Default.Save();
+                }
             }
         }
 
@@ -55,6 +62,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             var savedLangCode = Config.Default.Language ?? "en";
             _selectedLanguage = AvailableLanguages.FirstOrDefault(lang => lang.Code == savedLangCode)
                               ?? AvailableLanguages.FirstOrDefault(lang => lang.Code == "en");
+            SelectedCertificate = Config.Default.Certificate ?? "Jelly2Sams";
+
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
@@ -78,37 +87,36 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
         private List<string> GetAvailableCertificates(string profilePath)
         {
-            var certificates = new List<string>
+            var certificates = new List<string>();
+            string defaultCert = "Jelly2Sams";
+
+
+            List<string> profileNames = new();
+
+            if (File.Exists(profilePath))
             {
-                "Use application default",
-            };
-
-            if (!File.Exists(profilePath))
-                return certificates;
-
-            try
-            {
-                var doc = XDocument.Load(profilePath);
-
-                var profileNames = doc.Root?
-                    .Elements("profile")
-                    .Select(p => p.Attribute("name")?.Value)
-                    .Where(name => !string.IsNullOrEmpty(name))
-                    .ToList();
-
-                if (profileNames != null)
+                try
                 {
-                    certificates.AddRange(profileNames);
+                    var doc = XDocument.Load(profilePath);
+
+                    profileNames = doc.Root?
+                        .Elements("profile")
+                        .Select(p => p.Attribute("name")?.Value)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .ToList() ?? new List<string>();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error reading profile.xml: {ex.Message}");
                 }
             }
-            catch (Exception ex)
-            {
-                // Optionally log the error
-                Debug.WriteLine($"Error reading profile.xml: {ex.Message}");
-            }
+
+            if (!profileNames.Contains(defaultCert))
+                certificates.Add($"{defaultCert} (default)");
+
+            certificates.AddRange(profileNames);
 
             return certificates;
         }
-
-}
+    }
 }

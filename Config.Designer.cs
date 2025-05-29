@@ -34,5 +34,17 @@ namespace Samsung_Jellyfin_Installer {
                 this["Language"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Jelly2Sams")]
+        public string Certificate {
+            get {
+                return ((string)(this["Certificate"]));
+            }
+            set {
+                this["Certificate"] = value;
+            }
+        }
     }
 }

@@ -51,7 +51,7 @@
                           VerticalAlignment="Center"
                           Width="320"
                           ItemsSource="{Binding AvailableCertificates}"
-                          SelectedItem="{Binding SelectedCertificate, Mode=TwoWay}" />
+                          SelectedItem="{Binding SelectedCertificate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
