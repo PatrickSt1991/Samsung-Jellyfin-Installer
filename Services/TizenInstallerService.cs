@@ -252,8 +252,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 return string.Empty;
 
             var output = await RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+            if (!string.IsNullOrWhiteSpace(output))
+                return output.Trim();
 
-            return output ?? string.Empty;
+            output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
+            return output?.Trim() ?? string.Empty;
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
