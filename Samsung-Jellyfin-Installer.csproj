@@ -31,10 +31,10 @@
     <Content Include="TizenProfile\preSign\profiles.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TizenProfile\ca\author_ca.cer">
+    <Content Include="TizenProfile\ca\old_author_ca.cer">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="TizenProfile\ca\public2.crt">
+    <Content Include="TizenProfile\ca\old_public2.crt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

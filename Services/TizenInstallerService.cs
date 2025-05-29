@@ -1,5 +1,6 @@
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Tls;
+using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
@@ -34,6 +35,7 @@ namespace Samsung_Jellyfin_Installer.Services
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
         public string? TizenDataPath { get; private set; }
+        public string? TizenPluginPath { get; private set; }
         public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
@@ -57,6 +59,7 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                TizenPluginPath = Path.Combine(tizenRoot, "ide", "plugins");
 
                 string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
@@ -157,6 +160,9 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
+                var cipherUtil = new CipherUtil();
+                await cipherUtil.ExtractPasswordAsync(TizenPluginPath);
+
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -169,13 +175,15 @@ namespace Samsung_Jellyfin_Installer.Services
                             updateStatus(Strings.SuccessAuthCode);
 
                             var certificateService = new TizenCertificateService(_httpClient);
+                            await certificateService.ExtractRootCertificateAsync(TizenPluginPath);
 
                             (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
                                 duid: tvName,
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
                                 outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
-                                updateStatus
+                                updateStatus,
+                                TizenPluginPath
                             );
 
                             PackageCertificate = "Jelly2Sams";
@@ -201,7 +209,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
-
+                return InstallResult.FailureResult("dev stop");
                 updateStatus(Strings.InstallingPackage);
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
