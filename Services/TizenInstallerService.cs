@@ -160,9 +160,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.CheckTizenOS);
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
-                var cipherUtil = new CipherUtil();
-                await cipherUtil.ExtractPasswordAsync(TizenPluginPath);
-
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -209,7 +206,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
-                return InstallResult.FailureResult("dev stop");
+
                 updateStatus(Strings.InstallingPackage);
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 

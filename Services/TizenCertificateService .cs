@@ -70,11 +70,11 @@ namespace Samsung_Jellyfin_Installer.Services
             var signedDistributorCsrPath = Path.Combine(outputPath, "signed_distributor.cer");
             await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
-            updateStatus("Extracting required root certificates");
+            updateStatus(Strings.RootCertificate);
             await ExtractRootCertificateAsync(jarPath);
 
             updateStatus(Strings.CreateNewCertificates);
-            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "author_ca.crt");
+            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
             await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
 
             updateStatus(Strings.MovingP12Files);
@@ -262,7 +262,7 @@ namespace Samsung_Jellyfin_Installer.Services
                     {
                         string memberFileName = Path.GetFileName(member.FullName);
 
-                        if (memberFileName == ("author_ca.crt") || memberFileName == "vd_tizen_dev_public2.crt")
+                        if (memberFileName == ("vd_tizen_dev_author_ca.cer") || memberFileName == "vd_tizen_dev_public2.crt")
                         {
                             var targetPath = Path.Combine("TizenProfile", "ca", memberFileName);
                             Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);

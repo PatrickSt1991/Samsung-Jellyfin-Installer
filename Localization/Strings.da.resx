@@ -222,4 +222,7 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>Indstiller CA-certifikater...</value>
   </data>
+  <data name="RootCertificate" xml:space="preserve">
+    <value>Udtrækker nødvendige rodcertifikater...</value>
+  </data>
 </root>

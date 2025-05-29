@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -50,6 +51,7 @@ namespace Samsung_Jellyfin_Installer.Converters
             _usedPassword = FallbackKeyString;
             return null;
         }
+
         private string? ExtractPasswordFromClass(Stream classFileStream)
         {
             using var reader = new BinaryReader(classFileStream);
@@ -122,6 +124,7 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             return null;
         }
+
         private ushort ReadBigEndianUInt16(BinaryReader reader)
         {
             var bytes = reader.ReadBytes(2);
@@ -131,6 +134,7 @@ namespace Samsung_Jellyfin_Installer.Converters
             }
             return BitConverter.ToUInt16(bytes, 0);
         }
+
         public string GetEncryptedString(string plainText)
         {
             using var tdes = new TripleDESCryptoServiceProvider
@@ -145,6 +149,22 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             return Convert.ToBase64String(encryptedBytes);
         }
+
+        public string GetDecryptedString(string encryptedBase64)
+        {
+            byte[] encryptedBytes = Convert.FromBase64String(encryptedBase64);
+
+            using var tripleDes = TripleDES.Create();
+            tripleDes.Mode = CipherMode.ECB;
+            tripleDes.Padding = PaddingMode.PKCS7;
+            tripleDes.Key = KeyBytes; // Use the same KeyBytes property for consistency
+
+            using var decryptor = tripleDes.CreateDecryptor();
+            byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
+
+            return Encoding.UTF8.GetString(decryptedBytes);
+        }
+
         public string GenerateRandomPassword(int length = 12)
         {
             if (length < 8)
@@ -172,6 +192,5 @@ namespace Samsung_Jellyfin_Installer.Converters
             // Shuffle to avoid predictable positions
             return new string(chars.OrderBy(_ => Guid.NewGuid()).ToArray());
         }
-
     }
 }

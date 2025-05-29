@@ -20,21 +20,19 @@
 
 	<ItemGroup>
     <None Remove="TizenProfile\author.p12" />
+    <None Remove="TizenProfile\ca\do_not_delete_me.txt" />
     <None Remove="TizenProfile\profiles.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="jellyfin.ico" />
+    <Content Include="TizenProfile\ca\do_not_delete_me.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TizenProfile\preSign\author.p12">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TizenProfile\preSign\profiles.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TizenProfile\ca\old_author_ca.cer">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TizenProfile\ca\old_public2.crt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

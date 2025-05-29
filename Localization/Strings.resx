@@ -222,4 +222,7 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>Setting CA certificates...</value>
   </data>
+  <data name="RootCertificate" xml:space="preserve">
+    <value>Extracting required root certificates...</value>
+  </data>
 </root>
