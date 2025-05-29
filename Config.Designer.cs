@@ -46,5 +46,29 @@ namespace Samsung_Jellyfin_Installer {
                 this["Certificate"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RememberIp {
+            get {
+                return ((bool)(this["RememberIp"]));
+            }
+            set {
+                this["RememberIp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RemoveOld {
+            get {
+                return ((bool)(this["RemoveOld"]));
+            }
+            set {
+                this["RemoveOld"] = value;
+            }
+        }
     }
 }

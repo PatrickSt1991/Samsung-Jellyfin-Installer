@@ -259,6 +259,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Remove old Jellyfin.
+        /// </summary>
+        public static string lbl_DeletePrevious {
+            get {
+                return ResourceManager.GetString("lbl_DeletePrevious", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Language.
         /// </summary>
         public static string lbl_Language {

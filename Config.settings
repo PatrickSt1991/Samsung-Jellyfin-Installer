@@ -8,5 +8,11 @@
     <Setting Name="Certificate" Type="System.String" Scope="User">
       <Value Profile="(Default)">Jelly2Sams</Value>
     </Setting>
+    <Setting Name="RememberIp" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="RemoveOld" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

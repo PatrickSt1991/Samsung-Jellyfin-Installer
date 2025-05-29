@@ -264,4 +264,7 @@
   <data name="lbl_RememberIp" xml:space="preserve">
     <value>Onthoud aangepaste IP's</value>
   </data>
+  <data name="lbl_DeletePrevious" xml:space="preserve">
+    <value>Verwijder de oude Jellyfin-app</value>
+  </data>
 </root>

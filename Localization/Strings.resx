@@ -264,4 +264,7 @@
   <data name="lbl_RememberIp" xml:space="preserve">
     <value>Remember IPs</value>
   </data>
+  <data name="lbl_DeletePrevious" xml:space="preserve">
+    <value>Remove old Jellyfin</value>
+  </data>
 </root>

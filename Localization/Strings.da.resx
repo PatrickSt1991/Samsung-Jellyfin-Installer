@@ -264,4 +264,7 @@
   <data name="lbl_RememberIp" xml:space="preserve">
     <value>Husk brugerdefinerede IP'er</value>
   </data>
+  <data name="lbl_DeletePrevious" xml:space="preserve">
+    <value>Slet den gamle Jellyfin-app</value>
+  </data>
 </root>

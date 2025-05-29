@@ -83,12 +83,22 @@
                        Width="120"
                        Margin="0,0,16,0"/>
                     <CheckBox IsChecked="{Binding RememberCustomIP}"
-              VerticalAlignment="Center"
-              Style="{DynamicResource MaterialDesignCheckBox}"
-              Foreground="{DynamicResource MaterialDesignBody}"
-              FontSize="14" Width="320"/>
+                        VerticalAlignment="Center"
+                        Style="{DynamicResource MaterialDesignCheckBox}"
+                        Foreground="{DynamicResource MaterialDesignBody}"
+                        FontSize="14" Width="320"/>
                 </StackPanel>
-
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
+                    <Label Content="{loc:Localize lbl_DeletePrevious}"
+                       VerticalAlignment="Center"
+                       Width="120"
+                       Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding DeletePrevious}"
+                        VerticalAlignment="Center"
+                        Style="{DynamicResource MaterialDesignCheckBox}"
+                        Foreground="{DynamicResource MaterialDesignBody}"
+                        FontSize="14" Width="320"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Grid>
