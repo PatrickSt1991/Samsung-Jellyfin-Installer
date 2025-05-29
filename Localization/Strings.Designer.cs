@@ -322,6 +322,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Extracting required root certificates....
+        /// </summary>
+        public static string RootCertificate {
+            get {
+                return ResourceManager.GetString("RootCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Scanning network for Samsung TV....
         /// </summary>
         public static string ScanningNetwork {
