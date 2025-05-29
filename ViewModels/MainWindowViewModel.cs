@@ -29,6 +29,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private ObservableCollection<NetworkDevice> _availableDevices = new ObservableCollection<NetworkDevice>();
         private NetworkDevice? _selectedDevice;
         private string _statusBar;
+        private string _tizenCliPath;
 
         public ObservableCollection<GitHubRelease> Releases
         {
@@ -141,7 +142,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
         private async void InitializeAsync()
         {
-            if (!await _tizenInstaller.EnsureTizenCliAvailable())
+            _tizenCliPath = await _tizenInstaller.EnsureTizenCliAvailable();
+            
+            if (string.IsNullOrEmpty(_tizenCliPath))
             {
                 await _dialogService.ShowErrorAsync(
                     "PleaseInstallTizen".Localized());
@@ -153,7 +156,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private void OpenSettings()
         {
-            var settingsWindow = new SettingsView(new SettingsViewModel());
+            //I want that cliPath HERE
+            var settingsWindow = new SettingsView(new SettingsViewModel(_tizenCliPath));
             settingsWindow.ShowDialog();
         }
 

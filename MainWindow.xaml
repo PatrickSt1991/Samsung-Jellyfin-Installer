@@ -20,7 +20,7 @@
             <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Jellyfin Installer for Samsung (Tizen)</TextBlock>
         </materialDesign:Card>
 
-        <Label Content="Release" HorizontalAlignment="Left" Margin="14,75,0,0" VerticalAlignment="Top" Width="85" Height="25"/>
+        <Label Content="{loc:Localize lbl_Release}" HorizontalAlignment="Left" Margin="14,75,0,0" VerticalAlignment="Top" Width="85" Height="25"/>
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
                   ItemsSource="{Binding Releases}" 
                   SelectedItem="{Binding SelectedRelease}" 
@@ -32,7 +32,7 @@
                   VerticalAlignment="Top" 
                   Width="377"/>
 
-        <Label Content="Version" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
+        <Label Content="{loc:Localize lbl_Version}" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
                   ItemsSource="{Binding AvailableAssets}" 
                   SelectedItem="{Binding SelectedAsset}" 
@@ -44,7 +44,7 @@
                   Margin="95,125,0,0" 
                   VerticalAlignment="Top"/>
 
-        <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
+        <Label Content="{loc:Localize lbl_SelectTv}" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
         <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
                   ItemsSource="{Binding AvailableDevices}" 
                   SelectedItem="{Binding SelectedDevice}" 

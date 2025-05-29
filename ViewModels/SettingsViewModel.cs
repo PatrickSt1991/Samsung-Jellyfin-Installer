@@ -2,17 +2,27 @@
 using Samsung_Jellyfin_Installer.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
     public class SettingsViewModel : ViewModelBase
     {
         private LanguageOption _selectedLanguage;
-
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
+        public ObservableCollection<string> AvailableCertificates { get; } = new();
+        private string _selectedCertificate;
+        public string SelectedCertificate
+        {
+            get => _selectedCertificate;
+            set
+            {
+                _selectedCertificate = value;
+                OnPropertyChanged();
+            }
+        }
 
         public LanguageOption SelectedLanguage
         {
@@ -26,9 +36,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                     if (value != null)
                     {
-                        // Change language in your localization system
                         LocalizedStrings.Instance.ChangeLanguage(value.Code);
-                        // Persist the selection
+
                         Config.Default.Language = value.Code;
                         Config.Default.Save();
                     }
@@ -36,15 +45,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
         }
 
-        public SettingsViewModel()
+        public SettingsViewModel(string cliPath)
         {
             AvailableLanguages = new ObservableCollection<LanguageOption>(GetAvailableLanguages());
+            Debug.WriteLine($"cliPath: {cliPath}");
+            foreach (var cert in GetAvailableCertificates(cliPath))
+                AvailableCertificates.Add(cert);
 
             var savedLangCode = Config.Default.Language ?? "en";
             _selectedLanguage = AvailableLanguages.FirstOrDefault(lang => lang.Code == savedLangCode)
                               ?? AvailableLanguages.FirstOrDefault(lang => lang.Code == "en");
         }
-
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
             // Manually define supported languages
@@ -64,5 +75,40 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             return existingLanguages.Any() ? existingLanguages : supportedLanguages;
         }
-    }
+
+        private List<string> GetAvailableCertificates(string profilePath)
+        {
+            var certificates = new List<string>
+            {
+                "Use application default",
+            };
+
+            if (!File.Exists(profilePath))
+                return certificates;
+
+            try
+            {
+                var doc = XDocument.Load(profilePath);
+
+                var profileNames = doc.Root?
+                    .Elements("profile")
+                    .Select(p => p.Attribute("name")?.Value)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .ToList();
+
+                if (profileNames != null)
+                {
+                    certificates.AddRange(profileNames);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Optionally log the error
+                Debug.WriteLine($"Error reading profile.xml: {ex.Message}");
+            }
+
+            return certificates;
+        }
+
+}
 }

@@ -241,6 +241,78 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Certificate.
+        /// </summary>
+        public static string lbl_Certifcate {
+            get {
+                return ResourceManager.GetString("lbl_Certifcate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Custom WGT.
+        /// </summary>
+        public static string lbl_CustomWgt {
+            get {
+                return ResourceManager.GetString("lbl_CustomWgt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Language.
+        /// </summary>
+        public static string lbl_Language {
+            get {
+                return ResourceManager.GetString("lbl_Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Release.
+        /// </summary>
+        public static string lbl_Release {
+            get {
+                return ResourceManager.GetString("lbl_Release", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remember IPs.
+        /// </summary>
+        public static string lbl_RememberIp {
+            get {
+                return ResourceManager.GetString("lbl_RememberIp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select TV.
+        /// </summary>
+        public static string lbl_SelectTv {
+            get {
+                return ResourceManager.GetString("lbl_SelectTv", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        public static string lbl_Settings {
+            get {
+                return ResourceManager.GetString("lbl_Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Version.
+        /// </summary>
+        public static string lbl_Version {
+            get {
+                return ResourceManager.GetString("lbl_Version", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Loading releases....
         /// </summary>
         public static string LoadingReleases {
@@ -354,6 +426,33 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string ScanningNetwork {
             get {
                 return ResourceManager.GetString("ScanningNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select certificate.
+        /// </summary>
+        public static string SelectCertificate {
+            get {
+                return ResourceManager.GetString("SelectCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select language.
+        /// </summary>
+        public static string SelectLanguage {
+            get {
+                return ResourceManager.GetString("SelectLanguage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select WGT file.
+        /// </summary>
+        public static string SelectWGT {
+            get {
+                return ResourceManager.GetString("SelectWGT", resourceCulture);
             }
         }
         

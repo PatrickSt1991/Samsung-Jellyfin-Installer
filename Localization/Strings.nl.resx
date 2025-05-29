@@ -231,4 +231,37 @@
   <data name="ChooseTV" xml:space="preserve">
     <value>Kies TV...</value>
   </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Selecteer taal</value>
+  </data>
+  <data name="SelectCertificate" xml:space="preserve">
+    <value>Selecteer certificaat</value>
+  </data>
+  <data name="SelectWGT" xml:space="preserve">
+    <value>Selecteer WGT-bestand</value>
+  </data>
+  <data name="lbl_Release" xml:space="preserve">
+    <value>Uitgave</value>
+  </data>
+  <data name="lbl_Version" xml:space="preserve">
+    <value>Versie</value>
+  </data>
+  <data name="lbl_SelectTv" xml:space="preserve">
+    <value>Selecteer TV</value>
+  </data>
+  <data name="lbl_Language" xml:space="preserve">
+    <value>Taal</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certificaat</value>
+  </data>
+  <data name="lbl_CustomWgt" xml:space="preserve">
+    <value>Aangepaste WGT</value>
+  </data>
+  <data name="lbl_Settings" xml:space="preserve">
+    <value>Instellingen</value>
+  </data>
+  <data name="lbl_RememberIp" xml:space="preserve">
+    <value>Onthoud aangepaste IP's</value>
+  </data>
 </root>

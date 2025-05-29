@@ -4,6 +4,7 @@ using Samsung_Jellyfin_Installer.ViewModels;
 using System.Net.Http;
 using System.Windows;
 using System.Configuration;
+using System.Diagnostics;
 
 namespace Samsung_Jellyfin_Installer
 {
@@ -51,7 +52,9 @@ namespace Samsung_Jellyfin_Installer
             try
             {
                 var installer = _serviceProvider.GetRequiredService<ITizenInstallerService>();
-                if (!await installer.EnsureTizenCliAvailable())
+
+                string CliPath = await installer.EnsureTizenCliAvailable();
+                if (string.IsNullOrEmpty(CliPath))
                 {
                     MessageBox.Show("Tizen tools are required for this application",
                                   "Error",

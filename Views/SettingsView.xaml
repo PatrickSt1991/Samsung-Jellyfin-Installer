@@ -5,7 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Samsung_Jellyfin_Installer.Views"
-        xmlns:l="clr-namespace:Samsung_Jellyfin_Installer.Localization"
+        xmlns:loc="clr-namespace:Samsung_Jellyfin_Installer.Converters"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
         Background="{DynamicResource MaterialDesign.Brush.Background}"
         TextElement.FontWeight="Medium"
@@ -20,13 +20,13 @@
         </Grid.RowDefinitions>
 
         <materialDesign:Card Padding="12" Margin="0,10,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" VerticalAlignment="Top">
-            <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Settings</TextBlock>
+            <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center" Text="{loc:Localize lbl_Settings}"/>
         </materialDesign:Card>
 
         <StackPanel Grid.Row="1" Margin="0,20,0,0" VerticalAlignment="Top"  Width="Auto">
             <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Label Content="Language"
+                    <Label Content="{loc:Localize lbl_Language}"
                        VerticalAlignment="Center"
                        Width="120"
                        Margin="0,0,16,0"/>
@@ -35,32 +35,34 @@
                           SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
                           DisplayMemberPath="Name"
                           materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                          materialDesign:HintAssist.Hint="Select language"
+                          materialDesign:HintAssist.Hint="{loc:Localize SelectLanguage}"
                           VerticalAlignment="Center"
                           Width="320"/>
                 </StackPanel>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
-                    <Label Content="Certificate"
+                    <Label Content="{loc:Localize lbl_Certifcate}"
                        VerticalAlignment="Center"
                        Width="120"
                        Margin="0,0,16,0"/>
                     <ComboBox Style="{DynamicResource MaterialDesignComboBox}"
                           materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                          materialDesign:HintAssist.Hint="Select certificate"
+                          materialDesign:HintAssist.Hint="{loc:Localize SelectCertificate}"
                           VerticalAlignment="Center"
-                          Width="320"/>
+                          Width="320"
+                          ItemsSource="{Binding AvailableCertificates}"
+                          SelectedItem="{Binding SelectedCertificate, Mode=TwoWay}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
-                    <Label Content="Custom WGT"
+                    <Label Content="{loc:Localize lbl_CustomWgt}"
                        VerticalAlignment="Center"
                        Width="120"
                        Margin="0,0,16,0"/>
 
                     <TextBox Style="{DynamicResource MaterialDesignTextBox}"
                          Text="{Binding CertificatePath, Mode=TwoWay}"
-                         materialDesign:HintAssist.Hint="Select WGT file"
+                         materialDesign:HintAssist.Hint="{loc:Localize SelectWGT}"
                          VerticalAlignment="Center"
                          Width="270"
                          IsReadOnly="True"
@@ -73,6 +75,18 @@
                         Width="32"
                         Height="32"
                         ToolTip="Browse for file"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 15 0 0">
+                    <Label Content="{loc:Localize lbl_RememberIp}"
+                       VerticalAlignment="Center"
+                       Width="120"
+                       Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding RememberCustomIP}"
+              VerticalAlignment="Center"
+              Style="{DynamicResource MaterialDesignCheckBox}"
+              Foreground="{DynamicResource MaterialDesignBody}"
+              FontSize="14" Width="320"/>
                 </StackPanel>
 
             </StackPanel>

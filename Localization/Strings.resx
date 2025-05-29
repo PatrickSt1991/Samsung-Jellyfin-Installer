@@ -231,4 +231,37 @@
   <data name="ChooseTV" xml:space="preserve">
     <value>Choose TV...</value>
   </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Select language</value>
+  </data>
+  <data name="SelectCertificate" xml:space="preserve">
+    <value>Select certificate</value>
+  </data>
+  <data name="SelectWGT" xml:space="preserve">
+    <value>Select WGT file</value>
+  </data>
+  <data name="lbl_Release" xml:space="preserve">
+    <value>Release</value>
+  </data>
+  <data name="lbl_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="lbl_SelectTv" xml:space="preserve">
+    <value>Select TV</value>
+  </data>
+  <data name="lbl_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certificate</value>
+  </data>
+  <data name="lbl_CustomWgt" xml:space="preserve">
+    <value>Custom WGT</value>
+  </data>
+  <data name="lbl_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="lbl_RememberIp" xml:space="preserve">
+    <value>Remember IPs</value>
+  </data>
 </root>

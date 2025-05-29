@@ -67,12 +67,12 @@
 		  <LastGenOutput>Strings.Designer.cs</LastGenOutput>
 	  </EmbeddedResource>
     <EmbeddedResource Update="Localization\Strings.da.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <CustomToolNamespace>amsung_Jellyfin_Installer.Localization</CustomToolNamespace>
+      <Generator></Generator>
+      <CustomToolNamespace></CustomToolNamespace>
     </EmbeddedResource>
 	<EmbeddedResource Update="Localization\Strings.nl.resx">
-	  <Generator>PublicResXFileCodeGenerator</Generator>
-	  <CustomToolNamespace>amsung_Jellyfin_Installer.Localization</CustomToolNamespace>
+	  <Generator></Generator>
+	  <CustomToolNamespace></CustomToolNamespace>
 	</EmbeddedResource>
   </ItemGroup>
 

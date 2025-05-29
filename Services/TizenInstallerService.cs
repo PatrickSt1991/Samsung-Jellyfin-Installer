@@ -55,10 +55,10 @@ namespace Samsung_Jellyfin_Installer.Services
             }
         }
 
-        public async Task<bool> EnsureTizenCliAvailable()
+        public async Task<string> EnsureTizenCliAvailable()
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
-                return true;
+                return TizenDataPath;
 
             return await InstallMinimalCli();
         }
@@ -387,7 +387,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
-        private async Task<bool> InstallMinimalCli()
+        private async Task<string> InstallMinimalCli()
         {
             string installerPath = null;
             try
@@ -399,45 +399,40 @@ namespace Samsung_Jellyfin_Installer.Services
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
 
-                if (InstallCLI == MessageBoxResult.Yes)
+                if (InstallCLI != MessageBoxResult.Yes)
+                    return "User declined to install Tizen CLI.";
+
+                const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
+                installerPath = await DownloadPackageAsync(installerUrl);
+                string installPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Programs",
+                    "TizenStudioCli"
+                );
+
+                var startInfo = new ProcessStartInfo
                 {
-                    const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
-                    installerPath = await DownloadPackageAsync(installerUrl);
-                    string installPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "Programs",
-                        "TizenStudioCli"
-                    );
+                    FileName = installerPath,
+                    Arguments = $"--accept-license \"{installPath}\"",
+                    UseShellExecute = true,
+                    CreateNoWindow = false
+                };
 
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = installerPath,
-                        Arguments = $"--accept-license \"{installPath}\"",
-                        UseShellExecute = true,
-                        CreateNoWindow = false
-                    };
+                using var process = Process.Start(startInfo);
+                await process.WaitForExitAsync();
 
-                    using var process = Process.Start(startInfo);
-                    await process.WaitForExitAsync();
+                if (process.ExitCode != 0)
+                    return "Tizen CLI installation failed.";
 
-                    if (process.ExitCode == 0)
-                    {
-                        var tizenRoot = FindTizenRoot() ?? string.Empty;
-                        TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
-                        TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                var tizenRoot = FindTizenRoot() ?? string.Empty;
+                TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
+                TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
 
-                        return tizenRoot != string.Empty;
-                    }
-                    return false;
-                }
-                else
-                {
-                    return false;
-                }
+                return tizenRoot != string.Empty ? string.Empty : "Tizen root folder not found after installation.";
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                return $"An error occurred during installation: {ex.Message}";
             }
             finally
             {

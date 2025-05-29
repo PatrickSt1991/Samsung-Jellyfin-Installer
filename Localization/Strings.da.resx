@@ -231,4 +231,37 @@
   <data name="ChooseTV" xml:space="preserve">
     <value>Vælg TV...</value>
   </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Vælg sprog</value>
+  </data>
+  <data name="SelectCertificate" xml:space="preserve">
+    <value>Vælg certifikat</value>
+  </data>
+  <data name="SelectWGT" xml:space="preserve">
+    <value>Vælg WGT-fil</value>
+  </data>
+  <data name="lbl_Release" xml:space="preserve">
+    <value>Frigøre</value>
+  </data>
+  <data name="lbl_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="lbl_SelectTv" xml:space="preserve">
+    <value>Vælg TV</value>
+  </data>
+  <data name="lbl_Language" xml:space="preserve">
+    <value>Sprog</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certifikat</value>
+  </data>
+  <data name="lbl_CustomWgt" xml:space="preserve">
+    <value>Brugerdefineret WGT</value>
+  </data>
+  <data name="lbl_Settings" xml:space="preserve">
+    <value>Indstillinger</value>
+  </data>
+  <data name="lbl_RememberIp" xml:space="preserve">
+    <value>Husk brugerdefinerede IP'er</value>
+  </data>
 </root>
