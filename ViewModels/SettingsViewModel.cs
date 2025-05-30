@@ -1,9 +1,15 @@
-﻿using Samsung_Jellyfin_Installer.Models;
+﻿using Microsoft.Win32;
+using Samsung_Jellyfin_Installer.Commands;
+using Samsung_Jellyfin_Installer.Converters;
+using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using System.Windows;
+using System.Windows.Input;
 using System.Xml.Linq;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
@@ -11,25 +17,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
     public class SettingsViewModel : ViewModelBase
     {
         private LanguageOption _selectedLanguage;
-        public ObservableCollection<LanguageOption> AvailableLanguages { get; }
-        public ObservableCollection<string> AvailableCertificates { get; } = new();
+        private ExistingCertificates _selectedCertificateObject;
         private string _selectedCertificate;
-        public string SelectedCertificate
-        {
-            get => _selectedCertificate;
-            set
-            {
-                if(_selectedCertificate != value)
-                {
-                    _selectedCertificate = value;
-                    OnPropertyChanged(nameof(SelectedCertificate));
-
-                    var normalized = value?.Replace(" (default)", "");
-                    Config.Default.Certificate = normalized;
-                    Config.Default.Save();
-                }
-            }
-        }
+        private string _customWgtPath;
+        private bool _rememberCustomIP;
+        private bool _deletePreviousInstall;
 
         public LanguageOption SelectedLanguage
         {
@@ -51,19 +43,106 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+        public ExistingCertificates SelectedCertificateObject
+        {
+            get => _selectedCertificateObject;
+            set
+            {
+                if (_selectedCertificateObject != value)
+                {
+                    _selectedCertificateObject = value;
+                    OnPropertyChanged(nameof(SelectedCertificateObject));
 
-        public SettingsViewModel(string cliPath)
+                    if (value != null)
+                    {
+                        _selectedCertificate = value.Name;
+                        OnPropertyChanged(nameof(SelectedCertificate));
+
+                        var normalized = value.Name?.Replace(" (default)", "");
+                        Config.Default.Certificate = normalized;
+                        Config.Default.Save();
+                    }
+                }
+            }
+        }
+        public string SelectedCertificate
+        {
+            get => _selectedCertificate;
+            set
+            {
+                if (_selectedCertificate != value)
+                {
+                    _selectedCertificate = value;
+                    OnPropertyChanged(nameof(SelectedCertificate));
+
+                    var normalized = value?.Replace(" (default)", "");
+                    Config.Default.Certificate = normalized;
+                    Config.Default.Save();
+
+                    SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
+                }
+            }
+        }
+        public string CustomWgtPath
+        {
+            get => _customWgtPath;
+            set
+            {
+                if (_customWgtPath != value)
+                {
+                    _customWgtPath = value;
+                    OnPropertyChanged(nameof(CustomWgtPath));
+                    Config.Default.CustomWgtPath = value;
+                    Config.Default.Save();
+                }
+            }
+        }
+        public bool RememberCustomIP
+        {
+            get => _rememberCustomIP;
+            set
+            {
+                if(_rememberCustomIP != value)
+                {
+                    _rememberCustomIP = value;
+                    OnPropertyChanged(nameof(RememberCustomIP));
+
+                    Config.Default.RememberCustomIP = value;
+                    Config.Default.Save();
+                }
+            }
+        }
+        public bool DeletePreviousInstall
+        {
+            get => _deletePreviousInstall;
+            set
+            {
+                if(_deletePreviousInstall = value)
+                {
+                    _deletePreviousInstall = value;
+                    OnPropertyChanged(nameof(DeletePreviousInstall));
+
+                    Config.Default.DeletePreviousInstall = value;
+                    Config.Default.Save();
+                }
+            }
+        }
+
+        public ObservableCollection<LanguageOption> AvailableLanguages { get; }
+        public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
+        public ICommand BrowseWgtCommand { get; }
+        public SettingsViewModel(ITizenInstallerService tizenService)
         {
             AvailableLanguages = new ObservableCollection<LanguageOption>(GetAvailableLanguages());
-            Debug.WriteLine($"cliPath: {cliPath}");
-            foreach (var cert in GetAvailableCertificates(cliPath))
-                AvailableCertificates.Add(cert);
+            BrowseWgtCommand = new RelayCommand(BrowseWgtFile);
+            Task.Run(async () => await InitializeCertificates(tizenService));
 
             var savedLangCode = Config.Default.Language ?? "en";
-            _selectedLanguage = AvailableLanguages.FirstOrDefault(lang => lang.Code == savedLangCode)
+            SelectedLanguage = AvailableLanguages.FirstOrDefault(lang => lang.Code == savedLangCode)
                               ?? AvailableLanguages.FirstOrDefault(lang => lang.Code == "en");
-            SelectedCertificate = Config.Default.Certificate ?? "Jelly2Sams";
-
+            CustomWgtPath = Config.Default.CustomWgtPath ?? "";
+            RememberCustomIP = Config.Default.RememberCustomIP;
+            DeletePreviousInstall = Config.Default.DeletePreviousInstall;
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
@@ -84,39 +163,116 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             return existingLanguages.Any() ? existingLanguages : supportedLanguages;
         }
-
-        private List<string> GetAvailableCertificates(string profilePath)
+        private async Task InitializeCertificates(ITizenInstallerService tizenService)
         {
-            var certificates = new List<string>();
+            var (profilePath, tizenCrypto) = await tizenService.EnsureTizenCliAvailable();
+
+            var certificates = GetAvailableCertificates(profilePath, tizenCrypto);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (var cert in certificates)
+                    AvailableCertificates.Add(cert);
+
+                var savedCertName = Config.Default.Certificate ?? "Jell2Sams";
+                var selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName)
+                                ?? AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams")
+                                ?? AvailableCertificates.FirstOrDefault();
+
+                if (selectedCert != null)
+                    SelectedCertificate = selectedCert.Name;
+            });
+        }
+        private List<ExistingCertificates> GetAvailableCertificates(string profilePath, string tizenCrypto)
+        {
+            var certificates = new List<ExistingCertificates>();
             string defaultCert = "Jelly2Sams";
 
+            if (!File.Exists(profilePath))
+                return certificates;
 
-            List<string> profileNames = new();
-
-            if (File.Exists(profilePath))
+            try
             {
-                try
-                {
-                    var doc = XDocument.Load(profilePath);
+                var doc = XDocument.Load(profilePath);
+                var profiles = doc.Root?.Elements("profile");
 
-                    profileNames = doc.Root?
-                        .Elements("profile")
-                        .Select(p => p.Attribute("name")?.Value)
-                        .Where(name => !string.IsNullOrEmpty(name))
-                        .ToList() ?? new List<string>();
-                }
-                catch (Exception ex)
+                if (profiles == null)
+                    return certificates;
+
+                foreach (var profile in profiles)
                 {
-                    Debug.WriteLine($"Error reading profile.xml: {ex.Message}");
+                    string? name = profile.Attribute("name")?.Value;
+                    if (string.IsNullOrWhiteSpace(name))
+                        continue;
+
+                    var authorItem = profile.Elements("profileitem")
+                        .FirstOrDefault(p => p.Attribute("distributor")?.Value == "0");
+
+                    string? keyPath = authorItem?.Attribute("key")?.Value;
+                    string? encryptedPassword = authorItem.Attribute("password")?.Value;
+                    DateTime? expireDate = null;
+                    string? status = null;
+                    string? decryptedPassword = null;
+
+                    if (!string.IsNullOrWhiteSpace(keyPath) && File.Exists(keyPath) && (!string.IsNullOrEmpty(encryptedPassword)))
+                    {
+                        if (File.Exists(encryptedPassword))
+                            decryptedPassword = CipherUtil.RunWincryptDecrypt(encryptedPassword, tizenCrypto);
+                        else
+                            decryptedPassword = CipherUtil.GetDecryptedString(encryptedPassword);
+
+                        try
+                        {
+                            var cert = new X509Certificate2(keyPath, decryptedPassword, X509KeyStorageFlags.Exportable);
+                            expireDate = cert.NotAfter;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to read certificate '{keyPath}': {ex.Message}");
+                            status = "Unable to decrypt";
+                        }
+
+                        if(expireDate.HasValue && expireDate.Value.Date >= DateTime.Today)
+                        {
+                            certificates.Add(new ExistingCertificates
+                            {
+                                Name = name,
+                                File = keyPath,
+                                ExpireDate = expireDate
+                            });
+                        }
+                    }
+                }
+
+                // Add default entry if not found in profiles
+                if (certificates.All(c => c.Name != defaultCert))
+                {
+                    certificates.Add(new ExistingCertificates
+                    {
+                        Name = defaultCert,
+                        File = null,
+                        ExpireDate = null
+                    });
                 }
             }
-
-            if (!profileNames.Contains(defaultCert))
-                certificates.Add($"{defaultCert} (default)");
-
-            certificates.AddRange(profileNames);
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error reading profile XML: {ex.Message}");
+            }
 
             return certificates;
+        }
+        private void BrowseWgtFile()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Title = "Select WGT File",
+                Filter = "WGT Files (*.wgt)|*.wgt",
+                FilterIndex = 1,
+                Multiselect = false
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+                CustomWgtPath = openFileDialog.FileName;
         }
     }
 }

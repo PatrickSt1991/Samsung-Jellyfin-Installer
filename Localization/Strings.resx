@@ -252,9 +252,6 @@
   <data name="lbl_Language" xml:space="preserve">
     <value>Language</value>
   </data>
-  <data name="lbl_Certifcate" xml:space="preserve">
-    <value>Certificate</value>
-  </data>
   <data name="lbl_CustomWgt" xml:space="preserve">
     <value>Custom WGT</value>
   </data>
@@ -266,5 +263,23 @@
   </data>
   <data name="lbl_DeletePrevious" xml:space="preserve">
     <value>Remove old Jellyfin</value>
+  </data>
+  <data name="lbl_expires" xml:space="preserve">
+    <value>Expires</value>
+  </data>
+  <data name="IpWindowTitle" xml:space="preserve">
+    <value>Enter TV IP</value>
+  </data>
+  <data name="IpWindowDescription" xml:space="preserve">
+    <value>Please enter the device's IP address:</value>
+  </data>
+  <data name="InvalidDeviceIp" xml:space="preserve">
+    <value>Invalid device IP or device not found.</value>
+  </data>
+  <data name="IpNotListed" xml:space="preserve">
+    <value>My IP is not listed...</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certificate</value>
   </data>
 </root>

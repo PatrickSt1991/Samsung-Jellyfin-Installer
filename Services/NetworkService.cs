@@ -112,7 +112,7 @@ public class NetworkService : INetworkService
 
     private IEnumerable<IPAddress> GetRelevantLocalIPs()
     {
-        return NetworkInterface.GetAllNetworkInterfaces()
+        var baseIps = NetworkInterface.GetAllNetworkInterfaces()
             .Where(ni => ni.OperationalStatus == OperationalStatus.Up)
             .Where(ni => !_excludedInterfacePatterns.Any(p =>
                 ni.Name.Contains(p, StringComparison.OrdinalIgnoreCase)))
@@ -121,6 +121,22 @@ public class NetworkService : INetworkService
             .Where(ip => !IPAddress.IsLoopback(ip.Address))
             .Select(ip => ip.Address)
             .Distinct();
+
+        var additionalIps = Enumerable.Empty<IPAddress>();
+
+        if (Config.Default.RememberCustomIP && !string.IsNullOrEmpty(Config.Default.UserCustomIP))
+        {
+            try
+            {
+                additionalIps = new[] { IPAddress.Parse(Config.Default.UserCustomIP) };
+            }
+            catch (FormatException)
+            {
+                additionalIps = Enumerable.Empty<IPAddress>();
+            }
+        }
+
+        return baseIps.Concat(additionalIps).Distinct();
     }
 
     private async Task<bool> IsPortOpenAsync(string ip, int port, CancellationToken ct)

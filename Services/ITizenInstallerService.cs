@@ -3,7 +3,7 @@
     public interface ITizenInstallerService
     {
         string TizenCliPath { get; }
-        Task<string> EnsureTizenCliAvailable();
+        Task<(string, string)> EnsureTizenCliAvailable();
         Task<string> DownloadPackageAsync(string downloadUrl);
         Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus);
         Task<string?> GetTvNameAsync(string tvIpAddress);

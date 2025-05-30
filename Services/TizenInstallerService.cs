@@ -31,6 +31,7 @@ namespace Samsung_Jellyfin_Installer.Services
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
         public string? TizenDataPath { get; private set; }
+        public string? TizenCypto { get; private set; }
         public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
@@ -49,18 +50,19 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                TizenCypto = Path.Combine(tizenRoot, "tools", "certificate-encryptor","wincrypt.exe");
 
                 string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
             }
         }
 
-        public async Task<string> EnsureTizenCliAvailable()
+        public async Task<(string, string)> EnsureTizenCliAvailable()
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
-                return TizenDataPath;
+                return (TizenDataPath, TizenCypto);
 
-            return await InstallMinimalCli();
+            return (await InstallMinimalCli(), TizenCliPath);
         }
 
         public async Task<bool> ConnectToTvAsync(string tvIpAddress)
@@ -402,8 +404,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (InstallCLI != MessageBoxResult.Yes)
                     return "User declined to install Tizen CLI.";
 
-                const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
-                installerPath = await DownloadPackageAsync(installerUrl);
+                installerPath = await DownloadPackageAsync(Config.Default.TizenCliUrl);
                 string installPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Programs",

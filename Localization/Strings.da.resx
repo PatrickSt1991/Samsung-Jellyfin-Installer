@@ -252,9 +252,6 @@
   <data name="lbl_Language" xml:space="preserve">
     <value>Sprog</value>
   </data>
-  <data name="lbl_Certifcate" xml:space="preserve">
-    <value>Certifikat</value>
-  </data>
   <data name="lbl_CustomWgt" xml:space="preserve">
     <value>Brugerdefineret WGT</value>
   </data>
@@ -266,5 +263,23 @@
   </data>
   <data name="lbl_DeletePrevious" xml:space="preserve">
     <value>Slet den gamle Jellyfin-app</value>
+  </data>
+  <data name="lbl_expires" xml:space="preserve">
+    <value>Udløber</value>
+  </data>
+  <data name="IpWindowTitle" xml:space="preserve">
+    <value>Indtast TV IP</value>
+  </data>
+  <data name="IpWindowDescription" xml:space="preserve">
+    <value>Indtast venligst enhedens IP-adresse:</value>
+  </data>
+  <data name="InvalidDeviceIp" xml:space="preserve">
+    <value>Ugyldig enheds IP eller enhed ikke fundet.</value>
+  </data>
+  <data name="IpNotListed" xml:space="preserve">
+    <value>Min IP er ikke på listen...</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certifikat</value>
   </data>
 </root>

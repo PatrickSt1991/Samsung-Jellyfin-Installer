@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -8,7 +9,6 @@ namespace Samsung_Jellyfin_Installer.Converters
     {
         private const string KeyString = "KYANINYLhijklmnopqrstuvwx"; // 26 chars, use first 24 bytes only
         private static readonly byte[] KeyBytes = Encoding.UTF8.GetBytes(KeyString).Take(24).ToArray();
-
 
         public static string GetEncryptedString(string plainText)
         {
@@ -26,13 +26,12 @@ namespace Samsung_Jellyfin_Installer.Converters
         }
         public static string GetDecryptedString(string encryptedBase64)
         {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(KeyString);
             byte[] encryptedBytes = Convert.FromBase64String(encryptedBase64);
 
             using var tripleDes = TripleDES.Create();
             tripleDes.Mode = CipherMode.ECB;
             tripleDes.Padding = PaddingMode.PKCS7;
-            tripleDes.Key = keyBytes;
+            tripleDes.Key = KeyBytes;
 
             using var decryptor = tripleDes.CreateDecryptor();
             byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
@@ -66,6 +65,25 @@ namespace Samsung_Jellyfin_Installer.Converters
             // Shuffle to avoid predictable positions
             return new string(chars.OrderBy(_ => Guid.NewGuid()).ToArray());
         }
+        public static string RunWincryptDecrypt(string filePath, string cryptoPath)
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = cryptoPath,
+                Arguments = $"--decrypt \"{filePath}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
+            using (var process = Process.Start(processInfo))
+            {
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                return output.Split(new[] { "PASSWORD:" }, StringSplitOptions.None)[1].Trim();
+            }
+        }
+        
     }
 }

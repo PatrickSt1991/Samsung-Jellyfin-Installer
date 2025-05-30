@@ -50,12 +50,12 @@ namespace Samsung_Jellyfin_Installer {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool RememberIp {
+        public bool RememberCustomIP {
             get {
-                return ((bool)(this["RememberIp"]));
+                return ((bool)(this["RememberCustomIP"]));
             }
             set {
-                this["RememberIp"] = value;
+                this["RememberCustomIP"] = value;
             }
         }
         
@@ -68,6 +68,97 @@ namespace Samsung_Jellyfin_Installer {
             }
             set {
                 this["RemoveOld"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases")]
+        public string ReleasesUrl {
+            get {
+                return ((string)(this["ReleasesUrl"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://dev.tizen.samsung.com/apis/v2/authors")]
+        public string AuthorEndpoint {
+            get {
+                return ((string)(this["AuthorEndpoint"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://dev.tizen.samsung.com/apis/v1/distributors")]
+        public string DistributorsEndpoint_V1 {
+            get {
+                return ((string)(this["DistributorsEndpoint_V1"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://dev.tizen.samsung.com/apis/v2/distributors")]
+        public string DistributorsEndpoint_V2 {
+            get {
+                return ((string)(this["DistributorsEndpoint_V2"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5." +
+            "5_windows-64.exe")]
+        public string TizenCliUrl {
+            get {
+                return ((string)(this["TizenCliUrl"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.5.8-beta")]
+        public string AppVersion {
+            get {
+                return ((string)(this["AppVersion"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CustomWgtPath {
+            get {
+                return ((string)(this["CustomWgtPath"]));
+            }
+            set {
+                this["CustomWgtPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DeletePreviousInstall {
+            get {
+                return ((bool)(this["DeletePreviousInstall"]));
+            }
+            set {
+                this["DeletePreviousInstall"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string UserCustomIP {
+            get {
+                return ((string)(this["UserCustomIP"]));
+            }
+            set {
+                this["UserCustomIP"] = value;
             }
         }
     }

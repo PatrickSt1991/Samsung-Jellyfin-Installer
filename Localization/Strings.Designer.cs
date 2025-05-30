@@ -241,6 +241,42 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid device IP or device not found..
+        /// </summary>
+        public static string InvalidDeviceIp {
+            get {
+                return ResourceManager.GetString("InvalidDeviceIp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My IP is not listed....
+        /// </summary>
+        public static string IpNotListed {
+            get {
+                return ResourceManager.GetString("IpNotListed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter the device&apos;s IP address:.
+        /// </summary>
+        public static string IpWindowDescription {
+            get {
+                return ResourceManager.GetString("IpWindowDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter TV IP.
+        /// </summary>
+        public static string IpWindowTitle {
+            get {
+                return ResourceManager.GetString("IpWindowTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate.
         /// </summary>
         public static string lbl_Certifcate {
@@ -264,6 +300,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_DeletePrevious {
             get {
                 return ResourceManager.GetString("lbl_DeletePrevious", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expires.
+        /// </summary>
+        public static string lbl_expires {
+            get {
+                return ResourceManager.GetString("lbl_expires", resourceCulture);
             }
         }
         

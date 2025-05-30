@@ -37,6 +37,7 @@ namespace Samsung_Jellyfin_Installer
 
             // Register ViewModels
             services.AddSingleton<MainWindowViewModel>();
+            services.AddSingleton<SettingsViewModel>();
 
             // Register Views
             services.AddTransient<MainWindow>();
@@ -53,8 +54,9 @@ namespace Samsung_Jellyfin_Installer
             {
                 var installer = _serviceProvider.GetRequiredService<ITizenInstallerService>();
 
-                string CliPath = await installer.EnsureTizenCliAvailable();
-                if (string.IsNullOrEmpty(CliPath))
+                (string TizenDataPath, string TizenCliPath) = await installer.EnsureTizenCliAvailable();
+                
+                if (string.IsNullOrEmpty(TizenCliPath))
                 {
                     MessageBox.Show("Tizen tools are required for this application",
                                   "Error",

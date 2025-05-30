@@ -252,9 +252,6 @@
   <data name="lbl_Language" xml:space="preserve">
     <value>Taal</value>
   </data>
-  <data name="lbl_Certifcate" xml:space="preserve">
-    <value>Certificaat</value>
-  </data>
   <data name="lbl_CustomWgt" xml:space="preserve">
     <value>Aangepaste WGT</value>
   </data>
@@ -266,5 +263,23 @@
   </data>
   <data name="lbl_DeletePrevious" xml:space="preserve">
     <value>Verwijder de oude Jellyfin-app</value>
+  </data>
+  <data name="lbl_expires" xml:space="preserve">
+    <value>Verloopt</value>
+  </data>
+  <data name="IpWindowTitle" xml:space="preserve">
+    <value>Voer TV-IP in</value>
+  </data>
+  <data name="IpWindowDescription" xml:space="preserve">
+    <value>Voer het IP-adres van het apparaat in:</value>
+  </data>
+  <data name="InvalidDeviceIp" xml:space="preserve">
+    <value>Ongeldig apparaat-IP of apparaat niet gevonden.</value>
+  </data>
+  <data name="IpNotListed" xml:space="preserve">
+    <value>Mijn IP staat niet in de lijst...</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certificaat</value>
   </data>
 </root>
