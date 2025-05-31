@@ -1,0 +1,56 @@
+name: Update Version Table in README
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch latest releases
+        id: releases
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const stable = releases.data.find(r => !r.prerelease && !r.draft);
+            const beta = releases.data.find(r => r.prerelease && !r.draft);
+
+            return {
+              stable: stable ? { tag: stable.tag_name, url: stable.html_url } : null,
+              beta: beta ? { tag: beta.tag_name, url: beta.html_url } : null,
+            };
+
+      - name: Update README version table
+        run: |
+          STABLE_VERSION="${{ fromJson(steps.releases.outputs.result).stable.tag }}"
+          STABLE_URL="${{ fromJson(steps.releases.outputs.result).stable.url }}"
+          BETA_VERSION="${{ fromJson(steps.releases.outputs.result).beta.tag }}"
+          BETA_URL="${{ fromJson(steps.releases.outputs.result).beta.url }}"
+
+          VERSION_TABLE=$(cat <<EOF
+| Channel       | Version       | Notes                         |
+|---------------|---------------|-------------------------------|
+| **Stable**    | [\`$STABLE_VERSION\`]($STABLE_URL) | Recommended for most users    |
+| **Beta**      | [\`$BETA_VERSION\`]($BETA_URL)     | Includes new features, may be less stable |
+EOF
+          )
+
+          awk '/<!-- versions:start -->/{print;print VERSION_TABLE;skip=1;next} /<!-- versions:end -->/{skip=0} !skip' VERSION_TABLE="$VERSION_TABLE" README.md > README.tmp
+          mv README.tmp README.md
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git diff --cached --quiet || git commit -m "Update version table in README"
+          git push
