@@ -8,8 +8,12 @@ on:
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch latest releases
         id: releases
@@ -24,48 +28,67 @@ jobs:
             const stable = releases.data.find(r => !r.prerelease && !r.draft);
             const beta = releases.data.find(r => r.prerelease && !r.draft);
 
-            return {
+            const result = {
               stableTag: stable?.tag_name ?? "N/A",
               stableUrl: stable?.html_url ?? "#",
               betaTag: beta?.tag_name ?? "N/A",
               betaUrl: beta?.html_url ?? "#"
             };
+            
+            console.log('Release info:', result);
+            return result;
 
       - name: Set version info as env vars
         run: |
-          echo "STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stableTag }}" >> $GITHUB_ENV
-          echo "STABLE_URL=${{ fromJson(steps.releases.outputs.result).stableUrl }}" >> $GITHUB_ENV
-          echo "BETA_TAG=${{ fromJson(steps.releases.outputs.result).betaTag }}" >> $GITHUB_ENV
-          echo "BETA_URL=${{ fromJson(steps.releases.outputs.result).betaUrl }}" >> $GITHUB_ENV
+          echo 'STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stableTag }}' >> $GITHUB_ENV
+          echo 'STABLE_URL=${{ fromJson(steps.releases.outputs.result).stableUrl }}' >> $GITHUB_ENV
+          echo 'BETA_TAG=${{ fromJson(steps.releases.outputs.result).betaTag }}' >> $GITHUB_ENV
+          echo 'BETA_URL=${{ fromJson(steps.releases.outputs.result).betaUrl }}' >> $GITHUB_ENV
 
-      - name: Update README with version table
+      - name: Generate version table markdown
         run: |
-          TEMP_README=$(mktemp)
+          cat <<'EOF' > version_table.md
+          | Channel    | Version                                | Notes                                      |
+          |------------|----------------------------------------|--------------------------------------------|
+          | **Stable** | [`$STABLE_TAG`]($STABLE_URL)         | Recommended for most users                 |
+          | **Beta**   | [`$BETA_TAG`]($BETA_URL)             | Includes new features, may be less stable  |
+          EOF
+          
+          # Replace variables in the markdown file
+          sed -i "s/\$STABLE_TAG/$STABLE_TAG/g" version_table.md
+          sed -i "s/\$STABLE_URL/$STABLE_URL/g" version_table.md
+          sed -i "s/\$BETA_TAG/$BETA_TAG/g" version_table.md
+          sed -i "s|\$BETA_URL|$BETA_URL|g" version_table.md
 
-          {
-            cat <<EOF
-<!-- versions:start -->
-| Channel       | Version       | Notes                         |
-|---------------|---------------|-------------------------------|
-| **Stable**    | [\`${STABLE_TAG}\`](${STABLE_URL}) | Recommended for most users    |
-| **Beta**      | [\`${BETA_TAG}\`](${BETA_URL})     | Includes new features, may be less stable |
-<!-- versions:end -->
-EOF
-          } > version_table.md
-
+      - name: Inject version table into README
+        run: |
+          if ! grep -q "<!-- versions:start -->" README.md; then
+            echo "Warning: <!-- versions:start --> marker not found in README.md"
+            exit 1
+          fi
+          
           awk '
             BEGIN { in_block=0 }
-            /<!-- versions:start -->/ { print; while (getline line < "version_table.md") print line; in_block=1; next }
-            /<!-- versions:end -->/ { in_block=0; next }
-            !in_block
-          ' README.md > "$TEMP_README"
-
-          mv "$TEMP_README" README.md
+            /<!-- versions:start -->/ {
+              print;
+              print "";
+              while ((getline line < "version_table.md") > 0) print line;
+              print "";
+              in_block=1;
+              next
+            }
+            /<!-- versions:end -->/ { in_block=0; print; next }
+            !in_block { print }
+          ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push if changed
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md
-          git diff --cached --quiet || git commit -m "Update version table in README"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update version table in README [skip ci]"
+            git push
+          fi
