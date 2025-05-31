@@ -91,7 +91,7 @@
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
         </materialDesign:Card>
 
-        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" 
+        <Button Command="{Binding DownloadAndInstallCommand}" CommandParameter="{Binding SelectedRelease}" 
                 Content="{loc:Localize DownloadAndInstall}"
                 HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
 

@@ -58,7 +58,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         _selectedCertificate = value.Name;
                         OnPropertyChanged(nameof(SelectedCertificate));
 
-                        //var normalized = value.Name?.Replace(" (default)", "");
                         Settings.Default.Certificate = value.Name;
                         Settings.Default.Save();
                     }
@@ -75,7 +74,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _selectedCertificate = value;
                     OnPropertyChanged(nameof(SelectedCertificate));
 
-                    //var normalized = value?.Replace(" (default)", "");
                     Settings.Default.Certificate = value;
                     Settings.Default.Save();
 
@@ -270,7 +268,22 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             };
 
             if (openFileDialog.ShowDialog() == true)
-                CustomWgtPath = openFileDialog.FileName;
+            {
+                var originalPath = openFileDialog.FileName;
+                var directory = Path.GetDirectoryName(originalPath);
+                var baseName = Path.GetFileNameWithoutExtension(originalPath);
+                var extension = Path.GetExtension(originalPath);
+
+                var random = new Random();
+                const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                var randomSuffix = new string(Enumerable.Range(0, 4).Select(_ => chars[random.Next(chars.Length)]).ToArray());
+
+                var newFileName = $"{baseName}{randomSuffix}{extension}";
+                var newFilePath = Path.Combine(directory, newFileName);
+
+                File.Copy(originalPath, newFilePath, overwrite: true);
+                CustomWgtPath = newFilePath;
+            }
         }
     }
 }

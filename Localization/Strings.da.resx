@@ -285,4 +285,16 @@
   <data name="lbl_Other" xml:space="preserve">
     <value>Ellers</value>
   </data>
+  <data name="DownloadCompleted" xml:space="preserve">
+    <value>Download fuldført...</value>
+  </data>
+  <data name="NoPackageToInstall" xml:space="preserve">
+    <value>Ingen pakke at installere</value>
+  </data>
+  <data name="NoDeviceSelected" xml:space="preserve">
+    <value>Ingen enhed valgt</value>
+  </data>
+  <data name="UsingCustomWGT" xml:space="preserve">
+    <value />
+  </data>
 </root>

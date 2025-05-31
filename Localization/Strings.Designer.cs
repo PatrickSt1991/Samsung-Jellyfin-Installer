@@ -142,6 +142,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Download completed....
+        /// </summary>
+        public static string DownloadCompleted {
+            get {
+                return ResourceManager.GetString("DownloadCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download failed:.
         /// </summary>
         public static string DownloadFailed {
@@ -394,11 +403,29 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No device selected.
+        /// </summary>
+        public static string NoDeviceSelected {
+            get {
+                return ResourceManager.GetString("NoDeviceSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No devices found.
         /// </summary>
         public static string NoDevicesFound {
             get {
                 return ResourceManager.GetString("NoDevicesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No package to install.
+        /// </summary>
+        public static string NoPackageToInstall {
+            get {
+                return ResourceManager.GetString("NoPackageToInstall", resourceCulture);
             }
         }
         
@@ -561,6 +588,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string UpdatingCertificateProfile {
             get {
                 return ResourceManager.GetString("UpdatingCertificateProfile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using custom WGT file.
+        /// </summary>
+        public static string UsingCustomWGT {
+            get {
+                return ResourceManager.GetString("UsingCustomWGT", resourceCulture);
             }
         }
     }

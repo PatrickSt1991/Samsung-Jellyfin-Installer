@@ -28,8 +28,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private Asset _selectedAsset;
         private NetworkDevice? _selectedDevice;
         private bool _isLoading, _isLoadingDevices;
-        
-        private string _statusBar, _tizenProfilePath;
+
+        private string _statusBar;
+        private string _tizenProfilePath;
+        private string _downloadedPackagePath;
 
         public ObservableCollection<GitHubRelease> Releases
         {
@@ -109,9 +111,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             $"- Copyright (c) {DateTime.Now.Year} - MIT License - Patrick Stel";
 
 
-    public ICommand RefreshCommand { get; }
+        public ICommand RefreshCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
         public ICommand DownloadCommand { get; }
+        public ICommand InstallCommand { get; }
+        public ICommand DownloadAndInstallCommand { get; }
         public ICommand OpenSettingsCommand { get; }
 
         public MainWindowViewModel(
@@ -133,6 +137,20 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 async r => await DownloadReleaseAsync(r),
                 r => CanExecuteDownloadCommand(r)
             );
+
+            InstallCommand = new RelayCommand(
+                async () => await InstallPackageAsync(),
+                () => !string.IsNullOrEmpty(_downloadedPackagePath) &&
+                      File.Exists(_downloadedPackagePath) &&
+                      SelectedDevice != null &&
+                      !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress)
+            );
+
+            DownloadAndInstallCommand = new RelayCommand<GitHubRelease>(
+                async r => await DownloadAndInstallReleaseAsync(r),
+                r => CanExecuteDownloadCommand(r)
+            );
+
             OpenSettingsCommand = new RelayCommand(async () => OpenSettings());
 
             InitializeAsync();
@@ -161,48 +179,131 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private bool CanExecuteDownloadCommand(GitHubRelease release)
         {
-            return release != null
-                && !string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress);
+            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
+                File.Exists(Settings.Default.CustomWgtPath))
+            {
+                return !IsLoading && SelectedDevice != null &&
+                       !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
+            }
+
+            return !IsLoading &&
+                   release != null &&
+                   SelectedAsset != null &&
+                   SelectedDevice != null &&
+                   !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
         }
-        private async Task DownloadReleaseAsync(GitHubRelease release)
+        private async Task<string> DownloadReleaseAsync(GitHubRelease release)
         {
-            if (release?.PrimaryDownloadUrl == null) return;
+            if (release?.PrimaryDownloadUrl == null) return null;
 
             IsLoading = true;
-            string downloadPath = null;
             try
             {
                 StatusBar = "DownloadingPackage".Localized();
-                downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
+                string downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
+                _downloadedPackagePath = downloadPath;
 
-                if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
-                {
-                    var result = await _tizenInstaller.InstallPackageAsync(
-                        downloadPath,
-                        SelectedDevice.IpAddress,
-                        status => Application.Current.Dispatcher.Invoke(() => StatusBar = status));
-
-                    if (result.Success)
-                        await _dialogService.ShowMessageAsync($"{"InstallationSuccessfulOn".Localized()} {SelectedDevice.IpAddress}");
-                    else
-                        await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {result.ErrorMessage}");
-                }
+                StatusBar = "DownloadCompleted".Localized();
+                return downloadPath;
             }
             catch (Exception ex)
             {
                 await _dialogService.ShowErrorAsync($"{"DownloadFailed".Localized()} {ex.Message}");
+                return null;
             }
             finally
             {
-                try
-                {
-                    if (downloadPath != null && File.Exists(downloadPath))
-                        File.Delete(downloadPath);
-                }
-                catch { /* Ignore cleanup errors */ }
-
                 IsLoading = false;
             }
+        }
+        private async Task<bool> InstallPackageAsync(string packagePath = null)
+        {
+            string installPath = packagePath ?? _downloadedPackagePath;
+
+            if(string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
+            {
+                await _dialogService.ShowErrorAsync("NoPackageToInstall".Localized());
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
+            {
+                await _dialogService.ShowErrorAsync("NoDeviceSelected".Localized());
+                return false;
+            }
+
+            IsLoading = true;
+            try
+            {
+                StatusBar = "InstallingPackage".Localized();
+
+                var result = await _tizenInstaller.InstallPackageAsync(
+                    installPath,
+                    SelectedDevice.IpAddress,
+                    status => Application.Current.Dispatcher.Invoke(() => StatusBar = status));
+
+                if (result.Success)
+                {
+                    await _dialogService.ShowMessageAsync($"{"InstallationSuccessfulOn".Localized()} {SelectedDevice.IpAddress}");
+                    return true;
+                }
+                else
+                {
+                    await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {result.ErrorMessage}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+        private async Task DownloadAndInstallReleaseAsync(GitHubRelease release)
+        {
+            string installPath = null;
+            bool isCustomWgt = false;
+
+            if(!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
+                File.Exists(Settings.Default.CustomWgtPath))
+            {
+                installPath = Settings.Default.CustomWgtPath;
+                isCustomWgt = true;
+                StatusBar = "UsingCustomWGT".Localized();
+            }
+            else
+            {
+                installPath = await DownloadReleaseAsync(release);
+                if (string.IsNullOrEmpty(installPath))
+                    return;
+            }
+
+            bool packageInstalled = await InstallPackageAsync(installPath);
+
+            if (!isCustomWgt)
+                CleanupDownloadedPackage();
+
+            if (isCustomWgt && packageInstalled)
+            {
+                Settings.Default.CustomWgtPath = null;
+                Settings.Default.Save();
+            }
+        }
+        private void CleanupDownloadedPackage()
+        {
+            try
+            {
+                if (_downloadedPackagePath != null && File.Exists(_downloadedPackagePath))
+                {
+                    File.Delete(_downloadedPackagePath);
+                    _downloadedPackagePath = null;
+                }
+            }
+            catch { /* Ignore cleanup errors */ }
         }
         private async Task LoadReleasesAsync()
         {
