@@ -58,8 +58,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         _selectedCertificate = value.Name;
                         OnPropertyChanged(nameof(SelectedCertificate));
 
-                        var normalized = value.Name?.Replace(" (default)", "");
-                        Settings.Default.Certificate = normalized;
+                        //var normalized = value.Name?.Replace(" (default)", "");
+                        Settings.Default.Certificate = value.Name;
                         Settings.Default.Save();
                     }
                 }
@@ -75,8 +75,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _selectedCertificate = value;
                     OnPropertyChanged(nameof(SelectedCertificate));
 
-                    var normalized = value?.Replace(" (default)", "");
-                    Settings.Default.Certificate = normalized;
+                    //var normalized = value?.Replace(" (default)", "");
+                    Settings.Default.Certificate = value;
                     Settings.Default.Save();
 
                     SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
@@ -173,9 +173,14 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 foreach (var cert in certificates)
                     AvailableCertificates.Add(cert);
 
-                var savedCertName = Settings.Default.Certificate ?? "Jell2Sams";
-                var selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName)
-                                ?? AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams")
+                var savedCertName = Settings.Default.Certificate;
+                ExistingCertificates selectedCert = null;
+
+                if (!string.IsNullOrEmpty(savedCertName))
+                    selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName);
+
+                if (selectedCert == null)
+                    selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams (default)")
                                 ?? AvailableCertificates.FirstOrDefault();
 
                 if (selectedCert != null)
@@ -185,7 +190,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private List<ExistingCertificates> GetAvailableCertificates(string profilePath, string tizenCrypto)
         {
             var certificates = new List<ExistingCertificates>();
-            string defaultCert = "Jelly2Sams";
 
             if (!File.Exists(profilePath))
                 return certificates;
@@ -210,7 +214,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     string? keyPath = authorItem?.Attribute("key")?.Value;
                     string? encryptedPassword = authorItem.Attribute("password")?.Value;
                     DateTime? expireDate = null;
-                    string? status = null;
                     string? decryptedPassword = null;
 
                     if (!string.IsNullOrWhiteSpace(keyPath) && File.Exists(keyPath) && (!string.IsNullOrEmpty(encryptedPassword)))
@@ -228,7 +231,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         catch (Exception ex)
                         {
                             Debug.WriteLine($"Failed to read certificate '{keyPath}': {ex.Message}");
-                            status = "Unable to decrypt";
                         }
 
                         if(expireDate.HasValue && expireDate.Value.Date >= DateTime.Today)
@@ -242,22 +244,18 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         }
                     }
                 }
-
-                // Add default entry if not found in profiles
-                if (certificates.All(c => c.Name != defaultCert))
-                {
-                    certificates.Add(new ExistingCertificates
-                    {
-                        Name = defaultCert,
-                        File = null,
-                        ExpireDate = null
-                    });
-                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error reading profile XML: {ex.Message}");
             }
+
+            certificates.Add(new ExistingCertificates
+            {
+                Name = "Jelly2Sams (default)",
+                File = null, // null indicates this needs to be created
+                ExpireDate = null
+            });
 
             return certificates;
         }

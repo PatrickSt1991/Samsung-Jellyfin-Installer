@@ -1,4 +1,6 @@
-﻿namespace Samsung_Jellyfin_Installer.Services
+﻿using Samsung_Jellyfin_Installer.Models;
+
+namespace Samsung_Jellyfin_Installer.Services
 {
     public interface ITizenInstallerService
     {

@@ -69,10 +69,16 @@ public class NetworkService : INetworkService
         var localIps = GetRelevantLocalIPs();
         var lockObject = new object();
 
-        await Task.WhenAll(localIps.SelectMany(localIp =>
-        {
-            var networkPrefix = GetNetworkPrefix(localIp);
-            return Enumerable.Range(1, 254)
+        // Group by network prefix to avoid scanning the same network multiple times
+        var uniqueNetworks = localIps
+            .Select(ip => GetNetworkPrefix(ip))
+            .Distinct()
+            .ToList();
+
+        Debug.WriteLine($"Scanning {uniqueNetworks.Count} unique networks: {string.Join(", ", uniqueNetworks)}");
+
+        await Task.WhenAll(uniqueNetworks.SelectMany(networkPrefix =>
+            Enumerable.Range(1, 254)
                 .Select(i => $"{networkPrefix}.{i}")
                 .Select(async ip =>
                 {
@@ -81,21 +87,19 @@ public class NetworkService : INetworkService
                         using var cts = new CancellationTokenSource(scanTimeoutMs);
                         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                             cts.Token, cancellationToken);
-
                         if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
                         {
                             var manufacturer = await GetManufacturerFromIp(ip);
+                            Debug.WriteLine(manufacturer);
                             var device = new NetworkDevice
                             {
                                 IpAddress = ip,
                                 Manufacturer = manufacturer
                             };
-
                             lock (lockObject)
                             {
                                 foundDevices.Add(device);
                             }
-
                             if (manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) == true)
                             {
                                 device.DeviceName = await _tizenInstaller.GetTvNameAsync(ip);
@@ -103,13 +107,11 @@ public class NetworkService : INetworkService
                         }
                     }
                     catch { /* Ignore scan failures */ }
-                });
-        }));
+                })));
 
         Debug.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
         return foundDevices;
     }
-
     private IEnumerable<IPAddress> GetRelevantLocalIPs()
     {
         var baseIps = NetworkInterface.GetAllNetworkInterfaces()
@@ -119,26 +121,28 @@ public class NetworkService : INetworkService
             .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
             .Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork)
             .Where(ip => !IPAddress.IsLoopback(ip.Address))
-            .Select(ip => ip.Address)
-            .Distinct();
+            .Select(ip => ip.Address.ToString()); // Convert to string first
 
-        var additionalIps = Enumerable.Empty<IPAddress>();
-
+        var additionalIps = Enumerable.Empty<string>();
         if (Settings.Default.RememberCustomIP && !string.IsNullOrEmpty(Settings.Default.UserCustomIP))
         {
             try
             {
-                additionalIps = new[] { IPAddress.Parse(Settings.Default.UserCustomIP) };
+                Debug.WriteLine($"SEARCHME: {Settings.Default.UserCustomIP}");
+                // Validate it's a valid IP by parsing, then use the string
+                IPAddress.Parse(Settings.Default.UserCustomIP);
+                additionalIps = new[] { Settings.Default.UserCustomIP };
             }
             catch (FormatException)
             {
-                additionalIps = Enumerable.Empty<IPAddress>();
+                additionalIps = Enumerable.Empty<string>();
             }
         }
 
-        return baseIps.Concat(additionalIps).Distinct();
+        return baseIps.Concat(additionalIps)
+            .Distinct()
+            .Select(IPAddress.Parse); // Convert back to IPAddress
     }
-
     private async Task<bool> IsPortOpenAsync(string ip, int port, CancellationToken ct)
     {
         try

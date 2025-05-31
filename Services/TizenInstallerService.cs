@@ -64,13 +64,10 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return (await InstallMinimalCli(), TizenCliPath);
         }
-
         public async Task<bool> ConnectToTvAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
-            {
                 return false;
-            }
 
             try
             {
@@ -82,35 +79,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-
-        public async Task<string?> GetTvNameAsync(string tvIpAddress)
-        {
-            if (TizenSdbPath is null)
-            {
-                return null;
-            }
-
-            try
-            {
-                await ConnectToTvAsync(tvIpAddress);
-
-                var output = await RunCommandAsync(TizenSdbPath, "devices");
-                var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
-
-                return match.Success ? match.Groups["name"].Value.Trim() : null;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to get TV name: {ex}");
-            }
-            finally
-            {
-                await RunCommandAsync(TizenSdbPath, $"disconnect {tvIpAddress}");
-            }
-
-            return null;
-        }
-
         public async Task<string> DownloadPackageAsync(string downloadUrl)
         {
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
@@ -125,7 +93,6 @@ namespace Samsung_Jellyfin_Installer.Services
             await contentStream.CopyToAsync(fileStream);
             return localPath;
         }
-
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
             if (TizenCliPath is null || TizenSdbPath is null)
@@ -136,11 +103,8 @@ namespace Samsung_Jellyfin_Installer.Services
 
             try
             {
-                updateStatus("ConnectingToDevice".Localized());
-                await RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
-
                 updateStatus("RetrievingDeviceAddress".Localized());
-                string tvName = await GetTvNameAsync();
+                string tvName = await GetTvNameAsync(tvIpAddress);
 
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
@@ -148,34 +112,43 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                
+
+
+
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
                     {
-                        SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
+                        string selectedCertificate = Settings.Default.Certificate;
 
-                        if (!string.IsNullOrEmpty(auth.access_token))
+                        if(string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)")
                         {
+                            SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
+                            if (!string.IsNullOrEmpty(auth.access_token))
+                            {
 
-                            updateStatus("SuccessAuthCode".Localized());
+                                updateStatus("SuccessAuthCode".Localized());
 
-                            var certificateService = new TizenCertificateService(_httpClient);
+                                var certificateService = new TizenCertificateService(_httpClient);
+                                (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
+                                    duid: tvName,
+                                    accessToken: auth.access_token,
+                                    userId: auth.userId,
+                                    outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
+                                    updateStatus
+                                );
 
-                            (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
-                                duid: tvName,
-                                accessToken: auth.access_token,
-                                userId: auth.userId,
-                                outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
-                                updateStatus
-                            );
-
-                            PackageCertificate = "Jelly2Sams";
-                            UpdateCertificateManager(p12Location, p12Password, updateStatus);
+                                PackageCertificate = "Jelly2Sams";
+                                UpdateCertificateManager(p12Location, p12Password, updateStatus);
+                            }
+                            else
+                            {
+                                updateStatus("FailedAuthCode".Localized());
+                            }
                         }
                         else
                         {
-                            updateStatus("FailedAuthCode".Localized());
+                            PackageCertificate = selectedCertificate;
                         }
                     }
                     catch (Exception ex)
@@ -190,9 +163,17 @@ namespace Samsung_Jellyfin_Installer.Services
                     UpdateProfileCertificatePaths();
                     PackageCertificate = "custom";
                 }
-                updateStatus("PackagingWgtWithCertificate".Localized());
+                
 
+
+                updateStatus("PackagingWgtWithCertificate".Localized());
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
+
+                if (Settings.Default.RemoveOld)
+                {
+                    updateStatus("Removing old Jellyfin app");
+                    await RemoveJellyfinAppByIdAsync(tvName, updateStatus);
+                }
 
                 updateStatus("InstallingPackage".Localized());
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
@@ -216,17 +197,26 @@ namespace Samsung_Jellyfin_Installer.Services
                 await RunCommandAsync(TizenSdbPath, $"disconnect {tvIpAddress}");
             }
         }
-        private async Task<string> GetTvNameAsync()
+        public async Task<string> GetTvNameAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
-            {
                 return string.Empty;
+
+            try
+            {
+                await ConnectToTvAsync(tvIpAddress);
+
+                var output = await RunCommandAsync(TizenSdbPath, "devices");
+                var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
+
+                return match.Success ? match.Groups["name"].Value.Trim() : null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to get TV name: {ex}");
             }
 
-            var output = await RunCommandAsync(TizenSdbPath, "devices");
-            var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
-
-            return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
+            return null;
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
@@ -445,18 +435,35 @@ namespace Samsung_Jellyfin_Installer.Services
                 catch { /* Ignore cleanup errors */ }
             }
         }
-    }
-
-    public class InstallResult
-    {
-        public bool Success { get; init; }
-        public string ErrorMessage { get; init; }
-
-        public static InstallResult SuccessResult() => new InstallResult { Success = true };
-        public static InstallResult FailureResult(string error) => new InstallResult
+        public async Task RemoveJellyfinAppByIdAsync(string tvName, Action<string> updateStatus)
         {
-            Success = false,
-            ErrorMessage = error
-        };
+            try
+            {
+                string output = await RunCommandAsync(TizenSdbPath, "shell applist");
+                var jellyfinPattern = @"'Jellyfin'\s+'([^']+)'";
+                var match = Regex.Match(output, jellyfinPattern, RegexOptions.IgnoreCase);
+
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    string appId = match.Groups[1].Value;
+
+                    if (!string.IsNullOrEmpty(appId))
+                    {
+                        try
+                        {
+                            await RunCommandAsync(TizenSdbPath, $"uninstall -t {tvName} -p {appId}");
+                        }
+                        catch (Exception ex)
+                        {
+                            updateStatus($"Output: {ex.Message}".Localized());
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                updateStatus($"Output: {ex.Message}".Localized());
+            }
+        }
     }
 }

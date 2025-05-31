@@ -9,11 +9,9 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Samsung_Jellyfin_Installer.Converters;
-using Samsung_Jellyfin_Installer.Localization;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
-using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
