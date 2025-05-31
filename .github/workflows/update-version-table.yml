@@ -29,22 +29,29 @@ jobs:
               beta: beta ? { tag: beta.tag_name, url: beta.html_url } : null,
             };
 
+      - name: Set version info
+        run: |
+          echo "STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stable.tag }}" >> $GITHUB_ENV
+          echo "STABLE_URL=${{ fromJson(steps.releases.outputs.result).stable.url }}" >> $GITHUB_ENV
+          echo "BETA_TAG=${{ fromJson(steps.releases.outputs.result).beta.tag }}" >> $GITHUB_ENV
+          echo "BETA_URL=${{ fromJson(steps.releases.outputs.result).beta.url }}" >> $GITHUB_ENV
+
       - name: Update README version table
         run: |
-          STABLE_VERSION="${{ fromJson(steps.releases.outputs.result).stable.tag }}"
-          STABLE_URL="${{ fromJson(steps.releases.outputs.result).stable.url }}"
-          BETA_VERSION="${{ fromJson(steps.releases.outputs.result).beta.tag }}"
-          BETA_URL="${{ fromJson(steps.releases.outputs.result).beta.url }}"
-
           VERSION_TABLE=$(cat <<EOF
 | Channel       | Version       | Notes                         |
 |---------------|---------------|-------------------------------|
-| **Stable**    | [\`$STABLE_VERSION\`]($STABLE_URL) | Recommended for most users    |
-| **Beta**      | [\`$BETA_VERSION\`]($BETA_URL)     | Includes new features, may be less stable |
+| **Stable**    | [\`${STABLE_TAG}\`](${STABLE_URL}) | Recommended for most users    |
+| **Beta**      | [\`${BETA_TAG}\`](${BETA_URL})     | Includes new features, may be less stable |
 EOF
           )
 
-          awk '/<!-- versions:start -->/{print;print VERSION_TABLE;skip=1;next} /<!-- versions:end -->/{skip=0} !skip' VERSION_TABLE="$VERSION_TABLE" README.md > README.tmp
+          awk -v table="$VERSION_TABLE" '
+            /<!-- versions:start -->/ { print; print table; skip=1; next }
+            /<!-- versions:end -->/ { skip=0 }
+            !skip
+          ' README.md > README.tmp
+
           mv README.tmp README.md
 
       - name: Commit changes
