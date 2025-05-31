@@ -322,6 +322,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Other.
+        /// </summary>
+        public static string lbl_Other {
+            get {
+                return ResourceManager.GetString("lbl_Other", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Release.
         /// </summary>
         public static string lbl_Release {

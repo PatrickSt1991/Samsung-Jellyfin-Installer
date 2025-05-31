@@ -404,7 +404,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (InstallCLI != MessageBoxResult.Yes)
                     return "User declined to install Tizen CLI.";
 
-                installerPath = await DownloadPackageAsync(Config.Default.TizenCliUrl);
+                installerPath = await DownloadPackageAsync(Settings.Default.TizenCliUrl);
                 string installPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Programs",

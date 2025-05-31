@@ -124,11 +124,11 @@ public class NetworkService : INetworkService
 
         var additionalIps = Enumerable.Empty<IPAddress>();
 
-        if (Config.Default.RememberCustomIP && !string.IsNullOrEmpty(Config.Default.UserCustomIP))
+        if (Settings.Default.RememberCustomIP && !string.IsNullOrEmpty(Settings.Default.UserCustomIP))
         {
             try
             {
-                additionalIps = new[] { IPAddress.Parse(Config.Default.UserCustomIP) };
+                additionalIps = new[] { IPAddress.Parse(Settings.Default.UserCustomIP) };
             }
             catch (FormatException)
             {

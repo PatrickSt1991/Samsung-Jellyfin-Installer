@@ -105,7 +105,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             set => SetField(ref _statusBar, value);
         }
         public string FooterText =>
-            $"{Config.Default.AppVersion} " +
+            $"{Settings.Default.AppVersion} " +
             $"- Copyright (c) {DateTime.Now.Year} - MIT License - Patrick Stel";
 
 
@@ -212,7 +212,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             try
             {
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-                var response = await _httpClient.GetStringAsync(Config.Default.ReleasesUrl);
+                var response = await _httpClient.GetStringAsync(Settings.Default.ReleasesUrl);
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response)?
                     .OrderByDescending(r => r.PublishedAt)
@@ -271,7 +271,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 AvailableDevices.Add(new NetworkDevice
                 {
-                    IpAddress = "Other",
+                    IpAddress = "lbl_Other".Localized(),
                     Manufacturer = null,
                     DeviceName = "IpNotListed".Localized()
                 });
@@ -293,8 +293,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             if (device != null)
             {
-                Config.Default.UserCustomIP = device.IpAddress;
-                Config.Default.Save();
+                Settings.Default.UserCustomIP = device.IpAddress;
+                Settings.Default.Save();
 
                 SelectedDevice = device;
 

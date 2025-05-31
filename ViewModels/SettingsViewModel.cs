@@ -37,8 +37,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     {
                         LocalizedStrings.Instance.ChangeLanguage(value.Code);
 
-                        Config.Default.Language = value.Code;
-                        Config.Default.Save();
+                        Settings.Default.Language = value.Code;
+                        Settings.Default.Save();
                     }
                 }
             }
@@ -59,8 +59,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         OnPropertyChanged(nameof(SelectedCertificate));
 
                         var normalized = value.Name?.Replace(" (default)", "");
-                        Config.Default.Certificate = normalized;
-                        Config.Default.Save();
+                        Settings.Default.Certificate = normalized;
+                        Settings.Default.Save();
                     }
                 }
             }
@@ -76,8 +76,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     OnPropertyChanged(nameof(SelectedCertificate));
 
                     var normalized = value?.Replace(" (default)", "");
-                    Config.Default.Certificate = normalized;
-                    Config.Default.Save();
+                    Settings.Default.Certificate = normalized;
+                    Settings.Default.Save();
 
                     SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
                 }
@@ -92,8 +92,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 {
                     _customWgtPath = value;
                     OnPropertyChanged(nameof(CustomWgtPath));
-                    Config.Default.CustomWgtPath = value;
-                    Config.Default.Save();
+                    Settings.Default.CustomWgtPath = value;
+                    Settings.Default.Save();
                 }
             }
         }
@@ -107,8 +107,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _rememberCustomIP = value;
                     OnPropertyChanged(nameof(RememberCustomIP));
 
-                    Config.Default.RememberCustomIP = value;
-                    Config.Default.Save();
+                    Settings.Default.RememberCustomIP = value;
+                    Settings.Default.Save();
                 }
             }
         }
@@ -122,8 +122,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _deletePreviousInstall = value;
                     OnPropertyChanged(nameof(DeletePreviousInstall));
 
-                    Config.Default.DeletePreviousInstall = value;
-                    Config.Default.Save();
+                    Settings.Default.DeletePreviousInstall = value;
+                    Settings.Default.Save();
                 }
             }
         }
@@ -137,12 +137,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             BrowseWgtCommand = new RelayCommand(BrowseWgtFile);
             Task.Run(async () => await InitializeCertificates(tizenService));
 
-            var savedLangCode = Config.Default.Language ?? "en";
+            var savedLangCode = Settings.Default.Language ?? "en";
             SelectedLanguage = AvailableLanguages.FirstOrDefault(lang => lang.Code == savedLangCode)
                               ?? AvailableLanguages.FirstOrDefault(lang => lang.Code == "en");
-            CustomWgtPath = Config.Default.CustomWgtPath ?? "";
-            RememberCustomIP = Config.Default.RememberCustomIP;
-            DeletePreviousInstall = Config.Default.DeletePreviousInstall;
+            CustomWgtPath = Settings.Default.CustomWgtPath ?? "";
+            RememberCustomIP = Settings.Default.RememberCustomIP;
+            DeletePreviousInstall = Settings.Default.DeletePreviousInstall;
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
@@ -173,7 +173,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 foreach (var cert in certificates)
                     AvailableCertificates.Add(cert);
 
-                var savedCertName = Config.Default.Certificate ?? "Jell2Sams";
+                var savedCertName = Settings.Default.Certificate ?? "Jell2Sams";
                 var selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName)
                                 ?? AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams")
                                 ?? AvailableCertificates.FirstOrDefault();

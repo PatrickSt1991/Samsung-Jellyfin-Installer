@@ -282,4 +282,7 @@
   <data name="lbl_Certifcate" xml:space="preserve">
     <value>Certificate</value>
   </data>
+  <data name="lbl_Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
 </root>

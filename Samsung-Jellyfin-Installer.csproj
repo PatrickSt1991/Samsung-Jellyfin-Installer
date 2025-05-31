@@ -49,10 +49,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Config.Designer.cs">
+    <Compile Update="Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
-      <DependentUpon>Config.settings</DependentUpon>
+      <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Update="Localization\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -77,9 +77,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Config.settings">
+    <None Update="Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Config.Designer.cs</LastGenOutput>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 

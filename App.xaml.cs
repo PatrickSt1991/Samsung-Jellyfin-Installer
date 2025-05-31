@@ -47,7 +47,12 @@ namespace Samsung_Jellyfin_Installer
         {   
             base.OnStartup(e);
 
-            string savedLanguage = Config.Default.Language ?? "en";
+            string savedLanguage = Settings.Default.Language ?? "en";
+
+            var configPath = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+            Debug.WriteLine($"Config File Loc: {configPath}");
+
+
             LocalizedStrings.Instance.ChangeLanguage(savedLanguage);
 
             try

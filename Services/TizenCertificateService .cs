@@ -173,7 +173,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Config.Default.AuthorEndpoint);
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.AuthorEndpoint);
 
             var content = new MultipartFormDataContent
         {
@@ -193,7 +193,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<byte[]> PostCsrV1Async(string accessToken, string userId, byte[] csrBytes)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Config.Default.DistributorsEndpoint_V1);
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
 
             var content = new MultipartFormDataContent
         {
@@ -215,7 +215,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<byte[]> PostCsrV2Async(string accessToken, string userId, byte[] csrBytes, string csrFilePath, string outputPath)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Config.Default.DistributorsEndpoint_V2);
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V2);
 
             var content = new MultipartFormDataContent
         {
