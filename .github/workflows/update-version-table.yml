@@ -47,18 +47,12 @@ jobs:
 
       - name: Generate version table markdown
         run: |
-          cat <<'EOF' > version_table.md
-          | Channel    | Version                                | Notes                                      |
-          |------------|----------------------------------------|--------------------------------------------|
-          | **Stable** | [`$STABLE_TAG`]($STABLE_URL)         | Recommended for most users                 |
-          | **Beta**   | [`$BETA_TAG`]($BETA_URL)             | Includes new features, may be less stable  |
-          EOF
-          
-          # Replace variables in the markdown file
-          sed -i "s/\$STABLE_TAG/$STABLE_TAG/g" version_table.md
-          sed -i "s/\$STABLE_URL/$STABLE_URL/g" version_table.md
-          sed -i "s/\$BETA_TAG/$BETA_TAG/g" version_table.md
-          sed -i "s|\$BETA_URL|$BETA_URL|g" version_table.md
+          cat <<EOF > version_table.md
+| Channel    | Version                                | Notes                                      |
+|------------|----------------------------------------|--------------------------------------------|
+| **Stable** | [\`$STABLE_TAG\`]($STABLE_URL)         | Recommended for most users                 |
+| **Beta**   | [\`$BETA_TAG\`]($BETA_URL)             | Includes new features, may be less stable  |
+EOF
 
       - name: Inject version table into README
         run: |
