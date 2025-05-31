@@ -9,7 +9,12 @@ Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-build
 ## 📦 Current Versions
 
 <!-- versions:start -->
-_TODO: Version table will be auto-generated here_
+
+| Channel    | Version                                | Notes                                      |
+|------------|----------------------------------------|--------------------------------------------|
+| **Stable** | [`v1.5.7`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.7)         | Recommended for most users                 |
+| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta)             | Includes new features, may be less stable  |
+
 <!-- versions:end -->
 
 ---
