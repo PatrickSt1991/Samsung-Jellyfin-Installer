@@ -2,7 +2,7 @@ name: Update Version Table in README
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */6 * * *"  # Every 6 hours
   workflow_dispatch:
 
 jobs:
@@ -25,36 +25,44 @@ jobs:
             const beta = releases.data.find(r => r.prerelease && !r.draft);
 
             return {
-              stable: stable ? { tag: stable.tag_name, url: stable.html_url } : null,
-              beta: beta ? { tag: beta.tag_name, url: beta.html_url } : null,
+              stableTag: stable?.tag_name ?? "N/A",
+              stableUrl: stable?.html_url ?? "#",
+              betaTag: beta?.tag_name ?? "N/A",
+              betaUrl: beta?.html_url ?? "#"
             };
 
-      - name: Set version info
+      - name: Set version info as env vars
         run: |
-          echo "STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stable.tag }}" >> $GITHUB_ENV
-          echo "STABLE_URL=${{ fromJson(steps.releases.outputs.result).stable.url }}" >> $GITHUB_ENV
-          echo "BETA_TAG=${{ fromJson(steps.releases.outputs.result).beta.tag }}" >> $GITHUB_ENV
-          echo "BETA_URL=${{ fromJson(steps.releases.outputs.result).beta.url }}" >> $GITHUB_ENV
+          echo "STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stableTag }}" >> $GITHUB_ENV
+          echo "STABLE_URL=${{ fromJson(steps.releases.outputs.result).stableUrl }}" >> $GITHUB_ENV
+          echo "BETA_TAG=${{ fromJson(steps.releases.outputs.result).betaTag }}" >> $GITHUB_ENV
+          echo "BETA_URL=${{ fromJson(steps.releases.outputs.result).betaUrl }}" >> $GITHUB_ENV
 
-      - name: Update README version table
+      - name: Update README with version table
         run: |
-          VERSION_TABLE=$(cat <<EOF
+          TEMP_README=$(mktemp)
+
+          {
+            cat <<EOF
+<!-- versions:start -->
 | Channel       | Version       | Notes                         |
 |---------------|---------------|-------------------------------|
 | **Stable**    | [\`${STABLE_TAG}\`](${STABLE_URL}) | Recommended for most users    |
 | **Beta**      | [\`${BETA_TAG}\`](${BETA_URL})     | Includes new features, may be less stable |
+<!-- versions:end -->
 EOF
-          )
+          } > version_table.md
 
-          awk -v table="$VERSION_TABLE" '
-            /<!-- versions:start -->/ { print; print table; skip=1; next }
-            /<!-- versions:end -->/ { skip=0 }
-            !skip
-          ' README.md > README.tmp
+          awk '
+            BEGIN { in_block=0 }
+            /<!-- versions:start -->/ { print; while (getline line < "version_table.md") print line; in_block=1; next }
+            /<!-- versions:end -->/ { in_block=0; next }
+            !in_block
+          ' README.md > "$TEMP_README"
 
-          mv README.tmp README.md
+          mv "$TEMP_README" README.md
 
-      - name: Commit changes
+      - name: Commit and push if changed
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
