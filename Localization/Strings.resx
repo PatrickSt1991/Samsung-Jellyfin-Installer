@@ -297,4 +297,10 @@
   <data name="UsingCustomWGT" xml:space="preserve">
     <value>Using custom WGT file</value>
   </data>
+  <data name="FailedRemoveOld" xml:space="preserve">
+    <value>Failed to remove old app version</value>
+  </data>
+  <data name="FailedRemoveOldExtra" xml:space="preserve">
+    <value>Please remove the old Jellyfin app by hand from the TV</value>
+  </data>
 </root>

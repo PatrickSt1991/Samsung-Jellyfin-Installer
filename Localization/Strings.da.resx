@@ -297,4 +297,10 @@
   <data name="UsingCustomWGT" xml:space="preserve">
     <value />
   </data>
+  <data name="FailedRemoveOld" xml:space="preserve">
+    <value>Kunne ikke fjerne den gamle appversion</value>
+  </data>
+  <data name="FailedRemoveOldExtra" xml:space="preserve">
+    <value>Fjern venligst den gamle Jellyfin-app manuelt fra tv'et</value>
+  </data>
 </root>

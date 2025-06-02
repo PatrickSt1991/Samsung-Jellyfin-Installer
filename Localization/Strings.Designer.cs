@@ -187,6 +187,24 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to remove old app version.
+        /// </summary>
+        public static string FailedRemoveOld {
+            get {
+                return ResourceManager.GetString("FailedRemoveOld", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please remove the old Jellyfin app by hand from the TV.
+        /// </summary>
+        public static string FailedRemoveOldExtra {
+            get {
+                return ResourceManager.GetString("FailedRemoveOldExtra", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Generating keypair.
         /// </summary>
         public static string GenKeyPair {
