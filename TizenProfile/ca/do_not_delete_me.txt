@@ -1,0 +1,3 @@
+﻿Do not delete me!
+
+This folder will be used to place the root certificates comming from the .jar files!

@@ -1,9 +1,12 @@
+using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Tls;
 using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
-using System.Data;
+using Samsung_Jellyfin_Installer.Views;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -16,22 +19,24 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
+            "C:\\tizen-studio",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "TizenStudioCli"),
-            "C:\\tizen-studio",
             Environment.GetEnvironmentVariable("TIZEN_STUDIO_HOME") ?? string.Empty
         ];
 
         private readonly HttpClient _httpClient;
         private readonly string _downloadDirectory;
+        private readonly string _installPath;
 
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
         public string? TizenDataPath { get; private set; }
         public string? TizenCypto { get; private set; }
+        public string? TizenPluginPath { get; private set; }
         public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
@@ -43,6 +48,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 "SamsungJellyfinInstaller",
                 "Downloads");
 
+            _installPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Programs",
+                        "TizenStudioCli");
+
             Directory.CreateDirectory(_downloadDirectory);
             string? tizenRoot = FindTizenRoot();
 
@@ -51,6 +61,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
                 TizenCypto = Path.Combine(tizenRoot, "tools", "certificate-encryptor","wincrypt.exe");
+                TizenPluginPath = Path.Combine(tizenRoot, "ide", "plugins");
 
                 string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
@@ -79,6 +90,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
+
         public async Task<string> DownloadPackageAsync(string downloadUrl)
         {
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
@@ -109,10 +121,14 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
+                string tvDuid = await GetTvDuidAsync();
+
+                if(string.IsNullOrEmpty(tvDuid))
+                    return InstallResult.FailureResult(Strings.TvDuidNotFound);
 
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                
+
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -223,6 +239,19 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
+
+        private async Task<string> GetTvDuidAsync()
+        {
+            if (TizenSdbPath is null)
+                return string.Empty;
+
+            var output = await RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+            if (!string.IsNullOrWhiteSpace(output))
+                return output.Trim();
+
+            output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
+            return output?.Trim() ?? string.Empty;
+        }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
             updateStatus("SettingCertificateManager".Localized());
@@ -253,6 +282,12 @@ namespace Samsung_Jellyfin_Installer.Services
             );
 
             XDocument doc;
+
+
+            string directoryPath = Path.GetDirectoryName(TizenDataPath);
+            if (!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);;
+
             if (!File.Exists(TizenDataPath))
             {
                 // Create new XML file
@@ -387,17 +422,22 @@ namespace Samsung_Jellyfin_Installer.Services
         private async Task<string> InstallMinimalCli()
         {
             string installerPath = null;
+            InstallingWindow installingWindow = null;
+
             try
             {
-                var InstallCLI = MessageBox.Show("Tizen CLI 5.5 is required to continue.\n\n" +
-                                    "We will now download and install Tizen CLI 5.5.\n" +
+                var InstallCLI = MessageBox.Show("Tizen CLI & Certificate manager are required to continue.\n\n" +
+                                    "We will now download and install Tizen CLI followed by Certificate manager .\n" +
                                     "This may take a few minutes. Please be patient during the installation process.",
-                                    "Tizen CLI 5.5 Required",
+                                    "Tizen CLI & Certificate manager required",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
 
                 if (InstallCLI != MessageBoxResult.Yes)
                     return "User declined to install Tizen CLI.";
+
+                installingWindow = new InstallingWindow();
+                installingWindow.Show();
 
                 installerPath = await DownloadPackageAsync(Settings.Default.TizenCliUrl);
                 string installPath = Path.Combine(
@@ -432,6 +472,8 @@ namespace Samsung_Jellyfin_Installer.Services
             }
             finally
             {
+                installingWindow?.Close();
+
                 try
                 {
                     if (installerPath != null && File.Exists(installerPath))
@@ -440,10 +482,108 @@ namespace Samsung_Jellyfin_Installer.Services
                 catch { /* Ignore cleanup errors */ }
             }
         }
+
+        public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath)
+        {
+            // Check if already installed
+            string[] possiblePaths = {
+                Path.Combine(installPath, "tools", "certificate-manager", "certificate-manager.exe"),
+                Path.Combine(installPath, "certificate-manager", "certificate-manager.exe")
+            };
+
+            if (possiblePaths.Any(File.Exists))
+                return true;
+
+            string packageManagerPath = Path.Combine(installPath, "package-manager", "package-manager-cli.exe");
+            if (!File.Exists(packageManagerPath))
+            {
+                MessageBox.Show("Package manager CLI not found. Please ensure Tizen Studio is properly installed.");
+                return false;
+            }
+
+            try
+            {
+                // First install Certificate-Manager
+                var certManagerProcessInfo = new ProcessStartInfo
+                {
+                    FileName = packageManagerPath,
+                    Arguments = "install \"Certificate-Manager\" --accept-license",
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WorkingDirectory = installPath
+                };
+
+
+                using (var certManagerProcess = Process.Start(certManagerProcessInfo))
+                {
+                    if (certManagerProcess == null)
+                    {
+                        MessageBox.Show("Failed to start Certificate-Manager installation process.");
+                        return false;
+                    }
+
+                    await Task.Run(() => certManagerProcess.WaitForExit());
+
+                    if (certManagerProcess.ExitCode != 0)
+                    {
+                        MessageBox.Show($"Certificate-Manager installation failed with exit code {certManagerProcess.ExitCode}");
+                        return false;
+                    }
+                }
+
+                // Then install cert-add-on package
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = packageManagerPath,
+                    Arguments = "install \"cert-add-on\" --accept-license",
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WorkingDirectory = installPath
+                };
+
+                using (var process = Process.Start(processInfo))
+                {
+                    if (process == null)
+                    {
+                        MessageBox.Show("Failed to start package manager installation process.");
+                        return false;
+                    }
+
+                    string output = "";
+                    string error = "";
+
+                    await process.WaitForExitAsync();
+
+                    if (process.ExitCode == 0)
+                    {
+                        // Verify installation
+                        if (possiblePaths.Any(File.Exists))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Installation completed but certificate manager executable not found.");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"cert-add-on installation failed with exit code {process.ExitCode}");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Samsung Certificate Extension installation failed: {ex.Message}");
+                return false;
+            }
+        }
+    }
         private async Task<string> SearchJellyfinApp()
         {
             string appId = null;
-
             string output = await RunCommandAsync(TizenSdbPath, "sdb shell 0 vd_applist | findstr Jellyfin");
             var jellyfinPattern = @"'Jellyfin'\s+'([^']+)'";
             var match = Regex.Match(output, jellyfinPattern, RegexOptions.IgnoreCase);

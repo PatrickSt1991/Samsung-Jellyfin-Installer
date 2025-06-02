@@ -9,7 +9,10 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Samsung_Jellyfin_Installer.Converters;
+using Samsung_Jellyfin_Installer.Localization;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 
@@ -19,10 +22,12 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private readonly HttpClient _httpClient = httpClient;
 
-
-        public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus)
+        public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus, string jarPath)
         {
             updateStatus("OutputDir".Localized());
+            var cipherUtil = new CipherUtil();
+            await cipherUtil.ExtractPasswordAsync(jarPath);
+
             Directory.CreateDirectory(outputPath);
 
             updateStatus("SettingsCaCerts".Localized());
@@ -30,8 +35,8 @@ namespace Samsung_Jellyfin_Installer.Services
             Directory.CreateDirectory(caPath);
 
             updateStatus("GenPassword".Localized());
-            string p12Plain = CipherUtil.GenerateRandomPassword();
-            string p12Encrypted = CipherUtil.GetEncryptedString(p12Plain);
+            string p12Plain = cipherUtil.GenerateRandomPassword();
+            string p12Encrypted = cipherUtil.GetEncryptedString(p12Plain);
 
             var passwordFilePath = Path.Combine(outputPath, "password.txt");
             await File.WriteAllTextAsync(passwordFilePath, p12Plain);
@@ -66,8 +71,9 @@ namespace Samsung_Jellyfin_Installer.Services
             await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
             updateStatus("CreateNewCertificates".Localized());
-            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "author_ca.cer");
-            await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "public2.crt");
+            await ExtractRootCertificateAsync(jarPath);
+            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
+            await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
 
             updateStatus("MovingP12Files".Localized());
             string p12Location = MoveTizenCertificateFiles();
@@ -234,7 +240,41 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return await response.Content.ReadAsByteArrayAsync();
         }
+        public async Task ExtractRootCertificateAsync(string jarPath)
+        {
+            var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
+            foreach(var jar in jarFiles)
+            {
+                var fileName = Path.GetFileName(jar);
+                
+                if(fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
+                {
+                    using var fileStream = File.OpenRead(jar);
+                    using var msJar = new MemoryStream();
+                    await fileStream.CopyToAsync(msJar);
+                    msJar.Position = 0;
+
+                    using var jarZip = new ZipArchive(msJar, ZipArchiveMode.Read);
+                    foreach (var member in jarZip.Entries)
+                    {
+                        string memberFileName = Path.GetFileName(member.FullName);
+
+                        if (memberFileName == ("vd_tizen_dev_author_ca.cer") || memberFileName == "vd_tizen_dev_public2.crt")
+                        {
+                            var targetPath = Path.Combine("TizenProfile", "ca", memberFileName);
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+
+                            using var entryStream = member.Open();
+                            using var fileStreamOut = File.Create(targetPath);
+                            await entryStream.CopyToAsync(fileStreamOut);
+                        }
+                    }
+                }
+            }
+
+            await Task.CompletedTask;
+        }
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
         {
             string caCertFile = Path.Combine(caPath, caFile);

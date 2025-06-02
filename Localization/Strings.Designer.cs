@@ -529,6 +529,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Extracting required root certificates....
+        /// </summary>
+        public static string RootCertificate {
+            get {
+                return ResourceManager.GetString("RootCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Scanning network for Samsung TV....
         /// </summary>
         public static string ScanningNetwork {
@@ -592,7 +601,16 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TV Name could not be found....
+        ///   Looks up a localized string similar to TV duid could not be found....
+        /// </summary>
+        public static string TvDuidNotFound {
+            get {
+                return ResourceManager.GetString("TvDuidNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TV name could not be found....
         /// </summary>
         public static string TvNameNotFound {
             get {

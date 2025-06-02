@@ -144,8 +144,8 @@
   <data name="RetrievingDeviceAddress" xml:space="preserve">
     <value>Henter enhedsadresse...</value>
   </data>
-  <data name="TvNameNotFound" xml:space="preserve">
-    <value>TV navn kunne ikke findes...</value>
+  <data name="TvDuidNotFound" xml:space="preserve">
+    <value>TV duid kunne ikke findes...</value>
   </data>
   <data name="UpdatingCertificateProfile" xml:space="preserve">
     <value>Opdaterer certifikatprofil...</value>
@@ -302,5 +302,8 @@
   </data>
   <data name="FailedRemoveOldExtra" xml:space="preserve">
     <value>Fjern venligst den gamle Jellyfin-app manuelt fra tv'et</value>
+  </data>
+  <data name="TvNameNotFound" xml:space="preserve">
+    <value>TV navnet kunne ikke findes...</value>
   </data>
 </root>
