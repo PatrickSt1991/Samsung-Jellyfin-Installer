@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Samsung_Jellyfin_Installer"
-        xmlns:loc="clr-namespace:Samsung_Jellyfin_Installer.Converters"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:viewmodels="clr-namespace:Samsung_Jellyfin_Installer.ViewModels"
         xmlns:l = "clr-namespace:Samsung_Jellyfin_Installer.Localization"
@@ -20,88 +19,21 @@
             <TextBlock Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center">Jellyfin Installer for Samsung (Tizen)</TextBlock>
         </materialDesign:Card>
 
-        <Label Content="{loc:Localize lbl_Release}" HorizontalAlignment="Left" Margin="14,75,0,0" VerticalAlignment="Top" Width="120" Height="25"/>
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
-                  ItemsSource="{Binding Releases}" 
-                  SelectedItem="{Binding SelectedRelease}" 
-                  DisplayMemberPath="Name" 
-                  materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" 
-                  materialDesign:HintAssist.Hint="{loc:Localize ChooseRelease}"
-                  HorizontalAlignment="Left" 
-                  Margin="139,75,0,0" 
-                  VerticalAlignment="Top" 
-                  Width="300"/>
+        <Label Content="Release" HorizontalAlignment="Left" Margin="14,75,0,0" VerticalAlignment="Top" Width="85" Height="25"/>
+        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding Releases}" SelectedItem="{Binding SelectedRelease}" DisplayMemberPath="Name" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" HorizontalAlignment="Left" Margin="95,75,0,0" VerticalAlignment="Top" Width="377"/>
 
-        <Label Content="{loc:Localize lbl_Version}" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="120" Height="25"/>
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
-                  ItemsSource="{Binding AvailableAssets}" 
-                  SelectedItem="{Binding SelectedAsset}" 
-                  DisplayMemberPath="DisplayText" 
-                  materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" 
-                  materialDesign:HintAssist.Hint="{loc:Localize ChooseVersion}"
-                  Width="300" 
-                  HorizontalAlignment="Left" 
-                  Margin="139,125,0,0" 
-                  VerticalAlignment="Top"/>
+        <Label Content="Version" HorizontalAlignment="Left" Margin="14,125,0,0" VerticalAlignment="Top"  Width="85" Height="25"/>
+        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableAssets}" SelectedItem="{Binding SelectedAsset}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="377" HorizontalAlignment="Left" Margin="95,125,0,0" VerticalAlignment="Top"/>
 
-        <Label Content="{loc:Localize lbl_SelectTv}" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="120" Height="25" />
-        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" 
-                  ItemsSource="{Binding AvailableDevices}" 
-                  SelectedItem="{Binding SelectedDevice}" 
-                  DisplayMemberPath="DisplayText" 
-                  materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" 
-                  materialDesign:HintAssist.Hint="{loc:Localize ChooseTV}"
-                  Width="300" 
-                  HorizontalAlignment="Left" 
-                  Margin="139,175,0,0" 
-                  VerticalAlignment="Top" 
-                  IsEnabled="{Binding EnableDevicesInput}" />
-        <Button 
-            Command="{Binding RefreshDevicesCommand}" 
-            Style="{DynamicResource MaterialDesignFloatingActionLightButton}" 
-            Height="25" 
-            Width="25" 
-            HorizontalAlignment="Left" 
-            Padding="0" 
-            Margin="447,175,0,0" 
-            VerticalAlignment="Top" 
-            IsEnabled="{Binding EnableDevicesInput}" 
-            Background="#FF000B25" 
-            BorderBrush="#FF000B25" 
-            Foreground="White">
-            <materialDesign:PackIcon Kind="Refresh" />
-        </Button>
-
-        <Button 
-            Command="{Binding OpenSettingsCommand}" 
-            Style="{DynamicResource MaterialDesignFloatingActionLightButton}" 
-            Height="26" 
-            Width="25" 
-            HorizontalAlignment="Left" 
-            Padding="0" 
-            Margin="447,268,0,0"  
-            VerticalAlignment="Top" 
-            Background="#FF000B25" 
-            BorderBrush="#FF000B25" 
-            Foreground="White">
-            <materialDesign:PackIcon Kind="Settings" />
-        </Button>
-
+        <Label Content="Select TV" HorizontalAlignment="Left" Margin="14,175,0,0" VerticalAlignment="Top" Width="85" Height="25" />
+        <ComboBox Style="{DynamicResource MaterialDesignComboBox}" ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="DisplayText" materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25" Width="342" HorizontalAlignment="Left" Margin="95,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" />
+        <Button Command="{Binding RefreshDevicesCommand}" Style="{DynamicResource MaterialDesignFloatingActionLightButton}" Content="⟳" Height="25" Width="25" HorizontalAlignment="Left" Padding="0" Margin="447,175,0,0" VerticalAlignment="Top" IsEnabled="{Binding EnableDevicesInput}" Background="#FF000B25" BorderBrush="#FF000B25" Foreground="White" />
+        
         <materialDesign:Card Padding="12" Margin="0,215,0,0" Background="#FF000B25" Foreground="White" HorizontalAlignment="Center" Width="472" Height="38" VerticalAlignment="Top">
             <TextBlock Text="{Binding StatusBar }" Style="{DynamicResource MaterialDesignTitleTextBlock}" HorizontalAlignment="Center"/>
         </materialDesign:Card>
-
-        <Button Command="{Binding DownloadAndInstallCommand}" CommandParameter="{Binding SelectedRelease}" 
-                Content="{loc:Localize DownloadAndInstall}"
-                HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
-
-        <TextBlock FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" TextAlignment="Center">
-            <Hyperlink NavigateUri="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" 
-                       RequestNavigate="Hyperlink_RequestNavigate"
-                       TextDecorations="{x:Null}" 
-                       Foreground="#FF000B25">
-                <Run Text="{Binding FooterText, Mode=OneWay}" d:Text="A WHOLE COPYRIGHT RULE AND STUFF..."  />
-            </Hyperlink>
-        </TextBlock>
+        
+        <Button Command="{Binding DownloadCommand}" CommandParameter="{Binding SelectedRelease}" Content="{x:Static l:Strings.DownloadAndInstall}" HorizontalAlignment="Center" Margin="0,265,0,0" Style="{DynamicResource MaterialDesignRaisedLightButton}" Width="328" Background="#FF000B25" Foreground="White" Height="32" VerticalAlignment="Top"/>
+        <Label Content="Copyright (c) 2025 - MIT License - Patrick Stel" FontSize="12" HorizontalAlignment="Center" Margin="0,300,0,0" VerticalAlignment="Top" Width="480" HorizontalContentAlignment="Center"/>
     </Grid>
 </Window>

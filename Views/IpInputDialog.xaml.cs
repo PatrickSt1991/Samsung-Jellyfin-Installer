@@ -9,7 +9,6 @@ namespace Samsung_Jellyfin_Installer.Views
         public IpInputDialog(string title, string message)
         {
             InitializeComponent();
-            Loaded += IpInputDialog_Loaded;
             Title = title;
             PromptText.Text = message;
         }
@@ -23,10 +22,6 @@ namespace Samsung_Jellyfin_Installer.Views
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
-        }
-        private void IpInputDialog_Loaded(object sender, RoutedEventArgs e)
-        {
-            InputBox.Focus();
         }
     }
 }

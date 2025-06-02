@@ -3,8 +3,6 @@ using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.ViewModels;
 using System.Net.Http;
 using System.Windows;
-using System.Configuration;
-using System.Diagnostics;
 
 namespace Samsung_Jellyfin_Installer
 {
@@ -37,31 +35,19 @@ namespace Samsung_Jellyfin_Installer
 
             // Register ViewModels
             services.AddSingleton<MainWindowViewModel>();
-            services.AddSingleton<SettingsViewModel>();
 
             // Register Views
             services.AddTransient<MainWindow>();
         }
 
         protected override async void OnStartup(StartupEventArgs e)
-        {   
+        {
             base.OnStartup(e);
-
-            string savedLanguage = Settings.Default.Language ?? "en";
-
-            var configPath = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
-            Debug.WriteLine($"Config File Loc: {configPath}");
-
-
-            LocalizedStrings.Instance.ChangeLanguage(savedLanguage);
 
             try
             {
                 var installer = _serviceProvider.GetRequiredService<ITizenInstallerService>();
-
-                (string TizenDataPath, string TizenCliPath) = await installer.EnsureTizenCliAvailable();
-                
-                if (string.IsNullOrEmpty(TizenCliPath))
+                if (!await installer.EnsureTizenCliAvailable())
                 {
                     MessageBox.Show("Tizen tools are required for this application",
                                   "Error",

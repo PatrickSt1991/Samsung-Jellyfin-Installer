@@ -222,86 +222,8 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>Indstiller CA-certifikater...</value>
   </data>
-  <data name="ChooseRelease" xml:space="preserve">
-    <value>Vælg udgivelse...</value>
-  </data>
-  <data name="ChooseVersion" xml:space="preserve">
-    <value>Vælg version...</value>
-  </data>
-  <data name="ChooseTV" xml:space="preserve">
-    <value>Vælg TV...</value>
-  </data>
-  <data name="SelectLanguage" xml:space="preserve">
-    <value>Vælg sprog</value>
-  </data>
-  <data name="SelectCertificate" xml:space="preserve">
-    <value>Vælg certifikat</value>
-  </data>
-  <data name="SelectWGT" xml:space="preserve">
-    <value>Vælg WGT-fil</value>
-  </data>
-  <data name="lbl_Release" xml:space="preserve">
-    <value>Frigøre</value>
-  </data>
-  <data name="lbl_Version" xml:space="preserve">
-    <value>Version</value>
-  </data>
-  <data name="lbl_SelectTv" xml:space="preserve">
-    <value>Vælg TV</value>
-  </data>
-  <data name="lbl_Language" xml:space="preserve">
-    <value>Sprog</value>
-  </data>
-  <data name="lbl_CustomWgt" xml:space="preserve">
-    <value>Brugerdefineret WGT</value>
-  </data>
-  <data name="lbl_Settings" xml:space="preserve">
-    <value>Indstillinger</value>
-  </data>
-  <data name="lbl_RememberIp" xml:space="preserve">
-    <value>Husk brugerdefinerede IP'er</value>
-  </data>
-  <data name="lbl_DeletePrevious" xml:space="preserve">
-    <value>Slet den gamle Jellyfin-app</value>
-  </data>
-  <data name="lbl_expires" xml:space="preserve">
-    <value>Udløber</value>
-  </data>
-  <data name="IpWindowTitle" xml:space="preserve">
-    <value>Indtast TV IP</value>
-  </data>
-  <data name="IpWindowDescription" xml:space="preserve">
-    <value>Indtast venligst enhedens IP-adresse:</value>
-  </data>
-  <data name="InvalidDeviceIp" xml:space="preserve">
-    <value>Ugyldig enheds IP eller enhed ikke fundet.</value>
-  </data>
-  <data name="IpNotListed" xml:space="preserve">
-    <value>Min IP er ikke på listen...</value>
-  </data>
-  <data name="lbl_Certifcate" xml:space="preserve">
-    <value>Certifikat</value>
-  </data>
-  <data name="lbl_Other" xml:space="preserve">
-    <value>Ellers</value>
-  </data>
-  <data name="DownloadCompleted" xml:space="preserve">
-    <value>Download fuldført...</value>
-  </data>
-  <data name="NoPackageToInstall" xml:space="preserve">
-    <value>Ingen pakke at installere</value>
-  </data>
-  <data name="NoDeviceSelected" xml:space="preserve">
-    <value>Ingen enhed valgt</value>
-  </data>
-  <data name="UsingCustomWGT" xml:space="preserve">
-    <value />
-  </data>
-  <data name="FailedRemoveOld" xml:space="preserve">
-    <value>Kunne ikke fjerne den gamle appversion</value>
-  </data>
-  <data name="FailedRemoveOldExtra" xml:space="preserve">
-    <value>Fjern venligst den gamle Jellyfin-app manuelt fra tv'et</value>
+  <data name="RootCertificate" xml:space="preserve">
+    <value>Udtrækker nødvendige rodcertifikater...</value>
   </data>
   <data name="TvNameNotFound" xml:space="preserve">
     <value>TV navnet kunne ikke findes...</value>

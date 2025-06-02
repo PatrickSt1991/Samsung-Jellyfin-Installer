@@ -70,33 +70,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Choose release....
-        /// </summary>
-        public static string ChooseRelease {
-            get {
-                return ResourceManager.GetString("ChooseRelease", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Choose TV....
-        /// </summary>
-        public static string ChooseTV {
-            get {
-                return ResourceManager.GetString("ChooseTV", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Choose version....
-        /// </summary>
-        public static string ChooseVersion {
-            get {
-                return ResourceManager.GetString("ChooseVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Connecting to device....
         /// </summary>
         public static string ConnectingToDevice {
@@ -142,15 +115,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Download completed....
-        /// </summary>
-        public static string DownloadCompleted {
-            get {
-                return ResourceManager.GetString("DownloadCompleted", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Download failed:.
         /// </summary>
         public static string DownloadFailed {
@@ -183,24 +147,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string FailedLoadingReleases {
             get {
                 return ResourceManager.GetString("FailedLoadingReleases", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed to remove old app version.
-        /// </summary>
-        public static string FailedRemoveOld {
-            get {
-                return ResourceManager.GetString("FailedRemoveOld", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Please remove the old Jellyfin app by hand from the TV.
-        /// </summary>
-        public static string FailedRemoveOldExtra {
-            get {
-                return ResourceManager.GetString("FailedRemoveOldExtra", resourceCulture);
             }
         }
         
@@ -268,141 +214,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid device IP or device not found..
-        /// </summary>
-        public static string InvalidDeviceIp {
-            get {
-                return ResourceManager.GetString("InvalidDeviceIp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to My IP is not listed....
-        /// </summary>
-        public static string IpNotListed {
-            get {
-                return ResourceManager.GetString("IpNotListed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Please enter the device&apos;s IP address:.
-        /// </summary>
-        public static string IpWindowDescription {
-            get {
-                return ResourceManager.GetString("IpWindowDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enter TV IP.
-        /// </summary>
-        public static string IpWindowTitle {
-            get {
-                return ResourceManager.GetString("IpWindowTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Certificate.
-        /// </summary>
-        public static string lbl_Certifcate {
-            get {
-                return ResourceManager.GetString("lbl_Certifcate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Custom WGT.
-        /// </summary>
-        public static string lbl_CustomWgt {
-            get {
-                return ResourceManager.GetString("lbl_CustomWgt", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Remove old Jellyfin.
-        /// </summary>
-        public static string lbl_DeletePrevious {
-            get {
-                return ResourceManager.GetString("lbl_DeletePrevious", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Expires.
-        /// </summary>
-        public static string lbl_expires {
-            get {
-                return ResourceManager.GetString("lbl_expires", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Language.
-        /// </summary>
-        public static string lbl_Language {
-            get {
-                return ResourceManager.GetString("lbl_Language", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Other.
-        /// </summary>
-        public static string lbl_Other {
-            get {
-                return ResourceManager.GetString("lbl_Other", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Release.
-        /// </summary>
-        public static string lbl_Release {
-            get {
-                return ResourceManager.GetString("lbl_Release", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Remember IPs.
-        /// </summary>
-        public static string lbl_RememberIp {
-            get {
-                return ResourceManager.GetString("lbl_RememberIp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select TV.
-        /// </summary>
-        public static string lbl_SelectTv {
-            get {
-                return ResourceManager.GetString("lbl_SelectTv", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Settings.
-        /// </summary>
-        public static string lbl_Settings {
-            get {
-                return ResourceManager.GetString("lbl_Settings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Version.
-        /// </summary>
-        public static string lbl_Version {
-            get {
-                return ResourceManager.GetString("lbl_Version", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Loading releases....
         /// </summary>
         public static string LoadingReleases {
@@ -421,29 +232,11 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No device selected.
-        /// </summary>
-        public static string NoDeviceSelected {
-            get {
-                return ResourceManager.GetString("NoDeviceSelected", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to No devices found.
         /// </summary>
         public static string NoDevicesFound {
             get {
                 return ResourceManager.GetString("NoDevicesFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to No package to install.
-        /// </summary>
-        public static string NoPackageToInstall {
-            get {
-                return ResourceManager.GetString("NoPackageToInstall", resourceCulture);
             }
         }
         
@@ -547,33 +340,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select certificate.
-        /// </summary>
-        public static string SelectCertificate {
-            get {
-                return ResourceManager.GetString("SelectCertificate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select language.
-        /// </summary>
-        public static string SelectLanguage {
-            get {
-                return ResourceManager.GetString("SelectLanguage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select WGT file.
-        /// </summary>
-        public static string SelectWGT {
-            get {
-                return ResourceManager.GetString("SelectWGT", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Fixing Tizen certificate manager....
         /// </summary>
         public static string SettingCertificateManager {
@@ -624,15 +390,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string UpdatingCertificateProfile {
             get {
                 return ResourceManager.GetString("UpdatingCertificateProfile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Using custom WGT file.
-        /// </summary>
-        public static string UsingCustomWGT {
-            get {
-                return ResourceManager.GetString("UsingCustomWGT", resourceCulture);
             }
         }
     }

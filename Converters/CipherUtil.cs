@@ -157,7 +157,7 @@ namespace Samsung_Jellyfin_Installer.Converters
             using var tripleDes = TripleDES.Create();
             tripleDes.Mode = CipherMode.ECB;
             tripleDes.Padding = PaddingMode.PKCS7;
-            tripleDes.Key = KeyBytes;
+            tripleDes.Key = KeyBytes; // Use the same KeyBytes property for consistency
 
             using var decryptor = tripleDes.CreateDecryptor();
             byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
@@ -191,26 +191,6 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             // Shuffle to avoid predictable positions
             return new string(chars.OrderBy(_ => Guid.NewGuid()).ToArray());
-        }
-      
-        public static string RunWincryptDecrypt(string filePath, string cryptoPath)
-        {
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = cryptoPath,
-                Arguments = $"--decrypt \"{filePath}\"",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (var process = Process.Start(processInfo))
-            {
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                return output.Split(new[] { "PASSWORD:" }, StringSplitOptions.None)[1].Trim();
-            }
         }
     }
 }

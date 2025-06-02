@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Samsung_Jellyfin_Installer.Commands;
-using Samsung_Jellyfin_Installer.Converters;
+using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
-using Samsung_Jellyfin_Installer.Views;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
@@ -17,37 +16,24 @@ namespace Samsung_Jellyfin_Installer.ViewModels
     {
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
-        private readonly INetworkService _networkService;
-        private readonly IServiceProvider _serviceProvider;
         private readonly HttpClient _httpClient;
+        private readonly INetworkService _networkService;
 
         private ObservableCollection<GitHubRelease> _releases = new ObservableCollection<GitHubRelease>();
-        private ObservableCollection<Asset> _availableAssets = new ObservableCollection<Asset>();
-        private ObservableCollection<NetworkDevice> _availableDevices = new ObservableCollection<NetworkDevice>();
         private GitHubRelease _selectedRelease;
-        private Asset _selectedAsset;
-        private NetworkDevice? _selectedDevice;
         private bool _isLoading, _isLoadingDevices;
-
+        private ObservableCollection<Asset> _availableAssets = new ObservableCollection<Asset>();
+        private Asset _selectedAsset;
+        private ObservableCollection<NetworkDevice> _availableDevices = new ObservableCollection<NetworkDevice>();
+        private NetworkDevice? _selectedDevice;
         private string _statusBar;
-        private string _tizenProfilePath;
-        private string _downloadedPackagePath;
 
         public ObservableCollection<GitHubRelease> Releases
         {
             get => _releases;
             private set => SetField(ref _releases, value);
         }
-        public ObservableCollection<Asset> AvailableAssets
-        {
-            get => _availableAssets;
-            private set => SetField(ref _availableAssets, value);
-        }
-        public ObservableCollection<NetworkDevice> AvailableDevices
-        {
-            get => _availableDevices;
-            private set => SetField(ref _availableDevices, value);
-        }
+
         public GitHubRelease SelectedRelease
         {
             get => _selectedRelease;
@@ -62,11 +48,25 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+
+        public ObservableCollection<Asset> AvailableAssets
+        {
+            get => _availableAssets;
+            private set => SetField(ref _availableAssets, value);
+        }
+
         public Asset SelectedAsset
         {
             get => _selectedAsset;
             set => SetField(ref _selectedAsset, value);
         }
+
+        public ObservableCollection<NetworkDevice> AvailableDevices
+        {
+            get => _availableDevices;
+            private set => SetField(ref _availableDevices, value);
+        }
+
         public NetworkDevice? SelectedDevice
         {
             get => _selectedDevice;
@@ -88,6 +88,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+
         public bool IsLoadingDevices
         {
             get => _isLoadingDevices;
@@ -100,36 +101,29 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+
         public bool EnableDevicesInput => !IsLoadingDevices;
+
         public string StatusBar
         {
             get => _statusBar;
             set => SetField(ref _statusBar, value);
         }
-        public string FooterText =>
-            $"{Settings.Default.AppVersion} " +
-            $"- Copyright (c) {DateTime.Now.Year} - MIT License - Patrick Stel";
-
 
         public ICommand RefreshCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
         public ICommand DownloadCommand { get; }
-        public ICommand InstallCommand { get; }
-        public ICommand DownloadAndInstallCommand { get; }
-        public ICommand OpenSettingsCommand { get; }
 
         public MainWindowViewModel(
             ITizenInstallerService tizenInstaller,
             IDialogService dialogService,
-            INetworkService networkService,
-            IServiceProvider serviceProvider,
-            HttpClient httpClient)
+            HttpClient httpClient,
+            INetworkService networkService)
         {
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
-            _networkService = networkService;
-            _serviceProvider = serviceProvider;
             _httpClient = httpClient;
+            _networkService = networkService;
 
             RefreshCommand = new RelayCommand(async () => await LoadReleasesAsync());
             RefreshDevicesCommand = new RelayCommand(async () => await LoadDevicesAsync());
@@ -138,172 +132,78 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 r => CanExecuteDownloadCommand(r)
             );
 
-            InstallCommand = new RelayCommand(
-                async () => await InstallPackageAsync(),
-                () => !string.IsNullOrEmpty(_downloadedPackagePath) &&
-                      File.Exists(_downloadedPackagePath) &&
-                      SelectedDevice != null &&
-                      !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress)
-            );
-
-            DownloadAndInstallCommand = new RelayCommand<GitHubRelease>(
-                async r => await DownloadAndInstallReleaseAsync(r),
-                r => CanExecuteDownloadCommand(r)
-            );
-
-            OpenSettingsCommand = new RelayCommand(async () => OpenSettings());
-
             InitializeAsync();
         }
 
         private async void InitializeAsync()
         {
-            (_tizenProfilePath, _) = await _tizenInstaller.EnsureTizenCliAvailable();
-            
-            if (string.IsNullOrEmpty(_tizenProfilePath))
+            if (!await _tizenInstaller.EnsureTizenCliAvailable())
             {
                 await _dialogService.ShowErrorAsync(
-                    "PleaseInstallTizen".Localized());
+                    Strings.PleaseInstallTizen);
             }
 
             await LoadReleasesAsync();
-            StatusBar = "ScanningNetwork".Localized();
+            StatusBar = $"{Strings.ScanningNetwork}";
             await LoadDevicesAsync();
         }
-        private void OpenSettings()
-        {
-            var settingsViewModel = _serviceProvider.GetRequiredService<SettingsViewModel>();
-            var settingsWindow = new SettingsView();
-            settingsWindow.DataContext = settingsViewModel;
-            settingsWindow.ShowDialog();
-        }
+
         private bool CanExecuteDownloadCommand(GitHubRelease release)
         {
-            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
-                File.Exists(Settings.Default.CustomWgtPath))
-            {
-                return !IsLoading && SelectedDevice != null &&
-                       !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
-            }
-
-            return !IsLoading &&
-                   release != null &&
-                   SelectedAsset != null &&
-                   SelectedDevice != null &&
-                   !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
+            return release != null
+                && !string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress);
         }
-        private async Task<string> DownloadReleaseAsync(GitHubRelease release)
+        private async Task DownloadReleaseAsync(GitHubRelease release)
         {
-            if (release?.PrimaryDownloadUrl == null) return null;
+            if (release?.PrimaryDownloadUrl == null) return;
 
             IsLoading = true;
+            string downloadPath = null;
             try
             {
-                StatusBar = "DownloadingPackage".Localized();
-                string downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl);
-                _downloadedPackagePath = downloadPath;
+                StatusBar = Strings.DownloadingPackage;
+                string downloadDirectory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SamsungJellyfinInstaller",
+                    "Downloads");
+                downloadPath = await _tizenInstaller.DownloadPackageAsync(SelectedAsset.DownloadUrl, downloadDirectory);
 
-                StatusBar = "DownloadCompleted".Localized();
-                return downloadPath;
-            }
-            catch (Exception ex)
-            {
-                await _dialogService.ShowErrorAsync($"{"DownloadFailed".Localized()} {ex.Message}");
-                return null;
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-        private async Task<bool> InstallPackageAsync(string packagePath = null)
-        {
-            string installPath = packagePath ?? _downloadedPackagePath;
-
-            if(string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
-            {
-                await _dialogService.ShowErrorAsync("NoPackageToInstall".Localized());
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
-            {
-                await _dialogService.ShowErrorAsync("NoDeviceSelected".Localized());
-                return false;
-            }
-
-            IsLoading = true;
-            try
-            {
-                StatusBar = "InstallingPackage".Localized();
-
-                var result = await _tizenInstaller.InstallPackageAsync(
-                    installPath,
-                    SelectedDevice.IpAddress,
-                    status => Application.Current.Dispatcher.Invoke(() => StatusBar = status));
-
-                if (result.Success)
+                if (!string.IsNullOrWhiteSpace(SelectedDevice?.IpAddress))
                 {
-                    await _dialogService.ShowMessageAsync($"{"InstallationSuccessfulOn".Localized()} {SelectedDevice.IpAddress}");
-                    return true;
-                }
-                else
-                {
-                    await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {result.ErrorMessage}");
-                    return false;
+                    var result = await _tizenInstaller.InstallPackageAsync(
+                        downloadPath,
+                        SelectedDevice.IpAddress,
+                        status => Application.Current.Dispatcher.Invoke(() => StatusBar = status));
+
+                    if (result.Success)
+                    {
+                        await _dialogService.ShowMessageAsync(
+                            $"{Strings.InstallationSuccessfulOn} {SelectedDevice.IpAddress}");
+                    }
+                    else
+                    {
+                        await _dialogService.ShowErrorAsync(
+                            $"{Strings.InstallationFailed}: {result.ErrorMessage}");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex.Message}");
-                return false;
+                Debug.WriteLine($"Download failed: {ex.Message}");
+                await _dialogService.ShowErrorAsync(
+                    $"{Strings.DownloadFailed} {ex.Message}");
             }
             finally
             {
+                try
+                {
+                    if (downloadPath != null && File.Exists(downloadPath))
+                        File.Delete(downloadPath);
+                }
+                catch { /* Ignore cleanup errors */ }
+
                 IsLoading = false;
             }
-        }
-        private async Task DownloadAndInstallReleaseAsync(GitHubRelease release)
-        {
-            string installPath = null;
-            bool isCustomWgt = false;
-
-            if(!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
-                File.Exists(Settings.Default.CustomWgtPath))
-            {
-                installPath = Settings.Default.CustomWgtPath;
-                isCustomWgt = true;
-                StatusBar = "UsingCustomWGT".Localized();
-            }
-            else
-            {
-                installPath = await DownloadReleaseAsync(release);
-                if (string.IsNullOrEmpty(installPath))
-                    return;
-            }
-
-            bool packageInstalled = await InstallPackageAsync(installPath);
-
-            if (!isCustomWgt)
-                CleanupDownloadedPackage();
-
-            if (isCustomWgt && packageInstalled)
-            {
-                Settings.Default.CustomWgtPath = null;
-                Settings.Default.Save();
-            }
-        }
-        private void CleanupDownloadedPackage()
-        {
-            try
-            {
-                if (_downloadedPackagePath != null && File.Exists(_downloadedPackagePath))
-                {
-                    File.Delete(_downloadedPackagePath);
-                    _downloadedPackagePath = null;
-                }
-            }
-            catch { /* Ignore cleanup errors */ }
         }
         private async Task LoadReleasesAsync()
         {
@@ -313,7 +213,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             try
             {
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-                var response = await _httpClient.GetStringAsync(Settings.Default.ReleasesUrl);
+                var response = await _httpClient.GetStringAsync(
+                    "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases");
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response)?
                     .OrderByDescending(r => r.PublishedAt)
@@ -322,18 +223,23 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 if (allReleases != null)
                 {
                     foreach (var release in allReleases)
+                    {
                         Releases.Add(release);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"{"FailedLoadingReleases".Localized()} {ex.Message}");
+                Debug.WriteLine($"Release load error: {ex.Message}");
+                await _dialogService.ShowErrorAsync(
+                    $"{Strings.FailedLoadingReleases} {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
             }
         }
+
         private async Task LoadDevicesAsync()
         {
             IsLoadingDevices = true;
@@ -350,9 +256,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     AvailableDevices.Add(device);
 
                 if (AvailableDevices.Count == 0)
-                    StatusBar = "NoDevicesFound".Localized();
+                    StatusBar = Strings.NoDevicesFound;
                 else
-                    StatusBar = "Ready".Localized();
+                    StatusBar = Strings.Ready;
 
 
                 SelectedDevice = AvailableDevices.Count switch
@@ -365,6 +271,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Devices load error: {ex.Message}");
                 await _dialogService.ShowErrorAsync(
                     $"Failed to load devices: {ex.Message}");
             }
@@ -372,9 +279,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 AvailableDevices.Add(new NetworkDevice
                 {
-                    IpAddress = "lbl_Other".Localized(),
+                    IpAddress = "Other",
                     Manufacturer = null,
-                    DeviceName = "IpNotListed".Localized()
+                    DeviceName = "My IP is not listed..."
                 });
 
                 IsLoadingDevices = false;
@@ -382,7 +289,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private async Task PromptForManualIp()
         {
-            string? ip = await _dialogService.PromptForIpAsync("IpWindowTitle".Localized(), "IpWindowDescription".Localized());
+            string? ip = await _dialogService.PromptForIpAsync("Enter Device IP", "Please enter the device's IP address:");
 
             if (string.IsNullOrWhiteSpace(ip))
             {
@@ -394,9 +301,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             if (device != null)
             {
-                Settings.Default.UserCustomIP = device.IpAddress;
-                Settings.Default.Save();
-
                 SelectedDevice = device;
 
                 if (!AvailableDevices.Any(d => d.IpAddress == device.IpAddress))
@@ -405,8 +309,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             else
             {
                 SelectedDevice = AvailableDevices.FirstOrDefault(d => d.IpAddress != "Other");
-                await _dialogService.ShowErrorAsync("InvalidDeviceIp".Localized());
+                await _dialogService.ShowErrorAsync("Invalid device IP or device not found.");
             }
         }
+
+
     }
 }
