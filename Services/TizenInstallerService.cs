@@ -113,8 +113,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
-                tizenOs = "8.0";
-
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -171,14 +169,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (Settings.Default.DeletePreviousInstall)
                 {
-                    Debug.WriteLine("delete old");
                     updateStatus("Removing old Jellyfin app");
                     await RemoveJellyfinAppByIdAsync(tvName, updateStatus);
                 }
 
                 updateStatus("InstallingPackage".Localized());
 
-                return InstallResult.FailureResult($"delete old dev stop");
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
