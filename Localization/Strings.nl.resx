@@ -144,8 +144,8 @@
   <data name="RetrievingDeviceAddress" xml:space="preserve">
     <value>Apparaatadres ophalen...</value>
   </data>
-  <data name="TvNameNotFound" xml:space="preserve">
-    <value>TV Naam kon niet worden gevonden...</value>
+  <data name="TvDuidNotFound" xml:space="preserve">
+    <value>TV duid kon niet worden gevonden...</value>
   </data>
   <data name="UpdatingCertificateProfile" xml:space="preserve">
     <value>Certificaatprofiel bijwerken...</value>
@@ -170,5 +170,62 @@
   </data>
   <data name="ScanningNetwork" xml:space="preserve">
     <value>Network scannen voor Samsung TV...</value>
+  </data>
+  <data name="CheckTizenOS" xml:space="preserve">
+    <value>Tizen OS-versie controleren...</value>
+  </data>
+  <data name="SuccessAuthCode" xml:space="preserve">
+    <value>Autorisatiecode succesvol verkregen</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Klaar voor gebruik...</value>
+  </data>
+  <data name="FailedAuthCode" xml:space="preserve">
+    <value>Inloggen is geannuleerd of mislukt...</value>
+  </data>
+  <data name="NoDevicesFound" xml:space="preserve">
+    <value>Geen apparaten gevonden</value>
+  </data>
+  <data name="OutputDir" xml:space="preserve">
+    <value>Zorgen dat de uitvoermap bestaat...</value>
+  </data>
+  <data name="GenPassword" xml:space="preserve">
+    <value>Willekeurig wachtwoord genereren...</value>
+  </data>
+  <data name="GenKeyPair" xml:space="preserve">
+    <value>Sleutelpaar genereren...</value>
+  </data>
+  <data name="CreateAuthorCsr" xml:space="preserve">
+    <value>Auteur CSR maken...</value>
+  </data>
+  <data name="CreateDistributorCSR" xml:space="preserve">
+    <value>Genereren van een distributeur-CSR met DUID...</value>
+  </data>
+  <data name="PostAuthorCSR" xml:space="preserve">
+    <value>Bericht sturen naar Samsung-eindpunt...</value>
+  </data>
+  <data name="PostFirstDistributorCSR" xml:space="preserve">
+    <value>Bericht naar eerste Samsung-distributeur...</value>
+  </data>
+  <data name="PostSecondDistributorCSR" xml:space="preserve">
+    <value>Posten naar tweede Samsung-distributeur...</value>
+  </data>
+  <data name="CreateNewCertificates" xml:space="preserve">
+    <value>De ondertekende P12-bestanden maken...</value>
+  </data>
+  <data name="MovingP12Files" xml:space="preserve">
+    <value>Kopieer bestanden naar certificaatbeheerder...</value>
+  </data>
+  <data name="SettingCertificateManager" xml:space="preserve">
+    <value>Tizen-certificaatbeheerder repareren...</value>
+  </data>
+  <data name="SettingsCaCerts" xml:space="preserve">
+    <value>CA-certificaten instellen...</value>
+  </data>
+  <data name="RootCertificate" xml:space="preserve">
+    <value>Vereiste rootcertificaten extraheren...</value>
+  </data>
+  <data name="TvNameNotFound" xml:space="preserve">
+    <value>TV naam kon niet worden gevonden...</value>
   </data>
 </root>

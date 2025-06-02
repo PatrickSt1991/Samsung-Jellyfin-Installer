@@ -1,0 +1,88 @@
+name: Update Version Table in README
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest releases
+        id: releases
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const stable = releases.data.find(r => !r.prerelease && !r.draft);
+            const beta = releases.data.find(r => r.prerelease && !r.draft);
+
+            const result = {
+              stableTag: stable?.tag_name ?? "N/A",
+              stableUrl: stable?.html_url ?? "#",
+              betaTag: beta?.tag_name ?? "N/A",
+              betaUrl: beta?.html_url ?? "#"
+            };
+            
+            console.log('Release info:', result);
+            return result;
+
+      - name: Set version info as env vars
+        run: |
+          echo 'STABLE_TAG=${{ fromJson(steps.releases.outputs.result).stableTag }}' >> $GITHUB_ENV
+          echo 'STABLE_URL=${{ fromJson(steps.releases.outputs.result).stableUrl }}' >> $GITHUB_ENV
+          echo 'BETA_TAG=${{ fromJson(steps.releases.outputs.result).betaTag }}' >> $GITHUB_ENV
+          echo 'BETA_URL=${{ fromJson(steps.releases.outputs.result).betaUrl }}' >> $GITHUB_ENV
+
+      - name: Generate version table markdown
+        run: |
+          cat <<EOF > version_table.md
+          | Channel    | Version                                | Notes                                      |
+          |------------|----------------------------------------|--------------------------------------------|
+          | **Stable** | [\`$STABLE_TAG\`]($STABLE_URL)         | Recommended for most users                 |
+          | **Beta**   | [\`$BETA_TAG\`]($BETA_URL)             | Includes new features, may be less stable  |
+          EOF
+
+      - name: Inject version table into README
+        run: |
+          if ! grep -q "<!-- versions:start -->" README.md; then
+            echo "Warning: <!-- versions:start --> marker not found in README.md"
+            exit 1
+          fi
+          
+          awk '
+            BEGIN { in_block=0 }
+            /<!-- versions:start -->/ {
+              print;
+              print "";
+              while ((getline line < "version_table.md") > 0) print line;
+              print "";
+              in_block=1;
+              next
+            }
+            /<!-- versions:end -->/ { in_block=0; print; next }
+            !in_block { print }
+          ' README.md > README.tmp && mv README.tmp README.md
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update version table in README [skip ci]"
+            git push
+          fi

@@ -1,11 +1,17 @@
+using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Tls;
+using Samsung_Jellyfin_Installer.Converters;
+using Samsung_Jellyfin_Installer.Localization;
+using Samsung_Jellyfin_Installer.Models;
+using Samsung_Jellyfin_Installer.Views;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
-using Samsung_Jellyfin_Installer.Localization;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -13,20 +19,24 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
+            "C:\\tizen-studio",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "TizenStudioCli"),
-            "C:\\tizen-studio",
             Environment.GetEnvironmentVariable("TIZEN_STUDIO_HOME") ?? string.Empty
         ];
 
         private readonly HttpClient _httpClient;
         private readonly string _downloadDirectory;
+        private readonly string _installPath;
 
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
+        public string? TizenDataPath { get; private set; }
+        public string? TizenPluginPath { get; private set; }
+        public string? PackageCertificate { get; set; }
 
         public TizenInstallerService(HttpClient httpClient)
         {
@@ -37,6 +47,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 "SamsungJellyfinInstaller",
                 "Downloads");
 
+            _installPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Programs",
+                        "TizenStudioCli");
+
             Directory.CreateDirectory(_downloadDirectory);
             string? tizenRoot = FindTizenRoot();
 
@@ -44,6 +59,10 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                TizenPluginPath = Path.Combine(tizenRoot, "ide", "plugins");
+
+                string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
+                TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
             }
         }
 
@@ -72,18 +91,18 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        
+
         public async Task<string?> GetTvNameAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
             {
                 return null;
             }
-            
+
             try
             {
                 await ConnectToTvAsync(tvIpAddress);
-                
+
                 var output = await RunCommandAsync(TizenSdbPath, "devices");
                 var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
@@ -101,10 +120,12 @@ namespace Samsung_Jellyfin_Installer.Services
             return null;
         }
 
-        public async Task<string> DownloadPackageAsync(string downloadUrl)
+        public async Task<string> DownloadPackageAsync(string downloadUrl, string targetDirectory)
         {
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
-            var localPath = Path.Combine(_downloadDirectory, fileName);
+            var localPath = Path.Combine(targetDirectory, fileName);
+
+            Directory.CreateDirectory(targetDirectory);
 
             using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
@@ -120,10 +141,10 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (TizenCliPath is null || TizenSdbPath is null)
             {
-                updateStatus("Tizen Studio wasn't found");
-                return InstallResult.FailureResult("Tizen Studio wasn't found");
+                updateStatus(Strings.PleaseInstallTizen);
+                return InstallResult.FailureResult(Strings.PleaseInstallTizen);
             }
-            
+
             try
             {
                 updateStatus(Strings.ConnectingToDevice);
@@ -135,15 +156,62 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (string.IsNullOrEmpty(tvName))
                     return InstallResult.FailureResult(Strings.TvNameNotFound);
 
-                updateStatus(Strings.UpdatingCertificateProfile);
-                UpdateProfileCertificatePaths();
+                string tvDuid = await GetTvDuidAsync();
 
+                if(string.IsNullOrEmpty(tvDuid))
+                    return InstallResult.FailureResult(Strings.TvDuidNotFound);
+
+                updateStatus(Strings.CheckTizenOS);
+                string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
+
+                if (new Version(tizenOs) >= new Version("7.0"))
+                {
+                    try
+                    {
+                        SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
+
+                        if (!string.IsNullOrEmpty(auth.access_token))
+                        {
+
+                            updateStatus(Strings.SuccessAuthCode);
+
+                            var certificateService = new TizenCertificateService(_httpClient);
+                            await certificateService.ExtractRootCertificateAsync(TizenPluginPath);
+
+                            (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
+                                duid: tvDuid,
+                                accessToken: auth.access_token,
+                                userId: auth.userId,
+                                outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
+                                updateStatus,
+                                TizenPluginPath
+                            );
+
+                            PackageCertificate = "Jelly2Sams";
+                            UpdateCertificateManager(p12Location, p12Password, updateStatus);
+                        }
+                        else
+                        {
+                            updateStatus(Strings.FailedAuthCode);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        updateStatus($"{Strings.Output}: {ex.Message}");
+                        throw;
+                    }
+                }
+                else
+                {
+                    updateStatus(Strings.UpdatingCertificateProfile);
+                    UpdateProfileCertificatePaths();
+                    PackageCertificate = "custom";
+                }
                 updateStatus(Strings.PackagingWgtWithCertificate);
 
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s custom -- \"{packageUrl}\"");
+                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 updateStatus(Strings.InstallingPackage);
-
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
@@ -171,16 +239,108 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 return string.Empty;
             }
-            
+
             var output = await RunCommandAsync(TizenSdbPath, "devices");
             var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
 
             return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
         }
 
+        private async Task<string> GetTvDuidAsync()
+        {
+            if (TizenSdbPath is null)
+                return string.Empty;
+
+            var output = await RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+            if (!string.IsNullOrWhiteSpace(output))
+                return output.Trim();
+
+            output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
+            return output?.Trim() ?? string.Empty;
+        }
+        private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
+        {
+            updateStatus(Strings.SettingCertificateManager);
+            string profileName = "Jelly2Sams";
+            XElement jelly2SamsProfile = new XElement("profile",
+                new XAttribute("name", profileName),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "0"),
+                    new XAttribute("key", Path.Combine(p12Location, "author.p12")),
+                    new XAttribute("password", $"{p12Password}"),
+                    new XAttribute("rootca", "")
+                ),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "1"),
+                    new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
+                    new XAttribute("password", $"{p12Password}"),
+                    new XAttribute("rootca", "")
+                ),
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "2"),
+                    new XAttribute("key", ""),
+                    new XAttribute("password", ""),
+                    new XAttribute("rootca", "")
+                )
+            );
+
+            XDocument doc;
+
+
+            string directoryPath = Path.GetDirectoryName(TizenDataPath);
+            if (!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);;
+
+            if (!File.Exists(TizenDataPath))
+            {
+                // Create new XML file
+                doc = new XDocument(
+                    new XDeclaration("1.0", "UTF-8", "no"),
+                    new XElement("profiles",
+                        new XAttribute("active", "Jelly2Sams"),
+                        new XAttribute("version", "3.1"),
+                        jelly2SamsProfile
+                    )
+                );
+            }
+            else
+            {
+                doc = XDocument.Load(TizenDataPath);
+
+                XElement root = doc.Element("profiles")!;
+                XElement? existingProfile = root.Elements("profile")
+                    .FirstOrDefault(p => string.Equals(p.Attribute("name")?.Value, profileName, StringComparison.OrdinalIgnoreCase));
+
+                if (existingProfile is null)
+                {
+                    // Add new profile if it doesn't exist
+                    root.Add(jelly2SamsProfile);
+                }
+                else if (string.Equals(profileName, "Jelly2Sams", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Update password only for specific keys in Jelly2Sams profile
+                    foreach (var item in existingProfile.Elements("profileitem"))
+                    {
+                        string? keyValue = item.Attribute("key")?.Value;
+                        if (!string.IsNullOrEmpty(keyValue) &&
+                            (keyValue.EndsWith("author.p12", StringComparison.OrdinalIgnoreCase) ||
+                             keyValue.EndsWith("distributor.p12", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            item.SetAttributeValue("password", p12Password);
+                        }
+                    }
+                }
+
+            }
+
+            doc.Save(TizenDataPath);
+        }
         private static void UpdateProfileCertificatePaths()
         {
-            string profilePath = Path.GetFullPath("TizenProfile/profiles.xml");
+            string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
 
             var xml = XDocument.Load(profilePath);
             var profileItems = xml.Descendants("profileitem").ToList();
@@ -190,15 +350,14 @@ namespace Samsung_Jellyfin_Installer.Services
                 string distributor = item.Attribute("distributor")?.Value;
 
                 if (distributor == "0")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/author.p12"));
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/author.p12"));
 
                 if (distributor == "1")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/distributor.p12"));
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/distributor.p12"));
             }
 
             xml.Save(profilePath);
         }
-
         private static string? FindTizenRoot()
         {
             foreach (var basePath in PossibleTizenPaths)
@@ -212,7 +371,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
-        
         private static async Task<string> RunCommandAsync(string fileName, string arguments)
         {
             var psi = new ProcessStartInfo
@@ -259,53 +417,60 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return outputBuilder.ToString();
         }
+        private static async Task<string> FetchTizenOsVersion(string sdbPath)
+        {
+            var output = await RunCommandAsync(sdbPath, "capability");
+            var match = Regex.Match(output, @"platform_version:([\d.]+)");
 
+
+            return match.Success ? match.Groups[1].Value.Trim() : "";
+        }
         private async Task<bool> InstallMinimalCli()
         {
             string installerPath = null;
+            InstallingWindow installingWindow = null;
+
             try
             {
-                var InstallCLI = MessageBox.Show("Tizen CLI 5.5 is required to continue.\n\n" +
-                                    "We will now download and install Tizen CLI 5.5.\n" +
+                var InstallCLI = MessageBox.Show("Tizen CLI & Certificate manager are required to continue.\n\n" +
+                                    "We will now download and install Tizen CLI followed by Certificate manager .\n" +
                                     "This may take a few minutes. Please be patient during the installation process.",
-                                    "Tizen CLI 5.5 Required",
+                                    "Tizen CLI & Certificate manager required",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
 
-                if (InstallCLI == MessageBoxResult.Yes)
-                {
-                    const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
-                    installerPath = await DownloadPackageAsync(installerUrl);
-                    string installPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "Programs",
-                        "TizenStudioCli"
-                    );
-
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = installerPath,
-                        Arguments = $"--accept-license \"{installPath}\"",
-                        UseShellExecute = true,
-                        CreateNoWindow = false
-                    };
-
-                    using var process = Process.Start(startInfo);
-                    await process.WaitForExitAsync();
-
-                    if (process.ExitCode == 0)
-                    {
-                        var tizenRoot = FindTizenRoot() ?? string.Empty;
-                        TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
-                        TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
-                        return tizenRoot != string.Empty;
-                    }
+                if (InstallCLI != MessageBoxResult.Yes)
                     return false;
-                }
-                else
+
+                installingWindow = new InstallingWindow();
+                installingWindow.Show();
+
+                const string installerUrl = "https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5.5_windows-64.exe";
+                installerPath = await DownloadPackageAsync(installerUrl, _downloadDirectory);
+
+
+                var startInfo = new ProcessStartInfo
                 {
-                    return false;
+                    FileName = installerPath,
+                    Arguments = $"--accept-license \"{_installPath}\"",
+                    UseShellExecute = true,
+                    CreateNoWindow = false
+                };
+
+                using var process = Process.Start(startInfo);
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode == 0)
+                {
+                    await InstallSamsungCertificateExtensionAsync(_installPath);
+
+                    var tizenRoot = FindTizenRoot() ?? string.Empty;
+                    TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
+                    TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+
+                    return tizenRoot != string.Empty;
                 }
+                return false;
             }
             catch
             {
@@ -313,12 +478,111 @@ namespace Samsung_Jellyfin_Installer.Services
             }
             finally
             {
+                installingWindow?.Close();
+
                 try
                 {
                     if (installerPath != null && File.Exists(installerPath))
                         File.Delete(installerPath);
                 }
                 catch { /* Ignore cleanup errors */ }
+            }
+        }
+        public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath)
+        {
+            // Check if already installed
+            string[] possiblePaths = {
+                Path.Combine(installPath, "tools", "certificate-manager", "certificate-manager.exe"),
+                Path.Combine(installPath, "certificate-manager", "certificate-manager.exe")
+            };
+
+            if (possiblePaths.Any(File.Exists))
+                return true;
+
+            string packageManagerPath = Path.Combine(installPath, "package-manager", "package-manager-cli.exe");
+            if (!File.Exists(packageManagerPath))
+            {
+                MessageBox.Show("Package manager CLI not found. Please ensure Tizen Studio is properly installed.");
+                return false;
+            }
+
+            try
+            {
+                // First install Certificate-Manager
+                var certManagerProcessInfo = new ProcessStartInfo
+                {
+                    FileName = packageManagerPath,
+                    Arguments = "install \"Certificate-Manager\" --accept-license",
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WorkingDirectory = installPath
+                };
+
+
+                using (var certManagerProcess = Process.Start(certManagerProcessInfo))
+                {
+                    if (certManagerProcess == null)
+                    {
+                        MessageBox.Show("Failed to start Certificate-Manager installation process.");
+                        return false;
+                    }
+
+                    await Task.Run(() => certManagerProcess.WaitForExit());
+
+                    if (certManagerProcess.ExitCode != 0)
+                    {
+                        MessageBox.Show($"Certificate-Manager installation failed with exit code {certManagerProcess.ExitCode}");
+                        return false;
+                    }
+                }
+
+                // Then install cert-add-on package
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = packageManagerPath,
+                    Arguments = "install \"cert-add-on\" --accept-license",
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WorkingDirectory = installPath
+                };
+
+                using (var process = Process.Start(processInfo))
+                {
+                    if (process == null)
+                    {
+                        MessageBox.Show("Failed to start package manager installation process.");
+                        return false;
+                    }
+
+                    string output = "";
+                    string error = "";
+
+                    await process.WaitForExitAsync();
+
+                    if (process.ExitCode == 0)
+                    {
+                        // Verify installation
+                        if (possiblePaths.Any(File.Exists))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Installation completed but certificate manager executable not found.");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"cert-add-on installation failed with exit code {process.ExitCode}");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Samsung Certificate Extension installation failed: {ex.Message}");
+                return false;
             }
         }
     }
