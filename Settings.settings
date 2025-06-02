@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Samsung_Jellyfin_Installer" GeneratedClassName="Config">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Samsung_Jellyfin_Installer" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="Language" Type="System.String" Scope="User">
@@ -9,9 +9,6 @@
       <Value Profile="(Default)">Jelly2Sams</Value>
     </Setting>
     <Setting Name="RememberCustomIP" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="RemoveOld" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="ReleasesUrl" Type="System.String" Scope="Application">

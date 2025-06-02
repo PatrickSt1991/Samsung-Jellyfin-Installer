@@ -59,18 +59,6 @@ namespace Samsung_Jellyfin_Installer {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool RemoveOld {
-            get {
-                return ((bool)(this["RemoveOld"]));
-            }
-            set {
-                this["RemoveOld"] = value;
-            }
-        }
-        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases")]

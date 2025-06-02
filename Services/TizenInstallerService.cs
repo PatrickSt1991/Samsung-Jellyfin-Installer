@@ -113,7 +113,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
-
+                tizenOs = "8.0";
 
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
@@ -169,13 +169,16 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("PackagingWgtWithCertificate".Localized());
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
-                if (Settings.Default.RemoveOld)
+                if (Settings.Default.DeletePreviousInstall)
                 {
+                    Debug.WriteLine("delete old");
                     updateStatus("Removing old Jellyfin app");
                     await RemoveJellyfinAppByIdAsync(tvName, updateStatus);
                 }
 
                 updateStatus("InstallingPackage".Localized());
+
+                return InstallResult.FailureResult($"delete old dev stop");
                 string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
@@ -439,18 +442,18 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             try
             {
-                string output = await RunCommandAsync(TizenSdbPath, "shell applist");
+                string output = await RunCommandAsync(TizenSdbPath, "shell 0 applist");
                 var jellyfinPattern = @"'Jellyfin'\s+'([^']+)'";
                 var match = Regex.Match(output, jellyfinPattern, RegexOptions.IgnoreCase);
 
                 if (match.Success && match.Groups.Count > 1)
                 {
                     string appId = match.Groups[1].Value;
-
                     if (!string.IsNullOrEmpty(appId))
                     {
                         try
                         {
+                            
                             await RunCommandAsync(TizenSdbPath, $"uninstall -t {tvName} -p {appId}");
                         }
                         catch (Exception ex)
