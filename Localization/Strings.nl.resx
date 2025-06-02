@@ -222,8 +222,86 @@
   <data name="SettingsCaCerts" xml:space="preserve">
     <value>CA-certificaten instellen...</value>
   </data>
-  <data name="RootCertificate" xml:space="preserve">
-    <value>Vereiste rootcertificaten extraheren...</value>
+  <data name="ChooseRelease" xml:space="preserve">
+    <value>Kies release...</value>
+  </data>
+  <data name="ChooseVersion" xml:space="preserve">
+    <value>Kies versie...</value>
+  </data>
+  <data name="ChooseTV" xml:space="preserve">
+    <value>Kies TV...</value>
+  </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Selecteer taal</value>
+  </data>
+  <data name="SelectCertificate" xml:space="preserve">
+    <value>Selecteer certificaat</value>
+  </data>
+  <data name="SelectWGT" xml:space="preserve">
+    <value>Selecteer WGT-bestand</value>
+  </data>
+  <data name="lbl_Release" xml:space="preserve">
+    <value>Uitgave</value>
+  </data>
+  <data name="lbl_Version" xml:space="preserve">
+    <value>Versie</value>
+  </data>
+  <data name="lbl_SelectTv" xml:space="preserve">
+    <value>Selecteer TV</value>
+  </data>
+  <data name="lbl_Language" xml:space="preserve">
+    <value>Taal</value>
+  </data>
+  <data name="lbl_CustomWgt" xml:space="preserve">
+    <value>Aangepaste WGT</value>
+  </data>
+  <data name="lbl_Settings" xml:space="preserve">
+    <value>Instellingen</value>
+  </data>
+  <data name="lbl_RememberIp" xml:space="preserve">
+    <value>Onthoud aangepaste IP's</value>
+  </data>
+  <data name="lbl_DeletePrevious" xml:space="preserve">
+    <value>Verwijder de oude Jellyfin-app</value>
+  </data>
+  <data name="lbl_expires" xml:space="preserve">
+    <value>Verloopt</value>
+  </data>
+  <data name="IpWindowTitle" xml:space="preserve">
+    <value>Voer TV-IP in</value>
+  </data>
+  <data name="IpWindowDescription" xml:space="preserve">
+    <value>Voer het IP-adres van het apparaat in:</value>
+  </data>
+  <data name="InvalidDeviceIp" xml:space="preserve">
+    <value>Ongeldig apparaat-IP of apparaat niet gevonden.</value>
+  </data>
+  <data name="IpNotListed" xml:space="preserve">
+    <value>Mijn IP staat niet in de lijst...</value>
+  </data>
+  <data name="lbl_Certifcate" xml:space="preserve">
+    <value>Certificaat</value>
+  </data>
+  <data name="lbl_Other" xml:space="preserve">
+    <value>Anders</value>
+  </data>
+  <data name="DownloadCompleted" xml:space="preserve">
+    <value>Downloaden voltooid...</value>
+  </data>
+  <data name="NoPackageToInstall" xml:space="preserve">
+    <value>Geen pakket om te installeren</value>
+  </data>
+  <data name="NoDeviceSelected" xml:space="preserve">
+    <value>Geen apparaat geselecteerd</value>
+  </data>
+  <data name="UsingCustomWGT" xml:space="preserve">
+    <value>Aangepast WGT-bestand gebruiken</value>
+  </data>
+  <data name="FailedRemoveOld" xml:space="preserve">
+    <value>Het is niet gelukt om de oude app-versie te verwijderen</value>
+  </data>
+  <data name="FailedRemoveOldExtra" xml:space="preserve">
+    <value>Verwijder de oude Jellyfin-app handmatig van de tv</value>
   </data>
   <data name="TvNameNotFound" xml:space="preserve">
     <value>TV naam kon niet worden gevonden...</value>

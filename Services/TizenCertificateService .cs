@@ -24,60 +24,58 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus, string jarPath)
         {
+            updateStatus("OutputDir".Localized());
             var cipherUtil = new CipherUtil();
             await cipherUtil.ExtractPasswordAsync(jarPath);
 
-            updateStatus(Strings.OutputDir);
             Directory.CreateDirectory(outputPath);
 
-            updateStatus(Strings.SettingsCaCerts);
+            updateStatus("SettingsCaCerts".Localized());
             var caPath = Path.Combine(outputPath, "ca");
             Directory.CreateDirectory(caPath);
 
-            updateStatus(Strings.GenPassword);
+            updateStatus("GenPassword".Localized());
             string p12Plain = cipherUtil.GenerateRandomPassword();
             string p12Encrypted = cipherUtil.GetEncryptedString(p12Plain);
 
             var passwordFilePath = Path.Combine(outputPath, "password.txt");
             await File.WriteAllTextAsync(passwordFilePath, p12Plain);
 
-            updateStatus(Strings.GenKeyPair);
+            updateStatus("GenKeyPair".Localized());
             var keyPair = GenerateKeyPair();
 
-            updateStatus(Strings.CreateAuthorCsr);
+            updateStatus("CreateAuthorCsr".Localized());
             var authorCsrData = GenerateAuthorCsr(keyPair);
             var authorCsrPath = Path.Combine(outputPath, "author.csr");
             await File.WriteAllBytesAsync(authorCsrPath, authorCsrData);
 
-            updateStatus(Strings.CreateDistributorCSR);
+            updateStatus("CreateDistributorCSR".Localized());
             var distributorCsrData = GenerateDistributorCsr(keyPair, duid);
             var distributorCsrPath = Path.Combine(outputPath, "distributor.csr");
             await File.WriteAllBytesAsync(distributorCsrPath, distributorCsrData);
 
-            updateStatus(Strings.PostAuthorCSR);
+            updateStatus("PostAuthorCSR".Localized());
             var signedAuthorCsrBytes = await PostAuthorCsrAsync(authorCsrData, accessToken, userId);
             var signedAuthorCsrPath = Path.Combine(outputPath, "signed_author.cer");
             await File.WriteAllBytesAsync(signedAuthorCsrPath, signedAuthorCsrBytes);
 
 
-            updateStatus(Strings.PostFirstDistributorCSR);
+            updateStatus("PostFirstDistributorCSR".Localized());
             var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
             var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
             await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
 
-            updateStatus(Strings.PostSecondDistributorCSR);
+            updateStatus("PostSecondDistributorCSR".Localized());
             var signedDistributorCsrBytes = await PostCsrV2Async(accessToken, userId, distributorCsrData, distributorCsrPath, outputPath);
             var signedDistributorCsrPath = Path.Combine(outputPath, "signed_distributor.cer");
             await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
-            updateStatus(Strings.RootCertificate);
+            updateStatus("CreateNewCertificates".Localized());
             await ExtractRootCertificateAsync(jarPath);
-
-            updateStatus(Strings.CreateNewCertificates);
             await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
             await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
 
-            updateStatus(Strings.MovingP12Files);
+            updateStatus("MovingP12Files".Localized());
             string p12Location = MoveTizenCertificateFiles();
 
             return (p12Location, p12Encrypted);
@@ -179,7 +177,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v2/authors");
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.AuthorEndpoint);
 
             var content = new MultipartFormDataContent
         {
@@ -199,7 +197,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<byte[]> PostCsrV1Async(string accessToken, string userId, byte[] csrBytes)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v1/distributors");
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
 
             var content = new MultipartFormDataContent
         {
@@ -221,7 +219,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<byte[]> PostCsrV2Async(string accessToken, string userId, byte[] csrBytes, string csrFilePath, string outputPath)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v2/distributors");
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V2);
 
             var content = new MultipartFormDataContent
         {
