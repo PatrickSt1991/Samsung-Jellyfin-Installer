@@ -1,0 +1,17 @@
+﻿<Window x:Class="Samsung_Jellyfin_Installer.Views.IpInputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Samsung_Jellyfin_Installer.Views"
+        mc:Ignorable="d"
+        Title="Enter IP Address" Height="150" Width="300" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="10">
+        <TextBlock x:Name="PromptText" Margin="0 0 0 10" />
+        <TextBox x:Name="InputBox" Margin="0 0 0 10" CaretBrush="#FF000B25" SelectionBrush="#FF000B25" BorderBrush="#7F000B25" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="75" Margin="0 0 10 0" Click="Ok_Click" Background="#FF000B25" Foreground="White"/>
+            <Button Content="Cancel" Width="75" Click="Cancel_Click" Background="#FF000B25" Foreground="White" />
+        </StackPanel>
+    </StackPanel>
+</Window>
