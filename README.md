@@ -1,19 +1,20 @@
 # Jellyfin 2 Samsung (Samsung-Jellyfin-Installer)
 
-A simple tool to install Jellyfin on your Samsung Smart TV with ease.  
-✅ Supports **Tizen 7 and up**
+A simple tool for installing **Jellyfin** on your **Samsung Smart TV**—quickly and effortlessly.  
+✅ Supports **Tizen 7 and above**
 
-Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds) for providing the Jellyfin Tizen `.wgt` builds—super helpful and much appreciated!
+> Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds) for providing the Jellyfin Tizen `.wgt` builds—super helpful and much appreciated!
+
 ---
 
 ## 📦 Current Versions
 
 <!-- versions:start -->
 
-| Channel    | Version                                | Notes                                      |
-|------------|----------------------------------------|--------------------------------------------|
+| Channel    | Version                                                                                  | Notes                                      |
+|------------|------------------------------------------------------------------------------------------|--------------------------------------------|
 | **Stable** | [`v1.5.7`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.7)         | Recommended for most users                 |
-| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta)             | Includes new features, may be less stable  |
+| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta) | Includes new features; may be less stable  |
 
 <!-- versions:end -->
 
@@ -21,90 +22,98 @@ Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-build
 
 ## 🚀 How It Works
 
-Follow these steps to get Jellyfin running on your Samsung TV:
-
-### 1. Launch the Tool
-
-![Start screen](https://github.com/user-attachments/assets/2970399f-f2f6-45d5-9901-c400b7b75e19)  
-_When launched, the tool will automatically scan your network for Samsung Smart TVs._
+### 1. Launch the Tool  
+![Start screen](https://github.com/user-attachments/assets/4b0b0ba6-1165-4ce9-ac62-255baed6b21b)  
+The tool automatically scans your local network for compatible Samsung Smart TVs.
 
 ---
 
-### 2. Select a Release
-
-![Choose the release](https://github.com/user-attachments/assets/4b080475-bccf-4ae9-9090-c78e0aeefd7b)  
-_Choose the Jellyfin release you want to install._
-
----
-
-### 3. Pick a Version
-
-![Choose the version](https://github.com/user-attachments/assets/a3f64737-4d7d-4759-8a8a-9cc5023c4934)  
-_Select the specific version you prefer._
+### 2. Select a Release  
+![Choose the release](https://github.com/user-attachments/assets/34b0518e-11a6-49f7-8bcc-055267fa6a3d)  
+Choose the desired Jellyfin release channel (e.g., Stable or Beta).
 
 ---
 
-### 4. Select Your TV
+### 3. Pick a Version  
+![Choose the version](https://github.com/user-attachments/assets/935313d4-3db4-4e02-beeb-a4a1ceae2739)  
+Select the specific Jellyfin version you’d like to install.
 
+---
+
+### 4. Select Your TV  
 ![Devices_found](https://github.com/user-attachments/assets/d9aba234-c73a-480e-842d-2a7998c3ce6c)  
-_All discovered devices will be listed, including an option to manually enter an IP._
-
-If your device isn’t listed (e.g., on a different VLAN), you can manually enter the IP address:
+The tool lists all detected Samsung TVs. You can also manually enter an IP if your TV isn’t found.
 
 ![Device_not_listed](https://github.com/user-attachments/assets/d9272aad-562a-4485-b52f-885652cd720b)  
 
 ---
 
-### 5. Sit Back and Watch the Magic Happen ✨
-
-![See the magic happen](https://github.com/user-attachments/assets/351f59f2-34ec-4974-a87c-ab11c9f9a902)  
-_The tool handles the rest—just relax and let the installation finish._
+### 5. Sit Back and Watch the Magic ✨  
+![See the magic happen](https://github.com/user-attachments/assets/3826c8ec-51d1-4f08-8a3c-cf5cdd6bbe36)  
+Once started, the installer takes care of everything else automatically.
 
 ---
 
-### 5.1 Special Notes for Tizen 7+
+### ⚠️ Special Notes for Tizen 7+
 
-<img src="https://github.com/user-attachments/assets/b32a5873-a9d5-4f1e-9266-69f33961917f" alt="Tizen Email" style="width:400px; max-height:240px;">
-<img src="https://github.com/user-attachments/assets/9ad45a0a-f091-4eb6-94e8-eb0f381816d2" alt="Tizen Password" style="width:400px; max-height:240px;">
+<img src="https://github.com/user-attachments/assets/b32a5873-a9d5-4f1e-9266-69f33961917f" alt="Tizen Email" width="400">
+<img src="https://github.com/user-attachments/assets/9ad45a0a-f091-4eb6-94e8-eb0f381816d2" alt="Tizen Password" width="400">
 
-Devices running Tizen 7+ will prompt for Samsung account login. This is required to generate and exchange the necessary certificates during installation.
+Tizen 7+ requires a **Samsung account login** during the install. This step is necessary for generating and exchanging the security certificates used for app installation.
+
+---
+
+## ⚙️ Settings
+
+### Language
+![SetLang](https://github.com/user-attachments/assets/a1e672e0-dfed-4a47-a055-655d09601a2f)  
+Select your preferred language.
+
+### Certificate
+![SetCert](https://github.com/user-attachments/assets/e3ede4b0-40b4-4a8c-966d-74643e1ea0f4)  
+Choose an existing certificate or let the tool generate a new one automatically.
+
+### Advanced Options
+![SetGen](https://github.com/user-attachments/assets/1d6c7659-44fa-40e0-a5f0-d7b60f8e7e76)  
+- **Custom WGT:** Upload your own `.wgt` file (randomizes the package name to allow side-by-side installs).  
+- **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
+- **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).
 
 ---
 
 ## ✅ Requirements
 
-Before you begin, make sure you have the following:
+Before getting started, ensure you have the following:
 
 - A **Samsung Tizen Smart TV** with **Developer Mode enabled**
-- **Tizen Web CLI**
-- **Certificate manager**
+- **Tizen Web CLI** installed
+- **Certificate Manager**
 - **Microsoft Edge WebView2 Runtime**
-- A registered **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+ installations)
+- A valid **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+)
 
-> ℹ️ The installer will automatically check for missing dependencies and guide you through installing them if needed.
-
----
-
-## 🧭 How to Enable Developer Mode on Your Samsung TV
-
-1. Press the **Home** / **Smart Hub** button on your remote  
-2. Navigate to **Apps**  
-3. Enter **12345** using the remote or on-screen keyboard  
-   - This opens the hidden Developer Mode menu  
-4. Turn **Developer Mode** ON  
-5. Under “IP address,” enter your PC’s IP address (the one running the installer)  
-   - On Windows: `ipconfig` in Command Prompt  
-   - On macOS/Linux: `ifconfig` in Terminal
+> ℹ️ Don’t worry—the installer checks for missing dependencies and guides you through installation if needed.
 
 ---
 
-## 🛠️ Support
+## 🧭 How to Enable Developer Mode on Your TV
 
-Need help? Found a bug?  
-👉 [Open an issue](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues) on the GitHub repository.
+1. Press the **Home** or **Smart Hub** button on your remote  
+2. Go to **Apps**  
+3. Enter **12345** using your remote  
+4. In the Developer Mode popup:
+   - Toggle **Developer Mode ON**
+   - Enter your PC’s local IP address (find it using `ipconfig` or `ifconfig`)
+5. Restart the TV
 
-Have a feature request or an idea to improve the tool?  
-💡 Start a new thread on the [Discussions board](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/discussions)  
-or [open a feature request](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues).
+---
 
-We welcome feedback and contributions to help improve the experience for everyone!
+## 🛠️ Support & Feedback
+
+Need help or want to report a bug?  
+👉 [Open an issue](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)
+
+Got an idea for improvement?  
+💡 Share it on the [Discussions board](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/discussions)  
+or [submit a feature request](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)
+
+We welcome all contributions and feedback to improve the experience for everyone!  
