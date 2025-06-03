@@ -11,10 +11,10 @@ A simple tool for installing **Jellyfin** on your **Samsung Smart TV**—quickly
 
 <!-- versions:start -->
 
-| Channel    | Version                                                                                  | Notes                                      |
-|------------|------------------------------------------------------------------------------------------|--------------------------------------------|
-| **Stable** | [`v1.5.7`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.7)         | Recommended for most users                 |
-| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta) | Includes new features; may be less stable  |
+| Channel    | Version                                | Notes                                      |
+|------------|----------------------------------------|--------------------------------------------|
+| **Stable** | [`v1.5.8`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8)         | Recommended for most users                 |
+| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta)             | Includes new features, may be less stable  |
 
 <!-- versions:end -->
 
