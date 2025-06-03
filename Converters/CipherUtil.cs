@@ -192,7 +192,7 @@ namespace Samsung_Jellyfin_Installer.Converters
             // Shuffle to avoid predictable positions
             return new string(chars.OrderBy(_ => Guid.NewGuid()).ToArray());
         }
-        public static string RunWincryptDecrypt(string filePath, string cryptoPath)
+        public string RunWincryptDecrypt(string filePath, string cryptoPath)
         {
             var processInfo = new ProcessStartInfo
             {

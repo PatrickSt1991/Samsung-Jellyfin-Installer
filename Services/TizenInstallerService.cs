@@ -148,7 +148,8 @@ namespace Samsung_Jellyfin_Installer.Services
                                     accessToken: auth.access_token,
                                     userId: auth.userId,
                                     outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
-                                    updateStatus
+                                    updateStatus,
+                                    TizenPluginPath
                                 );
 
                                 PackageCertificate = "Jelly2Sams";
@@ -238,6 +239,19 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
+        private async Task<string> GetTvDuidAsync()
+        {
+            if (TizenSdbPath is null)
+                return string.Empty;
+
+            var output = await RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+            if (!string.IsNullOrWhiteSpace(output))
+                return output.Trim();
+
+            output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
+            return output?.Trim() ?? string.Empty;
+        }
+
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
             updateStatus("SettingCertificateManager".Localized());
@@ -405,7 +419,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
-        private async Task<bool> InstallMinimalCli()
+        private async Task<string> InstallMinimalCli()
         {
             string installerPath = null;
             InstallingWindow installingWindow = null;
@@ -443,21 +457,20 @@ namespace Samsung_Jellyfin_Installer.Services
                 using var process = Process.Start(startInfo);
                 await process.WaitForExitAsync();
 
-                if (process.ExitCode == 0)
-                {
-                    await InstallSamsungCertificateExtensionAsync(_installPath);
+                if (process.ExitCode != 0)
+                    return "Tizen CLI installation failed.";
 
-                    var tizenRoot = FindTizenRoot() ?? string.Empty;
-                    TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
-                    TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+                await InstallSamsungCertificateExtensionAsync(_installPath);
 
-                    return tizenRoot != string.Empty;
-                }
-                return false;
+                var tizenRoot = FindTizenRoot() ?? string.Empty;
+                TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
+                TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
+
+                return tizenRoot != string.Empty ? string.Empty : "Tizen root folder not found after installation.";
             }
-            catch
+            catch(Exception ex)
             {
-                return false;
+                return $"An error occurred during installation: {ex.Message}";
             }
             finally
             {

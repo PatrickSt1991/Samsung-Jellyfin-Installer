@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Samsung_Jellyfin_Installer"
+        xmlns:loc="clr-namespace:Samsung_Jellyfin_Installer.Converters"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:viewmodels="clr-namespace:Samsung_Jellyfin_Installer.ViewModels"
         xmlns:l="clr-namespace:Samsung_Jellyfin_Installer.Localization"
@@ -50,7 +51,7 @@
                 </Grid.ColumnDefinitions>
                 
                 <Label Grid.Column="0"
-                       Content="Release" 
+                       Content="{loc:Localize lbl_Release}" 
                        VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1"
                           Style="{DynamicResource MaterialDesignComboBox}"
@@ -58,6 +59,7 @@
                           SelectedItem="{Binding SelectedRelease}"
                           DisplayMemberPath="Name"
                           materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                          materialDesign:HintAssist.Hint="{loc:Localize ChooseRelease}"
                           VerticalAlignment="Center" />
             </Grid>
             
@@ -69,7 +71,7 @@
                 </Grid.ColumnDefinitions>
                 
                 <Label Grid.Column="0"
-                       Content="Version" 
+                       Content="{loc:Localize lbl_Version}" 
                        VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1"
                           Style="{DynamicResource MaterialDesignComboBox}"
@@ -77,6 +79,7 @@
                           SelectedItem="{Binding SelectedAsset}"
                           DisplayMemberPath="DisplayText"
                           materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                          materialDesign:HintAssist.Hint="{loc:Localize ChooseVersion}"
                           VerticalAlignment="Center" />
             </Grid>
             
@@ -89,7 +92,7 @@
                 </Grid.ColumnDefinitions>
                 
                 <Label Grid.Column="0"
-                       Content="Select TV" 
+                       Content="{loc:Localize lbl_SelectTv}" 
                        VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1"
                           Style="{DynamicResource MaterialDesignComboBox}"
@@ -97,20 +100,22 @@
                           SelectedItem="{Binding SelectedDevice}"
                           DisplayMemberPath="DisplayText"
                           materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                          materialDesign:HintAssist.Hint="{loc:Localize ChooseTV}"
                           VerticalAlignment="Center"
                           IsEnabled="{Binding EnableDevicesInput}"
                           Margin="0,0,10,0" />
-                <Button Grid.Column="2"
+                    <Button Grid.Column="2"
                         Command="{Binding RefreshDevicesCommand}"
                         Style="{DynamicResource MaterialDesignFloatingActionLightButton}"
-                        Content="⟳" 
                         Height="25" Width="25" 
                         VerticalAlignment="Center"
                         IsEnabled="{Binding EnableDevicesInput}"
                         Background="#FF000B25" 
                         BorderBrush="#FF000B25" 
-                        Foreground="White" />
-            </Grid>
+                        Foreground="White">
+                        <materialDesign:PackIcon Kind="Refresh" />
+                    </Button>
+                </Grid>
             
         </StackPanel>
         
@@ -126,21 +131,24 @@
         
         <!-- Main Button -->
         <Button Grid.Row="5"
-                Command="{Binding DownloadCommand}"
+                Command="{Binding DownloadAndInstallCommand}" 
                 CommandParameter="{Binding SelectedRelease}"
-                Content="{x:Static l:Strings.DownloadAndInstall}"
+                Content="{loc:Localize DownloadAndInstall}"
                 Style="{DynamicResource MaterialDesignRaisedLightButton}"
                 Background="#FF000B25" 
                 Foreground="White"
                 HorizontalAlignment="Center"
                 MinWidth="250" />
         
-        <!-- Copyright -->
-        <TextBlock Grid.Row="7"
-                   Text="Copyright (c) 2025 - MIT License - Patrick Stel"
-                   FontSize="12" 
-                   HorizontalAlignment="Center" />
-        
-    </Grid>
+            <!-- Copyright -->
+            <TextBlock FontSize="12" HorizontalAlignment="Center" Grid.Row="7" >
+                <Hyperlink NavigateUri="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" 
+                           RequestNavigate="Hyperlink_RequestNavigate"
+                           TextDecorations="{x:Null}" 
+                           Foreground="#FF000B25">
+                    <Run Text="{Binding FooterText, Mode=OneWay}" d:Text="A WHOLE COPYRIGHT RULE AND STUFF..."  />
+                </Hyperlink>
+            </TextBlock>
+        </Grid>
     </Border>
 </Window>

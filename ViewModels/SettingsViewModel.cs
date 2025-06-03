@@ -188,6 +188,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private List<ExistingCertificates> GetAvailableCertificates(string profilePath, string tizenCrypto)
         {
             var certificates = new List<ExistingCertificates>();
+            var cipherUtil = new CipherUtil();
 
             if (!File.Exists(profilePath))
                 return certificates;
@@ -217,9 +218,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     if (!string.IsNullOrWhiteSpace(keyPath) && File.Exists(keyPath) && (!string.IsNullOrEmpty(encryptedPassword)))
                     {
                         if (File.Exists(encryptedPassword))
-                            decryptedPassword = CipherUtil.RunWincryptDecrypt(encryptedPassword, tizenCrypto);
+                            decryptedPassword = cipherUtil.RunWincryptDecrypt(encryptedPassword, tizenCrypto);
                         else
-                            decryptedPassword = CipherUtil.GetDecryptedString(encryptedPassword);
+                            decryptedPassword = cipherUtil.GetDecryptedString(encryptedPassword);
 
                         try
                         {
