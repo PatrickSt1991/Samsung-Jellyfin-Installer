@@ -30,7 +30,7 @@ The tool automatically scans your local network for compatible Samsung Smart TVs
 
 ### 2. Select a Release  
 ![Choose the release](https://github.com/user-attachments/assets/34b0518e-11a6-49f7-8bcc-055267fa6a3d)  
-Choose the desired Jellyfin release channel (e.g., Stable or Beta).
+Choose the desired Jellyfin release.
 
 ---
 
