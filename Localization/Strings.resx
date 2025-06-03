@@ -147,6 +147,9 @@
   <data name="TvNameNotFound" xml:space="preserve">
     <value>TV Name could not be found...</value>
   </data>
+  <data name="TvDuidNotFound" xml:space="preserve">
+    <value>TV duid could not be found...</value>
+  </data>
   <data name="UpdatingCertificateProfile" xml:space="preserve">
     <value>Updating certificate profile...</value>
   </data>

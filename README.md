@@ -1,9 +1,21 @@
 # Jellyfin 2 Samsung (Samsung-Jellyfin-Installer)
 
 A simple tool to install Jellyfin on your Samsung Smart TV with ease.  
-✅ Supports **Tizen 7 and up** (beta—please report any issues you encounter!)
+✅ Supports **Tizen 7 and up**
 
 Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds) for providing the Jellyfin Tizen `.wgt` builds—super helpful and much appreciated!
+---
+
+## 📦 Current Versions
+
+<!-- versions:start -->
+
+| Channel    | Version                                | Notes                                      |
+|------------|----------------------------------------|--------------------------------------------|
+| **Stable** | [`v1.5.7`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.7)         | Recommended for most users                 |
+| **Beta**   | [`v1.5.8-beta`](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.5.8-beta)             | Includes new features, may be less stable  |
+
+<!-- versions:end -->
 
 ---
 
@@ -64,8 +76,9 @@ Devices running Tizen 7+ will prompt for Samsung account login. This is required
 Before you begin, make sure you have the following:
 
 - A **Samsung Tizen Smart TV** with **Developer Mode enabled**
-- **Tizen Web CLI** installed and available in your system path
-- **Microsoft Edge WebView2 Runtime** installed
+- **Tizen Web CLI**
+- **Certificate manager**
+- **Microsoft Edge WebView2 Runtime**
 - A registered **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+ installations)
 
 > ℹ️ The installer will automatically check for missing dependencies and guide you through installing them if needed.

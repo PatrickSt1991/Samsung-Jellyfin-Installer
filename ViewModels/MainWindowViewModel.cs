@@ -5,7 +5,10 @@ using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.Views;
+using Samsung_Jellyfin_Installer.Localization;
 using System.Collections.ObjectModel;
+﻿using Newtonsoft.Json;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
@@ -100,7 +103,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+
         public bool EnableDevicesInput => !IsLoadingDevices;
+
         public string StatusBar
         {
             get => _statusBar;

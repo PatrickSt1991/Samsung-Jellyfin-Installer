@@ -1,16 +1,141 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Samsung_Jellyfin_Installer.Converters
 {
-    public static class CipherUtil
+    public class CipherUtil
     {
-        private const string KeyString = "KYANINYLhijklmnopqrstuvwx"; // 26 chars, use first 24 bytes only
-        private static readonly byte[] KeyBytes = Encoding.UTF8.GetBytes(KeyString).Take(24).ToArray();
+        private const string FallbackKeyString = "KYANINYLhijklmnopqrstuvwx"; // 26 chars
+        private string _usedPassword = FallbackKeyString;
+        private byte[] KeyBytes => Encoding.UTF8.GetBytes(_usedPassword).Take(24).ToArray();
 
-        public static string GetEncryptedString(string plainText)
+        public async Task<string?> ExtractPasswordAsync(string jarPath)
+        {
+            var jarFiles = Directory.GetFiles(jarPath, "*.jar");
+
+            foreach (var jar in jarFiles)
+            {
+                var fileName = Path.GetFileName(jar);
+
+                if (fileName.Contains("org.tizen.common_") && fileName.EndsWith(".jar"))
+                {
+                    using var fileStream = File.OpenRead(jar);
+                    using var msJar = new MemoryStream();
+                    await fileStream.CopyToAsync(msJar);
+                    msJar.Position = 0;
+
+                    using var jarZip = new ZipArchive(msJar, ZipArchiveMode.Read);
+
+                    foreach (var entry in jarZip.Entries)
+                    {
+                        if (entry.FullName.EndsWith("CipherUtil.class"))
+                        {
+                            using var classStream = entry.Open();
+                            var extracted = ExtractPasswordFromClass(classStream);
+
+                            if (!string.IsNullOrEmpty(extracted))
+                            {
+                                _usedPassword = extracted;
+                                return extracted;
+                            }
+                        }
+                    }
+                }
+            }
+
+            _usedPassword = FallbackKeyString;
+            return null;
+        }
+
+        private string? ExtractPasswordFromClass(Stream classFileStream)
+        {
+            using var reader = new BinaryReader(classFileStream);
+
+            // Skip header: magic, minor version, major version
+            reader.ReadBytes(8);
+
+            ushort constantPoolCount = ReadBigEndianUInt16(reader);
+            var constants = new List<(string Type, string Value)>();
+
+            for (int i = 1; i < constantPoolCount; i++)
+            {
+                byte tag = reader.ReadByte();
+
+                switch (tag)
+                {
+                    case 1: // CONSTANT_Utf8
+                        ushort length = ReadBigEndianUInt16(reader);
+                        byte[] bytes = reader.ReadBytes(length);
+                        string value = Encoding.UTF8.GetString(bytes);
+                        constants.Add(("Utf8", value));
+                        break;
+
+                    case 3:
+                    case 4:
+                    case 9:
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 18:
+                        reader.ReadBytes(4);
+                        break;
+
+                    case 5:
+                    case 6:
+                        reader.ReadBytes(8);
+                        i++; // occupies two entries
+                        break;
+
+                    case 7:
+                    case 8:
+                    case 16:
+                        reader.ReadBytes(2);
+                        break;
+
+                    case 15:
+                        reader.ReadBytes(3);
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"Unknown constant pool tag {tag}");
+                }
+            }
+
+            // Look for 'password' field and a likely value nearby
+            for (int i = 0; i < constants.Count - 1; i++)
+            {
+                if (constants[i].Value == "password")
+                {
+                    for (int j = i + 1; j < constants.Count; j++)
+                    {
+                        var val = constants[j].Value;
+                        if (val.Length >= 16 && val.Length <= 32 && val.All(char.IsLetterOrDigit))
+                        {
+                            return val;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private ushort ReadBigEndianUInt16(BinaryReader reader)
+        {
+            var bytes = reader.ReadBytes(2);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+            return BitConverter.ToUInt16(bytes, 0);
+        }
+
+        public string GetEncryptedString(string plainText)
         {
             using var tdes = new TripleDESCryptoServiceProvider
             {
@@ -24,7 +149,8 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             return Convert.ToBase64String(encryptedBytes);
         }
-        public static string GetDecryptedString(string encryptedBase64)
+
+        public string GetDecryptedString(string encryptedBase64)
         {
             byte[] encryptedBytes = Convert.FromBase64String(encryptedBase64);
 
@@ -38,7 +164,8 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             return Encoding.UTF8.GetString(decryptedBytes);
         }
-        public static string GenerateRandomPassword(int length = 12)
+
+        public string GenerateRandomPassword(int length = 12)
         {
             if (length < 8)
                 throw new ArgumentException("Password length must be at least 8 characters.");

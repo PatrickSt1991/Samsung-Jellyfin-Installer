@@ -147,6 +147,9 @@
   <data name="TvNameNotFound" xml:space="preserve">
     <value>TV navn kunne ikke findes...</value>
   </data>
+  <data name="TvDuidNotFound" xml:space="preserve">
+    <value>TV duid kunne ikke findes...</value>
+  </data>
   <data name="UpdatingCertificateProfile" xml:space="preserve">
     <value>Opdaterer certifikatprofil...</value>
   </data>
