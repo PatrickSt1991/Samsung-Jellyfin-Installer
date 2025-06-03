@@ -1,0 +1,64 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>Samsung_Jellyfin_Installer</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>jellyfin.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CefSharpAnyCpuSupport>false</CefSharpAnyCpuSupport>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+
+	<ItemGroup>
+    <None Remove="TizenProfile\author.p12" />
+    <None Remove="TizenProfile\ca\do_not_delete_me.txt" />
+    <None Remove="TizenProfile\profiles.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="jellyfin.ico" />
+    <Content Include="TizenProfile\ca\do_not_delete_me.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TizenProfile\preSign\author.p12">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TizenProfile\preSign\profiles.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3240.44" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Localization\Strings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Localization\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

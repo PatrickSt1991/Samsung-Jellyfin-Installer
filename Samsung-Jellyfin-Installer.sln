@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samsung-Jellyfin-Installer", "Samsung-Jellyfin-Installer.csproj", "{C74C7337-9CFA-42FD-8C74-BFE170435FDF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Debug|x64.ActiveCfg = Debug|x64
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Debug|x64.Build.0 = Debug|x64
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Release|x64.ActiveCfg = Release|x64
+		{C74C7337-9CFA-42FD-8C74-BFE170435FDF}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {208F20F0-7D17-478D-8B7A-60DAD6356F56}
+	EndGlobalSection
+EndGlobal

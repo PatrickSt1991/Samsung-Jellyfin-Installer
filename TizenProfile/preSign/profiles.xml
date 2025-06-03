@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<profiles active="dev" version="3.1">
+<profile name="dev">
+<profileitem ca="" distributor="0" key="/home/developer/author.p12" password="eF0GFnArm/35qusNw7gjmQ==" rootca=""/>
+<profileitem ca="" distributor="1" key="/home/developer/tizen-studio/tools/certificate-generator/certificates/distributor/tizen-distributor-signer.p12" password="Vy63flx5JBMc5GA4iEf8oFy+8aKE7FX/+arrDcO4I5k=" rootca=""/>
+<profileitem ca="" distributor="2" key="" password="xmEcrXPl1ss=" rootca=""/>
+</profile>
+</profiles>
