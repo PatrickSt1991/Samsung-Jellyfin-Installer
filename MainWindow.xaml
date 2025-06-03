@@ -41,60 +41,62 @@
         </materialDesign:Card>
         
         <!-- Form Content -->
-        <StackPanel Grid.Row="2" VerticalAlignment="Top">
+        <StackPanel Grid.Row="2" VerticalAlignment="Top" Width="Auto">
             
             <!-- Release Selection -->
             <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="80" />
+                    <!-- Label -->
+                    <ColumnDefinition Width="Auto" />
+                    <!-- ComboBox -->
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                
-                <Label Grid.Column="0"
-                       Content="{loc:Localize lbl_Release}" 
-                       VerticalAlignment="Center" />
+
+                <Label Grid.Column="0" Margin="0,0,12,0"
+                    Content="{loc:Localize lbl_Release}" 
+                    VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1"
-                          Style="{DynamicResource MaterialDesignComboBox}"
-                          ItemsSource="{Binding Releases}"
-                          SelectedItem="{Binding SelectedRelease}"
-                          DisplayMemberPath="Name"
-                          materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                          materialDesign:HintAssist.Hint="{loc:Localize ChooseRelease}"
-                          VerticalAlignment="Center" />
+                            Style="{DynamicResource MaterialDesignComboBox}"
+                            ItemsSource="{Binding Releases}"
+                            SelectedItem="{Binding SelectedRelease}"
+                            DisplayMemberPath="Name"
+                            materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                            materialDesign:HintAssist.Hint="{loc:Localize ChooseRelease}"
+                            VerticalAlignment="Center" />
             </Grid>
             
             <!-- Version Selection -->
             <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                
-                <Label Grid.Column="0"
-                       Content="{loc:Localize lbl_Version}" 
-                       VerticalAlignment="Center" />
+
+                <Label Grid.Column="0" Margin="0,0,12,0"
+                    Content="{loc:Localize lbl_Version}" 
+                    VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1"
-                          Style="{DynamicResource MaterialDesignComboBox}"
-                          ItemsSource="{Binding AvailableAssets}"
-                          SelectedItem="{Binding SelectedAsset}"
-                          DisplayMemberPath="DisplayText"
-                          materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                          materialDesign:HintAssist.Hint="{loc:Localize ChooseVersion}"
-                          VerticalAlignment="Center" />
+                    Style="{DynamicResource MaterialDesignComboBox}"
+                    ItemsSource="{Binding AvailableAssets}"
+                    SelectedItem="{Binding SelectedAsset}"
+                    DisplayMemberPath="DisplayText"
+                    materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                    materialDesign:HintAssist.Hint="{loc:Localize ChooseVersion}"
+                    VerticalAlignment="Center" />
             </Grid>
             
             <!-- TV Selection -->
-            <Grid Margin="0,0,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="80" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                
-                <Label Grid.Column="0"
-                       Content="{loc:Localize lbl_SelectTv}" 
-                       VerticalAlignment="Center" />
-                <ComboBox Grid.Column="1"
+                <Grid Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Column="0" Margin="0,0,12,0"
+                    Content="{loc:Localize lbl_SelectTv}" 
+                    VerticalAlignment="Center" />
+                    <ComboBox Grid.Column="1"
                           Style="{DynamicResource MaterialDesignComboBox}"
                           ItemsSource="{Binding AvailableDevices}"
                           SelectedItem="{Binding SelectedDevice}"
@@ -116,8 +118,7 @@
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>
                 </Grid>
-            
-        </StackPanel>
+            </StackPanel>
         
         <!-- Status Bar -->
         <materialDesign:Card Grid.Row="3"
@@ -130,7 +131,13 @@
         </materialDesign:Card>
         
         <!-- Main Button -->
-        <Button Grid.Row="5"
+        <Grid Margin="0,0,0,0" Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="0.25*" />
+            </Grid.ColumnDefinitions>
+            
+            <Button Grid.Column="0"
                 Command="{Binding DownloadAndInstallCommand}" 
                 CommandParameter="{Binding SelectedRelease}"
                 Content="{loc:Localize DownloadAndInstall}"
@@ -138,8 +145,21 @@
                 Background="#FF000B25" 
                 Foreground="White"
                 HorizontalAlignment="Center"
-                MinWidth="250" />
-        
+                MinWidth="300" />
+            
+            <Button Grid.Column="1"
+                Command="{Binding OpenSettingsCommand}" 
+                Style="{DynamicResource MaterialDesignFloatingActionLightButton}" 
+                Height="26" 
+                Width="25" 
+                VerticalAlignment="Center"
+                Background="#FF000B25" 
+                BorderBrush="#FF000B25" 
+                Foreground="White">
+                <materialDesign:PackIcon Kind="Settings" />
+            </Button>
+        </Grid>
+
             <!-- Copyright -->
             <TextBlock FontSize="12" HorizontalAlignment="Center" Grid.Row="7" >
                 <Hyperlink NavigateUri="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" 

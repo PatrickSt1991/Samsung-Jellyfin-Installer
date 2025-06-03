@@ -49,6 +49,20 @@ namespace Samsung_Jellyfin_Installer
 
             string savedLanguage = Settings.Default.Language ?? "en";
 
+            var culture = new System.Globalization.CultureInfo(savedLanguage);
+
+            Debug.WriteLine($"Setting culture to: {savedLanguage}");
+            
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culture;
+            System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+
+            Debug.WriteLine($"Current UI Culture: {System.Threading.Thread.CurrentThread.CurrentUICulture.Name}");
+            Debug.WriteLine($"Default UI Culture: {System.Globalization.CultureInfo.DefaultThreadCurrentUICulture.Name}");
+
+
+
             var configPath = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
             Debug.WriteLine($"Config File Loc: {configPath}");
 

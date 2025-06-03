@@ -601,7 +601,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TV name could not be found....
+        ///   Looks up a localized string similar to TV Name could not be found....
         /// </summary>
         public static string TvNameNotFound {
             get {

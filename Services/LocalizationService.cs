@@ -1,6 +1,7 @@
 ﻿using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.ViewModels;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Resources;
@@ -10,24 +11,29 @@ namespace Samsung_Jellyfin_Installer.Services
     public class LocalizedStrings : ViewModelBase
     {
         private static LocalizedStrings _instance;
+        private CultureInfo _currentCulture;
+
         public static LocalizedStrings Instance => _instance ??= new LocalizedStrings();
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public CultureInfo CurrentCulture
+        {
+            get => _currentCulture;
+            private set => SetField(ref _currentCulture, value);
+        }
 
-        private LocalizedStrings() { }
+        private LocalizedStrings()
+        {
+            _currentCulture = CultureInfo.CurrentUICulture;
+        }
 
         public string this[string key]
         {
             get
             {
-                try
-                {
-                    return Strings.ResourceManager.GetString(key) ?? key;
-                }
-                catch
-                {
-                    return key;
-                }
+                // Use explicit culture from our property
+                var value = Strings.ResourceManager.GetString(key, CurrentCulture);
+
+                return value ?? $"#{key}#"; // Makes missing keys visible
             }
         }
 
@@ -35,15 +41,20 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             try
             {
-                var culture = new CultureInfo(cultureCode);
-                Thread.CurrentThread.CurrentCulture = culture;
-                Thread.CurrentThread.CurrentUICulture = culture;
-                CultureInfo.DefaultThreadCurrentCulture = culture;
-                CultureInfo.DefaultThreadCurrentUICulture = culture;
+                var newCulture = new CultureInfo(cultureCode);
 
+                // Update static cultures
+                CultureInfo.DefaultThreadCurrentCulture = newCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = newCulture;
+
+                // Update our instance culture
+                CurrentCulture = newCulture;
+
+                // Clear all resource caches
                 ClearResourceCache();
 
-                OnPropertyChanged("Item[]");
+                // Notify all listeners
+                OnPropertyChanged(string.Empty); // Refresh all bindings
             }
             catch (CultureNotFoundException)
             {
@@ -53,20 +64,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private void ClearResourceCache()
         {
-            try
-            {
-                var resourceSetsField = typeof(ResourceManager).GetField("_resourceSets",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
+            // More reliable cache clearing
+            var resourceManager = Strings.ResourceManager;
+            var method = resourceManager.GetType().GetMethod("InternalGetResourceSet",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
 
-                if (resourceSetsField?.GetValue(Strings.ResourceManager) is System.Collections.Hashtable resourceSets)
-                {
-                    resourceSets.Clear();
-                }
-            }
-            catch
-            {
-                //return nothing
-            }
+            method?.Invoke(resourceManager, new object[] { CurrentCulture, false, true });
         }
     }
 }

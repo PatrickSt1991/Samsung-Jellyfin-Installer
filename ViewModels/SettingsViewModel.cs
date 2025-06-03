@@ -164,7 +164,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private async Task InitializeCertificates(ITizenInstallerService tizenService)
         {
             var (profilePath, tizenCrypto) = await tizenService.EnsureTizenCliAvailable();
-
+            Debug.WriteLine(profilePath);
+            Debug.WriteLine(tizenCrypto);
             var certificates = GetAvailableCertificates(profilePath, tizenCrypto);
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -189,6 +190,13 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         {
             var certificates = new List<ExistingCertificates>();
             var cipherUtil = new CipherUtil();
+
+            certificates.Add(new ExistingCertificates
+            {
+                Name = "Jelly2Sams (default)",
+                File = null, // null indicates this needs to be created
+                ExpireDate = null
+            });
 
             if (!File.Exists(profilePath))
                 return certificates;
@@ -248,13 +256,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 Debug.WriteLine($"Error reading profile XML: {ex.Message}");
             }
-
-            certificates.Add(new ExistingCertificates
-            {
-                Name = "Jelly2Sams (default)",
-                File = null, // null indicates this needs to be created
-                ExpireDate = null
-            });
 
             return certificates;
         }

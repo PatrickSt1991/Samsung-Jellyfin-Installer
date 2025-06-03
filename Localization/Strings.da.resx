@@ -298,7 +298,7 @@
     <value>Ingen enhed valgt</value>
   </data>
   <data name="UsingCustomWGT" xml:space="preserve">
-    <value />
+    <value>Brug af brugerdefineret WGT-fil</value>
   </data>
   <data name="FailedRemoveOld" xml:space="preserve">
     <value>Kunne ikke fjerne den gamle appversion</value>

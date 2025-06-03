@@ -64,24 +64,34 @@
                   VerticalAlignment="Center" Margin="0,15,0,0"/>
 
                 <!-- WGT Path -->
-                <Label Grid.Row="2" Grid.Column="0" Content="{loc:Localize lbl_CustomWgt}"
-               VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,15,0,0">
-                    <TextBox Style="{DynamicResource MaterialDesignTextBox}"
-                     Text="{Binding CustomWgtPath, Mode=TwoWay}"
-                     materialDesign:HintAssist.Hint="{loc:Localize SelectWGT}"
-                     VerticalAlignment="Center"
-                     Width="205"
-                     IsReadOnly="True"
-                     Margin="0,0,8,0"/>
-                    <Button Content="📁"
-                    Command="{Binding BrowseWgtCommand}"
-                    Style="{DynamicResource MaterialDesignToolButton}"
-                    VerticalAlignment="Center"
-                    Width="30" Height="30"
-                    ToolTip="Browse for file"/>
-                </StackPanel>
+                <Label Grid.Row="2" Grid.Column="0" 
+                   Content="{loc:Localize lbl_CustomWgt}"
+                   VerticalAlignment="Center" 
+                   Margin="0,15,12,0"/>
 
+                <Grid Grid.Row="2" Grid.Column="1" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                         Style="{DynamicResource MaterialDesignTextBox}"
+                         Text="{Binding CustomWgtPath, Mode=TwoWay}"
+                         materialDesign:HintAssist.Hint="{loc:Localize SelectWGT}"
+                         VerticalAlignment="Center"
+                         IsReadOnly="True"
+                         Margin="0,0,8,0"/>
+
+                    <Button Grid.Column="1"
+                        Command="{Binding BrowseWgtCommand}"
+                        Style="{DynamicResource MaterialDesignToolButton}"
+                        VerticalAlignment="Center"
+                        Width="30" Height="30"
+                        ToolTip="Browse for file">
+                        <materialDesign:PackIcon Kind="FolderOutline" />
+                    </Button>
+                </Grid>
                 <!-- Remember IP -->
                 <Label Grid.Row="3" Grid.Column="0" Content="{loc:Localize lbl_RememberIp}"
                VerticalAlignment="Center" Margin="0,15,12,0"/>

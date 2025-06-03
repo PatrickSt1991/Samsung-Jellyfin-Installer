@@ -127,7 +127,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
-                
+
                 if (new Version(tizenOs) >= new Version("7.0"))
                 {
                     try
@@ -178,8 +178,6 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
                 
-
-
                 updateStatus("PackagingWgtWithCertificate".Localized());
                 await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
 
@@ -187,11 +185,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 {
                     updateStatus("Removing old Jellyfin app");
                     bool removeOldJelly = await RemoveJellyfinAppByIdAsync(tvName, updateStatus);
-
+                    
                     if (!removeOldJelly)
                     {
-                        MessageBox.Show("FailedRemoveOldExtra".Localized(), "Error", MessageBoxButton.OK);
-                        return InstallResult.FailureResult("FailedRemoveOld".Localized());
+                        updateStatus("FailedRemoveOld".Localized());
+                        return InstallResult.FailureResult("FailedRemoveOldExtra".Localized());
                     }
                 }
 
@@ -486,28 +484,39 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         private async Task<string> SearchJellyfinApp()
         {
-            string appId = null;
+            string output = await RunCommandAsync(TizenSdbPath, "shell 0 vd_applist");
 
-            string output = await RunCommandAsync(TizenSdbPath, "sdb shell 0 vd_applist | findstr Jellyfin");
-            var jellyfinPattern = @"'Jellyfin'\s+'([^']+)'";
-            var match = Regex.Match(output, jellyfinPattern, RegexOptions.IgnoreCase);
-            if (match.Success && match.Groups.Count > 1)
-                appId = match.Groups[1].Value;
+            var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                if (line.Contains("app_id") && line.Contains("Jellyfin"))
+                {
+                    var match = Regex.Match(line, @"app_id\s*=\s*(\S+)");
+                    if (match.Success)
+                    {
+                        var appId = match.Groups[1].Value;
+                        return appId;
+                    }
+                }
+            }
 
-            return appId;
+            return null;
         }
+
+
         public async Task<bool> RemoveJellyfinAppByIdAsync(string tvName, Action<string> updateStatus)
         {
             try
             {
                 string appId = await SearchJellyfinApp();
-
+                
                 if (string.IsNullOrEmpty(appId))
                     return true;
 
                 await RunCommandAsync(TizenCliPath, $"uninstall -t {tvName} -p {appId}");
 
                 appId = await SearchJellyfinApp();
+
                 if (!string.IsNullOrEmpty(appId))
                     return false;
 
