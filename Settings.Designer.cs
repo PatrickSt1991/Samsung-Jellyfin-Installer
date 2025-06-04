@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.5.8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.5.9-beta")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
@@ -142,8 +142,8 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://download.tizen.org/sdk/Installer/tizen-studio_5.5/web-cli_Tizen_Studio_5." +
-            "5_windows-64.exe")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6." +
+            "1_windows-64.exe")]
         public string TizenCliUrl {
             get {
                 return ((string)(this["TizenCliUrl"]));

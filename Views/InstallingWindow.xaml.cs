@@ -1,27 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Views
 {
-    /// <summary>
-    /// Interaction logic for InstallingWindow.xaml
-    /// </summary>
     public partial class InstallingWindow : Window
     {
         public InstallingWindow()
         {
             InitializeComponent();
         }
+        public void SetStatusText(string message)
+        {
+            StatusTextBlock.Text = message;
+        }
+
     }
 }

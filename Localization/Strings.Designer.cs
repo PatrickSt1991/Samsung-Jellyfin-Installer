@@ -61,6 +61,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Checking Tizen CLI....
+        /// </summary>
+        public static string CheckingTizenCli {
+            get {
+                return ResourceManager.GetString("CheckingTizenCli", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Checking Tizen OS version....
         /// </summary>
         public static string CheckTizenOS {
@@ -169,6 +178,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Downloading installer....
+        /// </summary>
+        public static string DownloadingSetupFile {
+            get {
+                return ResourceManager.GetString("DownloadingSetupFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Login was canceled or failed....
         /// </summary>
         public static string FailedAuthCode {
@@ -223,6 +241,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Initialization failed....
+        /// </summary>
+        public static string InitializationFailed {
+            get {
+                return ResourceManager.GetString("InitializationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Installation failed.
         /// </summary>
         public static string InstallationFailed {
@@ -259,11 +286,38 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Installing Certificate Manager add-on....
+        /// </summary>
+        public static string InstallingCertificateAddOn {
+            get {
+                return ResourceManager.GetString("InstallingCertificateAddOn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Installing Certificate Manager....
+        /// </summary>
+        public static string InstallingCertificateManager {
+            get {
+                return ResourceManager.GetString("InstallingCertificateManager", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Installing package on device....
         /// </summary>
         public static string InstallingPackage {
             get {
                 return ResourceManager.GetString("InstallingPackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Installing Tizen Studio CLI....
+        /// </summary>
+        public static string InstallingSetupFile {
+            get {
+                return ResourceManager.GetString("InstallingSetupFile", resourceCulture);
             }
         }
         
@@ -588,6 +642,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string SuccessAuthCode {
             get {
                 return ResourceManager.GetString("SuccessAuthCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tizen CLI installation failed....
+        /// </summary>
+        public static string TizenCliFailed {
+            get {
+                return ResourceManager.GetString("TizenCliFailed", resourceCulture);
             }
         }
         

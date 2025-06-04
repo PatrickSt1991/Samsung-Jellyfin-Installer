@@ -73,7 +73,9 @@ namespace Samsung_Jellyfin_Installer.Services
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
                 return (TizenDataPath, TizenCypto);
 
-            return (await InstallMinimalCli(), TizenCliPath);
+
+            var tizenInstallationPath = await InstallMinimalCli();
+            return (tizenInstallationPath, TizenCypto);
         }
         public async Task<bool> ConnectToTvAsync(string tvIpAddress)
         {
@@ -118,12 +120,12 @@ namespace Samsung_Jellyfin_Installer.Services
                 string tvName = await GetTvNameAsync(tvIpAddress);
 
                 if (string.IsNullOrEmpty(tvName))
-                    return InstallResult.FailureResult(Strings.TvNameNotFound);
+                    return InstallResult.FailureResult("TvNameNotFound".Localized());
 
                 string tvDuid = await GetTvDuidAsync();
 
                 if(string.IsNullOrEmpty(tvDuid))
-                    return InstallResult.FailureResult(Strings.TvDuidNotFound);
+                    return InstallResult.FailureResult("TvDuidNotFound".Localized());
 
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
@@ -435,8 +437,10 @@ namespace Samsung_Jellyfin_Installer.Services
                     return "User declined to install Tizen CLI.";
 
                 installingWindow = new InstallingWindow();
+                installingWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 installingWindow.Show();
 
+                installingWindow.SetStatusText("DownloadingSetupFile".Localized());
                 installerPath = await DownloadPackageAsync(Settings.Default.TizenCliUrl);
                 string installPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -451,35 +455,50 @@ namespace Samsung_Jellyfin_Installer.Services
                     UseShellExecute = true,
                     CreateNoWindow = false
                 };
-
+                
+                installingWindow.SetStatusText("InstallingSetupFile".Localized());
                 using var process = Process.Start(startInfo);
                 await process.WaitForExitAsync();
 
                 if (process.ExitCode != 0)
                     return "Tizen CLI installation failed.";
 
-                await InstallSamsungCertificateExtensionAsync(_installPath);
+                bool certInstalled = await InstallSamsungCertificateExtensionAsync(_installPath, installingWindow);
 
+                if (!certInstalled)
+                    MessageBox.Show("cert install error");
+                
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
+
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
 
-                return tizenRoot != string.Empty ? string.Empty : "Tizen root folder not found after installation.";
+                return !string.IsNullOrEmpty(tizenRoot) ? TizenCliPath : "Tizen root folder not found after installation.";
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return $"An error occurred during installation: {ex.Message}";
             }
             finally
             {
-                installingWindow?.Close();
-
-                try
                 {
-                    if (installerPath != null && File.Exists(installerPath))
-                        File.Delete(installerPath);
+                    // Ensure InstallingWindow is properly closed on UI thread
+                    if (installingWindow != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            installingWindow.Close();
+                        });
+                    }
+
+                    try
+                    {
+                        if (installerPath != null && File.Exists(installerPath))
+                            File.Delete(installerPath);
+                    }
+                    catch { /* Ignore cleanup errors */ }
                 }
-                catch { /* Ignore cleanup errors */ }
             }
         }
         private async Task<string> SearchJellyfinApp()
@@ -529,7 +548,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath)
+        public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
             // Check if already installed
             string[] possiblePaths = {
@@ -559,22 +578,15 @@ namespace Samsung_Jellyfin_Installer.Services
                     WorkingDirectory = installPath
                 };
 
+                installingWindow.SetStatusText("InstallingCertificateManager".Localized());
+                
+                using var certManagerProcess = Process.Start(certManagerProcessInfo);
+                await certManagerProcess.WaitForExitAsync();
 
-                using (var certManagerProcess = Process.Start(certManagerProcessInfo))
+                if (certManagerProcess.ExitCode != 0)
                 {
-                    if (certManagerProcess == null)
-                    {
-                        MessageBox.Show("Failed to start Certificate-Manager installation process.");
-                        return false;
-                    }
-
-                    await Task.Run(() => certManagerProcess.WaitForExit());
-
-                    if (certManagerProcess.ExitCode != 0)
-                    {
-                        MessageBox.Show($"Certificate-Manager installation failed with exit code {certManagerProcess.ExitCode}");
-                        return false;
-                    }
+                    MessageBox.Show($"Certificate-Manager installation failed with exit code {certManagerProcess.ExitCode}");
+                    return false;
                 }
 
                 // Then install cert-add-on package
@@ -587,37 +599,29 @@ namespace Samsung_Jellyfin_Installer.Services
                     WorkingDirectory = installPath
                 };
 
-                using (var process = Process.Start(processInfo))
+
+                installingWindow.SetStatusText("InstallingCertificateAddOn".Localized());
+
+                using var process = Process.Start(processInfo);
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode == 0)
                 {
-                    if (process == null)
+                    // Verify installation
+                    if (possiblePaths.Any(File.Exists))
                     {
-                        MessageBox.Show("Failed to start package manager installation process.");
-                        return false;
-                    }
-
-                    string output = "";
-                    string error = "";
-
-                    await process.WaitForExitAsync();
-
-                    if (process.ExitCode == 0)
-                    {
-                        // Verify installation
-                        if (possiblePaths.Any(File.Exists))
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Installation completed but certificate manager executable not found.");
-                            return false;
-                        }
+                        return true;
                     }
                     else
                     {
-                        MessageBox.Show($"cert-add-on installation failed with exit code {process.ExitCode}");
+                        MessageBox.Show("Installation completed but certificate manager executable not found.");
                         return false;
                     }
+                }
+                else
+                {
+                    MessageBox.Show($"cert-add-on installation failed with exit code {process.ExitCode}");
+                    return false;
                 }
             }
             catch (Exception ex)
