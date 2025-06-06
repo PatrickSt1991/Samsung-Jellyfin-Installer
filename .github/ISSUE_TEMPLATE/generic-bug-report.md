@@ -1,8 +1,8 @@
 ---
-name: Tizen 6.5- Bug
+name: Generic bug report
 about: Create a report to help us improve
-title: "[Tizen 6.5-] [Bug] <short description>"
-labels: bug, keep-alive, tizen 6.5-
+title: "[Bug] <short description>"
+labels: bug, keep-alive
 assignees: ''
 
 ---

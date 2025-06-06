@@ -2,10 +2,13 @@
 name: Tizen 7+ Bug
 about: Create a report to help us improve the application
 title: "[Tizen 7+] [Bug] <short description>"
-labels: bug, tizen 7+
+labels: bug, keep-alive, tizen 7+
 assignees: ''
 
 ---
+
+**Have you checked the wiki?**
+[Samsung Jellyfin Installer Wiki](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki)
 
 **Which version of the application did you use?**  
 (e.g., v1.2.3)
@@ -26,4 +29,3 @@ assignees: ''
 
 **Additional Context**  
 Add any other context or logs about the problem here.
-
