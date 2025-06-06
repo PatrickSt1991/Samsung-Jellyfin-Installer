@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Windows;
 using System.Configuration;
 using System.Diagnostics;
+using System.ComponentModel.DataAnnotations;
 
 namespace Samsung_Jellyfin_Installer
 {
@@ -51,49 +52,29 @@ namespace Samsung_Jellyfin_Installer
 
             var culture = new System.Globalization.CultureInfo(savedLanguage);
 
-            Debug.WriteLine($"Setting culture to: {savedLanguage}");
-            
             System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culture;
             System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
             Thread.CurrentThread.CurrentCulture = culture;
             Thread.CurrentThread.CurrentUICulture = culture;
 
-            Debug.WriteLine($"Current UI Culture: {System.Threading.Thread.CurrentThread.CurrentUICulture.Name}");
-            Debug.WriteLine($"Default UI Culture: {System.Globalization.CultureInfo.DefaultThreadCurrentUICulture.Name}");
-
-
-
             var configPath = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
-            Debug.WriteLine($"Config File Loc: {configPath}");
 
 
             LocalizedStrings.Instance.ChangeLanguage(savedLanguage);
 
             try
             {
-                var installer = _serviceProvider.GetRequiredService<ITizenInstallerService>();
-
-                (string TizenDataPath, string TizenCliPath) = await installer.EnsureTizenCliAvailable();
-                
-                if (string.IsNullOrEmpty(TizenCliPath))
-                {
-                    MessageBox.Show("Tizen tools are required for this application",
-                                  "Error",
-                                  MessageBoxButton.OK,
-                                  MessageBoxImage.Error);
-                    Shutdown();
-                    return;
-                }
-
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Application failed to start: {ex.Message}");
                 MessageBox.Show($"Application failed to start: {ex.Message}",
                               "Error",
                               MessageBoxButton.OK,
                               MessageBoxImage.Error);
+
                 Shutdown();
             }
         }

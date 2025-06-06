@@ -306,4 +306,25 @@
   <data name="FailedRemoveOldExtra" xml:space="preserve">
     <value>Fjern venligst den gamle Jellyfin-app manuelt fra tv'et</value>
   </data>
+  <data name="CheckingTizenCli" xml:space="preserve">
+    <value>Tjekker Tizen CLI...</value>
+  </data>
+  <data name="TizenCliFailed" xml:space="preserve">
+    <value>Tizen CLI-installation mislykkedes...</value>
+  </data>
+  <data name="InitializationFailed" xml:space="preserve">
+    <value>Initialisering mislykkedes</value>
+  </data>
+  <data name="DownloadingSetupFile" xml:space="preserve">
+    <value>Downloader installationsprogrammet...</value>
+  </data>
+  <data name="InstallingSetupFile" xml:space="preserve">
+    <value>Installation af Tizen Studio CLI...</value>
+  </data>
+  <data name="InstallingCertificateManager" xml:space="preserve">
+    <value>Installerer Certificate Manager...</value>
+  </data>
+  <data name="InstallingCertificateAddOn" xml:space="preserve">
+    <value>Installation af Certifikathåndtering-tilføjelsesprogram...</value>
+  </data>
 </root>

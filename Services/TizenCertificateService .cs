@@ -73,7 +73,7 @@ namespace Samsung_Jellyfin_Installer.Services
             updateStatus("CreateNewCertificates".Localized());
             await ExtractRootCertificateAsync(jarPath);
 
-            updateStatus(Strings.CreateNewCertificates);
+            updateStatus("CreateNewCertificates".Localized());
             await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
             await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
 

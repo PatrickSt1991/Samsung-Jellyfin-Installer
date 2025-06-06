@@ -163,17 +163,27 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
         private async void InitializeAsync()
         {
-            (_tizenProfilePath, _) = await _tizenInstaller.EnsureTizenCliAvailable();
-            
-            if (string.IsNullOrEmpty(_tizenProfilePath))
+            try
             {
-                await _dialogService.ShowErrorAsync(
-                    "PleaseInstallTizen".Localized());
-            }
+                StatusBar = "CheckingTizenCli".Localized();
 
-            await LoadReleasesAsync();
-            StatusBar = "ScanningNetwork".Localized();
-            await LoadDevicesAsync();
+                (string TizenDataPath, string TizenCliPath) = await _tizenInstaller.EnsureTizenCliAvailable();
+
+                if (string.IsNullOrEmpty(TizenDataPath))
+                {
+                    StatusBar = "TizenCliFailed".Localized();
+                    return;
+                }
+
+                await LoadReleasesAsync();
+                StatusBar = "ScanningNetwork".Localized();
+                await LoadDevicesAsync();
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine($"Initialization failed: {ex}");
+                StatusBar = "InitializationFailed".Localized();
+            }
         }
         private void OpenSettings()
         {
