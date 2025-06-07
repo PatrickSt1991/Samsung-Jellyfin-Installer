@@ -18,39 +18,8 @@ public class SamsungLoginService
 
     public Action<SamsungAuth> CallbackReceived;
 
-    public static bool IsWebView2RuntimeAvailable()
-    {
-        try
-        {
-            return !string.IsNullOrEmpty(CoreWebView2Environment.GetAvailableBrowserVersionString());
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     public static async Task<SamsungAuth> PerformSamsungLoginAsync()
     {
-        if (!IsWebView2RuntimeAvailable())
-        {
-            var result = MessageBox.Show(
-                "Microsoft Edge WebView2 Runtime is required. Install now?",
-                "Runtime Missing",
-                MessageBoxButton.YesNo);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
-                    UseShellExecute = true
-                });
-            }
-
-            throw new Exception("WebView2 Runtime not installed");
-        }
-
         string loginUrl =
             $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate?locale=&clientId=v285zxnl3h&redirect_uri={HttpUtility.UrlEncode(CallbackUrl)}&state={StateValue}&tokenType=TOKEN";
 

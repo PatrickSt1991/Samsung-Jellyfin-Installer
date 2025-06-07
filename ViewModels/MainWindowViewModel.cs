@@ -175,6 +175,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     return;
                 }
 
+                await WebView2Helper.EnsureWebView2RuntimeAsync();
+
                 await LoadReleasesAsync();
                 StatusBar = "ScanningNetwork".Localized();
                 await LoadDevicesAsync();
