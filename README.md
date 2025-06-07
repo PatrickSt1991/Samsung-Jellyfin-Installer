@@ -107,10 +107,11 @@ Before getting started, ensure you have the following:
 
 ---
 
-## 🛠️ Support & Feedback
+## 🛠️ Support, Feedback & Wiki
 
 Need help or want to report a bug?  
-👉 [Open an issue](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)
+👉 [Open an issue](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)  
+📖 [Check the wiki](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki)  
 
 Got an idea for improvement?  
 💡 Share it on the [Discussions board](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/discussions)  
