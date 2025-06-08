@@ -102,7 +102,7 @@ Before getting started, ensure you have the following:
 3. Enter **12345** using your remote  
 4. In the Developer Mode popup:
    - Toggle **Developer Mode ON**
-   - Enter your PC’s local IP address (find it using `ipconfig` or `ifconfig`)
+   - Enter your PC’s local IP address (find it using `ipconfig /all`)
 5. Restart the TV
 
 ---
