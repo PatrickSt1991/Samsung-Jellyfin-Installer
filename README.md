@@ -95,18 +95,6 @@ Before getting started, ensure you have the following:
 
 ---
 
-## 🧭 How to Enable Developer Mode on Your TV
-
-1. Press the **Home** or **Smart Hub** button on your remote  
-2. Go to **Apps**  
-3. Enter **12345** using your remote  
-4. In the Developer Mode popup:
-   - Toggle **Developer Mode ON**
-   - Enter your PC’s local IP address (find it using `ipconfig /all`)
-5. Restart the TV
-
----
-
 ## 🛠️ Support, Feedback & Wiki
 
 Need help or want to report a bug?  
