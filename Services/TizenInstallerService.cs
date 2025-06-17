@@ -4,6 +4,7 @@ using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -19,7 +20,7 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
-            "C:\\tizen-studio",
+            //"C:\\tizen-studio",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
@@ -72,7 +73,6 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
                 return (TizenDataPath, TizenCypto);
-
 
             var tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
@@ -548,35 +548,25 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        public async Task EnsureTizenExtensionsEnabledAsync(string installPath, InstallingWindow installingWindow)
+        public async Task EnsureTizenExtensionsEnabledAsync(string installPath, string packageManagerPath, InstallingWindow installingWindow)
         {
-            var requiredExtensions = new Dictionary<string, int>();
-
-            string packageManagerPath = Path.Combine(installPath, "package-manager", "package-manager-cli.exe");
-
-            var certManagerInfo = new ProcessStartInfo
-            {
-                FileName = packageManagerPath,
-                Arguments = "extra --list --detail",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = installPath
-            };
-
             installingWindow.SetStatusText("CheckingPackageManagerList".Localized());
 
-            string output;
-            using (var certManagerProcess = Process.Start(certManagerInfo))
+            var output = await ElevatedCommands.RunElevatedAndCaptureOutputAsync(
+                packageManagerPath,
+                "extra --list --detail",
+                installPath,
+                installingWindow,
+                "Querying Tizen extensions"
+            );
+
+            if (string.IsNullOrWhiteSpace(output))
             {
-                output = await certManagerProcess.StandardOutput.ReadToEndAsync();
-                await certManagerProcess.WaitForExitAsync();
+                installingWindow.SetStatusText("Failed to retrieve extension list.");
+                throw new InvalidOperationException("Failed to get extension output.");
             }
 
             var extensions = ParseExtensions(output);
-
-            // Define which extensions to check
             var targets = new[] { "Samsung Certificate Extension", "Samsung Tizen TV SDK" };
 
             foreach (var target in targets)
@@ -595,28 +585,41 @@ namespace Samsung_Jellyfin_Installer.Services
                 else
                 {
                     installingWindow.SetStatusText($"Activating extension: {target}...");
+
                     var activateProcess = new ProcessStartInfo
                     {
                         FileName = packageManagerPath,
                         Arguments = $"extra -act {ext.Index}",
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
+                        UseShellExecute = true,
+                        Verb = "runas", // elevation needed for activation
+                        CreateNoWindow = false,
                         WorkingDirectory = installPath
                     };
 
                     using var proc = Process.Start(activateProcess);
-                    var activationOutput = await proc.StandardOutput.ReadToEndAsync();
+                    if (proc == null)
+                    {
+                        throw new InvalidOperationException("Failed to start activation process");
+                    }
+
                     await proc.WaitForExitAsync();
-                    installingWindow.SetStatusText($"Activated: {target}");
+
+                    if (proc.ExitCode == 0)
+                    {
+                        installingWindow.SetStatusText($"Activated: {target}");
+                    }
+                    else
+                    {
+                        installingWindow.SetStatusText($"Failed to activate {target}. Exit code: {proc.ExitCode}");
+                        throw new InvalidOperationException($"Failed to activate extension {target}. Exit code: {proc.ExitCode}");
+                    }
                 }
             }
         }
 
+
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
-            // Check if already installed
             string[] possiblePaths = {
                 Path.Combine(installPath, "tools", "certificate-manager", "certificate-manager.exe"),
                 Path.Combine(installPath, "certificate-manager", "certificate-manager.exe")
@@ -632,7 +635,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
 
-            await EnsureTizenExtensionsEnabledAsync(installPath, installingWindow);
+            await EnsureTizenExtensionsEnabledAsync(installPath, packageManagerPath, installingWindow);
 
             try
             {
