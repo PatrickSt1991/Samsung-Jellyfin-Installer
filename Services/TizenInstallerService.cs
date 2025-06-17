@@ -548,6 +548,72 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
+        public async Task EnsureTizenExtensionsEnabledAsync(string installPath, InstallingWindow installingWindow)
+        {
+            var requiredExtensions = new Dictionary<string, int>();
+
+            string packageManagerPath = Path.Combine(installPath, "package-manager", "package-manager-cli.exe");
+
+            var certManagerInfo = new ProcessStartInfo
+            {
+                FileName = packageManagerPath,
+                Arguments = "extra --list --detail",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = installPath
+            };
+
+            installingWindow.SetStatusText("CheckingPackageManagerList".Localized());
+
+            string output;
+            using (var certManagerProcess = Process.Start(certManagerInfo))
+            {
+                output = await certManagerProcess.StandardOutput.ReadToEndAsync();
+                await certManagerProcess.WaitForExitAsync();
+            }
+
+            var extensions = ParseExtensions(output);
+
+            // Define which extensions to check
+            var targets = new[] { "Samsung Certificate Extension", "Samsung Tizen TV SDK" };
+
+            foreach (var target in targets)
+            {
+                var ext = extensions.FirstOrDefault(e => e.Name.Equals(target, StringComparison.OrdinalIgnoreCase));
+                if (ext == null)
+                {
+                    installingWindow.SetStatusText($"Extension '{target}' not found.");
+                    continue;
+                }
+
+                if (ext.Activated)
+                {
+                    installingWindow.SetStatusText($"Extension '{target}' already active.");
+                }
+                else
+                {
+                    installingWindow.SetStatusText($"Activating extension: {target}...");
+                    var activateProcess = new ProcessStartInfo
+                    {
+                        FileName = packageManagerPath,
+                        Arguments = $"extra -act {ext.Index}",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        WorkingDirectory = installPath
+                    };
+
+                    using var proc = Process.Start(activateProcess);
+                    var activationOutput = await proc.StandardOutput.ReadToEndAsync();
+                    await proc.WaitForExitAsync();
+                    installingWindow.SetStatusText($"Activated: {target}");
+                }
+            }
+        }
+
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
             // Check if already installed
@@ -565,6 +631,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 MessageBox.Show("Package manager CLI not found. Please ensure Tizen Studio is properly installed.");
                 return false;
             }
+
+            await EnsureTizenExtensionsEnabledAsync(installPath, installingWindow);
 
             try
             {
@@ -629,6 +697,32 @@ namespace Samsung_Jellyfin_Installer.Services
                 MessageBox.Show($"Samsung Certificate Extension installation failed: {ex.Message}");
                 return false;
             }
+        }
+        public class ExtensionEntry
+        {
+            public int Index;
+            public string Name = "";
+            public bool Activated;
+        }
+
+        public List<ExtensionEntry> ParseExtensions(string output)
+        {
+            var extensions = new List<ExtensionEntry>();
+            var regex = new Regex(
+                @"Index\s*:\s*(\d+)\s+Name\s*:\s*(.*?)\s+Repository\s*:\s*.*?\s+Id\s*:\s*.*?\s+Vendor\s*:\s*.*?\s+Description\s*:\s*.*?\s+Default\s*:\s*.*?\s+Activate\s*:\s*(true|false)",
+                RegexOptions.Singleline);
+
+            foreach (Match match in regex.Matches(output))
+            {
+                extensions.Add(new ExtensionEntry
+                {
+                    Index = int.Parse(match.Groups[1].Value),
+                    Name = match.Groups[2].Value.Trim(),
+                    Activated = bool.Parse(match.Groups[3].Value)
+                });
+            }
+
+            return extensions;
         }
     }
 }

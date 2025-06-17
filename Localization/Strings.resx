@@ -327,4 +327,7 @@
   <data name="InstallingCertificateAddOn" xml:space="preserve">
     <value>Installing Certificate Manager add-on...</value>
   </data>
+  <data name="CheckingPackageManagerList" xml:space="preserve">
+    <value>Checking Tizen Package manager</value>
+  </data>
 </root>
