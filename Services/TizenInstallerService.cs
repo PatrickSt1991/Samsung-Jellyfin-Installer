@@ -20,7 +20,7 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
-            //"C:\\tizen-studio",
+            "C:\\tizen-studio",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
