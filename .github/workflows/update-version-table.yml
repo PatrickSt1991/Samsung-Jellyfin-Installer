@@ -23,12 +23,16 @@ jobs:
             });
             const stable = releases.data.find(r => !r.prerelease && !r.draft);
             const beta = releases.data.find(r => r.prerelease && !r.draft);
-            const isSame = stable && beta && stable.tag_name === beta.tag_name;
+            
+            // Check if beta is based on the same version as stable (e.g., 1.6.1 vs 1.6.1-beta)
+            const isSameBaseVersion = stable && beta && 
+              beta.tag_name.startsWith(stable.tag_name + '-');
+            
             const result = {
               stableTag: stable?.tag_name ?? "N/A",
               stableUrl: stable?.html_url ?? "#",
-              betaTag: isSame ? "N/A" : (beta?.tag_name ?? "N/A"),
-              betaUrl: isSame ? "#" : (beta?.html_url ?? "#")
+              betaTag: isSameBaseVersion ? "N/A" : (beta?.tag_name ?? "N/A"),
+              betaUrl: isSameBaseVersion ? "#" : (beta?.html_url ?? "#")
             };
             console.log('Release info:', result);
             return result;
