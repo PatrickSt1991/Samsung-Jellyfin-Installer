@@ -4,6 +4,7 @@ using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -72,7 +73,6 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
                 return (TizenDataPath, TizenCypto);
-
 
             var tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
@@ -548,9 +548,78 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
+        public async Task EnsureTizenExtensionsEnabledAsync(string installPath, string packageManagerPath, InstallingWindow installingWindow)
+        {
+            installingWindow.SetStatusText("CheckingPackageManagerList".Localized());
+
+            var output = await ElevatedCommands.RunElevatedAndCaptureOutputAsync(
+                packageManagerPath,
+                "extra --list --detail",
+                installPath,
+                installingWindow,
+                "Querying Tizen extensions"
+            );
+
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                installingWindow.SetStatusText("Failed to retrieve extension list.");
+                throw new InvalidOperationException("Failed to get extension output.");
+            }
+
+            var extensions = ParseExtensions(output);
+            var targets = new[] { "Samsung Certificate Extension", "Samsung Tizen TV SDK" };
+
+            foreach (var target in targets)
+            {
+                var ext = extensions.FirstOrDefault(e => e.Name.Equals(target, StringComparison.OrdinalIgnoreCase));
+                if (ext == null)
+                {
+                    installingWindow.SetStatusText($"Extension '{target}' not found.");
+                    continue;
+                }
+
+                if (ext.Activated)
+                {
+                    installingWindow.SetStatusText($"Extension '{target}' already active.");
+                }
+                else
+                {
+                    installingWindow.SetStatusText($"Activating extension: {target}...");
+
+                    var activateProcess = new ProcessStartInfo
+                    {
+                        FileName = packageManagerPath,
+                        Arguments = $"extra -act {ext.Index}",
+                        UseShellExecute = true,
+                        Verb = "runas", // elevation needed for activation
+                        CreateNoWindow = false,
+                        WorkingDirectory = installPath
+                    };
+
+                    using var proc = Process.Start(activateProcess);
+                    if (proc == null)
+                    {
+                        throw new InvalidOperationException("Failed to start activation process");
+                    }
+
+                    await proc.WaitForExitAsync();
+
+                    if (proc.ExitCode == 0)
+                    {
+                        installingWindow.SetStatusText($"Activated: {target}");
+                    }
+                    else
+                    {
+                        installingWindow.SetStatusText($"Failed to activate {target}. Exit code: {proc.ExitCode}");
+                        throw new InvalidOperationException($"Failed to activate extension {target}. Exit code: {proc.ExitCode}");
+                    }
+                }
+            }
+        }
+
+
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
-            // Check if already installed
             string[] possiblePaths = {
                 Path.Combine(installPath, "tools", "certificate-manager", "certificate-manager.exe"),
                 Path.Combine(installPath, "certificate-manager", "certificate-manager.exe")
@@ -565,6 +634,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 MessageBox.Show("Package manager CLI not found. Please ensure Tizen Studio is properly installed.");
                 return false;
             }
+
+            await EnsureTizenExtensionsEnabledAsync(installPath, packageManagerPath, installingWindow);
 
             try
             {
@@ -629,6 +700,32 @@ namespace Samsung_Jellyfin_Installer.Services
                 MessageBox.Show($"Samsung Certificate Extension installation failed: {ex.Message}");
                 return false;
             }
+        }
+        public class ExtensionEntry
+        {
+            public int Index;
+            public string Name = "";
+            public bool Activated;
+        }
+
+        public List<ExtensionEntry> ParseExtensions(string output)
+        {
+            var extensions = new List<ExtensionEntry>();
+            var regex = new Regex(
+                @"Index\s*:\s*(\d+)\s+Name\s*:\s*(.*?)\s+Repository\s*:\s*.*?\s+Id\s*:\s*.*?\s+Vendor\s*:\s*.*?\s+Description\s*:\s*.*?\s+Default\s*:\s*.*?\s+Activate\s*:\s*(true|false)",
+                RegexOptions.Singleline);
+
+            foreach (Match match in regex.Matches(output))
+            {
+                extensions.Add(new ExtensionEntry
+                {
+                    Index = int.Parse(match.Groups[1].Value),
+                    Name = match.Groups[2].Value.Trim(),
+                    Activated = bool.Parse(match.Groups[3].Value)
+                });
+            }
+
+            return extensions;
         }
     }
 }

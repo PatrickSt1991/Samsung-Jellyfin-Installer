@@ -327,4 +327,7 @@
   <data name="InstallingCertificateAddOn" xml:space="preserve">
     <value>Certificate Manager-invoegtoepassing installeren...</value>
   </data>
+  <data name="CheckingPackageManagerList" xml:space="preserve">
+    <value>Tizen-pakketbeheerder controleren</value>
+  </data>
 </root>

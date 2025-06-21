@@ -61,6 +61,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Checking Tizen Package manager.
+        /// </summary>
+        public static string CheckingPackageManagerList {
+            get {
+                return ResourceManager.GetString("CheckingPackageManagerList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Checking Tizen CLI....
         /// </summary>
         public static string CheckingTizenCli {
