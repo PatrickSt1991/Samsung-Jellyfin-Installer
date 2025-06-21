@@ -78,3 +78,4 @@ jobs:
           else
             git commit -m "chore: update version table in README [skip ci]"
             git push
+          fi
