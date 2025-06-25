@@ -114,7 +114,7 @@
                   FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Force Certificate Creation -->
-                <Label Grid.Row="5" Grid.Column="0" Content="{loc:Localize lbl_DeletePrevious}"
+                <Label Grid.Row="5" Grid.Column="0" Content="{loc:Localize lbl_ForceLogin}"
                VerticalAlignment="Center" Margin="0,15,12,0"/>
                 <CheckBox Grid.Row="5" Grid.Column="1"
                   IsChecked="{Binding ForceSamsungLogin}"

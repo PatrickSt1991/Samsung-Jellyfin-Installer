@@ -69,6 +69,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 "Programs",
                 "TizenStudioCli");
 
+            var fallbackPath = "C:\\TizenStudioCli";
+
             if (defaultPath.Length > MaxSafePathLength)
             {
                 var pathChange = MessageBox.Show(
@@ -82,40 +84,50 @@ namespace Samsung_Jellyfin_Installer.Services
                     Environment.Exit(1);
                     return;
                 }
-            }
 
-            var fallbackPath = "C:\\TizenStudioCli";
+                // Use fallback path
+                if (!Directory.Exists(fallbackPath))
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/c mkdir \"" + fallbackPath + "\"",
+                        Verb = "runas",
+                        UseShellExecute = true,
+                        CreateNoWindow = true
+                    };
 
-            var psi = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = "/c mkdir \"C:\\TizenStudioCli\"",
-                Verb = "runas",
-                UseShellExecute = true,
-                CreateNoWindow = true
-            };
+                    try
+                    {
+                        Process.Start(psi)?.WaitForExit();
+                    }
+                    catch (System.ComponentModel.Win32Exception ex)
+                    {
+                        if (ex.NativeErrorCode == 1223)
+                        {
+                            MessageBox.Show(
+                                "AdminPrivRequired".Localized(),
+                                "PermissionDenied".Localized(),
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            Environment.Exit(1);
+                            return;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
 
-            try
-            {
-                Process.Start(psi)?.WaitForExit();
                 _installPath = fallbackPath;
             }
-            catch (System.ComponentModel.Win32Exception ex)
+            else
             {
-                if (ex.NativeErrorCode == 1223)
-                {
-                    MessageBox.Show(
-                        "AdminPrivRequired".Localized(),
-                        "PermissionDenied".Localized(),
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                }
-                else
-                {
-                    throw;
-                }
+                _installPath = defaultPath;
             }
         }
+
         public async Task<(string, string)> EnsureTizenCliAvailable()
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
