@@ -364,7 +364,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 var devices = await _networkService.GetLocalTizenAddresses();
 
                 foreach (NetworkDevice device in devices)
-                    AvailableDevices.Add(device);
+                {
+                    if(!string.IsNullOrEmpty(device.DeviceName))
+                        AvailableDevices.Add(device);
+                }
 
                 if (AvailableDevices.Count == 0)
                     StatusBar = "NoDevicesFound".Localized();
