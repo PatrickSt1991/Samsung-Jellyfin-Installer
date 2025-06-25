@@ -342,4 +342,7 @@
   <data name="PathLengthExceeded" xml:space="preserve">
     <value>Standardstien overstiger Windows-stilængden. Vil du ændre den til C:\Tizen Studio Cli?</value>
   </data>
+  <data name="lbl_ForceLogin" xml:space="preserve">
+    <value>Tving Samsung-login</value>
+  </data>
 </root>

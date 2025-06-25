@@ -1,9 +1,7 @@
 ﻿using Samsung_Jellyfin_Installer.Views;
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace Samsung_Jellyfin_Installer.Converters
 {

@@ -1,10 +1,7 @@
 ﻿using Samsung_Jellyfin_Installer.Localization;
 using Samsung_Jellyfin_Installer.ViewModels;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using System.Resources;
 
 namespace Samsung_Jellyfin_Installer.Services
 {

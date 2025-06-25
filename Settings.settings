@@ -38,5 +38,8 @@
     <Setting Name="TizenCliUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_windows-64.exe</Value>
     </Setting>
+    <Setting Name="ForceSamsungLogin" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

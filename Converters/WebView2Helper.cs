@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Web.WebView2.Core;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using Microsoft.Web.WebView2.Core;
 
 namespace Samsung_Jellyfin_Installer.Converters
 {

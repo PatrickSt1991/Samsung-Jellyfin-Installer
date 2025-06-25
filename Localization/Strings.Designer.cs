@@ -412,6 +412,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Force Samsung Login.
+        /// </summary>
+        public static string lbl_ForceLogin {
+            get {
+                return ResourceManager.GetString("lbl_ForceLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Language.
         /// </summary>
         public static string lbl_Language {

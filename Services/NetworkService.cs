@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace Samsung_Jellyfin_Installer.Services;
 

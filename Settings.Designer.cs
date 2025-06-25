@@ -149,5 +149,17 @@ namespace Samsung_Jellyfin_Installer {
                 return ((string)(this["TizenCliUrl"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ForceSamsungLogin {
+            get {
+                return ((bool)(this["ForceSamsungLogin"]));
+            }
+            set {
+                this["ForceSamsungLogin"] = value;
+            }
+        }
     }
 }

@@ -342,4 +342,7 @@
   <data name="PathLengthExceeded" xml:space="preserve">
     <value>The default path exceeds Windows Path length. Would you like to change it to C:\Tizen Studio Cli?</value>
   </data>
+  <data name="lbl_ForceLogin" xml:space="preserve">
+    <value>Force Samsung Login</value>
+  </data>
 </root>

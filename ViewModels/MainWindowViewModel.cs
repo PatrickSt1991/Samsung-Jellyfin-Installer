@@ -5,9 +5,7 @@ using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.Views;
-using Samsung_Jellyfin_Installer.Localization;
 using System.Collections.ObjectModel;
-﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -33,7 +31,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _isLoading, _isLoadingDevices;
 
         private string _statusBar;
-        private string _tizenProfilePath;
         private string _downloadedPackagePath;
 
         public ObservableCollection<GitHubRelease> Releases
@@ -181,7 +178,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 StatusBar = "ScanningNetwork".Localized();
                 await LoadDevicesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine($"Initialization failed: {ex}");
                 StatusBar = "InitializationFailed".Localized();
@@ -237,7 +234,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         {
             string installPath = packagePath ?? _downloadedPackagePath;
 
-            if(string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
+            if (string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
             {
                 await _dialogService.ShowErrorAsync("NoPackageToInstall".Localized());
                 return false;
@@ -285,7 +282,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             string installPath = null;
             bool isCustomWgt = false;
 
-            if(!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
+            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
                 File.Exists(Settings.Default.CustomWgtPath))
             {
                 installPath = Settings.Default.CustomWgtPath;
@@ -365,7 +362,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                 foreach (NetworkDevice device in devices)
                 {
-                    if(!string.IsNullOrEmpty(device.DeviceName))
+                    if (!string.IsNullOrEmpty(device.DeviceName))
                         AvailableDevices.Add(device);
                 }
 

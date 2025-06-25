@@ -9,8 +9,6 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Samsung_Jellyfin_Installer.Converters;
-using Samsung_Jellyfin_Installer.Localization;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -100,7 +98,7 @@ namespace Samsung_Jellyfin_Installer.Services
             var values = new List<string>
             {
                 "Jelly2Sams"
-        }   ;
+        };
 
             var subject = new X509Name(oids, values);
 
@@ -246,11 +244,11 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
-            foreach(var jar in jarFiles)
+            foreach (var jar in jarFiles)
             {
                 var fileName = Path.GetFileName(jar);
-                
-                if(fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
+
+                if (fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
                 {
                     using var fileStream = File.OpenRead(jar);
                     using var msJar = new MemoryStream();

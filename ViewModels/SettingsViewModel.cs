@@ -22,6 +22,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private string _customWgtPath;
         private bool _rememberCustomIP;
         private bool _deletePreviousInstall;
+        private bool _forceSamsungLogin;
 
         public LanguageOption SelectedLanguage
         {
@@ -100,7 +101,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _rememberCustomIP;
             set
             {
-                if(_rememberCustomIP != value)
+                if (_rememberCustomIP != value)
                 {
                     _rememberCustomIP = value;
                     OnPropertyChanged(nameof(RememberCustomIP));
@@ -115,12 +116,28 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _deletePreviousInstall;
             set
             {
-                if(_deletePreviousInstall = value)
+                if (_deletePreviousInstall = value)
                 {
                     _deletePreviousInstall = value;
                     OnPropertyChanged(nameof(DeletePreviousInstall));
 
                     Settings.Default.DeletePreviousInstall = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+
+        public bool ForceSamsungLogin
+        {
+            get => _forceSamsungLogin;
+            set
+            {
+                if(_forceSamsungLogin = value)
+                {
+                    _forceSamsungLogin = value;
+                    OnPropertyChanged(nameof(ForceSamsungLogin));
+
+                    Settings.Default.ForceSamsungLogin = value;
                     Settings.Default.Save();
                 }
             }
@@ -141,6 +158,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             CustomWgtPath = Settings.Default.CustomWgtPath ?? "";
             RememberCustomIP = Settings.Default.RememberCustomIP;
             DeletePreviousInstall = Settings.Default.DeletePreviousInstall;
+            ForceSamsungLogin = Settings.Default.ForceSamsungLogin;
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
@@ -164,8 +182,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private async Task InitializeCertificates(ITizenInstallerService tizenService)
         {
             var (profilePath, tizenCrypto) = await tizenService.EnsureTizenCliAvailable();
-            Debug.WriteLine(profilePath);
-            Debug.WriteLine(tizenCrypto);
+
             var certificates = GetAvailableCertificates(profilePath, tizenCrypto);
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -240,7 +257,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                             Debug.WriteLine($"Failed to read certificate '{keyPath}': {ex.Message}");
                         }
 
-                        if(expireDate.HasValue && expireDate.Value.Date >= DateTime.Today)
+                        if (expireDate.HasValue && expireDate.Value.Date >= DateTime.Today)
                         {
                             certificates.Add(new ExistingCertificates
                             {

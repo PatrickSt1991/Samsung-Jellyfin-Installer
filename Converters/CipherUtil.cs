@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -211,6 +209,6 @@ namespace Samsung_Jellyfin_Installer.Converters
                 return output.Split(new[] { "PASSWORD:" }, StringSplitOptions.None)[1].Trim();
             }
         }
-        
+
     }
 }
