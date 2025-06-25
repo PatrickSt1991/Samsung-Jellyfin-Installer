@@ -16,6 +16,7 @@ namespace Samsung_Jellyfin_Installer.Services
         private static readonly string[] PossibleTizenPaths =
         [
             "C:\\tizen-studio",
+            "C:\\TizenStudioCli",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
@@ -189,7 +190,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
-                if (new Version(tizenOs) >= new Version("7.0"))
+                if (new Version(tizenOs) >= new Version("6.0"))
                 {
                     try
                     {
