@@ -61,6 +61,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Administrator privileges are required to create the folder. Please create it manually or rerun the application as Administrator..
+        /// </summary>
+        public static string AdminPrivRequired {
+            get {
+                return ResourceManager.GetString("AdminPrivRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Checking Tizen Package manager.
         /// </summary>
         public static string CheckingPackageManagerList {
@@ -534,6 +543,33 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string PackagingWgtWithCertificate {
             get {
                 return ResourceManager.GetString("PackagingWgtWithCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The default path exceeds Windows Path length. Would you like to change it to C:\Tizen Studio Cli?.
+        /// </summary>
+        public static string PathLengthExceeded {
+            get {
+                return ResourceManager.GetString("PathLengthExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Windows Path Length Exceeded.
+        /// </summary>
+        public static string PathLengthWarning {
+            get {
+                return ResourceManager.GetString("PathLengthWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Permission Denied.
+        /// </summary>
+        public static string PermissionDenied {
+            get {
+                return ResourceManager.GetString("PermissionDenied", resourceCulture);
             }
         }
         

@@ -31,7 +31,8 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private readonly HttpClient _httpClient;
         private readonly string _downloadDirectory;
-        private readonly string _installPath;
+        private string _installPath;
+        private const int MaxSafePathLength = 240;
 
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
@@ -48,13 +49,11 @@ namespace Samsung_Jellyfin_Installer.Services
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "SamsungJellyfinInstaller",
                 "Downloads");
-
-            _installPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "Programs",
-                        "TizenStudioCli");
-
+        
             Directory.CreateDirectory(_downloadDirectory);
+
+            DetermineInstallPath();
+
             string? tizenRoot = FindTizenRoot();
 
             if (tizenRoot is not null)
@@ -68,7 +67,60 @@ namespace Samsung_Jellyfin_Installer.Services
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
             }
         }
+        private void DetermineInstallPath()
+        {
+            var defaultPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Programs",
+                "TizenStudioCli");
 
+            if (defaultPath.Length > MaxSafePathLength)
+            {
+                var pathChange = MessageBox.Show(
+                    "PathLengthExceeded".Localized(),
+                    "PathLengthWarning".Localized(),
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (pathChange == MessageBoxResult.No)
+                {
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+
+            var fallbackPath = "C:\\TizenStudioCli";
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/c mkdir \"C:\\TizenStudioCli\"",
+                Verb = "runas",
+                UseShellExecute = true,
+                CreateNoWindow = true
+            };
+
+            try
+            {
+                Process.Start(psi)?.WaitForExit();
+                _installPath = fallbackPath;
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                if (ex.NativeErrorCode == 1223)
+                {
+                    MessageBox.Show(
+                        "AdminPrivRequired".Localized(),
+                        "PermissionDenied".Localized(),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
         public async Task<(string, string)> EnsureTizenCliAvailable()
         {
             if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))

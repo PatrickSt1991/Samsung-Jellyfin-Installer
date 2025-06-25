@@ -330,4 +330,16 @@
   <data name="CheckingPackageManagerList" xml:space="preserve">
     <value>Tjekker Tizen-pakkehåndtering</value>
   </data>
+  <data name="PermissionDenied" xml:space="preserve">
+    <value>Tilladelse nægtet</value>
+  </data>
+  <data name="AdminPrivRequired" xml:space="preserve">
+    <value>Der kræves administratorrettigheder for at oprette mappen. Opret den manuelt, eller kør programmet igen som administrator.</value>
+  </data>
+  <data name="PathLengthWarning" xml:space="preserve">
+    <value>Windows-stilængde overskredet</value>
+  </data>
+  <data name="PathLengthExceeded" xml:space="preserve">
+    <value>Standardstien overstiger Windows-stilængden. Vil du ændre den til C:\Tizen Studio Cli?</value>
+  </data>
 </root>
