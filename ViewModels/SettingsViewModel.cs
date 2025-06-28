@@ -298,7 +298,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 var randomSuffix = new string(Enumerable.Range(0, 4).Select(_ => chars[random.Next(chars.Length)]).ToArray());
 
                 var newFileName = $"{baseName}{randomSuffix}{extension}";
-                var newFilePath = Path.Combine(directory, newFileName);
+                var newFilePath = Path.Combine(directory ?? Environment.CurrentDirectory, newFileName);
 
                 File.Copy(originalPath, newFilePath, overwrite: true);
                 CustomWgtPath = newFilePath;

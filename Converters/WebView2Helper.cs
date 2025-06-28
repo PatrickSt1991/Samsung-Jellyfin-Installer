@@ -32,7 +32,13 @@ namespace Samsung_Jellyfin_Installer.Converters
 
             Debug.WriteLine("WebView2 Runtime not found. Downloading and installing...");
 
-            string tempInstallerPath = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebView2Setup.exe");
+            var tempPath = Path.GetTempPath();
+            if (string.IsNullOrEmpty(tempPath))
+            {
+                throw new InvalidOperationException("Unable to get temporary directory path");
+            }
+
+            string tempInstallerPath = Path.Combine(tempPath, "MicrosoftEdgeWebView2Setup.exe");
 
             using (HttpClient client = new HttpClient())
             {

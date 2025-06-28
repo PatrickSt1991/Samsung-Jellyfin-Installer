@@ -14,6 +14,16 @@ namespace Samsung_Jellyfin_Installer.Converters
             InstallingWindow installingWindow,
             string actionDescription)
         {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ArgumentException("filePath cannot be null or empty", nameof(filePath));
+            }
+
+            if (string.IsNullOrEmpty(workingDir))
+            {
+                workingDir = Environment.CurrentDirectory;
+            }
+
             var tempFile = Path.Combine(Path.GetTempPath(), $"tizen_ext_{Guid.NewGuid():N}.txt");
 
             // Safely encode message for echo

@@ -14,6 +14,16 @@ namespace Samsung_Jellyfin_Installer.Converters
 
         public async Task<string?> ExtractPasswordAsync(string jarPath)
         {
+            if (string.IsNullOrEmpty(jarPath))
+            {
+                throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
+            }
+
+            if (!Directory.Exists(jarPath))
+            {
+                throw new DirectoryNotFoundException($"JAR directory not found: {jarPath}");
+            }
+
             var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
             foreach (var jar in jarFiles)

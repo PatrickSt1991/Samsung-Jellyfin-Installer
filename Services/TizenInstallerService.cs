@@ -59,7 +59,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 TizenCypto = Path.Combine(tizenRoot, "tools", "certificate-encryptor", "wincrypt.exe");
                 TizenPluginPath = Path.Combine(tizenRoot, "ide", "plugins");
 
-                string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot)!, Path.GetFileName(tizenRoot) + "-data");
+                string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot) ?? tizenRoot, Path.GetFileName(tizenRoot) + "-data");
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
             }
         }
@@ -211,7 +211,7 @@ namespace Samsung_Jellyfin_Installer.Services
                                     userId: auth.userId,
                                     outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
                                     updateStatus,
-                                    TizenPluginPath
+                                    TizenPluginPath ?? string.Empty
                                 );
 
                                 PackageCertificate = "Jelly2Sams";
@@ -314,6 +314,16 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
+            if (string.IsNullOrEmpty(p12Location))
+            {
+                throw new ArgumentException("p12Location cannot be null or empty", nameof(p12Location));
+            }
+
+            if (string.IsNullOrEmpty(p12Password))
+            {
+                throw new ArgumentException("p12Password cannot be null or empty", nameof(p12Password));
+            }
+
             updateStatus("SettingCertificateManager".Localized());
             string profileName = "Jelly2Sams";
             XElement jelly2SamsProfile = new XElement("profile",
@@ -343,10 +353,9 @@ namespace Samsung_Jellyfin_Installer.Services
 
             XDocument doc;
 
-
             string directoryPath = Path.GetDirectoryName(TizenDataPath);
-            if (!Directory.Exists(directoryPath))
-                Directory.CreateDirectory(directoryPath); ;
+            if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);
 
             if (!File.Exists(TizenDataPath))
             {
@@ -395,6 +404,13 @@ namespace Samsung_Jellyfin_Installer.Services
         private static void UpdateProfileCertificatePaths()
         {
             string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
+            
+            // Ensure the directory exists before trying to load the file
+            var directoryPath = Path.GetDirectoryName(profilePath);
+            if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
 
             var xml = XDocument.Load(profilePath);
             var profileItems = xml.Descendants("profileitem").ToList();
@@ -435,7 +451,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory = Path.GetDirectoryName(fileName)
+                WorkingDirectory = Path.GetDirectoryName(fileName) ?? Environment.CurrentDirectory
             };
 
             using var proc = new Process
