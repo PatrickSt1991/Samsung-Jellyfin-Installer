@@ -12,7 +12,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Settings" Height="375" Width="500">
+        Title="Settings" Height="400" Width="500">
     <Grid Background="#19000B25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
