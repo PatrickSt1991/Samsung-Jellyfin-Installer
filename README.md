@@ -78,6 +78,8 @@ Choose an existing certificate or let the tool generate a new one automatically.
 - **Custom WGT:** Upload your own `.wgt` file (randomizes the package name to allow side-by-side installs).  
 - **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
 - **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).
+- **Force Samsung Login:** Force the tool to login in order to forcefully create a new certificate.
+- **Right-to-left Reading:** Languages the are right-to-left need to have the IP inverted in order for Tizen Studio to work (192.168.1.2 -> 2.1.168.192)
 
 ---
 
