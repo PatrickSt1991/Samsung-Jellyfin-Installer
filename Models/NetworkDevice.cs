@@ -5,6 +5,8 @@ public class NetworkDevice
     public required string IpAddress { get; set; }
     public string? Manufacturer { get; set; }
     public string? DeviceName { get; set; }
+    public string? DeveloperMode { get; set; }
+    public string? DeveloperIP { get; set; }
 
     public string DisplayText
     {

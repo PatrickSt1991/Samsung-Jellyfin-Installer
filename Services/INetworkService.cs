@@ -6,5 +6,6 @@ public interface INetworkService
 {
     Task<IEnumerable<NetworkDevice>> GetLocalTizenAddresses(CancellationToken cancellationToken = default);
     Task<NetworkDevice?> ValidateManualTizenAddress(string ip, CancellationToken cancellationToken = default);
-
+    string GetLocalIPAddress();
+    string InvertIPAddress(string ipAddress);
 }

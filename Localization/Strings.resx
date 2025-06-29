@@ -345,4 +345,13 @@
   <data name="lbl_ForceLogin" xml:space="preserve">
     <value>Force Samsung Login</value>
   </data>
+  <data name="DeveloperModeRequired" xml:space="preserve">
+    <value>Samsung TV is not in developer mode...</value>
+  </data>
+  <data name="DeveloperIPMismatch" xml:space="preserve">
+    <value>Samsung Developer  mode IP doesn't match this devices local IP</value>
+  </data>
+  <data name="lbl_RTL" xml:space="preserve">
+    <value>Right-to-left (RTL) reading</value>
+  </data>
 </root>

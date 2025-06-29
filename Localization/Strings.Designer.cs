@@ -160,6 +160,24 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Samsung Developer  mode IP doesn&apos;t match this devices local IP.
+        /// </summary>
+        public static string DeveloperIPMismatch {
+            get {
+                return ResourceManager.GetString("DeveloperIPMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Samsung TV is not in developer mode....
+        /// </summary>
+        public static string DeveloperModeRequired {
+            get {
+                return ResourceManager.GetString("DeveloperModeRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download &amp; Install.
         /// </summary>
         public static string DownloadAndInstall {
@@ -453,6 +471,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_RememberIp {
             get {
                 return ResourceManager.GetString("lbl_RememberIp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Right-to-left (RTL) reading.
+        /// </summary>
+        public static string lbl_RTL {
+            get {
+                return ResourceManager.GetString("lbl_RTL", resourceCulture);
             }
         }
         

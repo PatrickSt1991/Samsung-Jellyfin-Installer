@@ -224,4 +224,21 @@ public class NetworkService : INetworkService
             return null;
         }
     }
+    public string GetLocalIPAddress()
+    {
+        using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+        {
+            socket.Connect("8.8.8.8", 65530);
+            var endPoint = socket.LocalEndPoint as IPEndPoint;
+            return endPoint?.Address.ToString();
+        }
+    }
+    public string InvertIPAddress(string ipAddress)
+    {
+        var parts = ipAddress.Split('.');
+        if (parts.Length != 4) throw new FormatException("Invalid IPv4 address.");
+        Array.Reverse(parts);
+        return string.Join(".", parts);
+    }
+
 }

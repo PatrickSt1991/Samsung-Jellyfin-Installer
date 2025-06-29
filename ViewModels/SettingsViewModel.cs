@@ -23,6 +23,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _rememberCustomIP;
         private bool _deletePreviousInstall;
         private bool _forceSamsungLogin;
+        private bool _rtlReading;
 
         public LanguageOption SelectedLanguage
         {
@@ -143,6 +144,22 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
         }
 
+        public bool RTLReading
+        {
+            get => _rtlReading;
+            set
+            {
+                if (_rtlReading = value)
+                {
+                    _rtlReading = value;
+                    OnPropertyChanged(nameof(RTLReading));
+
+                    Settings.Default.RTLReading = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
         public ICommand BrowseWgtCommand { get; }
@@ -159,6 +176,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             RememberCustomIP = Settings.Default.RememberCustomIP;
             DeletePreviousInstall = Settings.Default.DeletePreviousInstall;
             ForceSamsungLogin = Settings.Default.ForceSamsungLogin;
+            RTLReading = Settings.Default.RTLReading;
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {

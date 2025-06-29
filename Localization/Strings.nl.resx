@@ -345,4 +345,13 @@
   <data name="lbl_ForceLogin" xml:space="preserve">
     <value>Forceer Samsung-aanmelding</value>
   </data>
+  <data name="DeveloperModeRequired" xml:space="preserve">
+    <value>Samsung TV staat niet in de ontwikkelaarsmodus...</value>
+  </data>
+  <data name="DeveloperIPMismatch" xml:space="preserve">
+    <value>Het IP-adres van de Samsung-ontwikkelaarsmodus komt niet overeen met het lokale IP-adres van dit apparaat</value>
+  </data>
+  <data name="lbl_RTL" xml:space="preserve">
+    <value>Van rechts naar links (RTL) lezen</value>
+  </data>
 </root>
