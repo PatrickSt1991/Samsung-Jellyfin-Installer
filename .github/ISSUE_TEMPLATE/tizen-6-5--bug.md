@@ -1,9 +1,9 @@
 ---
-name: Tizen 6.5- Bug
-about: Create a report to help us improve
-title: "[Tizen 6.5-] [Bug] <short description>"
-labels: bug, keep-alive, tizen 6.5-
-assignees: ''
+name: Tizen 6.5+ Bug
+about: Create a report to help us improve the application
+title: "[Tizen 6.5+] [Bug] <short description>"
+labels: bug, keep-alive, tizen 6.5+
+assignees: PatrickSt1991
 
 ---
 

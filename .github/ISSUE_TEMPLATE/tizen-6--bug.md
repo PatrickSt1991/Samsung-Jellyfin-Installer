@@ -1,9 +1,9 @@
 ---
-name: Tizen 7+ Bug
-about: Create a report to help us improve the application
-title: "[Tizen 7+] [Bug] <short description>"
-labels: bug, keep-alive, tizen 7+
-assignees: ''
+name: Tizen 6- Bug
+about: Create a report to help us improve
+title: "[Tizen 6-] [Bug] <short description>"
+labels: bug, keep-alive, tizen 6-
+assignees: PatrickSt1991
 
 ---
 
