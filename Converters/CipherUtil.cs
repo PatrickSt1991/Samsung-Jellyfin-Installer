@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -16,6 +14,16 @@ namespace Samsung_Jellyfin_Installer.Converters
 
         public async Task<string?> ExtractPasswordAsync(string jarPath)
         {
+            if (string.IsNullOrEmpty(jarPath))
+            {
+                throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
+            }
+
+            if (!Directory.Exists(jarPath))
+            {
+                throw new DirectoryNotFoundException($"JAR directory not found: {jarPath}");
+            }
+
             var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
             foreach (var jar in jarFiles)
@@ -211,6 +219,6 @@ namespace Samsung_Jellyfin_Installer.Converters
                 return output.Split(new[] { "PASSWORD:" }, StringSplitOptions.None)[1].Trim();
             }
         }
-        
+
     }
 }

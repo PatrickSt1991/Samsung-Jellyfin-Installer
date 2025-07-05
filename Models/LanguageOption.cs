@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Samsung_Jellyfin_Installer.Models
+﻿namespace Samsung_Jellyfin_Installer.Models
 {
     public class LanguageOption
     {

@@ -330,4 +330,28 @@
   <data name="CheckingPackageManagerList" xml:space="preserve">
     <value>Tizen-pakketbeheerder controleren</value>
   </data>
+  <data name="PermissionDenied" xml:space="preserve">
+    <value>Toestemming geweigerd</value>
+  </data>
+  <data name="AdminPrivRequired" xml:space="preserve">
+    <value>Voor het aanmaken van deze map zijn beheerdersrechten vereist. Maak de map handmatig aan of voer de toepassing opnieuw uit als beheerder.</value>
+  </data>
+  <data name="PathLengthWarning" xml:space="preserve">
+    <value>Padlengte van Windows overschreden</value>
+  </data>
+  <data name="PathLengthExceeded" xml:space="preserve">
+    <value>Het standaardpad overschrijdt de padlengte van Windows. Wilt u dit wijzigen naar C:\Tizen Studio Cli?</value>
+  </data>
+  <data name="lbl_ForceLogin" xml:space="preserve">
+    <value>Forceer Samsung-aanmelding</value>
+  </data>
+  <data name="DeveloperModeRequired" xml:space="preserve">
+    <value>Samsung TV staat niet in de ontwikkelaarsmodus...</value>
+  </data>
+  <data name="DeveloperIPMismatch" xml:space="preserve">
+    <value>Het IP-adres van de Samsung-ontwikkelaarsmodus komt niet overeen met het lokale IP-adres van dit apparaat</value>
+  </data>
+  <data name="lbl_RTL" xml:space="preserve">
+    <value>Van rechts naar links (RTL) lezen</value>
+  </data>
 </root>

@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.2")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
@@ -147,6 +147,30 @@ namespace Samsung_Jellyfin_Installer {
         public string TizenCliUrl {
             get {
                 return ((string)(this["TizenCliUrl"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ForceSamsungLogin {
+            get {
+                return ((bool)(this["ForceSamsungLogin"]));
+            }
+            set {
+                this["ForceSamsungLogin"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RTLReading {
+            get {
+                return ((bool)(this["RTLReading"]));
+            }
+            set {
+                this["RTLReading"] = value;
             }
         }
     }

@@ -1,13 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Samsung_Jellyfin_Installer.Commands;
 using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.Views;
-using Samsung_Jellyfin_Installer.Localization;
 using System.Collections.ObjectModel;
-﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -33,7 +32,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _isLoading, _isLoadingDevices;
 
         private string _statusBar;
-        private string _tizenProfilePath;
         private string _downloadedPackagePath;
 
         public ObservableCollection<GitHubRelease> Releases
@@ -181,7 +179,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 StatusBar = "ScanningNetwork".Localized();
                 await LoadDevicesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine($"Initialization failed: {ex}");
                 StatusBar = "InitializationFailed".Localized();
@@ -236,8 +234,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private async Task<bool> InstallPackageAsync(string packagePath = null)
         {
             string installPath = packagePath ?? _downloadedPackagePath;
+            string CurrentDeviceLocalIpAddress = _networkService.GetLocalIPAddress();
 
-            if(string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
+            if (string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
             {
                 await _dialogService.ShowErrorAsync("NoPackageToInstall".Localized());
                 return false;
@@ -248,6 +247,34 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await _dialogService.ShowErrorAsync("NoDeviceSelected".Localized());
                 return false;
             }
+
+            if(SelectedDevice.DeveloperMode == "0")
+            {
+                await _dialogService.ShowErrorAsync("DeveloperModeRequired".Localized());
+                return false;
+            }
+
+            if (SelectedDevice.DeveloperIP != CurrentDeviceLocalIpAddress)
+            {
+                bool ipMismatch = true;
+
+                if (Settings.Default.RTLReading)
+                {
+                    string invertedIp = _networkService.InvertIPAddress(CurrentDeviceLocalIpAddress);
+                    if (SelectedDevice.DeveloperIP == invertedIp)
+                    {
+                        SelectedDevice.IpAddress = invertedIp;
+                        ipMismatch = false;
+                    }
+                }
+
+                if (ipMismatch)
+                {
+                    await _dialogService.ShowErrorAsync("DeveloperIPMismatch".Localized());
+                    return false;
+                }
+            }
+
 
             IsLoading = true;
             try
@@ -285,7 +312,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             string installPath = null;
             bool isCustomWgt = false;
 
-            if(!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
+            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
                 File.Exists(Settings.Default.CustomWgtPath))
             {
                 installPath = Settings.Default.CustomWgtPath;
@@ -364,7 +391,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 var devices = await _networkService.GetLocalTizenAddresses();
 
                 foreach (NetworkDevice device in devices)
-                    AvailableDevices.Add(device);
+                {
+                    var samsungDevice = await GetDeverloperInfoAsync(device);
+
+                    if (!string.IsNullOrEmpty(samsungDevice.DeviceName))
+                        AvailableDevices.Add(samsungDevice);
+                }
 
                 if (AvailableDevices.Count == 0)
                     StatusBar = "NoDevicesFound".Localized();
@@ -397,6 +429,43 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 IsLoadingDevices = false;
             }
         }
+        public async Task<NetworkDevice> GetDeverloperInfoAsync(NetworkDevice device)
+        {
+            try
+            {
+                string url = $"http://{device.IpAddress}:8001/api/v2/";
+
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                string jsonContent = await response.Content.ReadAsStringAsync();
+                JObject jsonObject = JObject.Parse(jsonContent);
+
+                var developerMode = jsonObject["device"]?["developerMode"]?.ToString();
+                var developerIP = jsonObject["device"]?["developerIP"]?.ToString();
+
+                return new NetworkDevice
+                {
+                    IpAddress = device.IpAddress,
+                    DeviceName = device.DeviceName,
+                    Manufacturer = device.Manufacturer,
+                    DeveloperMode = developerMode,
+                    DeveloperIP = developerIP
+                };
+            }
+            catch(HttpRequestException ex)
+            {
+                throw new Exception($"Error connecting to Samsung TV at {device.IpAddress}: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Error parsing JSON response: {ex.Message}", ex);
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Unexpected error: {ex.Message}", ex);
+            }
+        }
         private async Task PromptForManualIp()
         {
             string? ip = await _dialogService.PromptForIpAsync("IpWindowTitle".Localized(), "IpWindowDescription".Localized());
@@ -409,15 +478,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             var device = await _networkService.ValidateManualTizenAddress(ip);
 
-            if (device != null)
+            var samsungDevice = await GetDeverloperInfoAsync(device);
+
+            if (samsungDevice != null)
             {
-                Settings.Default.UserCustomIP = device.IpAddress;
+                Settings.Default.UserCustomIP = samsungDevice.IpAddress;
                 Settings.Default.Save();
 
-                SelectedDevice = device;
+                SelectedDevice = samsungDevice;
 
                 if (!AvailableDevices.Any(d => d.IpAddress == device.IpAddress))
-                    AvailableDevices.Add(device);
+                    AvailableDevices.Add(samsungDevice);
             }
             else
             {

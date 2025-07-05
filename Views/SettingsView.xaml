@@ -12,7 +12,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Settings" Height="375" Width="500">
+        Title="Settings" Height="400" Width="500">
     <Grid Background="#19000B25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,6 +26,8 @@
         <StackPanel Grid.Row="1" Margin="0,20,0,0" VerticalAlignment="Top" Width="Auto">
             <Grid Margin="14 0 14 0">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -107,6 +109,26 @@
                VerticalAlignment="Center" Margin="0,15,12,0"/>
                 <CheckBox Grid.Row="4" Grid.Column="1"
                   IsChecked="{Binding DeletePreviousInstall}"
+                  VerticalAlignment="Center"
+                  Style="{DynamicResource MaterialDesignCheckBox}"
+                  Foreground="{DynamicResource MaterialDesignBody}"
+                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+                <!-- Force Certificate Creation -->
+                <Label Grid.Row="5" Grid.Column="0" Content="{loc:Localize lbl_ForceLogin}"
+               VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="5" Grid.Column="1"
+                  IsChecked="{Binding ForceSamsungLogin}"
+                  VerticalAlignment="Center"
+                  Style="{DynamicResource MaterialDesignCheckBox}"
+                  Foreground="{DynamicResource MaterialDesignBody}"
+                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+                <!-- Force Certificate Creation -->
+                <Label Grid.Row="6" Grid.Column="0" Content="{loc:Localize lbl_RTL}"
+               VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="6" Grid.Column="1"
+                  IsChecked="{Binding RTLReading}"
                   VerticalAlignment="Center"
                   Style="{DynamicResource MaterialDesignCheckBox}"
                   Foreground="{DynamicResource MaterialDesignBody}"

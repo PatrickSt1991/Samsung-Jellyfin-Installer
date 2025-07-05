@@ -9,8 +9,6 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Samsung_Jellyfin_Installer.Converters;
-using Samsung_Jellyfin_Installer.Localization;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -24,6 +22,16 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus, string jarPath)
         {
+            if (string.IsNullOrEmpty(jarPath))
+            {
+                throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
+            }
+
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                throw new ArgumentException("outputPath cannot be null or empty", nameof(outputPath));
+            }
+
             var cipherUtil = new CipherUtil();
             await cipherUtil.ExtractPasswordAsync(jarPath);
 
@@ -100,7 +108,7 @@ namespace Samsung_Jellyfin_Installer.Services
             var values = new List<string>
             {
                 "Jelly2Sams"
-        }   ;
+        };
 
             var subject = new X509Name(oids, values);
 
@@ -244,13 +252,23 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task ExtractRootCertificateAsync(string jarPath)
         {
+            if (string.IsNullOrEmpty(jarPath))
+            {
+                throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
+            }
+
+            if (!Directory.Exists(jarPath))
+            {
+                throw new DirectoryNotFoundException($"JAR directory not found: {jarPath}");
+            }
+
             var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
-            foreach(var jar in jarFiles)
+            foreach (var jar in jarFiles)
             {
                 var fileName = Path.GetFileName(jar);
-                
-                if(fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
+
+                if (fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
                 {
                     using var fileStream = File.OpenRead(jar);
                     using var msJar = new MemoryStream();
@@ -265,7 +283,11 @@ namespace Samsung_Jellyfin_Installer.Services
                         if (memberFileName == ("vd_tizen_dev_author_ca.cer") || memberFileName == "vd_tizen_dev_public2.crt")
                         {
                             var targetPath = Path.Combine("TizenProfile", "ca", memberFileName);
-                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+                            var directoryName = Path.GetDirectoryName(targetPath);
+                            if (!string.IsNullOrEmpty(directoryName))
+                            {
+                                Directory.CreateDirectory(directoryName);
+                            }
 
                             using var entryStream = member.Open();
                             using var fileStreamOut = File.Create(targetPath);
@@ -344,6 +366,10 @@ namespace Samsung_Jellyfin_Installer.Services
         public static string MoveTizenCertificateFiles()
         {
             string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(userHome))
+            {
+                throw new InvalidOperationException("Unable to get user profile directory");
+            }
 
             string destinationFolder = Path.Combine(userHome, "SamsungCertificate", "Jelly2Sams");
 
@@ -361,6 +387,10 @@ namespace Samsung_Jellyfin_Installer.Services
             }
 
             string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
+            if (!Directory.Exists(sourceFolder))
+            {
+                throw new DirectoryNotFoundException($"Source folder not found: {sourceFolder}");
+            }
 
             string[] fileExtensions = { "*.xml", "*.pri", "*.p12", "*.pwd", "*.csr", "*.crt", "*.cer", "*.txt" };
 
@@ -369,8 +399,12 @@ namespace Samsung_Jellyfin_Installer.Services
                 string[] files = Directory.GetFiles(sourceFolder, pattern);
                 foreach (var file in files)
                 {
-                    string destFile = Path.Combine(destinationFolder, Path.GetFileName(file));
-                    File.Move(file, destFile, overwrite: true);
+                    string fileName = Path.GetFileName(file);
+                    if (!string.IsNullOrEmpty(fileName))
+                    {
+                        string destFile = Path.Combine(destinationFolder, fileName);
+                        File.Move(file, destFile, overwrite: true);
+                    }
                 }
             }
             return destinationFolder;
