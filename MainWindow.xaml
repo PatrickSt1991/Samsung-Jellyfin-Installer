@@ -162,7 +162,7 @@
 
             <!-- Copyright -->
             <TextBlock FontSize="12" HorizontalAlignment="Center" Grid.Row="7" >
-                <Hyperlink NavigateUri="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" 
+                <Hyperlink NavigateUri="https://patrickst1991.github.io/Samsung-Jellyfin-Installer/" 
                            RequestNavigate="Hyperlink_RequestNavigate"
                            TextDecorations="{x:Null}" 
                            Foreground="#FF000B25">
