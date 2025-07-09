@@ -243,7 +243,10 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
+
+                string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
+
+                await RunCommandAsync(TizenCliPath, $"package -t {packageUrlExtension} -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 if (Settings.Default.DeletePreviousInstall)
                 {
