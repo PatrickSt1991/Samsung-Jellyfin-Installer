@@ -241,7 +241,7 @@
     <value>Selecteer certificaat</value>
   </data>
   <data name="SelectWGT" xml:space="preserve">
-    <value>Selecteer WGT-bestand</value>
+    <value>Selecteer WGT- en/of TPK-bestand(en)</value>
   </data>
   <data name="lbl_Release" xml:space="preserve">
     <value>Uitgave</value>

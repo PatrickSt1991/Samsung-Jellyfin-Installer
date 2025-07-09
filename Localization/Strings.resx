@@ -241,7 +241,7 @@
     <value>Select certificate</value>
   </data>
   <data name="SelectWGT" xml:space="preserve">
-    <value>Select WGT file</value>
+    <value>Select WGT and/or TPK file(s)</value>
   </data>
   <data name="lbl_Release" xml:space="preserve">
     <value>Release</value>

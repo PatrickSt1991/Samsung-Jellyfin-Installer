@@ -691,7 +691,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select WGT file.
+        ///   Looks up a localized string similar to Select WGT and/or TPK file(s).
         /// </summary>
         public static string SelectWGT {
             get {

@@ -168,9 +168,6 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
-            MessageBox.Show(packageUrl);
-            MessageBox.Show(tvIpAddress);
-
             if (TizenCliPath is null || TizenSdbPath is null)
             {
                 updateStatus("PleaseInstallTizen".Localized());
@@ -218,6 +215,8 @@ namespace Samsung_Jellyfin_Installer.Services
                                 );
 
                                 PackageCertificate = "Jelly2Sams";
+                                Settings.Default.Certificate = PackageCertificate;
+                                Settings.Default.Save();
                                 UpdateCertificateManager(p12Location, p12Password, updateStatus);
                             }
                             else
