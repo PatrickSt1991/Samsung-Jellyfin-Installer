@@ -168,6 +168,9 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
+            MessageBox.Show(packageUrl);
+            MessageBox.Show(tvIpAddress);
+
             if (TizenCliPath is null || TizenSdbPath is null)
             {
                 updateStatus("PleaseInstallTizen".Localized());
@@ -542,7 +545,23 @@ namespace Samsung_Jellyfin_Installer.Services
                 bool certInstalled = await InstallSamsungCertificateExtensionAsync(_installPath, installingWindow);
 
                 if (!certInstalled)
-                    MessageBox.Show("cert install error");
+                {
+                    var certCrit = MessageBox.Show("There was a error during the installation of Tizen Certificate tooling! \r\nTry again?","Certificat Tooling Critical Error",MessageBoxButton.YesNo);
+                    if (certCrit == MessageBoxResult.No)
+                    {
+                        Application.Current.Shutdown();
+                    }
+                    else
+                    {
+                        bool retryCertInstalled = await InstallSamsungCertificateExtensionAsync(_installPath, installingWindow);
+                        if (!retryCertInstalled)
+                        {
+                            MessageBox.Show("Certificate Tooling installation failed again. Please try to install Tizen Studio manually.");
+                            Application.Current.Shutdown();
+                        }
+                    }
+                }
+                    
 
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
 
@@ -692,8 +711,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
             }
         }
-
-
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
             string[] possiblePaths = {
@@ -777,13 +794,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        public class ExtensionEntry
-        {
-            public int Index;
-            public string Name = "";
-            public bool Activated;
-        }
-
         public List<ExtensionEntry> ParseExtensions(string output)
         {
             var extensions = new List<ExtensionEntry>();

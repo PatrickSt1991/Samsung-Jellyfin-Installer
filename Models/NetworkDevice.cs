@@ -26,3 +26,9 @@ public class NetworkDevice
         }
     }
 }
+public class ExtensionEntry
+{
+    public int Index;
+    public string Name = "";
+    public bool Activated;
+}
