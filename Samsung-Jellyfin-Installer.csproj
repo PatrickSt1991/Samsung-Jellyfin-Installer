@@ -21,6 +21,8 @@
 
 	<ItemGroup>
     <None Remove="TizenProfile\author.p12" />
+    <None Remove="TizenProfile\ca\ca_local\vd_tizen_dev_author_ca.cer" />
+    <None Remove="TizenProfile\ca\ca_local\vd_tizen_dev_public2.crt" />
     <None Remove="TizenProfile\ca\do_not_delete_me.txt" />
     <None Remove="TizenProfile\profiles.xml" />
   </ItemGroup>
@@ -45,6 +47,15 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3240.44" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="TizenProfile\ca\ca_local\vd_tizen_dev_author_ca.cer">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="TizenProfile\ca\ca_local\vd_tizen_dev_public2.crt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>
