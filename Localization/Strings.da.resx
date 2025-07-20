@@ -354,4 +354,10 @@
   <data name="lbl_RTL" xml:space="preserve">
     <value>Højre-mod-venstre (RTL) læsning</value>
   </data>
+  <data name="FailedToStopSdbServer" xml:space="preserve">
+    <value>Der kører allerede en SDB-server, den kunne ikke stoppes...</value>
+  </data>
+  <data name="FailedToStopSdbServerTitle" xml:space="preserve">
+    <value>SDB-serveren kunne ikke stoppe!</value>
+  </data>
 </root>

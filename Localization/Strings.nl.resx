@@ -354,4 +354,10 @@
   <data name="lbl_RTL" xml:space="preserve">
     <value>Van rechts naar links (RTL) lezen</value>
   </data>
+  <data name="FailedToStopSdbServer" xml:space="preserve">
+    <value>Er is al een SDB-server actief, stoppen is mislukt...</value>
+  </data>
+  <data name="FailedToStopSdbServerTitle" xml:space="preserve">
+    <value>SDB-server kon niet worden gestopt!</value>
+  </data>
 </root>

@@ -354,4 +354,10 @@
   <data name="lbl_RTL" xml:space="preserve">
     <value>Right-to-left (RTL) reading</value>
   </data>
+  <data name="FailedToStopSdbServer" xml:space="preserve">
+    <value>There is a SDB Server already running, failed to stop...</value>
+  </data>
+  <data name="FailedToStopSdbServerTitle" xml:space="preserve">
+    <value>SDB Server failed to stop!</value>
+  </data>
 </root>

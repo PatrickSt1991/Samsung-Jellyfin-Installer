@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 
@@ -172,6 +173,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     StatusBar = "TizenCliFailed".Localized();
                     return;
                 }
+                else
+                {
+                    KillSdbServers();
+                }
 
                 await WebView2Helper.EnsureWebView2RuntimeAsync();
 
@@ -183,6 +188,28 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 Debug.WriteLine($"Initialization failed: {ex}");
                 StatusBar = "InitializationFailed".Localized();
+            }
+        }
+        public static void KillSdbServers()
+        {
+            try
+            {
+                Process[] sdbProcesses = Process.GetProcessesByName("sdb");
+
+                if (sdbProcesses.Length == 0)
+                    return;
+
+                foreach (Process proc in sdbProcesses)
+                {
+                    proc.Kill();
+                    proc.WaitForExit();
+                    Debug.WriteLine($"Killed SDB {proc.Id} - {proc.ProcessName}");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("FailedToStopSdbServer".Localized(), "FailedToStopSdbServerTitle".Localized(), MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         private void OpenSettings()
@@ -392,9 +419,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 IsLoading = false;
             }
         }
-        private async Task LoadDevicesAsync()
+        private async Task LoadDevicesAsync(CancellationToken cancellationToken = default)
         {
             IsLoadingDevices = true;
+            cancellationToken = default;
             AvailableDevices.Clear();
             try
             {
@@ -406,10 +434,20 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                 foreach (NetworkDevice device in devices)
                 {
-                    var samsungDevice = await GetDeverloperInfoAsync(device);
+                    if(await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
+                    {
+                        try
+                        {
+                            var samsungDevice = await GetDeverloperInfoAsync(device);
 
-                    if (!string.IsNullOrEmpty(samsungDevice.DeviceName))
-                        AvailableDevices.Add(samsungDevice);
+                            if (!string.IsNullOrEmpty(samsungDevice.DeviceName))
+                                AvailableDevices.Add(samsungDevice);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
                 }
 
                 if (AvailableDevices.Count == 0)

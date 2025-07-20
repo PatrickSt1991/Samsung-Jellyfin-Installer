@@ -259,6 +259,24 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There is a SDB Server already running, failed to stop....
+        /// </summary>
+        public static string FailedToStopSdbServer {
+            get {
+                return ResourceManager.GetString("FailedToStopSdbServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SDB Server failed to stop!.
+        /// </summary>
+        public static string FailedToStopSdbServerTitle {
+            get {
+                return ResourceManager.GetString("FailedToStopSdbServerTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Generating keypair.
         /// </summary>
         public static string GenKeyPair {

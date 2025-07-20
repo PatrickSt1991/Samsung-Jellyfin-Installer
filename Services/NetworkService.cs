@@ -40,17 +40,21 @@ public class NetworkService : INetworkService
 
             if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
             {
-                var manufacturer = await GetManufacturerFromIp(ip);
-                var device = new NetworkDevice
+                if (await IsPortOpenAsync(ip, 8001, linkedCts.Token))
                 {
-                    IpAddress = ip,
-                    Manufacturer = manufacturer
-                };
+                    var manufacturer = await GetManufacturerFromIp(ip);
+                    var device = new NetworkDevice
+                    {
+                        IpAddress = ip,
+                        Manufacturer = manufacturer
+                    };
 
-                if (manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) == true)
-                    device.DeviceName = await _tizenInstaller.GetTvNameAsync(ip);
+                    if (manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) == true)
+                        device.DeviceName = await _tizenInstaller.GetTvNameAsync(ip);
 
-                return device;
+                    return device;
+                }
+                return null;
             }
 
             return null;
@@ -74,8 +78,6 @@ public class NetworkService : INetworkService
             .Distinct()
             .ToList();
 
-        Debug.WriteLine($"Scanning {uniqueNetworks.Count} unique networks: {string.Join(", ", uniqueNetworks)}");
-
         await Task.WhenAll(uniqueNetworks.SelectMany(networkPrefix =>
             Enumerable.Range(1, 254)
                 .Select(i => $"{networkPrefix}.{i}")
@@ -89,7 +91,6 @@ public class NetworkService : INetworkService
                         if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
                         {
                             var manufacturer = await GetManufacturerFromIp(ip);
-                            Debug.WriteLine(manufacturer);
                             var device = new NetworkDevice
                             {
                                 IpAddress = ip,
@@ -127,7 +128,6 @@ public class NetworkService : INetworkService
         {
             try
             {
-                Debug.WriteLine($"SEARCHME: {Settings.Default.UserCustomIP}");
                 // Validate it's a valid IP by parsing, then use the string
                 IPAddress.Parse(Settings.Default.UserCustomIP);
                 additionalIps = new[] { Settings.Default.UserCustomIP };
@@ -142,7 +142,7 @@ public class NetworkService : INetworkService
             .Distinct()
             .Select(IPAddress.Parse); // Convert back to IPAddress
     }
-    private async Task<bool> IsPortOpenAsync(string ip, int port, CancellationToken ct)
+    public async Task<bool> IsPortOpenAsync(string ip, int port, CancellationToken ct)
     {
         try
         {
