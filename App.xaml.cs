@@ -48,7 +48,7 @@ namespace Samsung_Jellyfin_Installer
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            //SettingsCleaner.CleanOldSettings();
+            CleanOldSettings();
             string savedLanguage = Settings.Default.Language ?? "en";
 
             var culture = new System.Globalization.CultureInfo(savedLanguage);
