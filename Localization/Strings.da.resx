@@ -241,7 +241,7 @@
     <value>Vælg certifikat</value>
   </data>
   <data name="SelectWGT" xml:space="preserve">
-    <value>Vælg WGT-fil</value>
+    <value>Vælg WGT- og/eller TPK-fil(er)</value>
   </data>
   <data name="lbl_Release" xml:space="preserve">
     <value>Frigøre</value>

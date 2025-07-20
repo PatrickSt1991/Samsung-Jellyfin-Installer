@@ -81,6 +81,8 @@ namespace Samsung_Jellyfin_Installer.Services
             updateStatus("CreateNewCertificates".Localized());
             await ExtractRootCertificateAsync(jarPath);
 
+            await CheckCertificateExistanceAsync(caPath);
+
             updateStatus("CreateNewCertificates".Localized());
             await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
             await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
@@ -89,6 +91,41 @@ namespace Samsung_Jellyfin_Installer.Services
             string p12Location = MoveTizenCertificateFiles();
 
             return (p12Location, p12Encrypted);
+        }
+
+        private static async Task CheckCertificateExistanceAsync(string caPath)
+        {
+            var requiredFiles = new[]
+            {
+                "vd_tizen_dev_author_ca.cer",
+                "vd_tizen_dev_public2.crt"
+            };
+
+            string caLocalPath = Path.Combine(caPath, "ca_local");
+
+            foreach (var fileName in requiredFiles)
+            {
+                var targetFilePath = Path.Combine(caPath, fileName);
+
+                if (!File.Exists(targetFilePath))
+                {
+                    var sourceFilePath = Path.Combine(caLocalPath, fileName);
+
+                    if (!File.Exists(sourceFilePath))
+                    {
+                        Console.WriteLine($"[ERROR] Source file not found: {sourceFilePath}");
+                        continue;
+                    }
+
+                    Directory.CreateDirectory(caPath); // Ensure target directory exists
+
+                    await using var sourceStream = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    await using var targetStream = new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await sourceStream.CopyToAsync(targetStream);
+
+                    Console.WriteLine($"[INFO] Copied missing file: {fileName} from ca_local to ca.");
+                }
+            }
         }
 
         private static AsymmetricCipherKeyPair GenerateKeyPair()
@@ -108,7 +145,7 @@ namespace Samsung_Jellyfin_Installer.Services
             var values = new List<string>
             {
                 "Jelly2Sams"
-        };
+            };
 
             var subject = new X509Name(oids, values);
 

@@ -215,6 +215,8 @@ namespace Samsung_Jellyfin_Installer.Services
                                 );
 
                                 PackageCertificate = "Jelly2Sams";
+                                Settings.Default.Certificate = PackageCertificate;
+                                Settings.Default.Save();
                                 UpdateCertificateManager(p12Location, p12Password, updateStatus);
                             }
                             else
@@ -241,7 +243,10 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
-                await RunCommandAsync(TizenCliPath, $"package -t wgt -s {PackageCertificate} -- \"{packageUrl}\"");
+
+                string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
+
+                await RunCommandAsync(TizenCliPath, $"package -t {packageUrlExtension} -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 if (Settings.Default.DeletePreviousInstall)
                 {
@@ -542,7 +547,23 @@ namespace Samsung_Jellyfin_Installer.Services
                 bool certInstalled = await InstallSamsungCertificateExtensionAsync(_installPath, installingWindow);
 
                 if (!certInstalled)
-                    MessageBox.Show("cert install error");
+                {
+                    var certCrit = MessageBox.Show("There was a error during the installation of Tizen Certificate tooling! \r\nTry again?","Certificat Tooling Critical Error",MessageBoxButton.YesNo);
+                    if (certCrit == MessageBoxResult.No)
+                    {
+                        Application.Current.Shutdown();
+                    }
+                    else
+                    {
+                        bool retryCertInstalled = await InstallSamsungCertificateExtensionAsync(_installPath, installingWindow);
+                        if (!retryCertInstalled)
+                        {
+                            MessageBox.Show("Certificate Tooling installation failed again. Please try to install Tizen Studio manually.");
+                            Application.Current.Shutdown();
+                        }
+                    }
+                }
+                    
 
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
 
@@ -692,8 +713,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
             }
         }
-
-
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
             string[] possiblePaths = {
@@ -777,13 +796,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 return false;
             }
         }
-        public class ExtensionEntry
-        {
-            public int Index;
-            public string Name = "";
-            public bool Activated;
-        }
-
         public List<ExtensionEntry> ParseExtensions(string output)
         {
             var extensions = new List<ExtensionEntry>();

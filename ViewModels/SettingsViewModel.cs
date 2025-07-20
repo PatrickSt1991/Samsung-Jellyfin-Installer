@@ -298,28 +298,34 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         {
             var openFileDialog = new OpenFileDialog
             {
-                Title = "Select WGT File",
-                Filter = "WGT Files (*.wgt)|*.wgt",
-                FilterIndex = 1,
-                Multiselect = false
+                Title = "Select WGT/TPK File",
+                Filter = "WGT Files (*.wgt)|*.wgt|TPK Files (*.tpk)|*.tpk|All Supported Files (*.wgt;*.tpk)|*.wgt;*.tpk",
+                FilterIndex = 3,
+                Multiselect = true
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                var originalPath = openFileDialog.FileName;
-                var directory = Path.GetDirectoryName(originalPath);
-                var baseName = Path.GetFileNameWithoutExtension(originalPath);
-                var extension = Path.GetExtension(originalPath);
+                var newPaths = new List<string>();
 
-                var random = new Random();
-                const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                var randomSuffix = new string(Enumerable.Range(0, 4).Select(_ => chars[random.Next(chars.Length)]).ToArray());
+                foreach (var originalPath in openFileDialog.FileNames)
+                {
+                    var directory = Path.GetDirectoryName(originalPath);
+                    var baseName = Path.GetFileNameWithoutExtension(originalPath);
+                    var extension = Path.GetExtension(originalPath);
 
-                var newFileName = $"{baseName}{randomSuffix}{extension}";
-                var newFilePath = Path.Combine(directory ?? Environment.CurrentDirectory, newFileName);
+                    var random = new Random();
+                    const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    var randomSuffix = new string(Enumerable.Range(0, 4).Select(_ => chars[random.Next(chars.Length)]).ToArray());
 
-                File.Copy(originalPath, newFilePath, overwrite: true);
-                CustomWgtPath = newFilePath;
+                    var newFileName = $"{baseName}{randomSuffix}{extension}";
+                    var newFilePath = Path.Combine(directory ?? Environment.CurrentDirectory, newFileName);
+
+                    File.Copy(originalPath, newFilePath, overwrite: true);
+
+                    newPaths.Add(newFilePath);
+                }
+                CustomWgtPath = string.Join(";", newPaths);
             }
         }
     }

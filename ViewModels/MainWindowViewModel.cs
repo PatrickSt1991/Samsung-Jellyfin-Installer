@@ -194,9 +194,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private bool CanExecuteDownloadCommand(GitHubRelease release)
         {
-            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
-                File.Exists(Settings.Default.CustomWgtPath))
+            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath))
             {
+                foreach(string file in Settings.Default.CustomWgtPath.Split(';'))
+                    if (!File.Exists(file))
+                        return false;
+                
                 return !IsLoading && SelectedDevice != null &&
                        !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
             }
@@ -311,31 +314,42 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         {
             string installPath = null;
             bool isCustomWgt = false;
+            bool packageInstalled = false;
 
-            if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath) &&
-                File.Exists(Settings.Default.CustomWgtPath))
+            var customPaths = Settings.Default.CustomWgtPath?.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+            if(customPaths?.Length > 0)
             {
-                installPath = Settings.Default.CustomWgtPath;
                 isCustomWgt = true;
                 StatusBar = "UsingCustomWGT".Localized();
+
+                foreach(string filePath in customPaths)
+                {
+                    installPath = filePath.Trim();
+                    packageInstalled =await InstallPackageAsync(installPath);
+
+                    if (!packageInstalled)
+                        break;
+                }
+
+                if (packageInstalled)
+                {
+                    Settings.Default.CustomWgtPath = null;
+                    Settings.Default.Save();
+                }
             }
             else
             {
                 installPath = await DownloadReleaseAsync(release);
                 if (string.IsNullOrEmpty(installPath))
                     return;
-            }
 
-            bool packageInstalled = await InstallPackageAsync(installPath);
+                await InstallPackageAsync(installPath);
+            }
 
             if (!isCustomWgt)
                 CleanupDownloadedPackage();
 
-            if (isCustomWgt && packageInstalled)
-            {
-                Settings.Default.CustomWgtPath = null;
-                Settings.Default.Save();
-            }
         }
         private void CleanupDownloadedPackage()
         {

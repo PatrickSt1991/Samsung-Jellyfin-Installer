@@ -3,7 +3,9 @@ using Samsung_Jellyfin_Installer.Services;
 using Samsung_Jellyfin_Installer.ViewModels;
 using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Windows;
 
 namespace Samsung_Jellyfin_Installer
@@ -46,7 +48,7 @@ namespace Samsung_Jellyfin_Installer
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
+            CleanOldSettings();
             string savedLanguage = Settings.Default.Language ?? "en";
 
             var culture = new System.Globalization.CultureInfo(savedLanguage);
@@ -75,6 +77,24 @@ namespace Samsung_Jellyfin_Installer
                               MessageBoxImage.Error);
 
                 Shutdown();
+            }
+        }
+
+        public static void CleanOldSettings()
+        {
+            string basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Samsung-Jellyfin-Installe");
+
+            string exeName = Assembly.GetExecutingAssembly().GetName().Name;
+            string currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+            var dirs = Directory.GetDirectories(basePath);
+
+            foreach (var dir in dirs)
+            {
+                if (dir.Contains(currentVersion))
+                    continue;
+
+                Directory.Delete(dir, true);
             }
         }
     }
