@@ -1,7 +1,7 @@
 name: Update Version Table in README
 on:
   schedule:
-    - cron: "0 */6 * * *"  # Every 6 hours
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 jobs:
   update-readme:
@@ -50,8 +50,8 @@ jobs:
           cat <<EOF > version_table.md
           | Channel    | Version                                | Notes                                      |
           |------------|----------------------------------------|--------------------------------------------|
-          | **Stable** | [\$STABLE_TAG\]($STABLE_URL)         | Recommended for most users                 |
-          | **Beta**   | [\$BETA_TAG\]($BETA_URL)             | Includes new features, may be less stable  |
+          | **Stable** | [$STABLE_TAG]($STABLE_URL)           | Recommended for most users                 |
+          | **Beta**   | [$BETA_TAG]($BETA_URL)               | Includes new features, may be less stable  |
           EOF
       - name: Inject version table into README
         run: |
