@@ -84,17 +84,34 @@ namespace Samsung_Jellyfin_Installer
         {
             string basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Samsung-Jellyfin-Installe");
 
+            if (!Directory.Exists(basePath))
+                return;
+
             string exeName = Assembly.GetExecutingAssembly().GetName().Name;
             string currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-            var dirs = Directory.GetDirectories(basePath);
-
-            foreach (var dir in dirs)
+            try
             {
-                if (dir.Contains(currentVersion))
-                    continue;
+                var dirs = Directory.GetDirectories(basePath);
 
-                Directory.Delete(dir, true);
+                foreach (var dir in dirs)
+                {
+                    if (dir.Contains(currentVersion))
+                        continue;
+
+                    try
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Failed to delete directory {dir}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error during old settings cleanup: {ex.Message}");
             }
         }
     }
