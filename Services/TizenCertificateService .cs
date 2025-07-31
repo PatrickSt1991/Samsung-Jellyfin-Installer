@@ -24,7 +24,14 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             if (string.IsNullOrEmpty(jarPath))
             {
-                throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
+                string defaultJarPath = jarPath;
+                string rootPath = Directory.GetParent(Directory.GetParent(jarPath).FullName).FullName;
+                jarPath = Path.Combine(rootPath, "tools", "certificate-manager");
+
+                if (string.IsNullOrEmpty(jarPath) || !Directory.Exists(jarPath))
+                {
+                    throw new ArgumentException($"Default jarPath is null or empty: {defaultJarPath}, and fallback jarPath could not be found: {jarPath}",nameof(jarPath));
+                }
             }
 
             if (string.IsNullOrEmpty(outputPath))
