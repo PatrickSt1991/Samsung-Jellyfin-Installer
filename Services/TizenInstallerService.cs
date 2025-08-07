@@ -197,7 +197,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 await TizenLibraryCheck();
 
-                if (new Version(tizenOs) >= new Version("6.0"))
+                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ModifyConfig)
                 {
                     try
                     {
@@ -249,57 +249,13 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
-                updateStatus("PackagingWgtWithCertificate".Localized());
-                string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
-
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
                 {
-
-                    string baseDir = Path.GetDirectoryName(packageUrl);
-                    string tempDir = Path.Combine(baseDir, "Jelly_Temp");
-
-                    if (Directory.Exists(tempDir))
-                        Directory.Delete(tempDir, true);
-
-                    Directory.CreateDirectory(tempDir);
-
-                    ZipFile.ExtractToDirectory(packageUrl, tempDir);
-
-                    string configPath = Path.Combine(tempDir, "www", "config.json");
-
-                    if (!File.Exists(configPath))
-                        return InstallResult.FailureResult("ConfigFailure".Localized());
-
-                    string jsonText = File.ReadAllText(configPath);
-
-                    JsonNode config = JsonNode.Parse(jsonText);
-
-                    string[] JellyfinIP = Settings.Default.JellyfinIP.Split(':');
-
-                    var newServer = new JsonObject
-                    {
-                        ["name"] = "Configured Jellyfin Server",
-                        ["address"] = JellyfinIP[0],
-                        ["port"] = JellyfinIP[1],
-                        ["secure"] = false
-                    };
-
-                    config["servers"] = new JsonArray { newServer };
-
-                    File.WriteAllText(configPath, config.ToJsonString(new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    }));
-
-
-                    if (File.Exists(packageUrl))
-                        File.Delete(packageUrl);
-
-                    ZipFile.CreateFromDirectory(tempDir, packageUrl);
-
-                    Directory.Delete(tempDir, true);
+                    await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
                 }
 
+                updateStatus("PackagingWgtWithCertificate".Localized());
+                string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
 
                 await RunCommandAsync(TizenCliPath, $"package -t {packageUrlExtension} -s {PackageCertificate} -- \"{packageUrl}\"");
 
@@ -371,7 +327,66 @@ namespace Samsung_Jellyfin_Installer.Services
             output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
             return output?.Trim() ?? string.Empty;
         }
+        public async Task<InstallResult> ModifyJellyfinConfigAsync(string packageUrl, string certificateName)
+        {
+            try
+            {
+                string baseDir = Path.GetDirectoryName(packageUrl);
+                string tempDir = Path.Combine(baseDir, "Jelly_Temp");
 
+                // Clean up temp directory if it exists
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, true);
+                Directory.CreateDirectory(tempDir);
+
+                // Extract zip (sync - no async version available)
+                ZipFile.ExtractToDirectory(packageUrl, tempDir);
+
+                string configPath = Path.Combine(tempDir, "www", "config.json");
+                if (!File.Exists(configPath))
+                    return InstallResult.FailureResult("ConfigFailure".Localized());
+
+                string jsonText = await File.ReadAllTextAsync(configPath);
+                JsonNode config = JsonNode.Parse(jsonText);
+
+                // Set multiserver to false for single server mode
+                config["multiserver"] = false;
+
+                // Create server URL and add debugging
+                string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+
+                // Debug: Check if serverUrl is valid
+                if (string.IsNullOrEmpty(serverUrl) || serverUrl == "http://")
+                {
+                    return InstallResult.FailureResult($"Invalid server URL: {serverUrl}");
+                }
+
+                // Create new servers array with your server
+                var serversArray = new JsonArray();
+                serversArray.Add(JsonValue.Create(serverUrl));
+                config["servers"] = serversArray;
+
+                await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }));
+
+                if (File.Exists(packageUrl))
+                    File.Delete(packageUrl);
+
+                ZipFile.CreateFromDirectory(tempDir, packageUrl); // Still sync
+                Directory.Delete(tempDir, true);
+
+                await RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packageUrl}\"");
+
+                return InstallResult.SuccessResult();
+            }
+            catch (Exception ex)
+            {
+                // Log ex if needed
+                return InstallResult.FailureResult($"Exception: {ex.Message}");
+            }
+        }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
             if (string.IsNullOrEmpty(p12Location))
