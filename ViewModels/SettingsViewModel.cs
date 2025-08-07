@@ -24,6 +24,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _deletePreviousInstall;
         private bool _forceSamsungLogin;
         private bool _rtlReading;
+        private bool _modifyConfig;
+        private string _jellyfinServerIp;
+        private int _selectedJellyfinPort;
+        private Visibility _jellyfinServerVisible = Visibility.Collapsed;
 
         public LanguageOption SelectedLanguage
         {
@@ -97,6 +101,19 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+        public string JellyfinServerIp
+        {
+            get => _jellyfinServerIp;
+            set
+            {
+                if (_jellyfinServerIp != value)
+                {
+                    _jellyfinServerIp = value;
+                    OnPropertyChanged(nameof(JellyfinServerIp));
+                    UpdateJellyfinAddress();
+                }
+            }
+        }
         public bool RememberCustomIP
         {
             get => _rememberCustomIP;
@@ -127,7 +144,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
-
         public bool ForceSamsungLogin
         {
             get => _forceSamsungLogin;
@@ -143,7 +159,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
-
         public bool RTLReading
         {
             get => _rtlReading;
@@ -159,9 +174,50 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+        public bool ModifyConfig
+        {
+            get => _modifyConfig;
+            set
+            {
+                if (_modifyConfig != value)
+                {
+                    _modifyConfig = value;
+                    OnPropertyChanged(nameof(ModifyConfig));
 
+                    Settings.Default.ModifyConfig = value;
+                    Settings.Default.Save();
+                    JellyfinServerVisible = _modifyConfig ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+        }
+        public int SelectedJellyfinPort
+        {
+            get => _selectedJellyfinPort;
+            set
+            {
+                if (_selectedJellyfinPort != value)
+                {
+                    _selectedJellyfinPort = value;
+                    OnPropertyChanged(nameof(SelectedJellyfinPort));
+                    UpdateJellyfinAddress();
+                }
+            }
+        }
+        public Visibility JellyfinServerVisible
+        {
+            get => _jellyfinServerVisible;
+            set
+            {
+                if (_jellyfinServerVisible != value)
+                {
+                    _jellyfinServerVisible = value;
+                    OnPropertyChanged(nameof(JellyfinServerVisible));
+                }
+            }
+        }
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
+        public ObservableCollection<int> JellyfinPorts { get; } = new ObservableCollection<int> { 8096, 8920 };
         public ICommand BrowseWgtCommand { get; }
         public SettingsViewModel(ITizenInstallerService tizenService)
         {
@@ -177,6 +233,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             DeletePreviousInstall = Settings.Default.DeletePreviousInstall;
             ForceSamsungLogin = Settings.Default.ForceSamsungLogin;
             RTLReading = Settings.Default.RTLReading;
+            JellyfinServerIp = Settings.Default.JellyfinIP;
+            ModifyConfig = Settings.Default.ModifyConfig;
         }
         private IEnumerable<LanguageOption> GetAvailableLanguages()
         {
@@ -326,6 +384,14 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     newPaths.Add(newFilePath);
                 }
                 CustomWgtPath = string.Join(";", newPaths);
+            }
+        }
+        private void UpdateJellyfinAddress()
+        {
+            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && SelectedJellyfinPort > 0)
+            {
+                Settings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
+                Settings.Default.Save();
             }
         }
     }

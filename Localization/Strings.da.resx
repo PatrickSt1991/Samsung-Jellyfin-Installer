@@ -360,4 +360,13 @@
   <data name="FailedToStopSdbServerTitle" xml:space="preserve">
     <value>SDB-serveren kunne ikke stoppe!</value>
   </data>
+  <data name="lbl_JellyfinServer" xml:space="preserve">
+    <value>Jellyfin Server</value>
+  </data>
+  <data name="lbl_ModifyConfig" xml:space="preserve">
+    <value>Rediger konfiguration</value>
+  </data>
+  <data name="ConfigFailure" xml:space="preserve">
+    <value>config.json blev ikke fundet i den udpakkede pakke.</value>
+  </data>
 </root>

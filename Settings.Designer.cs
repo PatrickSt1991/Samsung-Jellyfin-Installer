@@ -173,5 +173,29 @@ namespace Samsung_Jellyfin_Installer {
                 this["RTLReading"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinIP {
+            get {
+                return ((string)(this["JellyfinIP"]));
+            }
+            set {
+                this["JellyfinIP"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ModifyConfig {
+            get {
+                return ((bool)(this["ModifyConfig"]));
+            }
+            set {
+                this["ModifyConfig"] = value;
+            }
+        }
     }
 }
