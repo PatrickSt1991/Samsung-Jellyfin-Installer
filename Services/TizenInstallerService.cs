@@ -254,8 +254,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
                 {
-                    MessageBox.Show("change config");
-                    MessageBox.Show(packageUrl);
+
                     string baseDir = Path.GetDirectoryName(packageUrl);
                     string tempDir = Path.Combine(baseDir, "Jelly_Temp");
 
