@@ -249,10 +249,9 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
+
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
-                {
                     await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
-                }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
                 string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();

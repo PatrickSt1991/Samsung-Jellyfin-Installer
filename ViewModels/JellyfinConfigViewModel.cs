@@ -85,7 +85,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _selectedTheme = value;
                     OnPropertyChanged(nameof(SelectedTheme));
 
-                    Settings.Default.Certificate = value;
+                    Settings.Default.SelectedTheme = value;
                     Settings.Default.Save();
                 }
             }
