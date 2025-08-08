@@ -66,20 +66,26 @@ Tizen 7+ requires a **Samsung account login** during the install. This step is n
 ## ⚙️ Settings
 
 ### Language
-![SetLang](https://github.com/user-attachments/assets/a1e672e0-dfed-4a47-a055-655d09601a2f)  
+<img width="486" height="468" alt="image" src="https://github.com/user-attachments/assets/b71dd21e-d7ac-4a04-92cf-cf3f696ff8da" />   
+
 Select your preferred language.
 
 ### Certificate
-![SetCert](https://github.com/user-attachments/assets/e3ede4b0-40b4-4a8c-966d-74643e1ea0f4)  
+<img width="486" height="468" alt="image" src="https://github.com/user-attachments/assets/e99b6d83-64f6-454d-a41c-6d3f5c69b878" />   
+
 Choose an existing certificate or let the tool generate a new one automatically.
 
 ### Advanced Options
-![SetGen](https://github.com/user-attachments/assets/1d6c7659-44fa-40e0-a5f0-d7b60f8e7e76)  
-- **Custom WGT:** Upload your own `.wgt` file (randomizes the package name to allow side-by-side installs).  
+<img width="486" height="468" alt="image" src="https://github.com/user-attachments/assets/20d78b2a-3fd4-4b76-b3de-3520e620ec7e" />
+
+- **Custom WGT:** Upload your own `.wgt` file(s) (randomizes the package name to allow side-by-side installs).  
 - **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
 - **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).
 - **Force Samsung Login:** Force the tool to login in order to forcefully create a new certificate.
 - **Right-to-left Reading:** Languages the are right-to-left need to have the IP inverted in order for Tizen Studio to work (192.168.1.2 -> 2.1.168.192)
+- **Modify Config:** Lets you set your Jellyfin Server IP in advance, so once the app is installed, you won’t need to configure it on the TV.
+  - This feature wil be expanded
+
 
 ---
 
