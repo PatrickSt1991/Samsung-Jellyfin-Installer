@@ -12,7 +12,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Settings" Height="400" Width="500">
+        Title="Settings" Height="475" Width="500">
     <Grid Background="#19000B25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,6 +26,8 @@
         <StackPanel Grid.Row="1" Margin="0,20,0,0" VerticalAlignment="Top" Width="Auto">
             <Grid Margin="14 0 14 0">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -133,6 +135,41 @@
                   Style="{DynamicResource MaterialDesignCheckBox}"
                   Foreground="{DynamicResource MaterialDesignBody}"
                   FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+                <Label Grid.Row="7" Grid.Column="0" Content="{loc:Localize lbl_ModifyConfig}"
+               VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="7" Grid.Column="1"
+                  IsChecked="{Binding ModifyConfig, Mode=TwoWay}"
+                  VerticalAlignment="Center"
+                  Style="{DynamicResource MaterialDesignCheckBox}"
+                  Foreground="{DynamicResource MaterialDesignBody}"
+                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+
+                <Label Grid.Row="8" Grid.Column="0" Content="{loc:Localize lbl_JellyfinServer}" Visibility="{Binding JellyfinServerVisible}"
+               VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <Grid Grid.Row="8" Grid.Column="1" Margin="0,15,0,0" Visibility="{Binding JellyfinServerVisible}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Text="{Binding JellyfinServerIp}"
+                        Visibility="{Binding JellyfinServerVisible}"
+                        Style="{DynamicResource MaterialDesignTextBox}"
+                        Foreground="{DynamicResource MaterialDesignBody}"
+                        FontSize="14" BorderBrush="#FF000B25" />
+                    <Label Grid.Row="8" Grid.Column="1" Content=":" Visibility="{Binding JellyfinServerVisible}"
+                        VerticalAlignment="Center" Margin="1,0,1,0"/>
+                    <ComboBox Grid.Column="2" Style="{DynamicResource MaterialDesignComboBox}" VerticalAlignment="Center" FontSize="14" 
+                              Visibility="{Binding JellyfinServerVisible}"
+                              SelectedItem="{Binding SelectedJellyfinPort}"
+                              ItemsSource="{Binding JellyfinPorts}"
+                        Width="75"/>
+                </Grid>
             </Grid>
         </StackPanel>
 

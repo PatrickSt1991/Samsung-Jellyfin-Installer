@@ -3,8 +3,11 @@ using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
@@ -30,6 +33,7 @@ namespace Samsung_Jellyfin_Installer.Services
         private string _installPath;
         private const int MaxSafePathLength = 240;
 
+        public string? TizenRootPath { get; private set; }
         public string? TizenCliPath { get; private set; }
         public string? TizenSdbPath { get; private set; }
         public string? TizenDataPath { get; private set; }
@@ -54,6 +58,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             if (tizenRoot is not null)
             {
+                TizenRootPath = tizenRoot;
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
                 TizenCypto = Path.Combine(tizenRoot, "tools", "certificate-encryptor", "wincrypt.exe");
@@ -190,7 +195,9 @@ namespace Samsung_Jellyfin_Installer.Services
                 updateStatus("CheckTizenOS".Localized());
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
-                if (new Version(tizenOs) >= new Version("6.0"))
+                await TizenLibraryCheck();
+
+                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ModifyConfig)
                 {
                     try
                     {
@@ -242,8 +249,12 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
-                updateStatus("PackagingWgtWithCertificate".Localized());
+                if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
+                {
+                    await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
+                }
 
+                updateStatus("PackagingWgtWithCertificate".Localized());
                 string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
 
                 await RunCommandAsync(TizenCliPath, $"package -t {packageUrlExtension} -s {PackageCertificate} -- \"{packageUrl}\"");
@@ -316,7 +327,66 @@ namespace Samsung_Jellyfin_Installer.Services
             output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
             return output?.Trim() ?? string.Empty;
         }
+        public async Task<InstallResult> ModifyJellyfinConfigAsync(string packageUrl, string certificateName)
+        {
+            try
+            {
+                string baseDir = Path.GetDirectoryName(packageUrl);
+                string tempDir = Path.Combine(baseDir, "Jelly_Temp");
 
+                // Clean up temp directory if it exists
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, true);
+                Directory.CreateDirectory(tempDir);
+
+                // Extract zip (sync - no async version available)
+                ZipFile.ExtractToDirectory(packageUrl, tempDir);
+
+                string configPath = Path.Combine(tempDir, "www", "config.json");
+                if (!File.Exists(configPath))
+                    return InstallResult.FailureResult("ConfigFailure".Localized());
+
+                string jsonText = await File.ReadAllTextAsync(configPath);
+                JsonNode config = JsonNode.Parse(jsonText);
+
+                // Set multiserver to false for single server mode
+                config["multiserver"] = false;
+
+                // Create server URL and add debugging
+                string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+
+                // Debug: Check if serverUrl is valid
+                if (string.IsNullOrEmpty(serverUrl) || serverUrl == "http://")
+                {
+                    return InstallResult.FailureResult($"Invalid server URL: {serverUrl}");
+                }
+
+                // Create new servers array with your server
+                var serversArray = new JsonArray();
+                serversArray.Add(JsonValue.Create(serverUrl));
+                config["servers"] = serversArray;
+
+                await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }));
+
+                if (File.Exists(packageUrl))
+                    File.Delete(packageUrl);
+
+                ZipFile.CreateFromDirectory(tempDir, packageUrl); // Still sync
+                Directory.Delete(tempDir, true);
+
+                await RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packageUrl}\"");
+
+                return InstallResult.SuccessResult();
+            }
+            catch (Exception ex)
+            {
+                // Log ex if needed
+                return InstallResult.FailureResult($"Exception: {ex.Message}");
+            }
+        }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
             if (string.IsNullOrEmpty(p12Location))
@@ -491,6 +561,54 @@ namespace Samsung_Jellyfin_Installer.Services
                 throw new Exception($"Command failed: {fileName} {arguments}\nOutput: {outputBuilder}\nError: {errorBuilder}");
 
             return outputBuilder.ToString();
+        }
+        private async Task<string> TizenLibraryCheck()
+        {
+            if (string.IsNullOrEmpty(TizenRootPath))
+            {
+                return "TizenRootPath is not set.";
+            }
+
+            string sourceLibraryPath = Path.Combine(TizenRootPath, "library");
+            string toolsPath = Path.Combine(TizenRootPath, "tools");
+            string destinationLibraryPath = Path.Combine(toolsPath, "library");
+
+            if (!Directory.Exists(sourceLibraryPath))
+            {
+                return $"Source library folder does not exist: {sourceLibraryPath}";
+            }
+
+            if (!Directory.Exists(destinationLibraryPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(toolsPath); // Ensure tools folder exists
+                    CopyDirectory(sourceLibraryPath, destinationLibraryPath);
+                    return "Library folder copied successfully.";
+                }
+                catch (Exception ex)
+                {
+                    return $"Failed to copy library folder: {ex.Message}";
+                }
+            }
+
+            return "Library folder already exists in tools directory.";
+        }
+        public void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            Directory.CreateDirectory(destinationDir);
+
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string destFile = Path.Combine(destinationDir, Path.GetFileName(file));
+                File.Copy(file, destFile, overwrite: true);
+            }
+
+            foreach (string subDir in Directory.GetDirectories(sourceDir))
+            {
+                string destSubDir = Path.Combine(destinationDir, Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir);
+            }
         }
         private static async Task<string> FetchTizenOsVersion(string sdbPath)
         {

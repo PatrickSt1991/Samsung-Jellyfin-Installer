@@ -26,7 +26,7 @@ namespace Samsung_Jellyfin_Installer.Services
             {
                 string defaultJarPath = jarPath;
                 string rootPath = Directory.GetParent(Directory.GetParent(jarPath).FullName).FullName;
-                jarPath = Path.Combine(rootPath, "tools", "certificate-manager");
+                jarPath = Path.Combine(rootPath, "tools", "certificate-manager", "plugins");
 
                 if (string.IsNullOrEmpty(jarPath) || !Directory.Exists(jarPath))
                 {

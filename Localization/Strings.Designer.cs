@@ -124,6 +124,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to config.json not found in the extracted package..
+        /// </summary>
+        public static string ConfigFailure {
+            get {
+                return ResourceManager.GetString("ConfigFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting to device....
         /// </summary>
         public static string ConnectingToDevice {
@@ -457,11 +466,29 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Jellyfin Server.
+        /// </summary>
+        public static string lbl_JellyfinServer {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Language.
         /// </summary>
         public static string lbl_Language {
             get {
                 return ResourceManager.GetString("lbl_Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modify Config.
+        /// </summary>
+        public static string lbl_ModifyConfig {
+            get {
+                return ResourceManager.GetString("lbl_ModifyConfig", resourceCulture);
             }
         }
         

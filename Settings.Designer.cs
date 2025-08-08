@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.7-beta")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.8-beta")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
@@ -171,6 +171,30 @@ namespace Samsung_Jellyfin_Installer {
             }
             set {
                 this["RTLReading"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinIP {
+            get {
+                return ((string)(this["JellyfinIP"]));
+            }
+            set {
+                this["JellyfinIP"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ModifyConfig {
+            get {
+                return ((bool)(this["ModifyConfig"]));
+            }
+            set {
+                this["ModifyConfig"] = value;
             }
         }
     }
