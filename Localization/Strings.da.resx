@@ -364,9 +364,81 @@
     <value>Jellyfin Server</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
-    <value>Rediger konfiguration</value>
+    <value>Indstil Jellyfin-konfiguration</value>
   </data>
   <data name="ConfigFailure" xml:space="preserve">
     <value>config.json blev ikke fundet i den udpakkede pakke.</value>
+  </data>
+  <data name="ServerIP" xml:space="preserve">
+    <value>Server IP</value>
+  </data>
+  <data name="ServerPort" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="SelectTheme" xml:space="preserve">
+    <value>Vælg tema</value>
+  </data>
+  <data name="lbl_EnableBackdrops" xml:space="preserve">
+    <value>Aktiver Baggrunde</value>
+  </data>
+  <data name="lbl_EnableThemeSongs" xml:space="preserve">
+    <value>Aktiver temasange</value>
+  </data>
+  <data name="lbl_EnableThemeVideos" xml:space="preserve">
+    <value>Aktiver temavideoer</value>
+  </data>
+  <data name="lbl_BackdropScreensaver" xml:space="preserve">
+    <value>Pauseskærm på baggrund</value>
+  </data>
+  <data name="lbl_DetailsBanner" xml:space="preserve">
+    <value>Detaljer banner</value>
+  </data>
+  <data name="lbl_CinemaMode" xml:space="preserve">
+    <value>Biograftilstand</value>
+  </data>
+  <data name="lbl_NextUpEnabled" xml:space="preserve">
+    <value>Next-up aktiveret</value>
+  </data>
+  <data name="lbl_EnableExternalVideoPlayers" xml:space="preserve">
+    <value>Aktiver eksterne videoafspillere</value>
+  </data>
+  <data name="lbl_SkipIntros" xml:space="preserve">
+    <value>Spring over introer</value>
+  </data>
+  <data name="lbl_AutoPlayNextEpisode" xml:space="preserve">
+    <value>Afspil næste afsnit automatisk</value>
+  </data>
+  <data name="lbl_RememberAudioSelections" xml:space="preserve">
+    <value>Husk lydvalg</value>
+  </data>
+  <data name="lbl_RememberSubtitleSelections" xml:space="preserve">
+    <value>Husk valg af undertekster</value>
+  </data>
+  <data name="lbl_PlayDefaultAudioTrack" xml:space="preserve">
+    <value>Afspil standard lydspor</value>
+  </data>
+  <data name="lbl_SubtitleMode" xml:space="preserve">
+    <value>Underteksttilstand</value>
+  </data>
+  <data name="lbl_AudioLanguagePreference" xml:space="preserve">
+    <value>Lydsprog præference</value>
+  </data>
+  <data name="lbl_SubtitleLanguagePreference" xml:space="preserve">
+    <value>Foretrukket sprog for undertekster</value>
+  </data>
+  <data name="lbl_JellyfinConfig" xml:space="preserve">
+    <value>Jellyfin-konfiguration</value>
+  </data>
+  <data name="SelectSubtitleMode" xml:space="preserve">
+    <value>Vælg underteksttilstand</value>
+  </data>
+  <data name="AudioLanguage" xml:space="preserve">
+    <value>f.eks. en | da | nl</value>
+  </data>
+  <data name="lbl_OpenConfig" xml:space="preserve">
+    <value>Åbn konfig</value>
   </data>
 </root>

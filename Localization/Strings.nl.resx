@@ -364,9 +364,81 @@
     <value>Jellyfin Server</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
-    <value>Configuratie wijzigen</value>
+    <value>Jellyfin-configuratie instellen</value>
   </data>
   <data name="ConfigFailure" xml:space="preserve">
     <value>config.json niet gevonden in het uitgepakte pakket.</value>
+  </data>
+  <data name="ServerIP" xml:space="preserve">
+    <value>Server-IP</value>
+  </data>
+  <data name="ServerPort" xml:space="preserve">
+    <value>Poort</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Thema</value>
+  </data>
+  <data name="SelectTheme" xml:space="preserve">
+    <value>Selecteer thema</value>
+  </data>
+  <data name="lbl_EnableBackdrops" xml:space="preserve">
+    <value>Achtergronden inschakelen</value>
+  </data>
+  <data name="lbl_EnableThemeSongs" xml:space="preserve">
+    <value>Thema muziek inschakelen</value>
+  </data>
+  <data name="lbl_EnableThemeVideos" xml:space="preserve">
+    <value>Themavideo's inschakelen</value>
+  </data>
+  <data name="lbl_BackdropScreensaver" xml:space="preserve">
+    <value>Achtergrond schermbeveiliging</value>
+  </data>
+  <data name="lbl_DetailsBanner" xml:space="preserve">
+    <value>Detailsbanner</value>
+  </data>
+  <data name="lbl_CinemaMode" xml:space="preserve">
+    <value>Bioscoopmodus</value>
+  </data>
+  <data name="lbl_NextUpEnabled" xml:space="preserve">
+    <value>Volgende aflevering</value>
+  </data>
+  <data name="lbl_EnableExternalVideoPlayers" xml:space="preserve">
+    <value>Externe videospelers inschakelen</value>
+  </data>
+  <data name="lbl_SkipIntros" xml:space="preserve">
+    <value>Sla intro's over</value>
+  </data>
+  <data name="lbl_AutoPlayNextEpisode" xml:space="preserve">
+    <value>Volgende aflevering automatisch afspelen</value>
+  </data>
+  <data name="lbl_RememberAudioSelections" xml:space="preserve">
+    <value>Onthoud audioselecties</value>
+  </data>
+  <data name="lbl_RememberSubtitleSelections" xml:space="preserve">
+    <value>Onthoud ondertitelselecties</value>
+  </data>
+  <data name="lbl_PlayDefaultAudioTrack" xml:space="preserve">
+    <value>Speel standaard audiotrack af</value>
+  </data>
+  <data name="lbl_SubtitleMode" xml:space="preserve">
+    <value>Ondertitelingsmodus</value>
+  </data>
+  <data name="lbl_AudioLanguagePreference" xml:space="preserve">
+    <value>Voorkeur voor audiotaal</value>
+  </data>
+  <data name="lbl_SubtitleLanguagePreference" xml:space="preserve">
+    <value>Taalvoorkeur ondertiteling</value>
+  </data>
+  <data name="lbl_JellyfinConfig" xml:space="preserve">
+    <value>Jellyfin-configuratie</value>
+  </data>
+  <data name="SelectSubtitleMode" xml:space="preserve">
+    <value>Selecteer Ondertitelingsmodus</value>
+  </data>
+  <data name="AudioLanguage" xml:space="preserve">
+    <value>bijv. en | da | nl</value>
+  </data>
+  <data name="lbl_OpenConfig" xml:space="preserve">
+    <value>Configuratie openen</value>
   </data>
 </root>

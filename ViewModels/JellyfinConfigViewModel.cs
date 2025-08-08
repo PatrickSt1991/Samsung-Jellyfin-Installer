@@ -1,0 +1,385 @@
+﻿using Samsung_Jellyfin_Installer.Commands;
+using Samsung_Jellyfin_Installer.Models;
+using Samsung_Jellyfin_Installer.Services;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Samsung_Jellyfin_Installer.ViewModels
+{
+    public class JellyfinConfigViewModel : ViewModelBase
+    {
+        private string? _audioLanguagePreference;
+        private string? _subtitleLanguagePreference;
+        private string? _jellyfinServerIp;
+        private string? _selectedTheme;
+        private string? _selectedSubtitleMode;
+        private int _selectedJellyfinPort;
+        private bool _enableBackdrops;
+        private bool _enableThemeSongs;
+        private bool _enableThemeVideos;
+        private bool _backdropScreensaver;
+        private bool _detailsBanner;
+        private bool _cinemaMode;
+        private bool _nextUpEnabled;
+        private bool _enableExternalVideoPlayers;
+        private bool _skipIntros;
+        private bool _autoPlayNextEpisode;
+        private bool _rememberAudioSelections;
+        private bool _rememberSubtitleSelections;
+        private bool _playDefaultAudioTrack;
+
+        public string AudioLanguagePreference
+        {
+            get => _audioLanguagePreference;
+            set
+            {
+                if (_audioLanguagePreference != value)
+                {
+                    _audioLanguagePreference = value;
+                    OnPropertyChanged(nameof(AudioLanguagePreference));
+
+                    Settings.Default.AudioLanguagePreference = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public string SubtitleLanguagePreference
+        {
+            get => _subtitleLanguagePreference;
+            set
+            {
+                if (_subtitleLanguagePreference != value)
+                {
+                    _subtitleLanguagePreference = value;
+                    OnPropertyChanged(nameof(SubtitleLanguagePreference));
+
+                    Settings.Default.SubtitleLanguagePreference = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public string JellyfinServerIp
+        {
+            get => _jellyfinServerIp;
+            set
+            {
+                if (_jellyfinServerIp != value)
+                {
+                    _jellyfinServerIp = value;
+                    OnPropertyChanged(nameof(JellyfinServerIp));
+                    UpdateJellyfinAddress();
+                }
+            }
+        }
+        public string SelectedTheme
+        {
+            get => _selectedTheme;
+            set
+            {
+                if (_selectedTheme != value)
+                {
+                    _selectedTheme = value;
+                    OnPropertyChanged(nameof(SelectedTheme));
+
+                    Settings.Default.Certificate = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public string SelectedSubtitleMode
+        {
+            get => _selectedSubtitleMode;
+            set
+            {
+                if (_selectedSubtitleMode != value)
+                {
+                    _selectedSubtitleMode = value;
+                    OnPropertyChanged(nameof(SelectedSubtitleMode));
+
+                    Settings.Default.SelectedSubtitleMode = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public int SelectedJellyfinPort
+        {
+            get => _selectedJellyfinPort;
+            set
+            {
+                if (_selectedJellyfinPort != value)
+                {
+                    _selectedJellyfinPort = value;
+                    OnPropertyChanged(nameof(SelectedJellyfinPort));
+                    UpdateJellyfinAddress();
+                }
+            }
+        }
+        public bool EnableBackdrops
+        {
+            get => _enableBackdrops;
+            set
+            {
+                if (_enableBackdrops != value)
+                {
+                    _enableBackdrops = value;
+                    OnPropertyChanged(nameof(EnableBackdrops));
+
+                    Settings.Default.EnableBackdrops = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool EnableThemeSongs
+        {
+            get => _enableThemeSongs;
+            set
+            {
+                if (_enableThemeSongs != value)
+                {
+                    _enableThemeSongs = value;
+                    OnPropertyChanged(nameof(EnableThemeSongs));
+
+                    Settings.Default.EnableThemeSongs = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool EnableThemeVideos
+        {
+            get => _enableThemeVideos;
+            set
+            {
+                if (_enableThemeVideos != value)
+                {
+                    _enableThemeVideos = value;
+                    OnPropertyChanged(nameof(EnableThemeVideos));
+
+                    Settings.Default.EnableThemeVideos = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool BackdropScreensaver
+        {
+            get => _backdropScreensaver;
+            set
+            {
+                if (_backdropScreensaver != value)
+                {
+                    _backdropScreensaver = value;
+                    OnPropertyChanged(nameof(BackdropScreensaver));
+
+                    Settings.Default.BackdropScreensaver = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool DetailsBanner
+        {
+            get => _detailsBanner;
+            set
+            {
+                if (_detailsBanner != value)
+                {
+                    _detailsBanner = value;
+                    OnPropertyChanged(nameof(DetailsBanner));
+
+                    Settings.Default.DetailsBanner = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool CinemaMode
+        {
+            get => _cinemaMode;
+            set
+            {
+                if (_cinemaMode != value)
+                {
+                    _cinemaMode = value;
+                    OnPropertyChanged(nameof(CinemaMode));
+
+                    Settings.Default.CinemaMode = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool NextUpEnabled
+        {
+            get => _nextUpEnabled;
+            set
+            {
+                if (_nextUpEnabled != value)
+                {
+                    _nextUpEnabled = value;
+                    OnPropertyChanged(nameof(NextUpEnabled));
+
+                    Settings.Default.NextUpEnabled = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool EnableExternalVideoPlayers
+        {
+            get => _enableExternalVideoPlayers;
+            set
+            {
+                if (_enableExternalVideoPlayers != value)
+                {
+                    _enableExternalVideoPlayers = value;
+                    OnPropertyChanged(nameof(EnableExternalVideoPlayers));
+
+                    Settings.Default.EnableExternalVideoPlayers = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool SkipIntros
+        {
+            get => _skipIntros;
+            set
+            {
+                if (_skipIntros != value)
+                {
+                    _skipIntros = value;
+                    OnPropertyChanged(nameof(SkipIntros));
+
+                    Settings.Default.SkipIntros = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool AutoPlayNextEpisode
+        {
+            get => _autoPlayNextEpisode;
+            set
+            {
+                if (_autoPlayNextEpisode != value)
+                {
+                    _autoPlayNextEpisode = value;
+                    OnPropertyChanged(nameof(AutoPlayNextEpisode));
+
+                    Settings.Default.AutoPlayNextEpisode = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool RememberAudioSelections
+        {
+            get => _rememberAudioSelections;
+            set
+            {
+                if (_rememberAudioSelections != value)
+                {
+                    _rememberAudioSelections = value;
+                    OnPropertyChanged(nameof(RememberAudioSelections));
+
+                    Settings.Default.RememberAudioSelections = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool RememberSubtitleSelections
+        {
+            get => _rememberSubtitleSelections;
+            set
+            {
+                if (_rememberSubtitleSelections != value)
+                {
+                    _rememberSubtitleSelections = value;
+                    OnPropertyChanged(nameof(RememberSubtitleSelections));
+
+                    Settings.Default.RememberSubtitleSelections = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public bool PlayDefaultAudioTrack
+        {
+            get => _playDefaultAudioTrack;
+            set
+            {
+                if (_playDefaultAudioTrack != value)
+                {
+                    _playDefaultAudioTrack = value;
+                    OnPropertyChanged(nameof(PlayDefaultAudioTrack));
+
+                    Settings.Default.PlayDefaultAudioTrack = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
+        public ObservableCollection<string> AvailableThemes { get; } =
+        [
+            "appletv",
+            "blueradiance",
+            "dark",
+            "light",
+            "purplehaze",
+            "wmc"
+        ];
+        public ObservableCollection<string> AvailableSubtitleModes { get; } =
+        [
+            "OnlyForced",
+            "Always",
+            "None"
+        ];
+        public ObservableCollection<int> JellyfinPorts { get; } =
+        [
+            8096, 8920
+        ];
+
+        public JellyfinConfigViewModel()
+        {
+
+            var jellyfinIP = Settings.Default.JellyfinIP;
+            if (!string.IsNullOrWhiteSpace(jellyfinIP) && jellyfinIP.Contains(':'))
+            {
+                var parts = jellyfinIP.Split(':');
+                if (parts.Length >= 2)
+                {
+                    JellyfinServerIp = parts[0];
+                    if (int.TryParse(parts[1], out int port))
+                        SelectedJellyfinPort = port;
+                }
+                Settings.Default.ModifyConfig = true;
+            }
+            else
+            {
+                JellyfinServerIp = "";
+                Settings.Default.ModifyConfig = false;
+            }
+
+            SelectedTheme = Settings.Default.SelectedTheme;
+            SelectedSubtitleMode = Settings.Default.SelectedSubtitleMode;
+            AudioLanguagePreference = Settings.Default.AudioLanguagePreference;
+            SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference;
+
+            EnableBackdrops = Settings.Default.EnableBackdrops;
+            EnableThemeSongs = Settings.Default.EnableThemeSongs;
+            EnableThemeVideos = Settings.Default.EnableThemeVideos;
+            BackdropScreensaver = Settings.Default.BackdropScreensaver;
+            DetailsBanner = Settings.Default.DetailsBanner;
+            CinemaMode = Settings.Default.CinemaMode;
+            NextUpEnabled = Settings.Default.NextUpEnabled;
+            EnableExternalVideoPlayers = Settings.Default.EnableExternalVideoPlayers;
+            SkipIntros = Settings.Default.SkipIntros;
+            AutoPlayNextEpisode = Settings.Default.AutoPlayNextEpisode;
+            RememberAudioSelections = Settings.Default.RememberAudioSelections;
+            RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections;
+            PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack;
+        }
+        private void UpdateJellyfinAddress()
+        {
+            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && SelectedJellyfinPort > 0)
+            {
+                Settings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
+                Settings.Default.Save();
+            }
+        }
+    }
+}

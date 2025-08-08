@@ -364,9 +364,81 @@
     <value>Jellyfin Server</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
-    <value>Modify Config</value>
+    <value>Set Jellyfin Config</value>
   </data>
   <data name="ConfigFailure" xml:space="preserve">
     <value>config.json not found in the extracted package.</value>
+  </data>
+  <data name="ServerIP" xml:space="preserve">
+    <value>Server IP</value>
+  </data>
+  <data name="ServerPort" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SelectTheme" xml:space="preserve">
+    <value>Select theme</value>
+  </data>
+  <data name="lbl_EnableBackdrops" xml:space="preserve">
+    <value>Enable backdrops</value>
+  </data>
+  <data name="lbl_EnableThemeSongs" xml:space="preserve">
+    <value>Enable theme songs</value>
+  </data>
+  <data name="lbl_EnableThemeVideos" xml:space="preserve">
+    <value>Enable theme videos</value>
+  </data>
+  <data name="lbl_BackdropScreensaver" xml:space="preserve">
+    <value>Backdrop screensaver</value>
+  </data>
+  <data name="lbl_DetailsBanner" xml:space="preserve">
+    <value>Details banner</value>
+  </data>
+  <data name="lbl_CinemaMode" xml:space="preserve">
+    <value>Cinema mode</value>
+  </data>
+  <data name="lbl_NextUpEnabled" xml:space="preserve">
+    <value>Next up enabled</value>
+  </data>
+  <data name="lbl_EnableExternalVideoPlayers" xml:space="preserve">
+    <value>Enable external video players</value>
+  </data>
+  <data name="lbl_SkipIntros" xml:space="preserve">
+    <value>Skip intros</value>
+  </data>
+  <data name="lbl_AutoPlayNextEpisode" xml:space="preserve">
+    <value>Auto play next episode</value>
+  </data>
+  <data name="lbl_RememberAudioSelections" xml:space="preserve">
+    <value>Remember audio selections</value>
+  </data>
+  <data name="lbl_RememberSubtitleSelections" xml:space="preserve">
+    <value>Remember subtitle selections</value>
+  </data>
+  <data name="lbl_PlayDefaultAudioTrack" xml:space="preserve">
+    <value>Play default audio track</value>
+  </data>
+  <data name="lbl_SubtitleMode" xml:space="preserve">
+    <value>Subtitle mode</value>
+  </data>
+  <data name="lbl_AudioLanguagePreference" xml:space="preserve">
+    <value>Audio language preference</value>
+  </data>
+  <data name="lbl_SubtitleLanguagePreference" xml:space="preserve">
+    <value>Subtitle language preference</value>
+  </data>
+  <data name="lbl_JellyfinConfig" xml:space="preserve">
+    <value>Jellyfin Config</value>
+  </data>
+  <data name="SelectSubtitleMode" xml:space="preserve">
+    <value>Select Subtitle Mode</value>
+  </data>
+  <data name="AudioLanguage" xml:space="preserve">
+    <value>e.g. en | da | nl</value>
+  </data>
+  <data name="lbl_OpenConfig" xml:space="preserve">
+    <value>Open config</value>
   </data>
 </root>
