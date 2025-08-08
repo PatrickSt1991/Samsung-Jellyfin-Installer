@@ -334,12 +334,10 @@ namespace Samsung_Jellyfin_Installer.Services
                 string baseDir = Path.GetDirectoryName(packageUrl);
                 string tempDir = Path.Combine(baseDir, "Jelly_Temp");
 
-                // Clean up temp directory if it exists
                 if (Directory.Exists(tempDir))
                     Directory.Delete(tempDir, true);
                 Directory.CreateDirectory(tempDir);
 
-                // Extract zip (sync - no async version available)
                 ZipFile.ExtractToDirectory(packageUrl, tempDir);
 
                 string configPath = Path.Combine(tempDir, "www", "config.json");
@@ -349,22 +347,67 @@ namespace Samsung_Jellyfin_Installer.Services
                 string jsonText = await File.ReadAllTextAsync(configPath);
                 JsonNode config = JsonNode.Parse(jsonText);
 
-                // Set multiserver to false for single server mode
                 config["multiserver"] = false;
 
-                // Create server URL and add debugging
                 string serverUrl = $"http://{Settings.Default.JellyfinIP}";
 
-                // Debug: Check if serverUrl is valid
                 if (string.IsNullOrEmpty(serverUrl) || serverUrl == "http://")
-                {
                     return InstallResult.FailureResult($"Invalid server URL: {serverUrl}");
-                }
 
-                // Create new servers array with your server
                 var serversArray = new JsonArray();
                 serversArray.Add(JsonValue.Create(serverUrl));
                 config["servers"] = serversArray;
+
+                if (!string.IsNullOrWhiteSpace(Settings.Default.SelectedTheme))
+                    config["theme"] = JsonValue.Create(Settings.Default.SelectedTheme);
+
+                if (!string.IsNullOrWhiteSpace(Settings.Default.SelectedSubtitleMode))
+                    config["subtitleMode"] = JsonValue.Create(Settings.Default.SelectedSubtitleMode);
+
+                if (!string.IsNullOrWhiteSpace(Settings.Default.AudioLanguagePreference))
+                    config["audioLanguagePreference"] = JsonValue.Create(Settings.Default.AudioLanguagePreference);
+
+                if (!string.IsNullOrWhiteSpace(Settings.Default.SubtitleLanguagePreference))
+                    config["subtitleLanguagePreference"] = JsonValue.Create(Settings.Default.SubtitleLanguagePreference);
+
+                if (Settings.Default.EnableBackdrops)
+                    config["enableBackdrops"] = JsonValue.Create(true);
+
+                if (Settings.Default.EnableThemeSongs)
+                    config["enableThemeSongs"] = JsonValue.Create(true);
+
+                if (Settings.Default.EnableThemeVideos)
+                    config["enableThemeVideos"] = JsonValue.Create(true);
+
+                if (Settings.Default.BackdropScreensaver)
+                    config["backdropScreensaver"] = JsonValue.Create(true);
+
+                if (Settings.Default.DetailsBanner)
+                    config["detailsBanner"] = JsonValue.Create(true);
+
+                if (Settings.Default.CinemaMode)
+                    config["cinemaMode"] = JsonValue.Create(true);
+
+                if (Settings.Default.NextUpEnabled)
+                    config["nextUpEnabled"] = JsonValue.Create(true);
+
+                if (Settings.Default.EnableExternalVideoPlayers)
+                    config["enableExternalVideoPlayers"] = JsonValue.Create(true);
+
+                if (Settings.Default.SkipIntros)
+                    config["skipIntros"] = JsonValue.Create(true);
+
+                if (Settings.Default.AutoPlayNextEpisode)
+                    config["autoPlayNextEpisode"] = JsonValue.Create(true);
+
+                if (Settings.Default.RememberAudioSelections)
+                    config["rememberAudioSelections"] = JsonValue.Create(true);
+
+                if (Settings.Default.RememberSubtitleSelections)
+                    config["rememberSubtitleSelections"] = JsonValue.Create(true);
+
+                if (Settings.Default.PlayDefaultAudioTrack)
+                    config["playDefaultAudioTrack"] = JsonValue.Create(true);
 
                 await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
                 {
@@ -374,7 +417,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (File.Exists(packageUrl))
                     File.Delete(packageUrl);
 
-                ZipFile.CreateFromDirectory(tempDir, packageUrl); // Still sync
+                ZipFile.CreateFromDirectory(tempDir, packageUrl);
                 Directory.Delete(tempDir, true);
 
                 await RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packageUrl}\"");
@@ -383,7 +426,6 @@ namespace Samsung_Jellyfin_Installer.Services
             }
             catch (Exception ex)
             {
-                // Log ex if needed
                 return InstallResult.FailureResult($"Exception: {ex.Message}");
             }
         }
