@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.8-beta")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.8")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
