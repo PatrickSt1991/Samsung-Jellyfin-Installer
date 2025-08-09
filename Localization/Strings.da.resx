@@ -441,4 +441,19 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Åbn konfig</value>
   </data>
+  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
+    <value>Aktiver brugerindstillinger</value>
+  </data>
+  <data name="lbl_ValidateLogin" xml:space="preserve">
+    <value>Valider</value>
+  </data>
+  <data name="lbl_ValidateJellyfin" xml:space="preserve">
+    <value>Valider Jellyfin-server</value>
+  </data>
+  <data name="NoJellyfinServer" xml:space="preserve">
+    <value>Udfyld venligst Jellyfin-serveren først...</value>
+  </data>
+  <data name="JellyfinLoginFailed" xml:space="preserve">
+    <value>Login mislykkedes: Ugyldige loginoplysninger eller serverfejl.</value>
+  </data>
 </root>

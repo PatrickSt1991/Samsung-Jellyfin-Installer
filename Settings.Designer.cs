@@ -200,7 +200,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("en")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string AudioLanguagePreference {
             get {
                 return ((string)(this["AudioLanguagePreference"]));
@@ -212,7 +212,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("en")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string SubtitleLanguagePreference {
             get {
                 return ((string)(this["SubtitleLanguagePreference"]));
@@ -399,6 +399,54 @@ namespace Samsung_Jellyfin_Installer {
             }
             set {
                 this["SelectedSubtitleMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableInjectionSettings {
+            get {
+                return ((bool)(this["EnableInjectionSettings"]));
+            }
+            set {
+                this["EnableInjectionSettings"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinUserId {
+            get {
+                return ((string)(this["JellyfinUserId"]));
+            }
+            set {
+                this["JellyfinUserId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableServerAPI {
+            get {
+                return ((bool)(this["EnableServerAPI"]));
+            }
+            set {
+                this["EnableServerAPI"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinAccessToken {
+            get {
+                return ((string)(this["JellyfinAccessToken"]));
+            }
+            set {
+                this["JellyfinAccessToken"] = value;
             }
         }
     }

@@ -441,4 +441,19 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Configuratie openen</value>
   </data>
+  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
+    <value>Schakel gebruikersinstellingen in</value>
+  </data>
+  <data name="lbl_ValidateLogin" xml:space="preserve">
+    <value>Valideer</value>
+  </data>
+  <data name="lbl_ValidateJellyfin" xml:space="preserve">
+    <value>Valideer Jellyfin Server</value>
+  </data>
+  <data name="NoJellyfinServer" xml:space="preserve">
+    <value>Vul eerst de Jellyfin-server in...</value>
+  </data>
+  <data name="JellyfinLoginFailed" xml:space="preserve">
+    <value>Aanmelden mislukt: ongeldige inloggegevens of serverfout.</value>
+  </data>
 </root>

@@ -441,4 +441,19 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Open config</value>
   </data>
+  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
+    <value>Enable user settings</value>
+  </data>
+  <data name="lbl_ValidateLogin" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="lbl_ValidateJellyfin" xml:space="preserve">
+    <value>Validate Jellyfin Server</value>
+  </data>
+  <data name="NoJellyfinServer" xml:space="preserve">
+    <value>Please fill in the Jellyfin server first...</value>
+  </data>
+  <data name="JellyfinLoginFailed" xml:space="preserve">
+    <value>Login failed: Invalid credentials or server error.</value>
+  </data>
 </root>

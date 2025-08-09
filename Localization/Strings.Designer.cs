@@ -430,6 +430,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login failed: Invalid credentials or server error..
+        /// </summary>
+        public static string JellyfinLoginFailed {
+            get {
+                return ResourceManager.GetString("JellyfinLoginFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Audio language preference.
         /// </summary>
         public static string lbl_AudioLanguagePreference {
@@ -516,6 +525,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_EnableExternalVideoPlayers {
             get {
                 return ResourceManager.GetString("lbl_EnableExternalVideoPlayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable user settings.
+        /// </summary>
+        public static string lbl_EnableInjectionSettings {
+            get {
+                return ResourceManager.GetString("lbl_EnableInjectionSettings", resourceCulture);
             }
         }
         
@@ -718,6 +736,24 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Validate Jellyfin Server.
+        /// </summary>
+        public static string lbl_ValidateJellyfin {
+            get {
+                return ResourceManager.GetString("lbl_ValidateJellyfin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Validate.
+        /// </summary>
+        public static string lbl_ValidateLogin {
+            get {
+                return ResourceManager.GetString("lbl_ValidateLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Version.
         /// </summary>
         public static string lbl_Version {
@@ -759,6 +795,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string NoDevicesFound {
             get {
                 return ResourceManager.GetString("NoDevicesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please fill in the Jellyfin server first....
+        /// </summary>
+        public static string NoJellyfinServer {
+            get {
+                return ResourceManager.GetString("NoJellyfinServer", resourceCulture);
             }
         }
         

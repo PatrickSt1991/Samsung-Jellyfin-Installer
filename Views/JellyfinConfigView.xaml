@@ -12,7 +12,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Jellyfin Config" Height="875" Width="500">
+        Title="Jellyfin Config" Height="925" Width="500">
     <Grid Background="#19000B25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -45,6 +45,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -53,7 +54,7 @@
                     <!-- Control -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Jellyfin Server -->
+                <!-- Jellyfin Server (Config Setting)-->
                 <Label Grid.Row="0" Grid.Column="0" Content="{loc:Localize lbl_JellyfinServer}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <Grid Grid.Row="0" Grid.Column="1" Margin="0,0,0,0">
                     <Grid.ColumnDefinitions>
@@ -77,158 +78,183 @@
                               materialDesign:HintAssist.Hint="{loc:Localize ServerPort}"
                               ItemsSource="{Binding JellyfinPorts}"
                         Width="75"/>
-                </Grid>                
-                
-                <!-- Theme's -->
-                <Label Grid.Row="1" Grid.Column="0" Content="{loc:Localize Theme}" 
-               VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0 15 0 0"
-                  Style="{DynamicResource MaterialDesignComboBox}"
-                  ItemsSource="{Binding AvailableThemes}"
-                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
-                  materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                  materialDesign:HintAssist.Hint="{loc:Localize SelectTheme}"
-                  VerticalAlignment="Center" />
+                </Grid>
 
+                <!-- Enable User Settings (Injection Settings) -->
+                <Label Grid.Row="1" Grid.Column="0" Content="{loc:Localize lbl_EnableInjectionSettings}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="1" Grid.Column="1"
+                    IsChecked="{Binding EnableInjectionSettings, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+                <!-- Theme's -->
+                <Label Grid.Row="2" Grid.Column="0" Content="{loc:Localize Theme}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0 15 0 0"
+                    Style="{DynamicResource MaterialDesignComboBox}"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    ItemsSource="{Binding AvailableThemes}"
+                    SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                    materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                    materialDesign:HintAssist.Hint="{loc:Localize SelectTheme}"
+                    VerticalAlignment="Center" />
+                
                 <!-- Backdrops -->
-                <Label Grid.Row="2" Grid.Column="0" Content="{loc:Localize lbl_EnableBackdrops}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="2" Grid.Column="1"
-                  IsChecked="{Binding EnableBackdrops, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="3" Grid.Column="0" Content="{loc:Localize lbl_EnableBackdrops}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="3" Grid.Column="1"
+                    IsChecked="{Binding EnableBackdrops, Mode=TwoWay}"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Theme Songs -->
-                <Label Grid.Row="3" Grid.Column="0" Content="{loc:Localize lbl_EnableThemeSongs}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="3" Grid.Column="1"
-                  IsChecked="{Binding EnableThemeSongs, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="4" Grid.Column="0" Content="{loc:Localize lbl_EnableThemeSongs}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="4" Grid.Column="1"
+                    IsChecked="{Binding EnableThemeSongs, Mode=TwoWay}"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Theme Videos -->
-                <Label Grid.Row="4" Grid.Column="0" Content="{loc:Localize lbl_EnableThemeVideos}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="4" Grid.Column="1"
-                  IsChecked="{Binding EnableThemeVideos, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="5" Grid.Column="0" Content="{loc:Localize lbl_EnableThemeVideos}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="5" Grid.Column="1"
+                    IsChecked="{Binding EnableThemeVideos, Mode=TwoWay}"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Backdrop Screensaver -->
-                <Label Grid.Row="5" Grid.Column="0" Content="{loc:Localize lbl_BackdropScreensaver}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="5" Grid.Column="1"
-                  IsChecked="{Binding BackdropScreensaver, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="6" Grid.Column="0" Content="{loc:Localize lbl_BackdropScreensaver}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="6" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding BackdropScreensaver, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Details Banner -->
-                <Label Grid.Row="6" Grid.Column="0" Content="{loc:Localize lbl_DetailsBanner}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="6" Grid.Column="1"
-                  IsChecked="{Binding DetailsBanner, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="7" Grid.Column="0" Content="{loc:Localize lbl_DetailsBanner}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="7" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding DetailsBanner, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Cinema Mode -->
-                <Label Grid.Row="7" Grid.Column="0" Content="{loc:Localize lbl_CinemaMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="7" Grid.Column="1"
-                  IsChecked="{Binding CinemaMode, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="8" Grid.Column="0" Content="{loc:Localize lbl_CinemaMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="8" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding CinemaMode, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Next-Up -->
-                <Label Grid.Row="8" Grid.Column="0" Content="{loc:Localize lbl_NextUpEnabled}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="8" Grid.Column="1"
-                  IsChecked="{Binding NextUpEnabled, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="9" Grid.Column="0" Content="{loc:Localize lbl_NextUpEnabled}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="9" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding NextUpEnabled, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Enable External VideoPlayers -->
-                <Label Grid.Row="9" Grid.Column="0" Content="{loc:Localize lbl_EnableExternalVideoPlayers}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="9" Grid.Column="1"
-                  IsChecked="{Binding EnableExternalVideoPlayers, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="10" Grid.Column="0" Content="{loc:Localize lbl_EnableExternalVideoPlayers}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="10" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding EnableExternalVideoPlayers, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Skip Intros -->
-                <Label Grid.Row="10" Grid.Column="0" Content="{loc:Localize lbl_SkipIntros}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="10" Grid.Column="1"
-                  IsChecked="{Binding SkipIntros, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="11" Grid.Column="0" Content="{loc:Localize lbl_SkipIntros}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="11" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding SkipIntros, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Auto play next episode -->
-                <Label Grid.Row="11" Grid.Column="0" Content="{loc:Localize lbl_AutoPlayNextEpisode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="11" Grid.Column="1"
-                  IsChecked="{Binding AutoPlayNextEpisode, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="12" Grid.Column="0" Content="{loc:Localize lbl_AutoPlayNextEpisode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="12" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding AutoPlayNextEpisode, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Remember audio selections -->
-                <Label Grid.Row="12" Grid.Column="0" Content="{loc:Localize lbl_RememberAudioSelections}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="12" Grid.Column="1"
-                  IsChecked="{Binding RememberAudioSelections, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
-
-                <!-- Remember subtitles selections -->
-                <Label Grid.Row="13" Grid.Column="0" Content="{loc:Localize lbl_RememberSubtitleSelections}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <Label Grid.Row="13" Grid.Column="0" Content="{loc:Localize lbl_RememberAudioSelections}" VerticalAlignment="Center" Margin="0,15,12,0"/>
                 <CheckBox Grid.Row="13" Grid.Column="1"
-                  IsChecked="{Binding RememberSubtitleSelections, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding RememberAudioSelections, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Remember subtitles selections -->
                 <Label Grid.Row="14" Grid.Column="0" Content="{loc:Localize lbl_RememberSubtitleSelections}" VerticalAlignment="Center" Margin="0,15,12,0"/>
                 <CheckBox Grid.Row="14" Grid.Column="1"
-                  IsChecked="{Binding RememberSubtitleSelections, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding RememberSubtitleSelections, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+
+                <!-- Remember subtitles selections -->
+                <Label Grid.Row="15" Grid.Column="0" Content="{loc:Localize lbl_RememberSubtitleSelections}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="15" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding RememberSubtitleSelections, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
 
                 <!-- Play Default Audio Track -->
-                <Label Grid.Row="15" Grid.Column="0" Content="{loc:Localize lbl_PlayDefaultAudioTrack}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <CheckBox Grid.Row="15" Grid.Column="1"
-                  IsChecked="{Binding PlayDefaultAudioTrack, Mode=TwoWay}"
-                  VerticalAlignment="Center"
-                  Style="{DynamicResource MaterialDesignCheckBox}"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
+                <Label Grid.Row="16" Grid.Column="0" Content="{loc:Localize lbl_PlayDefaultAudioTrack}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <CheckBox Grid.Row="16" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    IsChecked="{Binding PlayDefaultAudioTrack, Mode=TwoWay}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MaterialDesignCheckBox}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    FontSize="14" Margin="0,15,0,0" BorderBrush="#FF000B25" Background="#FF000B25"/>
                 
                 <!-- Subtitle modus -->
-                <Label Grid.Row="16" Grid.Column="0" Content="{loc:Localize lbl_SubtitleMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <ComboBox Grid.Row="16" Grid.Column="1" Margin="0 15 0 0"
-                  Style="{DynamicResource MaterialDesignComboBox}"
-                  ItemsSource="{Binding AvailableSubtitleModes}"
-                  SelectedItem="{Binding SelectedSubtitleMode, Mode=TwoWay}"
-                  materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                  materialDesign:HintAssist.Hint="{loc:Localize SelectSubtitleMode}"
-                  VerticalAlignment="Center" />
+                <Label Grid.Row="17" Grid.Column="0" Content="{loc:Localize lbl_SubtitleMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <ComboBox Grid.Row="17" Grid.Column="1" Margin="0 15 0 0"
+                    IsEnabled="{Binding EnableInjectionSettings}"
+                    Style="{DynamicResource MaterialDesignComboBox}"
+                    ItemsSource="{Binding AvailableSubtitleModes}"
+                    SelectedItem="{Binding SelectedSubtitleMode, Mode=TwoWay}"
+                    materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                    materialDesign:HintAssist.Hint="{loc:Localize SelectSubtitleMode}"
+                    VerticalAlignment="Center" />
 
                 <!-- Audio Language Preference -->
-                <Label Grid.Row="17" Grid.Column="0" Content="{loc:Localize lbl_AudioLanguagePreference}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <TextBox Grid.Row="17" Grid.Column="1"
+                <Label Grid.Row="18" Grid.Column="0" Content="{loc:Localize lbl_AudioLanguagePreference}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <TextBox Grid.Row="18" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
                     Margin="0,15,12,0"
                     VerticalAlignment="Center"
                     Text="{Binding AudioLanguagePreference}"
@@ -238,8 +264,9 @@
                     FontSize="14" BorderBrush="#FF000B25" />
 
                 <!-- Subtitle Language Preference -->
-                <Label Grid.Row="18" Grid.Column="0" Content="{loc:Localize lbl_SubtitleLanguagePreference}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                <TextBox Grid.Row="18" Grid.Column="1"
+                <Label Grid.Row="19" Grid.Column="0" Content="{loc:Localize lbl_SubtitleLanguagePreference}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                <TextBox Grid.Row="19" Grid.Column="1"
+                    IsEnabled="{Binding EnableInjectionSettings}"
                     Margin="0,15,12,0"
                     VerticalAlignment="Center"
                     Text="{Binding SubtitleLanguagePreference}"

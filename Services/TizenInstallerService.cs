@@ -249,7 +249,6 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
-
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
                     await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
 
@@ -357,61 +356,21 @@ namespace Samsung_Jellyfin_Installer.Services
                 serversArray.Add(JsonValue.Create(serverUrl));
                 config["servers"] = serversArray;
 
-                if (!string.IsNullOrWhiteSpace(Settings.Default.SelectedTheme))
-                    config["theme"] = JsonValue.Create(Settings.Default.SelectedTheme);
-
-                if (!string.IsNullOrWhiteSpace(Settings.Default.SelectedSubtitleMode))
-                    config["subtitleMode"] = JsonValue.Create(Settings.Default.SelectedSubtitleMode);
-
-                if (!string.IsNullOrWhiteSpace(Settings.Default.AudioLanguagePreference))
-                    config["audioLanguagePreference"] = JsonValue.Create(Settings.Default.AudioLanguagePreference);
-
-                if (!string.IsNullOrWhiteSpace(Settings.Default.SubtitleLanguagePreference))
-                    config["subtitleLanguagePreference"] = JsonValue.Create(Settings.Default.SubtitleLanguagePreference);
-
-                if (Settings.Default.EnableBackdrops)
-                    config["enableBackdrops"] = JsonValue.Create(true);
-
-                if (Settings.Default.EnableThemeSongs)
-                    config["enableThemeSongs"] = JsonValue.Create(true);
-
-                if (Settings.Default.EnableThemeVideos)
-                    config["enableThemeVideos"] = JsonValue.Create(true);
-
-                if (Settings.Default.BackdropScreensaver)
-                    config["backdropScreensaver"] = JsonValue.Create(true);
-
-                if (Settings.Default.DetailsBanner)
-                    config["detailsBanner"] = JsonValue.Create(true);
-
-                if (Settings.Default.CinemaMode)
-                    config["cinemaMode"] = JsonValue.Create(true);
-
-                if (Settings.Default.NextUpEnabled)
-                    config["nextUpEnabled"] = JsonValue.Create(true);
-
-                if (Settings.Default.EnableExternalVideoPlayers)
-                    config["enableExternalVideoPlayers"] = JsonValue.Create(true);
-
-                if (Settings.Default.SkipIntros)
-                    config["skipIntros"] = JsonValue.Create(true);
-
-                if (Settings.Default.AutoPlayNextEpisode)
-                    config["autoPlayNextEpisode"] = JsonValue.Create(true);
-
-                if (Settings.Default.RememberAudioSelections)
-                    config["rememberAudioSelections"] = JsonValue.Create(true);
-
-                if (Settings.Default.RememberSubtitleSelections)
-                    config["rememberSubtitleSelections"] = JsonValue.Create(true);
-
-                if (Settings.Default.PlayDefaultAudioTrack)
-                    config["playDefaultAudioTrack"] = JsonValue.Create(true);
-
                 await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
                 {
                     WriteIndented = true
                 }));
+
+                
+                if (Settings.Default.EnableInjectionSettings && (!string.IsNullOrEmpty(Settings.Default.JellyfinUserId)))
+                {
+                    string rootIndexPath = Path.Combine(tempDir, "index.html");
+                    if (File.Exists(rootIndexPath))
+                        await ModifyRootIndexHtml(rootIndexPath, Settings.Default.JellyfinUserId);
+                }
+
+                if(Settings.Default.EnableServerAPI && (!string.IsNullOrEmpty(Settings.Default.JellyfinUserId)))
+                    await CallJellyfinServerAPI();
 
                 if (File.Exists(packageUrl))
                     File.Delete(packageUrl);
@@ -426,6 +385,115 @@ namespace Samsung_Jellyfin_Installer.Services
             catch (Exception ex)
             {
                 return InstallResult.FailureResult($"Exception: {ex.Message}");
+            }
+        }
+        private async Task ModifyRootIndexHtml(string indexPath, string userId)
+        {
+            string htmlContent = await File.ReadAllTextAsync(indexPath);
+
+            if (htmlContent.Contains("<!-- SAMSUNG_JELLYFIN_AUTO_INJECTED -->"))
+                return;
+
+
+            string injectionScript = $@"
+<!-- SAMSUNG_JELLYFIN_AUTO_INJECTED -->
+<script>
+    // Set defaults directly for the known userId
+    (function() {{
+        var userId = '{userId}';
+        
+        if (localStorage.getItem('samsung-jellyfin-injected-' + userId)) {{
+            return;
+        }}
+                
+        // Theme
+        localStorage.setItem(userId + '-appTheme', '{Settings.Default.SelectedTheme ?? "dark"}');
+        
+        // UI Settings
+        localStorage.setItem(userId + '-enableBackdrops', '{Settings.Default.EnableBackdrops.ToString().ToLower()}');
+        localStorage.setItem(userId + '-enableThemeSongs', '{Settings.Default.EnableThemeSongs.ToString().ToLower()}');
+        localStorage.setItem(userId + '-enableThemeVideos', '{Settings.Default.EnableThemeVideos.ToString().ToLower()}');
+        localStorage.setItem(userId + '-backdropScreensaver', '{Settings.Default.BackdropScreensaver.ToString().ToLower()}');
+        localStorage.setItem(userId + '-detailsBanner', '{Settings.Default.DetailsBanner.ToString().ToLower()}');
+        localStorage.setItem(userId + '-cinemaMode', '{Settings.Default.CinemaMode.ToString().ToLower()}');
+        localStorage.setItem(userId + '-nextUpEnabled', '{Settings.Default.NextUpEnabled.ToString().ToLower()}');
+        localStorage.setItem(userId + '-enableExternalVideoPlayers', '{Settings.Default.EnableExternalVideoPlayers.ToString().ToLower()}');
+        localStorage.setItem(userId + '-skipIntros', '{Settings.Default.SkipIntros.ToString().ToLower()}');
+        
+        // Language preferences (only if not empty)
+        var audioLangPref = '{Settings.Default.AudioLanguagePreference ?? ""}';
+        if (audioLangPref) {{
+            localStorage.setItem(userId + '-audioLanguagePreference', audioLangPref);
+        }}
+        
+        var subtitleLangPref = '{Settings.Default.SubtitleLanguagePreference ?? ""}';
+        if (subtitleLangPref) {{
+            localStorage.setItem(userId + '-subtitleLanguagePreference', subtitleLangPref);
+        }}
+        
+        // Mark as injected for this user
+        localStorage.setItem('samsung-jellyfin-injected-' + userId, 'true');
+    }})();
+    
+</script>";
+
+            htmlContent = htmlContent.Replace("<head>", "<head>" + injectionScript);
+
+            await File.WriteAllTextAsync(indexPath, htmlContent);
+        }
+        private async Task CallJellyfinServerAPI()
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization",
+                    $"MediaBrowser UserId=\"{Settings.Default.JellyfinUserId}\", Client=\"Samsung Jellyfin\", Device=\"Samsung TV\", DeviceId=\"samsung-tv-12345\", Version=\"1.0.0\", Token=\"{Settings.Default.JellyfinAccessToken}\"");
+
+                var getResponse = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users/{Settings.Default.JellyfinUserId}");
+                getResponse.EnsureSuccessStatusCode();
+                var userJson = await getResponse.Content.ReadAsStringAsync();
+
+                using var doc = JsonDocument.Parse(userJson);
+                string castReceiverId = null;
+                if (doc.RootElement.TryGetProperty("Configuration", out var configElement) &&
+                    configElement.TryGetProperty("CastReceiverId", out var castIdElement))
+                {
+                    castReceiverId = castIdElement.GetString();
+                }
+
+                // If it's missing, keep it null or handle default
+                if (string.IsNullOrEmpty(castReceiverId))
+                    return;
+
+
+                var userConfig = new
+                {
+                    PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack,
+                    SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference ?? "",
+                    DisplayMissingEpisodes = false,
+                    GroupedFolders = new string[0],
+                    SubtitleMode = Settings.Default.SelectedSubtitleMode ?? "Default",
+                    DisplayCollectionsView = false,
+                    EnableLocalPassword = false,
+                    OrderedViews = new string[0],
+                    LatestItemsExcludes = new string[0],
+                    MyMediaExcludes = new string[0],
+                    HidePlayedInLatest = true,
+                    RememberAudioSelections = Settings.Default.RememberAudioSelections,
+                    RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections,
+                    EnableNextEpisodeAutoPlay = Settings.Default.AutoPlayNextEpisode,
+                    CastReceiverId = castReceiverId
+                };
+
+                var json = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/{Settings.Default.JellyfinUserId}/Configuration", content);
+                return;
+            }
+            catch(Exception ex)
+            {
+                return;
             }
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
@@ -777,8 +845,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
-
-
         public async Task<bool> RemoveJellyfinAppByIdAsync(string tvName, Action<string> updateStatus)
         {
             try
