@@ -361,7 +361,7 @@
     <value>SDB Server failed to stop!</value>
   </data>
   <data name="lbl_JellyfinServer" xml:space="preserve">
-    <value>Jellyfin Server</value>
+    <value>Address</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
     <value>Set Jellyfin Config</value>
@@ -441,9 +441,6 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Open config</value>
   </data>
-  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
-    <value>Enable user settings</value>
-  </data>
   <data name="lbl_ValidateLogin" xml:space="preserve">
     <value>Validate</value>
   </data>
@@ -455,5 +452,11 @@
   </data>
   <data name="JellyfinLoginFailed" xml:space="preserve">
     <value>Login failed: Invalid credentials or server error.</value>
+  </data>
+  <data name="lbl_JellyfinServerApi" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="UpdateMode" xml:space="preserve">
+    <value>Update mode</value>
   </data>
 </root>

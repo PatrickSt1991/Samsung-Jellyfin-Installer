@@ -1,36 +1,18 @@
-﻿using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
-using Newtonsoft.Json.Linq;
-using Samsung_Jellyfin_Installer.Commands;
-using Samsung_Jellyfin_Installer.Converters;
-using Samsung_Jellyfin_Installer.Models;
-using Samsung_Jellyfin_Installer.Views;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Windows;
-using System.Windows.Input;
-using static Samsung_Jellyfin_Installer.Models.JellyfinAuth;
+﻿using System.Collections.ObjectModel;
+using System.Security.Policy;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
     public class JellyfinConfigViewModel : ViewModelBase
     {
-        private JellyfinLoginWindow? _loginWindow;
-
-        private string? _jellyfinUsername;
-        private string? _jellyfinPassword;
         private string? _audioLanguagePreference;
         private string? _subtitleLanguagePreference;
         private string? _jellyfinServerIp;
         private string? _selectedTheme;
         private string? _selectedSubtitleMode;
-        private string _jellyfinUserId;
-        private string _jellyfinAccessToken;
+        private string _jellyfinApiKey;
+        private string _selectedUpdateMode;
         private int _selectedJellyfinPort;
-        private bool _enableInjectionSettings;
-        private bool _isUpdatingInjectionSettings;
         private bool _enableBackdrops;
         private bool _enableThemeSongs;
         private bool _enableThemeVideos;
@@ -44,32 +26,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _rememberAudioSelections;
         private bool _rememberSubtitleSelections;
         private bool _playDefaultAudioTrack;
-        private bool _isValidating;
 
-        public string JellyfinUsername
-        {
-            get => _jellyfinUsername;
-            set
-            {
-                if(_jellyfinUsername != value)
-                {
-                    _jellyfinUsername = value;
-                    OnPropertyChanged(nameof(JellyfinUsername));
-                }
-            }
-        }
-        public string JellyfinPassword
-        {
-            get => _jellyfinPassword;
-            set
-            {
-                if(_jellyfinPassword != value)
-                {
-                    _jellyfinPassword = value;
-                    OnPropertyChanged(nameof(JellyfinPassword));
-                }
-            }
-        }
         public string AudioLanguagePreference
         {
             get => _audioLanguagePreference;
@@ -143,32 +100,32 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
-        public string JellyfinUserId
+        public string JellyfinApiKey
         {
-            get => _jellyfinUserId;
-            set 
-            { 
-                if(_jellyfinUserId != value)
+            get => _jellyfinApiKey;
+            set
+            {
+                if(_jellyfinApiKey != value)
                 {
-                    _jellyfinUserId = value;
-                    OnPropertyChanged(nameof(JellyfinUserId));
+                    _jellyfinApiKey = value;
+                    OnPropertyChanged(nameof(JellyfinApiKey));
 
-                    Settings.Default.JellyfinUserId = value;
+                    Settings.Default.JellyfinApiKey = value;
                     Settings.Default.Save();
                 }
             }
         }
-        public string JellyfinAccessToken
+        public string SelectedUpdateMode
         {
-            get => _jellyfinAccessToken;
+            get => _selectedUpdateMode;
             set
             {
-                if(_jellyfinAccessToken != value)
+                if (_selectedUpdateMode != value)
                 {
-                    _jellyfinAccessToken = value;
-                    OnPropertyChanged(nameof(JellyfinAccessToken));
+                    _selectedUpdateMode = value;
+                    OnPropertyChanged(nameof(SelectedUpdateMode));
 
-                    Settings.Default.JellyfinAccessToken = value;
+                    Settings.Default.ConfigUpdateMode = value;
                     Settings.Default.Save();
                 }
             }
@@ -183,45 +140,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     _selectedJellyfinPort = value;
                     OnPropertyChanged(nameof(SelectedJellyfinPort));
                     UpdateJellyfinAddress();
-                }
-            }
-        }
-        public bool EnableInjectionSettings
-        {
-            get => _enableInjectionSettings;
-            set
-            {
-                if (_enableInjectionSettings != value)
-                {
-                    if (_isUpdatingInjectionSettings) return;
-
-                    _enableInjectionSettings = value;
-                    OnPropertyChanged(nameof(EnableInjectionSettings));
-
-                    if (value)
-                    {
-                        Debug.WriteLine($"value: {value}");
-                        bool serverCheck = JellyfinUserToken();
-                        Debug.WriteLine($"serverCheck: {serverCheck}");
-                        if (serverCheck)
-                        {
-                            Settings.Default.EnableInjectionSettings = value;
-                            Settings.Default.Save();
-                        }
-                        else
-                        {
-                            _isUpdatingInjectionSettings = true;
-                            _enableInjectionSettings = false;
-                            OnPropertyChanged(nameof(EnableInjectionSettings));
-                            _isUpdatingInjectionSettings = false;
-                        }
-                    }
-                    else
-                    {
-                        Settings.Default.EnableInjectionSettings = false;
-                        Settings.Default.Save();
-                        _isUpdatingInjectionSettings = false;
-                    }
                 }
             }
         }
@@ -420,11 +338,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
-        public bool IsValidating
-        {
-            get => _isValidating;
-            set { _isValidating = value; OnPropertyChanged(); }
-        }
         public ObservableCollection<string> AvailableThemes { get; } =
         [
             "appletv",
@@ -438,18 +351,27 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         [
             "OnlyForced",
             "Always",
-            "None"
+            "None",
+            "Default"
         ];
         public ObservableCollection<int> JellyfinPorts { get; } =
         [
             8096, 8920
         ];
-        public ICommand ValidateLoginCommand { get; }
+        public ObservableCollection<string> AvailableUpdateModes { get; } =
+        [
+            "None",
+            "Server Settings",
+            "Browser Settings",
+            "User Settings",
+            "Server & Browser Settings",
+            "Server & User Settings",
+            "Browser & User Settings",
+            "All Settings"
+        ];
 
         public JellyfinConfigViewModel()
         {
-            ValidateLoginCommand = new RelayCommand(async () => await ExecuteValidateLoginCommandAsync(), () => !IsValidating);
-
             var jellyfinIP = Settings.Default.JellyfinIP;
             if (!string.IsNullOrWhiteSpace(jellyfinIP) && jellyfinIP.Contains(':'))
             {
@@ -460,13 +382,14 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     if (int.TryParse(parts[1], out int port))
                         SelectedJellyfinPort = port;
                 }
-                Settings.Default.ModifyConfig = true;
             }
             else
             {
                 JellyfinServerIp = "";
-                Settings.Default.ModifyConfig = false;
             }
+
+            SelectedUpdateMode = Settings.Default.ConfigUpdateMode;
+            JellyfinApiKey = Settings.Default.JellyfinApiKey;
 
             SelectedTheme = Settings.Default.SelectedTheme;
             SelectedSubtitleMode = Settings.Default.SelectedSubtitleMode;
@@ -487,97 +410,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections;
             PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack;
         }
-        public void SetLoginWindow(JellyfinLoginWindow window)
-        {
-            _loginWindow = window;
-        }
         private void UpdateJellyfinAddress()
         {
             if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && SelectedJellyfinPort > 0)
             {
                 Settings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
-                Settings.Default.ModifyConfig = true;
                 Settings.Default.Save();
-            }
-            else
-            {
-                Settings.Default.ModifyConfig = false;
-                Settings.Default.Save();
-            }
-        }
-        private bool JellyfinUserToken()
-        {
-            if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP))
-            {
-                if (string.IsNullOrEmpty(Settings.Default.JellyfinUserId))
-                {
-                    var loginWindow = new JellyfinLoginWindow();
-                    loginWindow.DataContext = this;
-                    SetLoginWindow(loginWindow);
-                    loginWindow.Show();
-
-                    return true;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                MessageBox.Show("NoJellyfinServer".Localized());
-                return false;
-            }
-            return false;
-        }
-        private async Task ExecuteValidateLoginCommandAsync()
-        {
-            try
-            {
-                IsValidating = true;
-                CommandManager.InvalidateRequerySuggested();
-
-                using var httpClient = new HttpClient();
-
-                var authRequest = new
-                {
-                    Username = JellyfinUsername,
-                    Pw = JellyfinPassword
-                };
-
-                var json = JsonSerializer.Serialize(authRequest);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                httpClient.DefaultRequestHeaders.Clear();
-                httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization",
-                    "MediaBrowser Client=\"Samsung Jellyfin\", Device=\"Samsung TV\", DeviceId=\"samsung-tv-12345\", Version=\"1.0.0\"");
-
-                var response = await httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/authenticatebyname", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseJson = await response.Content.ReadAsStringAsync();
-                    var authResult = JsonSerializer.Deserialize<JellyfinAuth>(responseJson);
-
-                    JellyfinUserId = authResult.UserId;
-                    JellyfinAccessToken = authResult.AccessToken;
-
-                    _loginWindow?.Close();
-                    _loginWindow = null;
-                }
-                else
-                {
-                    MessageBox.Show("JellyfinLoginFailed".Localized());
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Login error: {ex.Message}");
-            }
-            finally
-            {
-                IsValidating = false;
-                CommandManager.InvalidateRequerySuggested();
             }
         }
     }

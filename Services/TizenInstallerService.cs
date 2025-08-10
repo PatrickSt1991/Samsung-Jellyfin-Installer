@@ -197,7 +197,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 await TizenLibraryCheck();
 
-                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ModifyConfig)
+                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ConfigUpdateMode != "None")
                 {
                     try
                     {
@@ -249,8 +249,17 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
-                if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
-                    await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
+                if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && !Settings.Default.ConfigUpdateMode.Contains("None"))
+                {
+                    if (string.IsNullOrEmpty(Settings.Default.JellyfinUserId))
+                        await GetUserFromJellyfin();
+
+                    if(Settings.Default.ConfigUpdateMode.Contains("Server") || Settings.Default.ConfigUpdateMode.Contains("Browser"))
+                        await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
+
+                    if (Settings.Default.ConfigUpdateMode.Contains("User"))
+                        await UpdateJellyfinUserConfiguration();
+                }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
                 string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
@@ -338,39 +347,14 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 ZipFile.ExtractToDirectory(packageUrl, tempDir);
 
-                string configPath = Path.Combine(tempDir, "www", "config.json");
-                if (!File.Exists(configPath))
-                    return InstallResult.FailureResult("ConfigFailure".Localized());
 
-                string jsonText = await File.ReadAllTextAsync(configPath);
-                JsonNode config = JsonNode.Parse(jsonText);
+                if (Settings.Default.ConfigUpdateMode.Contains("Server"))
+                    await ModifyWwwConfigJson(tempDir);
 
-                config["multiserver"] = false;
 
-                string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+                if (Settings.Default.ConfigUpdateMode.Contains("Browser"))
+                    await ModifyRootIndexHtml(tempDir);
 
-                if (string.IsNullOrEmpty(serverUrl) || serverUrl == "http://")
-                    return InstallResult.FailureResult($"Invalid server URL: {serverUrl}");
-
-                var serversArray = new JsonArray();
-                serversArray.Add(JsonValue.Create(serverUrl));
-                config["servers"] = serversArray;
-
-                await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                }));
-
-                
-                if (Settings.Default.EnableInjectionSettings && (!string.IsNullOrEmpty(Settings.Default.JellyfinUserId)))
-                {
-                    string rootIndexPath = Path.Combine(tempDir, "index.html");
-                    if (File.Exists(rootIndexPath))
-                        await ModifyRootIndexHtml(rootIndexPath, Settings.Default.JellyfinUserId);
-                }
-
-                if(Settings.Default.EnableServerAPI && (!string.IsNullOrEmpty(Settings.Default.JellyfinUserId)))
-                    await CallJellyfinServerAPI();
 
                 if (File.Exists(packageUrl))
                     File.Delete(packageUrl);
@@ -387,8 +371,62 @@ namespace Samsung_Jellyfin_Installer.Services
                 return InstallResult.FailureResult($"Exception: {ex.Message}");
             }
         }
-        private async Task ModifyRootIndexHtml(string indexPath, string userId)
+        private async Task GetUserFromJellyfin()
         {
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
+
+            var response = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users");
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var users = JsonSerializer.Deserialize<JellyfinAuth[]>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if(users != null)
+            {
+                var rootUser = users.FirstOrDefault();
+                if(rootUser != null)
+                {
+                    Settings.Default.JellyfinUserId = rootUser.Id;
+                    Settings.Default.Save();
+                }
+                else
+                {
+                    MessageBox.Show($"Failed to retrieve any Jellyfin Users, no Config settings will be changed!");
+                }
+            }
+            else
+            {
+                MessageBox.Show($"Failed to retrieve any Jellyfin Users, no Config settings will be changed!");
+            }
+        }
+        private async Task ModifyWwwConfigJson(string tempDir)
+        {
+            string configPath = Path.Combine(tempDir, "www", "config.json");
+
+            string jsonText = await File.ReadAllTextAsync(configPath);
+            JsonNode config = JsonNode.Parse(jsonText);
+
+            config["multiserver"] = false;
+
+            string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+
+            var serversArray = new JsonArray();
+            serversArray.Add(JsonValue.Create(serverUrl));
+            config["servers"] = serversArray;
+
+            await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+        }
+        private async Task ModifyRootIndexHtml(string tempDir)
+        {
+            string indexPath = Path.Combine(tempDir, "index.html");
             string htmlContent = await File.ReadAllTextAsync(indexPath);
 
             if (htmlContent.Contains("<!-- SAMSUNG_JELLYFIN_AUTO_INJECTED -->"))
@@ -400,7 +438,7 @@ namespace Samsung_Jellyfin_Installer.Services
 <script>
     // Set defaults directly for the known userId
     (function() {{
-        var userId = '{userId}';
+        var userId = '{Settings.Default.JellyfinUserId}';
         
         if (localStorage.getItem('samsung-jellyfin-injected-' + userId)) {{
             return;
@@ -441,54 +479,30 @@ namespace Samsung_Jellyfin_Installer.Services
 
             await File.WriteAllTextAsync(indexPath, htmlContent);
         }
-        private async Task CallJellyfinServerAPI()
+        private async Task UpdateJellyfinUserConfiguration()
         {
             try
             {
                 _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization",
-                    $"MediaBrowser UserId=\"{Settings.Default.JellyfinUserId}\", Client=\"Samsung Jellyfin\", Device=\"Samsung TV\", DeviceId=\"samsung-tv-12345\", Version=\"1.0.0\", Token=\"{Settings.Default.JellyfinAccessToken}\"");
-
-                var getResponse = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users/{Settings.Default.JellyfinUserId}");
-                getResponse.EnsureSuccessStatusCode();
-                var userJson = await getResponse.Content.ReadAsStringAsync();
-
-                using var doc = JsonDocument.Parse(userJson);
-                string castReceiverId = null;
-                if (doc.RootElement.TryGetProperty("Configuration", out var configElement) &&
-                    configElement.TryGetProperty("CastReceiverId", out var castIdElement))
-                {
-                    castReceiverId = castIdElement.GetString();
-                }
-
-                // If it's missing, keep it null or handle default
-                if (string.IsNullOrEmpty(castReceiverId))
-                    return;
-
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
 
                 var userConfig = new
                 {
                     PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack,
-                    SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference ?? "",
-                    DisplayMissingEpisodes = false,
-                    GroupedFolders = new string[0],
-                    SubtitleMode = Settings.Default.SelectedSubtitleMode ?? "Default",
-                    DisplayCollectionsView = false,
-                    EnableLocalPassword = false,
-                    OrderedViews = new string[0],
-                    LatestItemsExcludes = new string[0],
-                    MyMediaExcludes = new string[0],
-                    HidePlayedInLatest = true,
+                    SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference,
+                    SubtitleMode = Settings.Default.SelectedSubtitleMode,
                     RememberAudioSelections = Settings.Default.RememberAudioSelections,
                     RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections,
                     EnableNextEpisodeAutoPlay = Settings.Default.AutoPlayNextEpisode,
-                    CastReceiverId = castReceiverId
                 };
 
                 var json = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/{Settings.Default.JellyfinUserId}/Configuration", content);
+                var response = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/Configuration?userId={Settings.Default.JellyfinUserId}", content);
+
+                response.EnsureSuccessStatusCode();
+
                 return;
             }
             catch(Exception ex)

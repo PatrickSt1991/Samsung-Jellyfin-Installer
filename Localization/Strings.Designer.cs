@@ -529,15 +529,6 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enable user settings.
-        /// </summary>
-        public static string lbl_EnableInjectionSettings {
-            get {
-                return ResourceManager.GetString("lbl_EnableInjectionSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Enable theme songs.
         /// </summary>
         public static string lbl_EnableThemeSongs {
@@ -583,11 +574,20 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Jellyfin Server.
+        ///   Looks up a localized string similar to Address.
         /// </summary>
         public static string lbl_JellyfinServer {
             get {
                 return ResourceManager.GetString("lbl_JellyfinServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API Key.
+        /// </summary>
+        public static string lbl_JellyfinServerApi {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinServerApi", resourceCulture);
             }
         }
         
@@ -1056,6 +1056,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string TvNameNotFound {
             get {
                 return ResourceManager.GetString("TvNameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update mode.
+        /// </summary>
+        public static string UpdateMode {
+            get {
+                return ResourceManager.GetString("UpdateMode", resourceCulture);
             }
         }
         

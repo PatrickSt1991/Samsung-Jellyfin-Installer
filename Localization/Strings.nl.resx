@@ -361,7 +361,7 @@
     <value>SDB-server kon niet worden gestopt!</value>
   </data>
   <data name="lbl_JellyfinServer" xml:space="preserve">
-    <value>Jellyfin Server</value>
+    <value>Adres</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
     <value>Jellyfin-configuratie instellen</value>
@@ -441,9 +441,6 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Configuratie openen</value>
   </data>
-  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
-    <value>Schakel gebruikersinstellingen in</value>
-  </data>
   <data name="lbl_ValidateLogin" xml:space="preserve">
     <value>Valideer</value>
   </data>
@@ -455,5 +452,11 @@
   </data>
   <data name="JellyfinLoginFailed" xml:space="preserve">
     <value>Aanmelden mislukt: ongeldige inloggegevens of serverfout.</value>
+  </data>
+  <data name="lbl_JellyfinServerApi" xml:space="preserve">
+    <value>API -sleutel</value>
+  </data>
+  <data name="UpdateMode" xml:space="preserve">
+    <value>Update-modus</value>
   </data>
 </root>

@@ -188,18 +188,6 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ModifyConfig {
-            get {
-                return ((bool)(this["ModifyConfig"]));
-            }
-            set {
-                this["ModifyConfig"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string AudioLanguagePreference {
             get {
@@ -332,7 +320,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool AutoPlayNextEpisode {
             get {
                 return ((bool)(this["AutoPlayNextEpisode"]));
@@ -344,7 +332,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool RememberAudioSelections {
             get {
                 return ((bool)(this["RememberAudioSelections"]));
@@ -356,7 +344,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool RememberSubtitleSelections {
             get {
                 return ((bool)(this["RememberSubtitleSelections"]));
@@ -368,7 +356,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool PlayDefaultAudioTrack {
             get {
                 return ((bool)(this["PlayDefaultAudioTrack"]));
@@ -392,7 +380,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Default")]
         public string SelectedSubtitleMode {
             get {
                 return ((string)(this["SelectedSubtitleMode"]));
@@ -404,13 +392,25 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool EnableInjectionSettings {
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ConfigUpdateMode {
             get {
-                return ((bool)(this["EnableInjectionSettings"]));
+                return ((string)(this["ConfigUpdateMode"]));
             }
             set {
-                this["EnableInjectionSettings"] = value;
+                this["ConfigUpdateMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinApiKey {
+            get {
+                return ((string)(this["JellyfinApiKey"]));
+            }
+            set {
+                this["JellyfinApiKey"] = value;
             }
         }
         
@@ -423,30 +423,6 @@ namespace Samsung_Jellyfin_Installer {
             }
             set {
                 this["JellyfinUserId"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool EnableServerAPI {
-            get {
-                return ((bool)(this["EnableServerAPI"]));
-            }
-            set {
-                this["EnableServerAPI"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string JellyfinAccessToken {
-            get {
-                return ((string)(this["JellyfinAccessToken"]));
-            }
-            set {
-                this["JellyfinAccessToken"] = value;
             }
         }
     }

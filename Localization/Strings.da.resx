@@ -361,7 +361,7 @@
     <value>SDB-serveren kunne ikke stoppe!</value>
   </data>
   <data name="lbl_JellyfinServer" xml:space="preserve">
-    <value>Jellyfin Server</value>
+    <value>Adresse</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
     <value>Indstil Jellyfin-konfiguration</value>
@@ -441,9 +441,6 @@
   <data name="lbl_OpenConfig" xml:space="preserve">
     <value>Åbn konfig</value>
   </data>
-  <data name="lbl_EnableInjectionSettings" xml:space="preserve">
-    <value>Aktiver brugerindstillinger</value>
-  </data>
   <data name="lbl_ValidateLogin" xml:space="preserve">
     <value>Valider</value>
   </data>
@@ -455,5 +452,11 @@
   </data>
   <data name="JellyfinLoginFailed" xml:space="preserve">
     <value>Login mislykkedes: Ugyldige loginoplysninger eller serverfejl.</value>
+  </data>
+  <data name="lbl_JellyfinServerApi" xml:space="preserve">
+    <value>API -nøgle</value>
+  </data>
+  <data name="UpdateMode" xml:space="preserve">
+    <value>Opdateringstilstand</value>
   </data>
 </root>
