@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -254,11 +255,20 @@ namespace Samsung_Jellyfin_Installer.Services
                     if (string.IsNullOrEmpty(Settings.Default.JellyfinUserId))
                         await GetUserFromJellyfin();
 
-                    if(Settings.Default.ConfigUpdateMode.Contains("Server") || Settings.Default.ConfigUpdateMode.Contains("Browser"))
+                    if (Settings.Default.ConfigUpdateMode.Contains("Server") || 
+                        Settings.Default.ConfigUpdateMode.Contains("Browser") ||
+                        Settings.Default.ConfigUpdateMode.Contains("All"))
+                    {
                         await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
+                    }
+                        
 
-                    if (Settings.Default.ConfigUpdateMode.Contains("User"))
+                    if (Settings.Default.ConfigUpdateMode.Contains("User") ||
+                        Settings.Default.ConfigUpdateMode.Contains("All"))
+                    {
                         await UpdateJellyfinUserConfiguration();
+                    }
+                        
                 }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
@@ -348,12 +358,16 @@ namespace Samsung_Jellyfin_Installer.Services
                 ZipFile.ExtractToDirectory(packageUrl, tempDir);
 
 
-                if (Settings.Default.ConfigUpdateMode.Contains("Server"))
+                if (Settings.Default.ConfigUpdateMode.Contains("Server") ||
+                    Settings.Default.ConfigUpdateMode.Contains("All"))
                     await ModifyWwwConfigJson(tempDir);
+                    
 
 
-                if (Settings.Default.ConfigUpdateMode.Contains("Browser"))
+                if (Settings.Default.ConfigUpdateMode.Contains("Browser") ||
+                    Settings.Default.ConfigUpdateMode.Contains("All"))
                     await ModifyRootIndexHtml(tempDir);
+                    
 
 
                 if (File.Exists(packageUrl))
@@ -377,10 +391,10 @@ namespace Samsung_Jellyfin_Installer.Services
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
 
             var response = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users");
+            
             response.EnsureSuccessStatusCode();
-
             var json = await response.Content.ReadAsStringAsync();
-
+            
             var users = JsonSerializer.Deserialize<JellyfinAuth[]>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -418,7 +432,6 @@ namespace Samsung_Jellyfin_Installer.Services
             var serversArray = new JsonArray();
             serversArray.Add(JsonValue.Create(serverUrl));
             config["servers"] = serversArray;
-
             await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
             {
                 WriteIndented = true
@@ -498,9 +511,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 var json = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-
                 var response = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/Configuration?userId={Settings.Default.JellyfinUserId}", content);
-
                 response.EnsureSuccessStatusCode();
 
                 return;

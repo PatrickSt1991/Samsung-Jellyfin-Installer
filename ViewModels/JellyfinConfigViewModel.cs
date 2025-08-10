@@ -349,10 +349,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         ];
         public ObservableCollection<string> AvailableSubtitleModes { get; } =
         [
-            "OnlyForced",
-            "Always",
             "None",
-            "Default"
+            "OnlyForced",
+            "Default",
+            "Always"
         ];
         public ObservableCollection<int> JellyfinPorts { get; } =
         [
