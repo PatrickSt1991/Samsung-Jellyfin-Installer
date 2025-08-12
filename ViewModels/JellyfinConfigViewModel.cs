@@ -26,6 +26,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _rememberAudioSelections;
         private bool _rememberSubtitleSelections;
         private bool _playDefaultAudioTrack;
+        private bool _apiKeyEnabled = false;
 
         public string AudioLanguagePreference
         {
@@ -124,6 +125,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 {
                     _selectedUpdateMode = value;
                     OnPropertyChanged(nameof(SelectedUpdateMode));
+
+                    ApiKeyEnabled =
+                        !SelectedUpdateMode.Contains("Server") &&
+                        !SelectedUpdateMode.Contains("None");
 
                     Settings.Default.ConfigUpdateMode = value;
                     Settings.Default.Save();
@@ -335,6 +340,18 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                     Settings.Default.PlayDefaultAudioTrack = value;
                     Settings.Default.Save();
+                }
+            }
+        }
+        public bool ApiKeyEnabled
+        {
+            get => _apiKeyEnabled;
+            set
+            {
+                if(_apiKeyEnabled != value)
+                {
+                    _apiKeyEnabled = value;
+                    OnPropertyChanged(nameof(ApiKeyEnabled));
                 }
             }
         }

@@ -466,6 +466,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Browser settings.
+        /// </summary>
+        public static string lbl_BrowserSettings {
+            get {
+                return ResourceManager.GetString("lbl_BrowserSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate.
         /// </summary>
         public static string lbl_Certifcate {
@@ -700,6 +709,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Server settings.
+        /// </summary>
+        public static string lbl_ServerSettings {
+            get {
+                return ResourceManager.GetString("lbl_ServerSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Settings.
         /// </summary>
         public static string lbl_Settings {
@@ -732,6 +750,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_SubtitleMode {
             get {
                 return ResourceManager.GetString("lbl_SubtitleMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User settings.
+        /// </summary>
+        public static string lbl_UserSettings {
+            get {
+                return ResourceManager.GetString("lbl_UserSettings", resourceCulture);
             }
         }
         

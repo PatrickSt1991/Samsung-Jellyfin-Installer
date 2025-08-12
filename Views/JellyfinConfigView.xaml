@@ -28,7 +28,7 @@
                 <!-- Server Configuration Section -->
                 <materialDesign:Card Margin="14,0,14,20" Padding="10" >
                     <StackPanel>
-                        <TextBlock Text="Server" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
+                        <TextBlock Text="{loc:Localize lbl_ServerSettings}" d:Text="ServerSettings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
 
                         <!-- Jellyfin Server (Config Setting)-->
                         <Grid Margin="0,0,0,10">
@@ -42,8 +42,19 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Column="0" Content="{loc:Localize lbl_JellyfinServer}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <Grid Grid.Column="1">
+                            <!-- Update mode (ConfigUpdateMode) -->
+                            <Label Grid.Row="0" Grid.Column="0" FontSize="14"  Content="{loc:Localize UpdateMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0 15 0 0"
+                                Style="{DynamicResource MaterialDesignComboBox}"
+                                ItemsSource="{Binding AvailableUpdateModes}"
+                                SelectedItem="{Binding SelectedUpdateMode, Mode=TwoWay}"
+                                materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                                FontSize="14" 
+                                materialDesign:HintAssist.Hint="Update mode"
+                                VerticalAlignment="Center"/>
+                            
+                            <Label Grid.Column="0" Grid.Row="1" Content="{loc:Localize lbl_JellyfinServer}" FontSize="14" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                            <Grid Grid.Column="1" Grid.Row="1" Margin="0, 15,12,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -65,15 +76,13 @@
                                     SelectedItem="{Binding SelectedJellyfinPort}"
                                     materialDesign:HintAssist.Hint="{loc:Localize ServerPort}"
                                     ItemsSource="{Binding JellyfinPorts}"
-                                    Width="75"/>
+                                    Width="75"
+                                    BorderBrush="#FF000B25"/>
                             </Grid>
 
-                            <!-- Update mode (ConfigUpdateMode) -->
-                            
-                            
                             <!-- Jellyfin API key -->
-                            <Label Grid.Row="1" Grid.Column="0" Content="{loc:Localize lbl_JellyfinServerApi}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                            <TextBox Grid.Row="1" Grid.Column="1"
+                            <Label Grid.Row="2" Grid.Column="0" Content="{loc:Localize lbl_JellyfinServerApi}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                            <TextBox Grid.Row="2" Grid.Column="1"
                                 VerticalAlignment="Center"
                                 Text="{Binding JellyfinApiKey, Mode=TwoWay}"
                                 Style="{DynamicResource MaterialDesignTextBox}"
@@ -81,25 +90,16 @@
                                 materialDesign:HintAssist.Hint="API Key"
                                 FontSize="14" 
                                 Margin="0,15,0,0" 
+                                IsEnabled="{Binding ApiKeyEnabled}"
                                 BorderBrush="#FF000B25"/>
-
-                            <Label Grid.Row="2" Grid.Column="0" FontSize="14"  Content="{loc:Localize UpdateMode}" VerticalAlignment="Center" Margin="0,15,12,0"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0 15 0 0"
-                                Style="{DynamicResource MaterialDesignComboBox}"
-                                ItemsSource="{Binding AvailableUpdateModes}"
-                                SelectedItem="{Binding SelectedUpdateMode, Mode=TwoWay}"
-                                materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
-                                FontSize="14" 
-                                materialDesign:HintAssist.Hint="Update mode"
-                                VerticalAlignment="Center"/>
                         </Grid>
                     </StackPanel>
                 </materialDesign:Card>
 
                 <!-- Browser Settings Section -->
                 <materialDesign:Card Margin="14,0,14,20" Padding="10">
-                    <StackPanel>
-                        <TextBlock Text="Browser Settings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
+                    <StackPanel IsEnabled="{Binding ApiKeyEnabled}">
+                        <TextBlock Text="{loc:Localize lbl_BrowserSettings}" d:Text="BrowserSettings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
 
                         <!-- HTML INJECTION -->
                         <Grid>
@@ -243,8 +243,8 @@
 
                 <!-- API Settings Section -->
                 <materialDesign:Card Margin="14,0,14,0" Padding="10">
-                    <StackPanel>
-                        <TextBlock Text="Server Settings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
+                    <StackPanel IsEnabled="{Binding ApiKeyEnabled}">
+                        <TextBlock Text="{loc:Localize lbl_UserSettings}" d:Text="UserSettings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
 
                         <Grid>
                             <Grid.RowDefinitions>

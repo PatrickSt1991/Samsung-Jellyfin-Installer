@@ -459,4 +459,13 @@
   <data name="UpdateMode" xml:space="preserve">
     <value>Update mode</value>
   </data>
+  <data name="lbl_ServerSettings" xml:space="preserve">
+    <value>Server settings</value>
+  </data>
+  <data name="lbl_BrowserSettings" xml:space="preserve">
+    <value>Browser settings</value>
+  </data>
+  <data name="lbl_UserSettings" xml:space="preserve">
+    <value>User settings</value>
+  </data>
 </root>

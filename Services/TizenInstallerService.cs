@@ -252,7 +252,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && !Settings.Default.ConfigUpdateMode.Contains("None"))
                 {
-                    if (string.IsNullOrEmpty(Settings.Default.JellyfinUserId))
+                    if (string.IsNullOrEmpty(Settings.Default.JellyfinUserId) && (Settings.Default.ConfigUpdateMode != "Server Settings"))
                         await GetUserFromJellyfin();
 
                     if (Settings.Default.ConfigUpdateMode.Contains("Server") || 
