@@ -267,8 +267,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     {
                         if (File.Exists(encryptedPassword))
                             decryptedPassword = cipherUtil.RunWincryptDecrypt(encryptedPassword, tizenCrypto);
-                        else
+                        else if (IsBase64String(encryptedPassword))
                             decryptedPassword = cipherUtil.GetDecryptedString(encryptedPassword);
+                        else
+                            continue;
 
                         try
                         {
@@ -299,6 +301,13 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             return certificates;
         }
+        private bool IsBase64String(string s)
+        {
+            s = s.Trim();
+            return (s.Length % 4 == 0) &&
+                   System.Text.RegularExpressions.Regex.IsMatch(s, @"^[A-Za-z0-9\+/]*={0,2}$");
+        }
+
         private void BrowseWgtFile()
         {
             var openFileDialog = new OpenFileDialog
