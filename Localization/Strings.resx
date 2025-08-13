@@ -468,4 +468,7 @@
   <data name="lbl_UserSettings" xml:space="preserve">
     <value>User settings</value>
   </data>
+  <data name="lbl_userAutoLogin" xml:space="preserve">
+    <value>Enable auto login</value>
+  </data>
 </root>

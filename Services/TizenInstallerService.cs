@@ -137,12 +137,39 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<(string, string)> EnsureTizenCliAvailable()
         {
-            if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
+            bool cliOk = File.Exists(TizenCliPath) && File.Exists(TizenSdbPath);
+            bool cryptoOk = File.Exists(TizenCypto);
+
+            string[] certManagerPaths = {
+                Path.Combine(TizenRootPath, "certificate-manager", "certificate-manager.exe"),
+                Path.Combine(TizenRootPath, "tools", "certificate-manager", "certificate-manager.exe")
+            };
+
+            bool certManagerOk = certManagerPaths.Any(File.Exists);
+            
+            string certManagerPluginsPath = Path.Combine(TizenRootPath, "tools", "certificate-manager", "plugins");
+            string idePluginsPath = Path.Combine(TizenRootPath, "ide", "plugins");
+
+            bool certExtensionOk =
+                FolderHasCertJar(certManagerPluginsPath) ||
+                FolderHasCertJar(idePluginsPath);
+
+            if (cliOk && cryptoOk && certManagerOk && certExtensionOk)
                 return (TizenDataPath, TizenCypto);
 
             var tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
         }
+        bool FolderHasCertJar(string path)
+        {
+            if (!Directory.Exists(path))
+                return false;
+
+            return Directory.EnumerateFiles(path, "*.jar")
+                .Any(file => Path.GetFileName(file)
+                    .StartsWith("org.tizen.common.cert_", StringComparison.OrdinalIgnoreCase));
+        }
+
         public async Task<bool> ConnectToTvAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
@@ -499,6 +526,16 @@ namespace Samsung_Jellyfin_Installer.Services
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
 
+                var userSetting = new
+                {
+                    EnableAutoLogin = Settings.Default.UserAutoLogin,
+                };
+
+                var userJson = JsonSerializer.Serialize(userSetting, new JsonSerializerOptions { WriteIndented = true });
+                var userContent = new StringContent(userJson, Encoding.UTF8, "application/json");
+                var userResponse = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users?userId={Settings.Default.JellyfinUserId}", userContent);
+                userResponse.EnsureSuccessStatusCode();
+
                 var userConfig = new
                 {
                     PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack,
@@ -507,6 +544,7 @@ namespace Samsung_Jellyfin_Installer.Services
                     RememberAudioSelections = Settings.Default.RememberAudioSelections,
                     RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections,
                     EnableNextEpisodeAutoPlay = Settings.Default.AutoPlayNextEpisode,
+
                 };
 
                 var json = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });

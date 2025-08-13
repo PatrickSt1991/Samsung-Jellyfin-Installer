@@ -26,6 +26,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _rememberAudioSelections;
         private bool _rememberSubtitleSelections;
         private bool _playDefaultAudioTrack;
+        private bool _userAutoLogin;
         private bool _apiKeyEnabled = false;
 
         public string AudioLanguagePreference
@@ -343,6 +344,21 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+        public bool UserAutoLogin
+        {
+            get => _userAutoLogin;
+            set
+            {
+                if(_userAutoLogin != value)
+                {
+                    _userAutoLogin = value;
+                    OnPropertyChanged(nameof(UserAutoLogin));
+
+                    Settings.Default.UserAutoLogin = value;
+                    Settings.Default.Save();
+                }
+            }
+        }
         public bool ApiKeyEnabled
         {
             get => _apiKeyEnabled;
@@ -426,6 +442,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             RememberAudioSelections = Settings.Default.RememberAudioSelections;
             RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections;
             PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack;
+            UserAutoLogin = Settings.Default.UserAutoLogin;
         }
         private void UpdateJellyfinAddress()
         {

@@ -754,6 +754,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable auto login.
+        /// </summary>
+        public static string lbl_userAutoLogin {
+            get {
+                return ResourceManager.GetString("lbl_userAutoLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to User settings.
         /// </summary>
         public static string lbl_UserSettings {

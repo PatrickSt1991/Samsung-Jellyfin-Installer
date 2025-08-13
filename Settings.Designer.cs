@@ -425,5 +425,17 @@ namespace Samsung_Jellyfin_Installer {
                 this["JellyfinUserId"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UserAutoLogin {
+            get {
+                return ((bool)(this["UserAutoLogin"]));
+            }
+            set {
+                this["UserAutoLogin"] = value;
+            }
+        }
     }
 }
