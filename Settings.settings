@@ -110,5 +110,8 @@
     <Setting Name="UserAutoLogin" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="JellyfinAvRelease" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/239769070</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

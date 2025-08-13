@@ -437,5 +437,15 @@ namespace Samsung_Jellyfin_Installer {
                 this["UserAutoLogin"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/23" +
+            "9769070")]
+        public string JellyfinAvRelease {
+            get {
+                return ((string)(this["JellyfinAvRelease"]));
+            }
+        }
     }
 }
