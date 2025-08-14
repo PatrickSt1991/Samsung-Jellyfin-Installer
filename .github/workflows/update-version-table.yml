@@ -21,8 +21,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const stable = releases.data.find(r => !r.prerelease && !r.draft);
-            const beta = releases.data.find(r => r.prerelease && !r.draft);
+            const stable = releases.data.find(r => !r.prerelease && !r.draft && r.tag_name.startsWith("v"));
+            const beta = releases.data.find(r => r.prerelease && !r.draft && r.tag_name.startsWith("v"));
             
             // Check if beta is based on the same version as stable (e.g., 1.6.1 vs 1.6.1-beta)
             const isSameBaseVersion = stable && beta && 
