@@ -70,6 +70,24 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to e.g. en | da | nl.
+        /// </summary>
+        public static string AudioLanguage {
+            get {
+                return ResourceManager.GetString("AudioLanguage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string btn_Close {
+            get {
+                return ResourceManager.GetString("btn_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Checking Tizen Package manager.
         /// </summary>
         public static string CheckingPackageManagerList {
@@ -340,7 +358,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Successfully installed on.
+        ///   Looks up a localized string similar to Jellyfin has been successfully installed!.
         /// </summary>
         public static string InstallationSuccessfulOn {
             get {
@@ -421,11 +439,65 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login failed: Invalid credentials or server error..
+        /// </summary>
+        public static string JellyfinLoginFailed {
+            get {
+                return ResourceManager.GetString("JellyfinLoginFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Audio language preference.
+        /// </summary>
+        public static string lbl_AudioLanguagePreference {
+            get {
+                return ResourceManager.GetString("lbl_AudioLanguagePreference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Auto play next episode.
+        /// </summary>
+        public static string lbl_AutoPlayNextEpisode {
+            get {
+                return ResourceManager.GetString("lbl_AutoPlayNextEpisode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backdrop screensaver.
+        /// </summary>
+        public static string lbl_BackdropScreensaver {
+            get {
+                return ResourceManager.GetString("lbl_BackdropScreensaver", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Browser settings.
+        /// </summary>
+        public static string lbl_BrowserSettings {
+            get {
+                return ResourceManager.GetString("lbl_BrowserSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate.
         /// </summary>
         public static string lbl_Certifcate {
             get {
                 return ResourceManager.GetString("lbl_Certifcate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cinema mode.
+        /// </summary>
+        public static string lbl_CinemaMode {
+            get {
+                return ResourceManager.GetString("lbl_CinemaMode", resourceCulture);
             }
         }
         
@@ -448,11 +520,74 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Details banner.
+        /// </summary>
+        public static string lbl_DetailsBanner {
+            get {
+                return ResourceManager.GetString("lbl_DetailsBanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to That was easy, right?.
+        /// </summary>
+        public static string lbl_easyRight {
+            get {
+                return ResourceManager.GetString("lbl_easyRight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable backdrops.
+        /// </summary>
+        public static string lbl_EnableBackdrops {
+            get {
+                return ResourceManager.GetString("lbl_EnableBackdrops", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable external video players.
+        /// </summary>
+        public static string lbl_EnableExternalVideoPlayers {
+            get {
+                return ResourceManager.GetString("lbl_EnableExternalVideoPlayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable theme songs.
+        /// </summary>
+        public static string lbl_EnableThemeSongs {
+            get {
+                return ResourceManager.GetString("lbl_EnableThemeSongs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable theme videos.
+        /// </summary>
+        public static string lbl_EnableThemeVideos {
+            get {
+                return ResourceManager.GetString("lbl_EnableThemeVideos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expires.
         /// </summary>
         public static string lbl_expires {
             get {
                 return ResourceManager.GetString("lbl_expires", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to retrieve any Jellyfin Users, no Config settings will be changed!.
+        /// </summary>
+        public static string lbl_FailedUsers {
+            get {
+                return ResourceManager.GetString("lbl_FailedUsers", resourceCulture);
             }
         }
         
@@ -466,11 +601,47 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Jellyfin Server.
+        ///   Looks up a localized string similar to Jellyfin API Key.
+        /// </summary>
+        public static string lbl_JellyfinAPIKey {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinAPIKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Jellyfin Config.
+        /// </summary>
+        public static string lbl_JellyfinConfig {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Address.
         /// </summary>
         public static string lbl_JellyfinServer {
             get {
                 return ResourceManager.GetString("lbl_JellyfinServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API Key.
+        /// </summary>
+        public static string lbl_JellyfinServerApi {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinServerApi", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Jellyfin user(s).
+        /// </summary>
+        public static string lbl_JellyfinUser {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinUser", resourceCulture);
             }
         }
         
@@ -484,11 +655,29 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Modify Config.
+        ///   Looks up a localized string similar to Set Jellyfin Config.
         /// </summary>
         public static string lbl_ModifyConfig {
             get {
                 return ResourceManager.GetString("lbl_ModifyConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Next up enabled.
+        /// </summary>
+        public static string lbl_NextUpEnabled {
+            get {
+                return ResourceManager.GetString("lbl_NextUpEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open config.
+        /// </summary>
+        public static string lbl_OpenConfig {
+            get {
+                return ResourceManager.GetString("lbl_OpenConfig", resourceCulture);
             }
         }
         
@@ -502,6 +691,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Play default audio track.
+        /// </summary>
+        public static string lbl_PlayDefaultAudioTrack {
+            get {
+                return ResourceManager.GetString("lbl_PlayDefaultAudioTrack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Release.
         /// </summary>
         public static string lbl_Release {
@@ -511,11 +709,29 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Remember audio selections.
+        /// </summary>
+        public static string lbl_RememberAudioSelections {
+            get {
+                return ResourceManager.GetString("lbl_RememberAudioSelections", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Remember IPs.
         /// </summary>
         public static string lbl_RememberIp {
             get {
                 return ResourceManager.GetString("lbl_RememberIp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remember subtitle selections.
+        /// </summary>
+        public static string lbl_RememberSubtitleSelections {
+            get {
+                return ResourceManager.GetString("lbl_RememberSubtitleSelections", resourceCulture);
             }
         }
         
@@ -538,11 +754,110 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select user(s) to update.
+        /// </summary>
+        public static string lbl_SelectUsers {
+            get {
+                return ResourceManager.GetString("lbl_SelectUsers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server settings.
+        /// </summary>
+        public static string lbl_ServerSettings {
+            get {
+                return ResourceManager.GetString("lbl_ServerSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Settings.
         /// </summary>
         public static string lbl_Settings {
             get {
                 return ResourceManager.GetString("lbl_Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Skip intros.
+        /// </summary>
+        public static string lbl_SkipIntros {
+            get {
+                return ResourceManager.GetString("lbl_SkipIntros", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subtitle language preference.
+        /// </summary>
+        public static string lbl_SubtitleLanguagePreference {
+            get {
+                return ResourceManager.GetString("lbl_SubtitleLanguagePreference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subtitle mode.
+        /// </summary>
+        public static string lbl_SubtitleMode {
+            get {
+                return ResourceManager.GetString("lbl_SubtitleMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose what to update.
+        /// </summary>
+        public static string lbl_UpdateMode {
+            get {
+                return ResourceManager.GetString("lbl_UpdateMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable auto login.
+        /// </summary>
+        public static string lbl_userAutoLogin {
+            get {
+                return ResourceManager.GetString("lbl_userAutoLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User settings.
+        /// </summary>
+        public static string lbl_UserSettings {
+            get {
+                return ResourceManager.GetString("lbl_UserSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Validate Jellyfin Server.
+        /// </summary>
+        public static string lbl_ValidateJellyfin {
+            get {
+                return ResourceManager.GetString("lbl_ValidateJellyfin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Validate.
+        /// </summary>
+        public static string lbl_ValidateLogin {
+            get {
+                return ResourceManager.GetString("lbl_ValidateLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🍺 Buy me a beer.
+        /// </summary>
+        public static string lbl_Validation {
+            get {
+                return ResourceManager.GetString("lbl_Validation", resourceCulture);
             }
         }
         
@@ -588,6 +903,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string NoDevicesFound {
             get {
                 return ResourceManager.GetString("NoDevicesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please fill in the Jellyfin server first....
+        /// </summary>
+        public static string NoJellyfinServer {
+            get {
+                return ResourceManager.GetString("NoJellyfinServer", resourceCulture);
             }
         }
         
@@ -736,11 +1060,47 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select Subtitle Mode.
+        /// </summary>
+        public static string SelectSubtitleMode {
+            get {
+                return ResourceManager.GetString("SelectSubtitleMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select theme.
+        /// </summary>
+        public static string SelectTheme {
+            get {
+                return ResourceManager.GetString("SelectTheme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select WGT and/or TPK file(s).
         /// </summary>
         public static string SelectWGT {
             get {
                 return ResourceManager.GetString("SelectWGT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server IP.
+        /// </summary>
+        public static string ServerIP {
+            get {
+                return ResourceManager.GetString("ServerIP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Port.
+        /// </summary>
+        public static string ServerPort {
+            get {
+                return ResourceManager.GetString("ServerPort", resourceCulture);
             }
         }
         
@@ -772,6 +1132,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Theme.
+        /// </summary>
+        public static string Theme {
+            get {
+                return ResourceManager.GetString("Theme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tizen CLI installation failed....
         /// </summary>
         public static string TizenCliFailed {
@@ -795,6 +1164,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string TvNameNotFound {
             get {
                 return ResourceManager.GetString("TvNameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update mode.
+        /// </summary>
+        public static string UpdateMode {
+            get {
+                return ResourceManager.GetString("UpdateMode", resourceCulture);
             }
         }
         

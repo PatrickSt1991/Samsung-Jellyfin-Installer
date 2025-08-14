@@ -318,7 +318,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                 if (result.Success)
                 {
-                    await _dialogService.ShowMessageAsync($"{"InstallationSuccessfulOn".Localized()} {SelectedDevice.IpAddress}");
+                    var win = new InstallationCompleteWindow();
+                    win.ShowDialog();
                     return true;
                 }
                 else
@@ -402,13 +403,17 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response)?
                     .OrderByDescending(r => r.PublishedAt)
-                    .Take(30);
+                    .Take(10);
 
                 if (allReleases != null)
                 {
                     foreach (var release in allReleases)
                         Releases.Add(release);
                 }
+
+                var avResponse = await _httpClient.GetStringAsync(Settings.Default.JellyfinAvRelease);
+                var avRelease = JsonConvert.DeserializeObject<GitHubRelease>(avResponse);
+                Releases.Add(avRelease);
             }
             catch (Exception ex)
             {

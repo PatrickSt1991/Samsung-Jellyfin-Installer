@@ -136,12 +136,39 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<(string, string)> EnsureTizenCliAvailable()
         {
-            if (File.Exists(TizenCliPath) && File.Exists(TizenSdbPath))
+            bool cliOk = File.Exists(TizenCliPath) && File.Exists(TizenSdbPath);
+            bool cryptoOk = File.Exists(TizenCypto);
+
+            string[] certManagerPaths = {
+                Path.Combine(TizenRootPath, "certificate-manager", "certificate-manager.exe"),
+                Path.Combine(TizenRootPath, "tools", "certificate-manager", "certificate-manager.exe")
+            };
+
+            bool certManagerOk = certManagerPaths.Any(File.Exists);
+            
+            string certManagerPluginsPath = Path.Combine(TizenRootPath, "tools", "certificate-manager", "plugins");
+            string idePluginsPath = Path.Combine(TizenRootPath, "ide", "plugins");
+
+            bool certExtensionOk =
+                FolderHasCertJar(certManagerPluginsPath) ||
+                FolderHasCertJar(idePluginsPath);
+
+            if (cliOk && cryptoOk && certManagerOk && certExtensionOk)
                 return (TizenDataPath, TizenCypto);
 
             var tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
         }
+        bool FolderHasCertJar(string path)
+        {
+            if (!Directory.Exists(path))
+                return false;
+
+            return Directory.EnumerateFiles(path, "*.jar")
+                .Any(file => Path.GetFileName(file)
+                    .StartsWith("org.tizen.common.cert_", StringComparison.OrdinalIgnoreCase));
+        }
+
         public async Task<bool> ConnectToTvAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
@@ -173,6 +200,7 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
+            return InstallResult.SuccessResult();
             if (TizenCliPath is null || TizenSdbPath is null)
             {
                 updateStatus("PleaseInstallTizen".Localized());
@@ -197,7 +225,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 await TizenLibraryCheck();
 
-                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ModifyConfig)
+                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ConfigUpdateMode != "None")
                 {
                     try
                     {
@@ -249,9 +277,29 @@ namespace Samsung_Jellyfin_Installer.Services
                     PackageCertificate = "custom";
                 }
 
-                if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && Settings.Default.ModifyConfig)
+                if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && !Settings.Default.ConfigUpdateMode.Contains("None"))
                 {
-                    await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate);
+                    string[] userIds = [];
+
+                    if (Settings.Default.JellyfinUserId == "everyone" && (Settings.Default.ConfigUpdateMode != "Server Settings"))
+                        userIds = await GetUsersFromJellyfin();
+                    else
+                        userIds = new[] { Settings.Default.JellyfinUserId };
+                    
+                    if (Settings.Default.ConfigUpdateMode.Contains("Server") || 
+                        Settings.Default.ConfigUpdateMode.Contains("Browser") ||
+                        Settings.Default.ConfigUpdateMode.Contains("All"))
+                    {
+                        await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate, userIds);
+                    }
+                        
+
+                    if (Settings.Default.ConfigUpdateMode.Contains("User") ||
+                        Settings.Default.ConfigUpdateMode.Contains("All"))
+                    {
+                        await UpdateJellyfinUserConfiguration(userIds);
+                    }
+                        
                 }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
@@ -327,54 +375,37 @@ namespace Samsung_Jellyfin_Installer.Services
             output = await RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"");
             return output?.Trim() ?? string.Empty;
         }
-        public async Task<InstallResult> ModifyJellyfinConfigAsync(string packageUrl, string certificateName)
+        public async Task<InstallResult> ModifyJellyfinConfigAsync(string packageUrl, string certificateName, string[] userIds)
         {
+            
             try
             {
                 string baseDir = Path.GetDirectoryName(packageUrl);
                 string tempDir = Path.Combine(baseDir, "Jelly_Temp");
 
-                // Clean up temp directory if it exists
                 if (Directory.Exists(tempDir))
                     Directory.Delete(tempDir, true);
                 Directory.CreateDirectory(tempDir);
 
-                // Extract zip (sync - no async version available)
                 ZipFile.ExtractToDirectory(packageUrl, tempDir);
 
-                string configPath = Path.Combine(tempDir, "www", "config.json");
-                if (!File.Exists(configPath))
-                    return InstallResult.FailureResult("ConfigFailure".Localized());
 
-                string jsonText = await File.ReadAllTextAsync(configPath);
-                JsonNode config = JsonNode.Parse(jsonText);
+                if (Settings.Default.ConfigUpdateMode.Contains("Server") ||
+                    Settings.Default.ConfigUpdateMode.Contains("All"))
+                    await ModifyWwwConfigJson(tempDir);
+                    
 
-                // Set multiserver to false for single server mode
-                config["multiserver"] = false;
 
-                // Create server URL and add debugging
-                string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+                if (Settings.Default.ConfigUpdateMode.Contains("Browser") ||
+                    Settings.Default.ConfigUpdateMode.Contains("All"))
+                    await ModifyRootIndexHtml(tempDir, userIds);
+                    
 
-                // Debug: Check if serverUrl is valid
-                if (string.IsNullOrEmpty(serverUrl) || serverUrl == "http://")
-                {
-                    return InstallResult.FailureResult($"Invalid server URL: {serverUrl}");
-                }
-
-                // Create new servers array with your server
-                var serversArray = new JsonArray();
-                serversArray.Add(JsonValue.Create(serverUrl));
-                config["servers"] = serversArray;
-
-                await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                }));
 
                 if (File.Exists(packageUrl))
                     File.Delete(packageUrl);
 
-                ZipFile.CreateFromDirectory(tempDir, packageUrl); // Still sync
+                ZipFile.CreateFromDirectory(tempDir, packageUrl);
                 Directory.Delete(tempDir, true);
 
                 await RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packageUrl}\"");
@@ -383,8 +414,171 @@ namespace Samsung_Jellyfin_Installer.Services
             }
             catch (Exception ex)
             {
-                // Log ex if needed
                 return InstallResult.FailureResult($"Exception: {ex.Message}");
+            }
+        }
+        private async Task<string[]> GetUsersFromJellyfin()
+        {
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
+
+            var response = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users");
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var users = JsonSerializer.Deserialize<JellyfinAuth[]>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (users == null || users.Length == 0)
+            {
+                MessageBox.Show("lbl_FailedUsers".Localized());
+                return Array.Empty<string>();
+            }
+
+            var allIds = users.Select(u => u.Id).ToArray();
+            return allIds;
+        }
+
+        private async Task ModifyWwwConfigJson(string tempDir)
+        {
+            string configPath = Path.Combine(tempDir, "www", "config.json");
+
+            string jsonText = await File.ReadAllTextAsync(configPath);
+            JsonNode config = JsonNode.Parse(jsonText);
+
+            config["multiserver"] = false;
+
+            string serverUrl = $"http://{Settings.Default.JellyfinIP}";
+
+            var serversArray = new JsonArray
+            {
+                JsonValue.Create(serverUrl)
+            };
+
+            config["servers"] = serversArray;
+            await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+        }
+        private async Task ModifyRootIndexHtml(string tempDir, string[] userIds)
+        {
+            string indexPath = Path.Combine(tempDir, "index.html");
+            string htmlContent = await File.ReadAllTextAsync(indexPath);
+            if (htmlContent.Contains("<!-- SAMSUNG_JELLYFIN_AUTO_INJECTED -->"))
+                return;
+
+            // Generate script for each user ID
+            var scriptBuilder = new StringBuilder();
+            scriptBuilder.AppendLine("<!-- SAMSUNG_JELLYFIN_AUTO_INJECTED -->");
+            scriptBuilder.AppendLine("<script>");
+            scriptBuilder.AppendLine("(function() {");
+
+            foreach (string userId in userIds)
+            {
+                // Skip empty or null user IDs
+                if (string.IsNullOrEmpty(userId))
+                    continue;
+
+                scriptBuilder.AppendLine($"    // Settings for user: {userId}");
+                scriptBuilder.AppendLine($"    var userId = '{userId}';");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine("    if (localStorage.getItem('samsung-jellyfin-injected-' + userId)) {");
+                scriptBuilder.AppendLine("        return;");
+                scriptBuilder.AppendLine("    }");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine("    // Theme");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-appTheme', '{Settings.Default.SelectedTheme ?? "dark"}');");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine("    // UI Settings");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-enableBackdrops', '{Settings.Default.EnableBackdrops.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-enableThemeSongs', '{Settings.Default.EnableThemeSongs.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-enableThemeVideos', '{Settings.Default.EnableThemeVideos.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-backdropScreensaver', '{Settings.Default.BackdropScreensaver.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-detailsBanner', '{Settings.Default.DetailsBanner.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-cinemaMode', '{Settings.Default.CinemaMode.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-nextUpEnabled', '{Settings.Default.NextUpEnabled.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-enableExternalVideoPlayers', '{Settings.Default.EnableExternalVideoPlayers.ToString().ToLower()}');");
+                scriptBuilder.AppendLine($"    localStorage.setItem(userId + '-skipIntros', '{Settings.Default.SkipIntros.ToString().ToLower()}');");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine("    // Language preferences (only if not empty)");
+                scriptBuilder.AppendLine($"    var audioLangPref = '{Settings.Default.AudioLanguagePreference ?? ""}';");
+                scriptBuilder.AppendLine("    if (audioLangPref) {");
+                scriptBuilder.AppendLine("        localStorage.setItem(userId + '-audioLanguagePreference', audioLangPref);");
+                scriptBuilder.AppendLine("    }");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine($"    var subtitleLangPref = '{Settings.Default.SubtitleLanguagePreference ?? ""}';");
+                scriptBuilder.AppendLine("    if (subtitleLangPref) {");
+                scriptBuilder.AppendLine("        localStorage.setItem(userId + '-subtitleLanguagePreference', subtitleLangPref);");
+                scriptBuilder.AppendLine("    }");
+                scriptBuilder.AppendLine();
+                scriptBuilder.AppendLine("    // Mark as injected for this user");
+                scriptBuilder.AppendLine("    localStorage.setItem('samsung-jellyfin-injected-' + userId, 'true');");
+                scriptBuilder.AppendLine();
+            }
+
+            scriptBuilder.AppendLine("})();");
+            scriptBuilder.AppendLine("</script>");
+
+            string injectionScript = scriptBuilder.ToString();
+            htmlContent = htmlContent.Replace("<head>", "<head>" + injectionScript);
+            await File.WriteAllTextAsync(indexPath, htmlContent);
+        }
+        private async Task UpdateJellyfinUserConfiguration(string[] userIds)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
+
+                foreach (string userId in userIds)
+                {
+                    // Skip empty or null user IDs
+                    if (string.IsNullOrEmpty(userId))
+                        continue;
+
+                    try
+                    {
+                        var getUserResponse = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users/{userId}");
+                        getUserResponse.EnsureSuccessStatusCode();
+                        var userJson = await getUserResponse.Content.ReadAsStringAsync();
+
+                        var userNode = JsonNode.Parse(userJson);
+
+                        userNode["EnableAutoLogin"] = Settings.Default.UserAutoLogin;
+
+                        var userContent = new StringContent(userNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }),Encoding.UTF8, "application/json");
+
+                        var userResponse = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users?userId={userId}", userContent);
+                        userResponse.EnsureSuccessStatusCode();
+
+                        // Update user configuration
+                        var userConfig = new
+                        {
+                            PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack,
+                            SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference,
+                            SubtitleMode = Settings.Default.SelectedSubtitleMode,
+                            RememberAudioSelections = Settings.Default.RememberAudioSelections,
+                            RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections,
+                            EnableNextEpisodeAutoPlay = Settings.Default.AutoPlayNextEpisode,
+                        };
+                        var json = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        var response = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users/Configuration?userId={userId}", content);
+                        response.EnsureSuccessStatusCode();
+                    }
+                    catch (Exception userEx)
+                    {
+                        Debug.WriteLine($"Failed to update configuration for user {userId}: {userEx.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"General error updating user configurations: {ex.Message}");
             }
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
@@ -736,8 +930,6 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return null;
         }
-
-
         public async Task<bool> RemoveJellyfinAppByIdAsync(string tvName, Action<string> updateStatus)
         {
             try

@@ -124,7 +124,7 @@
     <value>Installation failed</value>
   </data>
   <data name="InstallationSuccessfulOn" xml:space="preserve">
-    <value>Successfully installed on</value>
+    <value>Jellyfin has been successfully installed!</value>
   </data>
   <data name="DownloadFailed" xml:space="preserve">
     <value>Download failed:</value>
@@ -361,12 +361,138 @@
     <value>SDB Server failed to stop!</value>
   </data>
   <data name="lbl_JellyfinServer" xml:space="preserve">
-    <value>Jellyfin Server</value>
+    <value>Address</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
-    <value>Modify Config</value>
+    <value>Set Jellyfin Config</value>
   </data>
   <data name="ConfigFailure" xml:space="preserve">
     <value>config.json not found in the extracted package.</value>
+  </data>
+  <data name="ServerIP" xml:space="preserve">
+    <value>Server IP</value>
+  </data>
+  <data name="ServerPort" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SelectTheme" xml:space="preserve">
+    <value>Select theme</value>
+  </data>
+  <data name="lbl_EnableBackdrops" xml:space="preserve">
+    <value>Enable backdrops</value>
+  </data>
+  <data name="lbl_EnableThemeSongs" xml:space="preserve">
+    <value>Enable theme songs</value>
+  </data>
+  <data name="lbl_EnableThemeVideos" xml:space="preserve">
+    <value>Enable theme videos</value>
+  </data>
+  <data name="lbl_BackdropScreensaver" xml:space="preserve">
+    <value>Backdrop screensaver</value>
+  </data>
+  <data name="lbl_DetailsBanner" xml:space="preserve">
+    <value>Details banner</value>
+  </data>
+  <data name="lbl_CinemaMode" xml:space="preserve">
+    <value>Cinema mode</value>
+  </data>
+  <data name="lbl_NextUpEnabled" xml:space="preserve">
+    <value>Next up enabled</value>
+  </data>
+  <data name="lbl_EnableExternalVideoPlayers" xml:space="preserve">
+    <value>Enable external video players</value>
+  </data>
+  <data name="lbl_SkipIntros" xml:space="preserve">
+    <value>Skip intros</value>
+  </data>
+  <data name="lbl_AutoPlayNextEpisode" xml:space="preserve">
+    <value>Auto play next episode</value>
+  </data>
+  <data name="lbl_RememberAudioSelections" xml:space="preserve">
+    <value>Remember audio selections</value>
+  </data>
+  <data name="lbl_RememberSubtitleSelections" xml:space="preserve">
+    <value>Remember subtitle selections</value>
+  </data>
+  <data name="lbl_PlayDefaultAudioTrack" xml:space="preserve">
+    <value>Play default audio track</value>
+  </data>
+  <data name="lbl_SubtitleMode" xml:space="preserve">
+    <value>Subtitle mode</value>
+  </data>
+  <data name="lbl_AudioLanguagePreference" xml:space="preserve">
+    <value>Audio language preference</value>
+  </data>
+  <data name="lbl_SubtitleLanguagePreference" xml:space="preserve">
+    <value>Subtitle language preference</value>
+  </data>
+  <data name="lbl_JellyfinConfig" xml:space="preserve">
+    <value>Jellyfin Config</value>
+  </data>
+  <data name="SelectSubtitleMode" xml:space="preserve">
+    <value>Select Subtitle Mode</value>
+  </data>
+  <data name="AudioLanguage" xml:space="preserve">
+    <value>e.g. en | da | nl</value>
+  </data>
+  <data name="lbl_OpenConfig" xml:space="preserve">
+    <value>Open config</value>
+  </data>
+  <data name="lbl_ValidateLogin" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="lbl_ValidateJellyfin" xml:space="preserve">
+    <value>Validate Jellyfin Server</value>
+  </data>
+  <data name="NoJellyfinServer" xml:space="preserve">
+    <value>Please fill in the Jellyfin server first...</value>
+  </data>
+  <data name="JellyfinLoginFailed" xml:space="preserve">
+    <value>Login failed: Invalid credentials or server error.</value>
+  </data>
+  <data name="lbl_JellyfinServerApi" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="UpdateMode" xml:space="preserve">
+    <value>Update mode</value>
+  </data>
+  <data name="lbl_ServerSettings" xml:space="preserve">
+    <value>Server settings</value>
+  </data>
+  <data name="lbl_BrowserSettings" xml:space="preserve">
+    <value>Browser settings</value>
+  </data>
+  <data name="lbl_UserSettings" xml:space="preserve">
+    <value>User settings</value>
+  </data>
+  <data name="lbl_userAutoLogin" xml:space="preserve">
+    <value>Enable auto login</value>
+  </data>
+  <data name="lbl_JellyfinUser" xml:space="preserve">
+    <value>Jellyfin user(s)</value>
+  </data>
+  <data name="lbl_FailedUsers" xml:space="preserve">
+    <value>Failed to retrieve any Jellyfin Users, no Config settings will be changed!</value>
+  </data>
+  <data name="lbl_UpdateMode" xml:space="preserve">
+    <value>Choose what to update</value>
+  </data>
+  <data name="lbl_JellyfinAPIKey" xml:space="preserve">
+    <value>Jellyfin API Key</value>
+  </data>
+  <data name="lbl_SelectUsers" xml:space="preserve">
+    <value>Select user(s) to update</value>
+  </data>
+  <data name="lbl_Validation" xml:space="preserve">
+    <value>🍺 Buy me a beer</value>
+  </data>
+  <data name="btn_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="lbl_easyRight" xml:space="preserve">
+    <value>That was easy, right?</value>
   </data>
 </root>

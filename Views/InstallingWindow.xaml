@@ -1,11 +1,16 @@
 ﻿<Window x:Class="Samsung_Jellyfin_Installer.Views.InstallingWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="Installing" Height="120" Width="300"
-        WindowStyle="ToolWindow" ResizeMode="NoResize" ShowInTaskbar="False"
-        WindowStartupLocation="CenterScreen" Topmost="True">
-    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock x:Name="StatusTextBlock" Text="Installing Tizen CLI..." FontWeight="Bold" Margin="0,10" />
-        <ProgressBar IsIndeterminate="True" Height="20" Width="250" />
+        WindowStyle="ToolWindow"  ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen" Topmost="True" >
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" >
+        <materialDesign:Card Padding="10" >
+            <StackPanel>
+                <TextBlock x:Name="StatusTextBlock" Text="Installing Tizen CLI..." FontWeight="Bold" Margin="0,10" />
+                <ProgressBar IsIndeterminate="True" Height="20" Width="250" />
+            </StackPanel>
+        </materialDesign:Card>
     </StackPanel>
 </Window>

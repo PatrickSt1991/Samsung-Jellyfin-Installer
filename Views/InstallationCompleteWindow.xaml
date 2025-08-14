@@ -1,0 +1,70 @@
+﻿<Window x:Class="Samsung_Jellyfin_Installer.Views.InstallationCompleteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Samsung_Jellyfin_Installer.Views"
+        xmlns:loc="clr-namespace:Samsung_Jellyfin_Installer.Converters"
+        mc:Ignorable="d"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        Title="{loc:Localize InstallationSuccessful}"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStyle="None">
+    <Grid Background="#19000B25">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="295*"/>
+            <ColumnDefinition Width="74*"/>
+        </Grid.ColumnDefinitions>
+        <materialDesign:Card Margin="15,15,15,15" Padding="10" Grid.ColumnSpan="2" >
+            <StackPanel Margin="20" HorizontalAlignment="Center">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="✅" FontSize="36" TextAlignment="Center" />
+                    <TextBlock 
+                        x:Name="MessageText"
+                        TextWrapping="Wrap"
+                        FontSize="16"
+                        TextAlignment="Center"
+                        Margin="0,10,0,15" 
+                        Text="{loc:Localize InstallationSuccessfulOn}"/>
+                    <TextBlock 
+                        x:Name="ValidationRule"
+                        TextWrapping="Wrap"
+                        TextAlignment="Center"
+                        Margin="0,0,0,15" 
+                        Text="{loc:Localize lbl_easyRight}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <!-- Ko-fi Button -->
+                    <Button Background="#FF000B25"
+                        Foreground="White"
+                        Style="{DynamicResource MaterialDesignRaisedLightButton}"
+                        Margin="10,5,15,10"
+                        Click="Validation_Click"
+                        Cursor="Hand"
+                        BorderThickness="0"
+                        HorizontalAlignment="Center" 
+                        BorderBrush="#FF36FD00"
+                        Content="{loc:Localize lbl_Validation}"/>
+
+                    <!-- Close Button -->
+                    <Button Content="{loc:Localize btn_Close}"
+                    Margin="10,5,5,10"
+                    Style="{DynamicResource MaterialDesignRaisedLightButton}"
+                    Background="#FF000B25" 
+                    Foreground="White"
+                    Click="CloseButton_Click"
+                    BorderThickness="0"
+                    Width="80"
+                    HorizontalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </materialDesign:Card>
+    </Grid>
+</Window>

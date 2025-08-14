@@ -124,7 +124,7 @@
     <value>Installationen mislykkedes</value>
   </data>
   <data name="InstallationSuccessfulOn" xml:space="preserve">
-    <value>Succesfuldt installeret på</value>
+    <value>Jellyfin er blevet installeret!</value>
   </data>
   <data name="DownloadFailed" xml:space="preserve">
     <value>Download mislykkedes:</value>
@@ -361,12 +361,138 @@
     <value>SDB-serveren kunne ikke stoppe!</value>
   </data>
   <data name="lbl_JellyfinServer" xml:space="preserve">
-    <value>Jellyfin Server</value>
+    <value>Adresse</value>
   </data>
   <data name="lbl_ModifyConfig" xml:space="preserve">
-    <value>Rediger konfiguration</value>
+    <value>Indstil Jellyfin-konfiguration</value>
   </data>
   <data name="ConfigFailure" xml:space="preserve">
     <value>config.json blev ikke fundet i den udpakkede pakke.</value>
+  </data>
+  <data name="ServerIP" xml:space="preserve">
+    <value>Server IP</value>
+  </data>
+  <data name="ServerPort" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="SelectTheme" xml:space="preserve">
+    <value>Vælg tema</value>
+  </data>
+  <data name="lbl_EnableBackdrops" xml:space="preserve">
+    <value>Aktiver Baggrunde</value>
+  </data>
+  <data name="lbl_EnableThemeSongs" xml:space="preserve">
+    <value>Aktiver temasange</value>
+  </data>
+  <data name="lbl_EnableThemeVideos" xml:space="preserve">
+    <value>Aktiver temavideoer</value>
+  </data>
+  <data name="lbl_BackdropScreensaver" xml:space="preserve">
+    <value>Pauseskærm på baggrund</value>
+  </data>
+  <data name="lbl_DetailsBanner" xml:space="preserve">
+    <value>Detaljer banner</value>
+  </data>
+  <data name="lbl_CinemaMode" xml:space="preserve">
+    <value>Biograftilstand</value>
+  </data>
+  <data name="lbl_NextUpEnabled" xml:space="preserve">
+    <value>Next-up aktiveret</value>
+  </data>
+  <data name="lbl_EnableExternalVideoPlayers" xml:space="preserve">
+    <value>Aktiver eksterne videoafspillere</value>
+  </data>
+  <data name="lbl_SkipIntros" xml:space="preserve">
+    <value>Spring over introer</value>
+  </data>
+  <data name="lbl_AutoPlayNextEpisode" xml:space="preserve">
+    <value>Afspil næste afsnit automatisk</value>
+  </data>
+  <data name="lbl_RememberAudioSelections" xml:space="preserve">
+    <value>Husk lydvalg</value>
+  </data>
+  <data name="lbl_RememberSubtitleSelections" xml:space="preserve">
+    <value>Husk valg af undertekster</value>
+  </data>
+  <data name="lbl_PlayDefaultAudioTrack" xml:space="preserve">
+    <value>Afspil standard lydspor</value>
+  </data>
+  <data name="lbl_SubtitleMode" xml:space="preserve">
+    <value>Underteksttilstand</value>
+  </data>
+  <data name="lbl_AudioLanguagePreference" xml:space="preserve">
+    <value>Lydsprog præference</value>
+  </data>
+  <data name="lbl_SubtitleLanguagePreference" xml:space="preserve">
+    <value>Foretrukket sprog for undertekster</value>
+  </data>
+  <data name="lbl_JellyfinConfig" xml:space="preserve">
+    <value>Jellyfin-konfiguration</value>
+  </data>
+  <data name="SelectSubtitleMode" xml:space="preserve">
+    <value>Vælg underteksttilstand</value>
+  </data>
+  <data name="AudioLanguage" xml:space="preserve">
+    <value>f.eks. en | da | nl</value>
+  </data>
+  <data name="lbl_OpenConfig" xml:space="preserve">
+    <value>Åbn konfig</value>
+  </data>
+  <data name="lbl_ValidateLogin" xml:space="preserve">
+    <value>Valider</value>
+  </data>
+  <data name="lbl_ValidateJellyfin" xml:space="preserve">
+    <value>Valider Jellyfin-server</value>
+  </data>
+  <data name="NoJellyfinServer" xml:space="preserve">
+    <value>Udfyld venligst Jellyfin-serveren først...</value>
+  </data>
+  <data name="JellyfinLoginFailed" xml:space="preserve">
+    <value>Login mislykkedes: Ugyldige loginoplysninger eller serverfejl.</value>
+  </data>
+  <data name="lbl_JellyfinServerApi" xml:space="preserve">
+    <value>API -nøgle</value>
+  </data>
+  <data name="UpdateMode" xml:space="preserve">
+    <value>Opdateringstilstand</value>
+  </data>
+  <data name="lbl_ServerSettings" xml:space="preserve">
+    <value>Serverindstillinger</value>
+  </data>
+  <data name="lbl_BrowserSettings" xml:space="preserve">
+    <value>Browserindstillinger</value>
+  </data>
+  <data name="lbl_UserSettings" xml:space="preserve">
+    <value>Brugerindstillinger</value>
+  </data>
+  <data name="lbl_userAutoLogin" xml:space="preserve">
+    <value>Aktiver automatisk login</value>
+  </data>
+  <data name="lbl_JellyfinUser" xml:space="preserve">
+    <value>Jellyfin-bruger(e)</value>
+  </data>
+  <data name="lbl_FailedUsers" xml:space="preserve">
+    <value>Kunne ikke hente nogen Jellyfin-brugere. Ingen konfigurationsindstillinger vil blive ændret!</value>
+  </data>
+  <data name="lbl_UpdateMode" xml:space="preserve">
+    <value>Vælg, hvad der skal opdateres</value>
+  </data>
+  <data name="lbl_JellyfinAPIKey" xml:space="preserve">
+    <value>Jellyfin API nøgle</value>
+  </data>
+  <data name="lbl_SelectUsers" xml:space="preserve">
+    <value>Vælg bruger(e) til opdatering</value>
+  </data>
+  <data name="lbl_Validation" xml:space="preserve">
+    <value>🍺 Køb mig en øl</value>
+  </data>
+  <data name="btn_Close" xml:space="preserve">
+    <value>Tæt</value>
+  </data>
+  <data name="lbl_easyRight" xml:space="preserve">
+    <value>Det var nemt, ikke?</value>
   </data>
 </root>

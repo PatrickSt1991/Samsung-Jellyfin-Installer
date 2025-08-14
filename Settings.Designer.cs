@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.6.8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.7.0-beta")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
@@ -188,13 +188,263 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ModifyConfig {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioLanguagePreference {
             get {
-                return ((bool)(this["ModifyConfig"]));
+                return ((string)(this["AudioLanguagePreference"]));
             }
             set {
-                this["ModifyConfig"] = value;
+                this["AudioLanguagePreference"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SubtitleLanguagePreference {
+            get {
+                return ((string)(this["SubtitleLanguagePreference"]));
+            }
+            set {
+                this["SubtitleLanguagePreference"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableBackdrops {
+            get {
+                return ((bool)(this["EnableBackdrops"]));
+            }
+            set {
+                this["EnableBackdrops"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableThemeSongs {
+            get {
+                return ((bool)(this["EnableThemeSongs"]));
+            }
+            set {
+                this["EnableThemeSongs"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableThemeVideos {
+            get {
+                return ((bool)(this["EnableThemeVideos"]));
+            }
+            set {
+                this["EnableThemeVideos"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool BackdropScreensaver {
+            get {
+                return ((bool)(this["BackdropScreensaver"]));
+            }
+            set {
+                this["BackdropScreensaver"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DetailsBanner {
+            get {
+                return ((bool)(this["DetailsBanner"]));
+            }
+            set {
+                this["DetailsBanner"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CinemaMode {
+            get {
+                return ((bool)(this["CinemaMode"]));
+            }
+            set {
+                this["CinemaMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool NextUpEnabled {
+            get {
+                return ((bool)(this["NextUpEnabled"]));
+            }
+            set {
+                this["NextUpEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableExternalVideoPlayers {
+            get {
+                return ((bool)(this["EnableExternalVideoPlayers"]));
+            }
+            set {
+                this["EnableExternalVideoPlayers"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SkipIntros {
+            get {
+                return ((bool)(this["SkipIntros"]));
+            }
+            set {
+                this["SkipIntros"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AutoPlayNextEpisode {
+            get {
+                return ((bool)(this["AutoPlayNextEpisode"]));
+            }
+            set {
+                this["AutoPlayNextEpisode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool RememberAudioSelections {
+            get {
+                return ((bool)(this["RememberAudioSelections"]));
+            }
+            set {
+                this["RememberAudioSelections"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool RememberSubtitleSelections {
+            get {
+                return ((bool)(this["RememberSubtitleSelections"]));
+            }
+            set {
+                this["RememberSubtitleSelections"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool PlayDefaultAudioTrack {
+            get {
+                return ((bool)(this["PlayDefaultAudioTrack"]));
+            }
+            set {
+                this["PlayDefaultAudioTrack"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SelectedTheme {
+            get {
+                return ((string)(this["SelectedTheme"]));
+            }
+            set {
+                this["SelectedTheme"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Default")]
+        public string SelectedSubtitleMode {
+            get {
+                return ((string)(this["SelectedSubtitleMode"]));
+            }
+            set {
+                this["SelectedSubtitleMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ConfigUpdateMode {
+            get {
+                return ((string)(this["ConfigUpdateMode"]));
+            }
+            set {
+                this["ConfigUpdateMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinApiKey {
+            get {
+                return ((string)(this["JellyfinApiKey"]));
+            }
+            set {
+                this["JellyfinApiKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JellyfinUserId {
+            get {
+                return ((string)(this["JellyfinUserId"]));
+            }
+            set {
+                this["JellyfinUserId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UserAutoLogin {
+            get {
+                return ((bool)(this["UserAutoLogin"]));
+            }
+            set {
+                this["UserAutoLogin"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/23" +
+            "9769070")]
+        public string JellyfinAvRelease {
+            get {
+                return ((string)(this["JellyfinAvRelease"]));
             }
         }
     }
