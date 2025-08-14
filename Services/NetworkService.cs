@@ -112,7 +112,7 @@ public class NetworkService : INetworkService
         Debug.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
         return foundDevices;
     }
-    private IEnumerable<IPAddress> GetRelevantLocalIPs()
+    public IEnumerable<IPAddress> GetRelevantLocalIPs()
     {
         var baseIps = NetworkInterface.GetAllNetworkInterfaces()
             .Where(ni => ni.OperationalStatus == OperationalStatus.Up)

@@ -264,7 +264,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private async Task<bool> InstallPackageAsync(string packagePath = null)
         {
             string installPath = packagePath ?? _downloadedPackagePath;
-            string CurrentDeviceLocalIpAddress = _networkService.GetLocalIPAddress();
+
+            var localIps = _networkService.GetRelevantLocalIPs()
+                              .Select(ip => ip.ToString())
+                              .ToList();
+
+            bool ipMismatch = !localIps.Contains(SelectedDevice.DeveloperIP);
 
             if (string.IsNullOrEmpty(installPath) || !File.Exists(installPath))
             {
@@ -284,27 +289,21 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 return false;
             }
 
-            if (SelectedDevice.DeveloperIP != CurrentDeviceLocalIpAddress)
+            if(ipMismatch && Settings.Default.RTLReading)
             {
-                bool ipMismatch = true;
+                ipMismatch = !localIps
+                    .Select(ip => _networkService.InvertIPAddress(ip))
+                    .Contains(SelectedDevice.DeveloperIP);
 
-                if (Settings.Default.RTLReading)
-                {
-                    string invertedIp = _networkService.InvertIPAddress(CurrentDeviceLocalIpAddress);
-                    if (SelectedDevice.DeveloperIP == invertedIp)
-                    {
-                        SelectedDevice.IpAddress = invertedIp;
-                        ipMismatch = false;
-                    }
-                }
-
-                if (ipMismatch)
-                {
-                    await _dialogService.ShowErrorAsync("DeveloperIPMismatch".Localized());
-                    return false;
-                }
+                if (!ipMismatch)
+                    SelectedDevice.IpAddress = SelectedDevice.DeveloperIP;
             }
 
+            if (ipMismatch)
+            {
+                await _dialogService.ShowErrorAsync("DeveloperIPMismatch".Localized());
+                return false;
+            }
 
             IsLoading = true;
             try
