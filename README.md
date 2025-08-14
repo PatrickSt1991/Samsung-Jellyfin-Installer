@@ -19,7 +19,7 @@ A simple tool for installing **Jellyfin** on your **Samsung Smart TV**—quickly
 <!-- versions:end -->
 
 ---
-
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M71JOT9R)
 ## 🚀 How It Works
 
 ### 1. Launch the Tool  
