@@ -471,4 +471,19 @@
   <data name="lbl_userAutoLogin" xml:space="preserve">
     <value>Schakel automatisch inloggen in</value>
   </data>
+  <data name="lbl_JellyfinUser" xml:space="preserve">
+    <value>Jellyfin-gebruiker(s)</value>
+  </data>
+  <data name="lbl_FailedUsers" xml:space="preserve">
+    <value>Het ophalen van Jellyfin-gebruikers is mislukt. Er worden geen configuratie-instellingen gewijzigd!</value>
+  </data>
+  <data name="lbl_UpdateMode" xml:space="preserve">
+    <value>Kies wat u wilt updaten</value>
+  </data>
+  <data name="lbl_JellyfinAPIKey" xml:space="preserve">
+    <value>Jellyfin API-sleutel</value>
+  </data>
+  <data name="lbl_SelectUsers" xml:space="preserve">
+    <value>Selecteer gebruiker(s) om bij te werken</value>
+  </data>
 </root>

@@ -471,4 +471,19 @@
   <data name="lbl_userAutoLogin" xml:space="preserve">
     <value>Aktiver automatisk login</value>
   </data>
+  <data name="lbl_JellyfinUser" xml:space="preserve">
+    <value>Jellyfin-bruger(e)</value>
+  </data>
+  <data name="lbl_FailedUsers" xml:space="preserve">
+    <value>Kunne ikke hente nogen Jellyfin-brugere. Ingen konfigurationsindstillinger vil blive ændret!</value>
+  </data>
+  <data name="lbl_UpdateMode" xml:space="preserve">
+    <value>Vælg, hvad der skal opdateres</value>
+  </data>
+  <data name="lbl_JellyfinAPIKey" xml:space="preserve">
+    <value>Jellyfin API nøgle</value>
+  </data>
+  <data name="lbl_SelectUsers" xml:space="preserve">
+    <value>Vælg bruger(e) til opdatering</value>
+  </data>
 </root>

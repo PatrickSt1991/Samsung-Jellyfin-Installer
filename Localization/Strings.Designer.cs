@@ -565,11 +565,29 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to retrieve any Jellyfin Users, no Config settings will be changed!.
+        /// </summary>
+        public static string lbl_FailedUsers {
+            get {
+                return ResourceManager.GetString("lbl_FailedUsers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Force Samsung Login.
         /// </summary>
         public static string lbl_ForceLogin {
             get {
                 return ResourceManager.GetString("lbl_ForceLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Jellyfin API Key.
+        /// </summary>
+        public static string lbl_JellyfinAPIKey {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinAPIKey", resourceCulture);
             }
         }
         
@@ -597,6 +615,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_JellyfinServerApi {
             get {
                 return ResourceManager.GetString("lbl_JellyfinServerApi", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Jellyfin user(s).
+        /// </summary>
+        public static string lbl_JellyfinUser {
+            get {
+                return ResourceManager.GetString("lbl_JellyfinUser", resourceCulture);
             }
         }
         
@@ -709,6 +736,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select user(s) to update.
+        /// </summary>
+        public static string lbl_SelectUsers {
+            get {
+                return ResourceManager.GetString("lbl_SelectUsers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Server settings.
         /// </summary>
         public static string lbl_ServerSettings {
@@ -750,6 +786,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_SubtitleMode {
             get {
                 return ResourceManager.GetString("lbl_SubtitleMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose what to update.
+        /// </summary>
+        public static string lbl_UpdateMode {
+            get {
+                return ResourceManager.GetString("lbl_UpdateMode", resourceCulture);
             }
         }
         

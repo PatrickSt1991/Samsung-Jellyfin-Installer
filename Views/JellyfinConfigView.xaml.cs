@@ -1,4 +1,5 @@
 ﻿using Samsung_Jellyfin_Installer.ViewModels;
+using System.Net.Http;
 using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Views
@@ -8,7 +9,8 @@ namespace Samsung_Jellyfin_Installer.Views
         public JellyfinConfigView()
         {
             InitializeComponent();
-            DataContext = new JellyfinConfigViewModel();
+            var httpClient = new HttpClient();
+            DataContext = new JellyfinConfigViewModel(httpClient);
         }
     }
 }

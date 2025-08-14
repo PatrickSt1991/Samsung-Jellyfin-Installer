@@ -471,4 +471,19 @@
   <data name="lbl_userAutoLogin" xml:space="preserve">
     <value>Enable auto login</value>
   </data>
+  <data name="lbl_JellyfinUser" xml:space="preserve">
+    <value>Jellyfin user(s)</value>
+  </data>
+  <data name="lbl_FailedUsers" xml:space="preserve">
+    <value>Failed to retrieve any Jellyfin Users, no Config settings will be changed!</value>
+  </data>
+  <data name="lbl_UpdateMode" xml:space="preserve">
+    <value>Choose what to update</value>
+  </data>
+  <data name="lbl_JellyfinAPIKey" xml:space="preserve">
+    <value>Jellyfin API Key</value>
+  </data>
+  <data name="lbl_SelectUsers" xml:space="preserve">
+    <value>Select user(s) to update</value>
+  </data>
 </root>

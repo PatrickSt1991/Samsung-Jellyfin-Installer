@@ -36,6 +36,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -50,7 +51,7 @@
                                 SelectedItem="{Binding SelectedUpdateMode, Mode=TwoWay}"
                                 materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
                                 FontSize="14" 
-                                materialDesign:HintAssist.Hint="Update mode"
+                                materialDesign:HintAssist.Hint="{loc:Localize lbl_UpdateMode}"
                                 VerticalAlignment="Center"/>
                             
                             <Label Grid.Column="0" Grid.Row="1" Content="{loc:Localize lbl_JellyfinServer}" FontSize="14" VerticalAlignment="Center" Margin="0,15,12,0"/>
@@ -87,18 +88,31 @@
                                 Text="{Binding JellyfinApiKey, Mode=TwoWay}"
                                 Style="{DynamicResource MaterialDesignTextBox}"
                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                materialDesign:HintAssist.Hint="API Key"
+                                materialDesign:HintAssist.Hint="{loc:Localize lbl_JellyfinAPIKey}"
                                 FontSize="14" 
                                 Margin="0,15,0,0" 
                                 IsEnabled="{Binding ApiKeyEnabled}"
                                 BorderBrush="#FF000B25"/>
+
+                            <!-- User Selection (ConfigUpdateMode) -->
+                            <Label Grid.Row="3" Grid.Column="0" FontSize="14"  Content="{loc:Localize lbl_JellyfinUser}" VerticalAlignment="Center" Margin="0,15,12,0"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0 15 0 0"
+                                Style="{DynamicResource MaterialDesignComboBox}"
+                                ItemsSource="{Binding AvailableJellyfinUsers}"
+                                SelectedItem="{Binding SelectedJellyfinUser, Mode=TwoWay}"
+                                IsEnabled="{Binding ApiKeySet}"
+                                DisplayMemberPath="Name"
+                                materialDesign:TextFieldAssist.UnderlineBrush="#FF000B25"
+                                FontSize="14" 
+                                materialDesign:HintAssist.Hint="{loc:Localize lbl_SelectUsers}"
+                                VerticalAlignment="Center"/>
                         </Grid>
                     </StackPanel>
                 </materialDesign:Card>
 
                 <!-- Browser Settings Section -->
                 <materialDesign:Card Margin="14,0,14,20" Padding="10">
-                    <StackPanel IsEnabled="{Binding ApiKeyEnabled}">
+                    <StackPanel IsEnabled="{Binding ApiKeySet}">
                         <TextBlock Text="{loc:Localize lbl_BrowserSettings}" d:Text="BrowserSettings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
 
                         <!-- HTML INJECTION -->
@@ -243,7 +257,7 @@
 
                 <!-- API Settings Section -->
                 <materialDesign:Card Margin="14,0,14,0" Padding="10">
-                    <StackPanel IsEnabled="{Binding ApiKeyEnabled}">
+                    <StackPanel IsEnabled="{Binding ApiKeySet}">
                         <TextBlock Text="{loc:Localize lbl_UserSettings}" d:Text="UserSettings" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
 
                         <Grid>

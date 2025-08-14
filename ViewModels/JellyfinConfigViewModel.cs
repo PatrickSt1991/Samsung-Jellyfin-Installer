@@ -1,10 +1,16 @@
-﻿using System.Collections.ObjectModel;
-using System.Security.Policy;
+﻿using Samsung_Jellyfin_Installer.Models;
+using Samsung_Jellyfin_Installer.Services;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace Samsung_Jellyfin_Installer.ViewModels
 {
     public class JellyfinConfigViewModel : ViewModelBase
     {
+        private readonly HttpClient _httpClient;
+
         private string? _audioLanguagePreference;
         private string? _subtitleLanguagePreference;
         private string? _jellyfinServerIp;
@@ -28,6 +34,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private bool _playDefaultAudioTrack;
         private bool _userAutoLogin;
         private bool _apiKeyEnabled = false;
+        private bool _apiKeySet = false;
+        private ObservableCollection<JellyfinAuth> _availableJellyfinUsers;
+        private JellyfinAuth _selectedJellyfinUser;
 
         public string AudioLanguagePreference
         {
@@ -114,6 +123,12 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                     Settings.Default.JellyfinApiKey = value;
                     Settings.Default.Save();
+
+                    ApiKeySet = !string.IsNullOrEmpty(Settings.Default.JellyfinIP) &&
+                                !string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) &&
+                                Settings.Default.JellyfinApiKey.Length == 32;
+
+                    _ = LoadJellyfinUsersAsync();
                 }
             }
         }
@@ -371,6 +386,18 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
+        public bool ApiKeySet
+        {
+            get => _apiKeySet;
+            set
+            {
+                if(_apiKeySet != value)
+                {
+                    _apiKeySet = value;
+                    OnPropertyChanged(nameof(ApiKeySet));
+                }
+            }
+        }
         public ObservableCollection<string> AvailableThemes { get; } =
         [
             "appletv",
@@ -402,9 +429,32 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             "Browser & User Settings",
             "All Settings"
         ];
-
-        public JellyfinConfigViewModel()
+        public ObservableCollection<JellyfinAuth> AvailableJellyfinUsers 
+        { 
+            get => _availableJellyfinUsers;
+            set
+            {
+                _availableJellyfinUsers = value;
+                OnPropertyChanged(nameof(AvailableJellyfinUsers));
+            }
+        }
+        public JellyfinAuth SelectedJellyfinUser
         {
+            get => _selectedJellyfinUser;
+            set
+            {
+                _selectedJellyfinUser = value;
+                OnPropertyChanged(nameof(SelectedJellyfinUser));
+            }
+        }
+
+        public JellyfinConfigViewModel(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
+
+            AvailableJellyfinUsers = [];
+
             var jellyfinIP = Settings.Default.JellyfinIP;
             if (!string.IsNullOrWhiteSpace(jellyfinIP) && jellyfinIP.Contains(':'))
             {
@@ -420,7 +470,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 JellyfinServerIp = "";
             }
-
+            
             SelectedUpdateMode = Settings.Default.ConfigUpdateMode;
             JellyfinApiKey = Settings.Default.JellyfinApiKey;
 
@@ -443,6 +493,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             RememberSubtitleSelections = Settings.Default.RememberSubtitleSelections;
             PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack;
             UserAutoLogin = Settings.Default.UserAutoLogin;
+
+            _ = LoadJellyfinUsersAsync();
         }
         private void UpdateJellyfinAddress()
         {
@@ -452,5 +504,44 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 Settings.Default.Save();
             }
         }
+        private async Task LoadJellyfinUsersAsync()
+        {
+            if (string.IsNullOrEmpty(Settings.Default.JellyfinIP) ||
+                string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) ||
+                Settings.Default.JellyfinApiKey.Length != 32)
+                return;
+
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
+
+            var response = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var users = JsonSerializer.Deserialize<List<JellyfinAuth>>(json);
+
+                AvailableJellyfinUsers.Clear();
+                foreach (var user in users)
+                    AvailableJellyfinUsers.Add(user);
+
+                if (AvailableJellyfinUsers.Count > 1)
+                {
+                    AvailableJellyfinUsers.Add(new JellyfinAuth
+                    {
+                        Id = "everyone",
+                        Name = "Everyone"
+                    });
+                }
+
+                var savedUserId = Settings.Default.JellyfinUserId;
+                if (!string.IsNullOrEmpty(savedUserId))
+                    SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == savedUserId);
+
+                if (SelectedJellyfinUser == null && AvailableJellyfinUsers.Count == 1)
+                    SelectedJellyfinUser = AvailableJellyfinUsers.First();
+            }
+        }
+
     }
 }
