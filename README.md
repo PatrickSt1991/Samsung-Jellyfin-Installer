@@ -14,7 +14,7 @@ A simple tool for installing **Jellyfin** on your **Samsung Smart TV**—quickly
 | Channel    | Version                                | Notes                                      |
 |------------|----------------------------------------|--------------------------------------------|
 | **Stable** | [avplay](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/avplay)           | Recommended for most users                 |
-| **Beta**   | [v1.6.9-beta](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.6.9-beta)               | Includes new features, may be less stable  |
+| **Beta**   | [v1.7.0-beta](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.7.0-beta)               | Includes new features, may be less stable  |
 
 <!-- versions:end -->
 
