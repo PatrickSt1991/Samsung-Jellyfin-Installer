@@ -79,6 +79,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string btn_Close {
+            get {
+                return ResourceManager.GetString("btn_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Checking Tizen Package manager.
         /// </summary>
         public static string CheckingPackageManagerList {
@@ -349,7 +358,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Successfully installed on.
+        ///   Looks up a localized string similar to Jellyfin has been successfully installed!.
         /// </summary>
         public static string InstallationSuccessfulOn {
             get {
@@ -516,6 +525,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_DetailsBanner {
             get {
                 return ResourceManager.GetString("lbl_DetailsBanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to That was easy, right?.
+        /// </summary>
+        public static string lbl_easyRight {
+            get {
+                return ResourceManager.GetString("lbl_easyRight", resourceCulture);
             }
         }
         
@@ -831,6 +849,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string lbl_ValidateLogin {
             get {
                 return ResourceManager.GetString("lbl_ValidateLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 🍺 Buy me a beer.
+        /// </summary>
+        public static string lbl_Validation {
+            get {
+                return ResourceManager.GetString("lbl_Validation", resourceCulture);
             }
         }
         

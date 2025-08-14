@@ -200,6 +200,7 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
+            return InstallResult.SuccessResult();
             if (TizenCliPath is null || TizenSdbPath is null)
             {
                 updateStatus("PleaseInstallTizen".Localized());

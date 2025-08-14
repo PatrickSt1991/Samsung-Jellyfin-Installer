@@ -124,7 +124,7 @@
     <value>Installatie mislukt</value>
   </data>
   <data name="InstallationSuccessfulOn" xml:space="preserve">
-    <value>Succesvol geïnstalleerd op</value>
+    <value>Jellyfin is succesvol geïnstalleerd!</value>
   </data>
   <data name="DownloadFailed" xml:space="preserve">
     <value>Downloaden mislukt:</value>
@@ -485,5 +485,14 @@
   </data>
   <data name="lbl_SelectUsers" xml:space="preserve">
     <value>Selecteer gebruiker(s) om bij te werken</value>
+  </data>
+  <data name="lbl_Validation" xml:space="preserve">
+    <value>🍺 Koop me een biertje</value>
+  </data>
+  <data name="btn_Close" xml:space="preserve">
+    <value>Sluiten</value>
+  </data>
+  <data name="lbl_easyRight" xml:space="preserve">
+    <value>Dat was makkelijk, toch?</value>
   </data>
 </root>

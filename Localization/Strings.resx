@@ -124,7 +124,7 @@
     <value>Installation failed</value>
   </data>
   <data name="InstallationSuccessfulOn" xml:space="preserve">
-    <value>Successfully installed on</value>
+    <value>Jellyfin has been successfully installed!</value>
   </data>
   <data name="DownloadFailed" xml:space="preserve">
     <value>Download failed:</value>
@@ -485,5 +485,14 @@
   </data>
   <data name="lbl_SelectUsers" xml:space="preserve">
     <value>Select user(s) to update</value>
+  </data>
+  <data name="lbl_Validation" xml:space="preserve">
+    <value>🍺 Buy me a beer</value>
+  </data>
+  <data name="btn_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="lbl_easyRight" xml:space="preserve">
+    <value>That was easy, right?</value>
   </data>
 </root>

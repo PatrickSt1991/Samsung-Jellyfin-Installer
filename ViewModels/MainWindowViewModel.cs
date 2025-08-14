@@ -318,7 +318,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
                 if (result.Success)
                 {
-                    await _dialogService.ShowMessageAsync($"{"InstallationSuccessfulOn".Localized()} {SelectedDevice.IpAddress}");
+                    var win = new InstallationCompleteWindow();
+                    win.ShowDialog();
                     return true;
                 }
                 else
