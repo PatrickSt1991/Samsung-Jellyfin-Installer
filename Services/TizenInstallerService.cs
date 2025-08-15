@@ -136,29 +136,41 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<(string, string)> EnsureTizenCliAvailable()
         {
-            bool cliOk = File.Exists(TizenCliPath) && File.Exists(TizenSdbPath);
-            bool cryptoOk = File.Exists(TizenCypto);
+            string tizenInstallationPath = null;
 
-            string[] certManagerPaths = {
-                Path.Combine(TizenRootPath, "certificate-manager", "certificate-manager.exe"),
-                Path.Combine(TizenRootPath, "tools", "certificate-manager", "certificate-manager.exe")
-            };
+            if (!string.IsNullOrWhiteSpace(TizenRootPath))
+            {
+                bool cliOk = File.Exists(TizenCliPath) && File.Exists(TizenSdbPath);
+                bool cryptoOk = File.Exists(TizenCypto);
 
-            bool certManagerOk = certManagerPaths.Any(File.Exists);
-            
-            string certManagerPluginsPath = Path.Combine(TizenRootPath, "tools", "certificate-manager", "plugins");
-            string idePluginsPath = Path.Combine(TizenRootPath, "ide", "plugins");
+                MessageBox.Show($"RootPath {TizenRootPath}");
 
-            bool certExtensionOk =
-                FolderHasCertJar(certManagerPluginsPath) ||
-                FolderHasCertJar(idePluginsPath);
+                string[] certManagerPaths = {
+                    Path.Combine(TizenRootPath, "certificate-manager", "certificate-manager.exe"),
+                    Path.Combine(TizenRootPath, "tools", "certificate-manager", "certificate-manager.exe")
+                };
 
-            if (cliOk && cryptoOk && certManagerOk && certExtensionOk)
-                return (TizenDataPath, TizenCypto);
+                bool certManagerOk = certManagerPaths.Any(File.Exists);
+                MessageBox.Show($"certManager-OK {certManagerOk}");
 
-            var tizenInstallationPath = await InstallMinimalCli();
+                string certManagerPluginsPath = Path.Combine(TizenRootPath, "tools", "certificate-manager", "plugins");
+                string idePluginsPath = Path.Combine(TizenRootPath, "ide", "plugins");
+
+                bool certExtensionOk =
+                    FolderHasCertJar(certManagerPluginsPath) ||
+                    FolderHasCertJar(idePluginsPath);
+
+                MessageBox.Show($"certExtension-OK {certExtensionOk}");
+
+                if (cliOk && cryptoOk && certManagerOk && certExtensionOk)
+                    return (TizenDataPath, TizenCypto);
+            }
+
+            // Fallback: Install minimal CLI
+            tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
         }
+
         bool FolderHasCertJar(string path)
         {
             if (!Directory.Exists(path))
