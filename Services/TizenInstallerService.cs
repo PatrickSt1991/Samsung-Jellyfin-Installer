@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Primitives;
 using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
@@ -11,6 +12,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
+using static MaterialDesignThemes.Wpf.Theme.ToolBar;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -259,7 +261,7 @@ namespace Samsung_Jellyfin_Installer.Services
                                 PackageCertificate = "Jelly2Sams";
                                 Settings.Default.Certificate = PackageCertificate;
                                 Settings.Default.Save();
-                                UpdateCertificateManager(p12Location, p12Password, updateStatus);
+                                UpdateCertificateManager(p12Location, p12Password, "Jelly2Sams", updateStatus);
                             }
                             else
                             {
@@ -280,8 +282,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 else
                 {
                     updateStatus("UpdatingCertificateProfile".Localized());
-                    UpdateProfileCertificatePaths();
-                    PackageCertificate = "custom";
+                    UpdateCertificateManager("custom", "custom", "custom_jelly", updateStatus);
+                    PackageCertificate = "custom_jelly";
                 }
 
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && !Settings.Default.ConfigUpdateMode.Contains("None"))
@@ -588,7 +590,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 Debug.WriteLine($"General error updating user configurations: {ex.Message}");
             }
         }
-        private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
+        private void UpdateCertificateManager(string p12Location, string p12Password, string profileName, Action<string> updateStatus)
         {
             if (string.IsNullOrEmpty(p12Location))
             {
@@ -600,22 +602,37 @@ namespace Samsung_Jellyfin_Installer.Services
                 throw new ArgumentException("p12Password cannot be null or empty", nameof(p12Password));
             }
 
+            string distributorFile = "distributor.p12";
+            string distributorPassword = p12Password;
+            string authorPassword = p12Password;
+            string distributorLocation = p12Location;
+            string authorLocation = p12Location;
+
+            if (profileName == "custom_jelly")
+            {
+                distributorFile = "tizen-distributor-signer.p12";
+                distributorPassword = "Vy63flx5JBMc5GA4iEf8oFy+8aKE7FX/+arrDcO4I5k=";
+                distributorLocation = Path.Combine(TizenRootPath, "tools", "certificate-generator", "certificates", "distributor");
+                authorPassword = "eF0GFnArm/35qusNw7gjmQ==";
+                authorLocation = Path.GetFullPath("TizenProfile/preSign/");
+            }
+
             updateStatus("SettingCertificateManager".Localized());
-            string profileName = "Jelly2Sams";
+
             XElement jelly2SamsProfile = new XElement("profile",
                 new XAttribute("name", profileName),
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "0"),
-                    new XAttribute("key", Path.Combine(p12Location, "author.p12")),
-                    new XAttribute("password", $"{p12Password}"),
+                    new XAttribute("key", Path.Combine(authorLocation, "author.p12")),
+                    new XAttribute("password", $"{authorPassword}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "1"),
-                    new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
-                    new XAttribute("password", $"{p12Password}"),
+                    new XAttribute("key", Path.Combine(distributorLocation, distributorFile)),
+                    new XAttribute("password", $"{distributorPassword}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
@@ -639,7 +656,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 doc = new XDocument(
                     new XDeclaration("1.0", "UTF-8", "no"),
                     new XElement("profiles",
-                        new XAttribute("active", "Jelly2Sams"),
+                        new XAttribute("active", profileName),
                         new XAttribute("version", "3.1"),
                         jelly2SamsProfile
                     )
@@ -655,12 +672,10 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (existingProfile is null)
                 {
-                    // Add new profile if it doesn't exist
                     root.Add(jelly2SamsProfile);
                 }
                 else if (string.Equals(profileName, "Jelly2Sams", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Update password only for specific keys in Jelly2Sams profile
                     foreach (var item in existingProfile.Elements("profileitem"))
                     {
                         string? keyValue = item.Attribute("key")?.Value;
@@ -672,37 +687,26 @@ namespace Samsung_Jellyfin_Installer.Services
                         }
                     }
                 }
+                else if (string.Equals(profileName, "custom", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (var item in existingProfile.Elements("profileitem"))
+                    {
+                        string? keyValue = item.Attribute("key")?.Value;
+
+                        if (!string.IsNullOrEmpty(keyValue))
+                        {
+                            if (keyValue.EndsWith("author.p12", StringComparison.OrdinalIgnoreCase))
+                                item.SetAttributeValue("password", authorPassword);
+
+                            else if (keyValue.EndsWith("distributor.p12", StringComparison.OrdinalIgnoreCase))
+                                item.SetAttributeValue("password", distributorPassword);
+                        }
+                    }
+                }
 
             }
 
             doc.Save(TizenDataPath);
-        }
-        private static void UpdateProfileCertificatePaths()
-        {
-            string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
-            
-            // Ensure the directory exists before trying to load the file
-            var directoryPath = Path.GetDirectoryName(profilePath);
-            if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            var xml = XDocument.Load(profilePath);
-            var profileItems = xml.Descendants("profileitem").ToList();
-
-            foreach (var item in profileItems)
-            {
-                string distributor = item.Attribute("distributor")?.Value;
-
-                if (distributor == "0")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/author.p12"));
-
-                if (distributor == "1")
-                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/distributor.p12"));
-            }
-
-            xml.Save(profilePath);
         }
         private static string? FindTizenRoot()
         {
