@@ -143,7 +143,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 bool cliOk = File.Exists(TizenCliPath) && File.Exists(TizenSdbPath);
                 bool cryptoOk = File.Exists(TizenCypto);
 
-                MessageBox.Show($"RootPath {TizenRootPath}");
 
                 string[] certManagerPaths = {
                     Path.Combine(TizenRootPath, "certificate-manager", "certificate-manager.exe"),
@@ -151,7 +150,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 };
 
                 bool certManagerOk = certManagerPaths.Any(File.Exists);
-                MessageBox.Show($"certManager-OK {certManagerOk}");
 
                 string certManagerPluginsPath = Path.Combine(TizenRootPath, "tools", "certificate-manager", "plugins");
                 string idePluginsPath = Path.Combine(TizenRootPath, "ide", "plugins");
@@ -160,13 +158,11 @@ namespace Samsung_Jellyfin_Installer.Services
                     FolderHasCertJar(certManagerPluginsPath) ||
                     FolderHasCertJar(idePluginsPath);
 
-                MessageBox.Show($"certExtension-OK {certExtensionOk}");
 
                 if (cliOk && cryptoOk && certManagerOk && certExtensionOk)
                     return (TizenDataPath, TizenCypto);
             }
 
-            // Fallback: Install minimal CLI
             tizenInstallationPath = await InstallMinimalCli();
             return (tizenInstallationPath, TizenCypto);
         }
