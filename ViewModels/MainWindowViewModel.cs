@@ -505,23 +505,37 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     IpAddress = device.IpAddress,
                     DeviceName = device.DeviceName,
                     Manufacturer = device.Manufacturer,
-                    DeveloperMode = developerMode,
-                    DeveloperIP = developerIP
+                    DeveloperMode = developerMode ?? string.Empty,
+                    DeveloperIP = developerIP ?? string.Empty
                 };
             }
-            catch(HttpRequestException ex)
+            catch (HttpRequestException ex)
             {
-                throw new Exception($"Error connecting to Samsung TV at {device.IpAddress}: {ex.Message}", ex);
+                await _dialogService.ShowErrorAsync(
+                    $"Error connecting to Samsung TV at {device.IpAddress}: {ex.Message}");
             }
             catch (JsonException ex)
             {
-                throw new Exception($"Error parsing JSON response: {ex.Message}", ex);
+                await _dialogService.ShowErrorAsync(
+                    $"Error parsing JSON response: {ex.Message}");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new Exception($"Unexpected error: {ex.Message}", ex);
+                await _dialogService.ShowErrorAsync(
+                    $"Unexpected error: {ex.Message}");
             }
+
+            // Return original device with DeveloperMode and DeveloperIP empty
+            return new NetworkDevice
+            {
+                IpAddress = device.IpAddress,
+                DeviceName = device.DeviceName,
+                Manufacturer = device.Manufacturer,
+                DeveloperMode = string.Empty,
+                DeveloperIP = string.Empty
+            };
         }
+
         private async Task PromptForManualIp()
         {
             string? ip = await _dialogService.PromptForIpAsync("IpWindowTitle".Localized(), "IpWindowDescription".Localized());
