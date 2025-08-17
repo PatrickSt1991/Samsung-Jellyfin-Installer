@@ -13,6 +13,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -120,8 +121,8 @@ namespace Samsung_Jellyfin_Installer.Services
 
                     if (!File.Exists(sourceFilePath))
                     {
-                        Console.WriteLine($"[ERROR] Source file not found: {sourceFilePath}");
-                        continue;
+                        MessageBox.Show($"[ERROR] Source file not found: {sourceFilePath}");
+                        return;
                     }
 
                     Directory.CreateDirectory(caPath); // Ensure target directory exists
@@ -141,7 +142,6 @@ namespace Samsung_Jellyfin_Installer.Services
             keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
             return keyGen.GenerateKeyPair();
         }
-
         private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
         {
             var oids = new List<DerObjectIdentifier>
@@ -173,7 +173,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 return ms.ToArray();
             }
         }
-
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
         {
             // Build subject: CN=TizenSDK
