@@ -349,7 +349,7 @@
     <value>Samsung TV staat niet in de ontwikkelaarsmodus...</value>
   </data>
   <data name="DeveloperIPMismatch" xml:space="preserve">
-    <value>Het IP-adres van de Samsung-ontwikkelaarsmodus komt niet overeen met het lokale IP-adres van dit apparaat</value>
+    <value>Het IP-adres van de Samsung Developer-modus komt niet overeen met het lokale IP-adres van dit apparaat. Wilt u doorgaan?</value>
   </data>
   <data name="lbl_RTL" xml:space="preserve">
     <value>Van rechts naar links (RTL) lezen</value>

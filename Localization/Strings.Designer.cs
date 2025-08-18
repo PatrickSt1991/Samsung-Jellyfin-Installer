@@ -187,7 +187,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Samsung Developer  mode IP doesn&apos;t match this devices local IP.
+        ///   Looks up a localized string similar to Samsung Developer mode IP doesn&apos;t match this devices local IP, do you wish to continue?.
         /// </summary>
         public static string DeveloperIPMismatch {
             get {

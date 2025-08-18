@@ -349,7 +349,7 @@
     <value>Samsung TV er ikke i udviklertilstand...</value>
   </data>
   <data name="DeveloperIPMismatch" xml:space="preserve">
-    <value>Samsungs udviklertilstands-IP matcher ikke denne enheds lokale IP</value>
+    <value>Samsungs IP-adresse for udviklertilstand matcher ikke denne enheds lokale IP-adresse. Vil du fortsætte?</value>
   </data>
   <data name="lbl_RTL" xml:space="preserve">
     <value>Højre-mod-venstre (RTL) læsning</value>

@@ -301,8 +301,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             if (ipMismatch)
             {
-                await _dialogService.ShowErrorAsync("DeveloperIPMismatch".Localized());
-                return false;
+                bool continueExecution = await _dialogService.ShowConfirmationAsync("DeveloperIPMismatch".Localized());
+                if (!continueExecution)
+                    return false;
             }
 
             IsLoading = true;

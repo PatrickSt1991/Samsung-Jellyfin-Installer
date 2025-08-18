@@ -349,7 +349,7 @@
     <value>Samsung TV is not in developer mode...</value>
   </data>
   <data name="DeveloperIPMismatch" xml:space="preserve">
-    <value>Samsung Developer  mode IP doesn't match this devices local IP</value>
+    <value>Samsung Developer mode IP doesn't match this devices local IP, do you wish to continue?</value>
   </data>
   <data name="lbl_RTL" xml:space="preserve">
     <value>Right-to-left (RTL) reading</value>
