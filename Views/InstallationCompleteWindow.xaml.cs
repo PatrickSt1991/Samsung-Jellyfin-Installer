@@ -17,7 +17,7 @@ namespace Samsung_Jellyfin_Installer.Views
                 FileName = "https://ko-fi.com/patrickst",
                 UseShellExecute = true
             });
-            
+
             this.Close();
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)

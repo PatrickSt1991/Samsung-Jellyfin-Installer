@@ -495,4 +495,10 @@
   <data name="lbl_easyRight" xml:space="preserve">
     <value>Dat was makkelijk, toch?</value>
   </data>
+  <data name="NoDevicesFoundRetry" xml:space="preserve">
+    <value>Geen apparaten gevonden. Opnieuw proberen met virtuele NIC?</value>
+  </data>
+  <data name="RetySearchMsg" xml:space="preserve">
+    <value>Er zijn geen tv's gevonden. Wilt u opnieuw zoeken, maar dan met virtuele netwerkkaarten?</value>
+  </data>
 </root>

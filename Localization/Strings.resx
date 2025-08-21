@@ -495,4 +495,10 @@
   <data name="lbl_easyRight" xml:space="preserve">
     <value>That was easy, right?</value>
   </data>
+  <data name="NoDevicesFoundRetry" xml:space="preserve">
+    <value>No devices found, retry with virtual NIC?</value>
+  </data>
+  <data name="RetySearchMsg" xml:space="preserve">
+    <value>No TV's found, want to search again with virtual network cards included in the search?</value>
+  </data>
 </root>

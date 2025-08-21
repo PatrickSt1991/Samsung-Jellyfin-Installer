@@ -24,7 +24,7 @@
       <Value Profile="(Default)">https://dev.tizen.samsung.com/apis/v2/distributors</Value>
     </Setting>
     <Setting Name="AppVersion" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">v1.7.2</Value>
+      <Value Profile="(Default)">v1.7.3-beta</Value>
     </Setting>
     <Setting Name="CustomWgtPath" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

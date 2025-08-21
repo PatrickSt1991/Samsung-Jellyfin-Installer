@@ -12,11 +12,6 @@ public class NetworkService : INetworkService
 {
     private readonly ITizenInstallerService _tizenInstaller;
     private static readonly HttpClient _httpClient = new HttpClient();
-    private static readonly HashSet<string> _excludedInterfacePatterns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "VirtualBox", "Loopback", "Docker", "Hyper-V",
-        "vEthernet", "VPN", "Bluetooth", "vSwitch"
-    };
     private const int tvPort = 26101;
     private const int scanTimeoutMs = 1000;
 
@@ -25,9 +20,9 @@ public class NetworkService : INetworkService
         _tizenInstaller = tizenInstaller;
     }
 
-    public async Task<IEnumerable<NetworkDevice>> GetLocalTizenAddresses(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<NetworkDevice>> GetLocalTizenAddresses(CancellationToken cancellationToken = default, bool virtualScan = false)
     {
-        return await FindTizenTvsAsync(cancellationToken);
+        return await FindTizenTvsAsync(cancellationToken, virtualScan);
     }
 
     public async Task<NetworkDevice?> ValidateManualTizenAddress(string ip, CancellationToken cancellationToken = default)
@@ -66,10 +61,10 @@ public class NetworkService : INetworkService
         }
     }
 
-    public async Task<IEnumerable<NetworkDevice>> FindTizenTvsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<NetworkDevice>> FindTizenTvsAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
     {
         var foundDevices = new List<NetworkDevice>();
-        var localIps = GetRelevantLocalIPs();
+        var localIps = GetRelevantLocalIPs(virtualScan);
         var lockObject = new object();
 
         // Group by network prefix to avoid scanning the same network multiple times
@@ -112,16 +107,20 @@ public class NetworkService : INetworkService
         Debug.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
         return foundDevices;
     }
-    public IEnumerable<IPAddress> GetRelevantLocalIPs()
+    public IEnumerable<IPAddress> GetRelevantLocalIPs(bool virtualScan = false)
     {
         var baseIps = NetworkInterface.GetAllNetworkInterfaces()
             .Where(ni => ni.OperationalStatus == OperationalStatus.Up)
-            .Where(ni => !_excludedInterfacePatterns.Any(p =>
-                ni.Name.Contains(p, StringComparison.OrdinalIgnoreCase)))
+            .Where(ni =>
+                virtualScan
+                    ? true 
+                    : (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                       ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
             .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
             .Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork)
             .Where(ip => !IPAddress.IsLoopback(ip.Address))
-            .Select(ip => ip.Address.ToString()); // Convert to string first
+            .Select(ip => ip.Address.ToString())
+            .ToList();
 
         var additionalIps = Enumerable.Empty<string>();
         if (Settings.Default.RememberCustomIP && !string.IsNullOrEmpty(Settings.Default.UserCustomIP))

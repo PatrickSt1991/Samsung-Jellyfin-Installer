@@ -10,7 +10,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 
@@ -223,10 +222,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         {
             if (!string.IsNullOrEmpty(Settings.Default.CustomWgtPath))
             {
-                foreach(string file in Settings.Default.CustomWgtPath.Split(';'))
+                foreach (string file in Settings.Default.CustomWgtPath.Split(';'))
                     if (!File.Exists(file))
                         return false;
-                
+
                 return !IsLoading && SelectedDevice != null &&
                        !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
             }
@@ -283,13 +282,13 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 return false;
             }
 
-            if(SelectedDevice.DeveloperMode == "0")
+            if (SelectedDevice.DeveloperMode == "0")
             {
                 await _dialogService.ShowErrorAsync("DeveloperModeRequired".Localized());
                 return false;
             }
 
-            if(ipMismatch && Settings.Default.RTLReading)
+            if (ipMismatch && Settings.Default.RTLReading)
             {
                 ipMismatch = !localIps
                     .Select(ip => _networkService.InvertIPAddress(ip))
@@ -346,15 +345,15 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             var customPaths = Settings.Default.CustomWgtPath?.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-            if(customPaths?.Length > 0)
+            if (customPaths?.Length > 0)
             {
                 isCustomWgt = true;
                 StatusBar = "UsingCustomWGT".Localized();
 
-                foreach(string filePath in customPaths)
+                foreach (string filePath in customPaths)
                 {
                     installPath = filePath.Trim();
-                    packageInstalled =await InstallPackageAsync(installPath);
+                    packageInstalled = await InstallPackageAsync(installPath);
 
                     if (!packageInstalled)
                         break;
@@ -424,22 +423,20 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 IsLoading = false;
             }
         }
-        private async Task LoadDevicesAsync(CancellationToken cancellationToken = default)
+        private async Task LoadDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
         {
             IsLoadingDevices = true;
-            cancellationToken = default;
             AvailableDevices.Clear();
+
             try
             {
-                string? selectedIp = null;
-                if (SelectedDevice is not null)
-                    selectedIp = SelectedDevice.IpAddress;
+                string? selectedIp = SelectedDevice?.IpAddress;
 
-                var devices = await _networkService.GetLocalTizenAddresses();
+                var devices = await _networkService.GetLocalTizenAddresses(cancellationToken, virtualScan);
 
                 foreach (NetworkDevice device in devices)
                 {
-                    if(await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
+                    if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
                     {
                         try
                         {
@@ -450,16 +447,33 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                         }
                         catch
                         {
-                            continue;
+                            // Ignore scan failures
                         }
                     }
                 }
 
                 if (AvailableDevices.Count == 0)
-                    StatusBar = "NoDevicesFound".Localized();
-                else
-                    StatusBar = "Ready".Localized();
+                {
+                    if (!virtualScan)
+                    {
+                        StatusBar = "NoDevicesFoundRetry".Localized();
+                        var rescan = MessageBox.Show(
+                            "RetySearchMsg".Localized(),
+                            "NoDevicesFound".Localized(),
+                            MessageBoxButton.YesNo);
 
+                        if (rescan == MessageBoxResult.Yes)
+                            await LoadDevicesAsync(cancellationToken, true);
+                    }
+                    else
+                    {
+                        StatusBar = "NoDevicesFound".Localized();
+                    }
+                }
+                else
+                {
+                    StatusBar = "Ready".Localized();
+                }
 
                 SelectedDevice = AvailableDevices.Count switch
                 {
@@ -476,16 +490,20 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
             finally
             {
-                AvailableDevices.Add(new NetworkDevice
+                if (!AvailableDevices.Any(d => d.IpAddress == "lbl_Other".Localized()))
                 {
-                    IpAddress = "lbl_Other".Localized(),
-                    Manufacturer = null,
-                    DeviceName = "IpNotListed".Localized()
-                });
+                    AvailableDevices.Add(new NetworkDevice
+                    {
+                        IpAddress = "lbl_Other".Localized(),
+                        Manufacturer = null,
+                        DeviceName = "IpNotListed".Localized()
+                    });
+                }
 
                 IsLoadingDevices = false;
             }
         }
+
         public async Task<NetworkDevice> GetDeverloperInfoAsync(NetworkDevice device)
         {
             try

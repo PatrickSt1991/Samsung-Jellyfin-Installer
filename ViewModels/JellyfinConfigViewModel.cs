@@ -1,5 +1,4 @@
 ﻿using Samsung_Jellyfin_Installer.Models;
-using Samsung_Jellyfin_Installer.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net.Http;
@@ -18,7 +17,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private string? _selectedSubtitleMode;
         private string _jellyfinApiKey;
         private string _selectedUpdateMode;
-        private int _selectedJellyfinPort;
+        private string _selectedJellyfinPort;
         private bool _enableBackdrops;
         private bool _enableThemeSongs;
         private bool _enableThemeVideos;
@@ -116,7 +115,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _jellyfinApiKey;
             set
             {
-                if(_jellyfinApiKey != value)
+                if (_jellyfinApiKey != value)
                 {
                     _jellyfinApiKey = value;
                     OnPropertyChanged(nameof(JellyfinApiKey));
@@ -151,7 +150,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
             }
         }
-        public int SelectedJellyfinPort
+        public string SelectedJellyfinPort
         {
             get => _selectedJellyfinPort;
             set
@@ -364,7 +363,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _userAutoLogin;
             set
             {
-                if(_userAutoLogin != value)
+                if (_userAutoLogin != value)
                 {
                     _userAutoLogin = value;
                     OnPropertyChanged(nameof(UserAutoLogin));
@@ -379,7 +378,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _apiKeyEnabled;
             set
             {
-                if(_apiKeyEnabled != value)
+                if (_apiKeyEnabled != value)
                 {
                     _apiKeyEnabled = value;
                     OnPropertyChanged(nameof(ApiKeyEnabled));
@@ -391,7 +390,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _apiKeySet;
             set
             {
-                if(_apiKeySet != value)
+                if (_apiKeySet != value)
                 {
                     _apiKeySet = value;
                     OnPropertyChanged(nameof(ApiKeySet));
@@ -429,8 +428,8 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             "Browser & User Settings",
             "All Settings"
         ];
-        public ObservableCollection<JellyfinAuth> AvailableJellyfinUsers 
-        { 
+        public ObservableCollection<JellyfinAuth> AvailableJellyfinUsers
+        {
             get => _availableJellyfinUsers;
             set
             {
@@ -462,15 +461,14 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 if (parts.Length >= 2)
                 {
                     JellyfinServerIp = parts[0];
-                    if (int.TryParse(parts[1], out int port))
-                        SelectedJellyfinPort = port;
+                    SelectedJellyfinPort = parts[1];
                 }
             }
             else
             {
                 JellyfinServerIp = "";
             }
-            
+
             SelectedUpdateMode = Settings.Default.ConfigUpdateMode;
             JellyfinApiKey = Settings.Default.JellyfinApiKey;
 
@@ -498,9 +496,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private void UpdateJellyfinAddress()
         {
-            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && SelectedJellyfinPort > 0)
+            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && !string.IsNullOrWhiteSpace(SelectedJellyfinPort))
             {
                 Settings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
+                Debug.WriteLine(Settings.Default.JellyfinIP);
                 Settings.Default.Save();
             }
         }

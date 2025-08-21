@@ -907,6 +907,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No devices found, retry with virtual NIC?.
+        /// </summary>
+        public static string NoDevicesFoundRetry {
+            get {
+                return ResourceManager.GetString("NoDevicesFoundRetry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Please fill in the Jellyfin server first....
         /// </summary>
         public static string NoJellyfinServer {
@@ -1029,6 +1038,15 @@ namespace Samsung_Jellyfin_Installer.Localization {
         public static string RetrievingDeviceAddress {
             get {
                 return ResourceManager.GetString("RetrievingDeviceAddress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No TV&apos;s found, want to search again with virtual network cards included in the search?.
+        /// </summary>
+        public static string RetySearchMsg {
+            get {
+                return ResourceManager.GetString("RetySearchMsg", resourceCulture);
             }
         }
         
