@@ -70,15 +70,18 @@
                                     materialDesign:HintAssist.Hint="{loc:Localize ServerIP}"
                                     FontSize="14" BorderBrush="#FF000B25"/>
                                 <Label Grid.Column="1" Content=":" VerticalAlignment="Center" Margin="1,0,1,0"/>
-                                <ComboBox Grid.Column="2" 
-                                    Style="{DynamicResource MaterialDesignComboBox}" 
-                                    VerticalAlignment="Center" 
-                                    FontSize="14" 
-                                    SelectedItem="{Binding SelectedJellyfinPort}"
-                                    materialDesign:HintAssist.Hint="{loc:Localize ServerPort}"
-                                    ItemsSource="{Binding JellyfinPorts}"
-                                    Width="75"
-                                    BorderBrush="#FF000B25"/>
+                                <ComboBox Grid.Column="2"
+          Style="{DynamicResource MaterialDesignComboBox}" 
+          VerticalAlignment="Center" 
+          FontSize="14" 
+          IsEditable="True"
+          Text="{Binding SelectedJellyfinPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+          SelectedItem="{Binding SelectedJellyfinPort, Mode=TwoWay}"
+          materialDesign:HintAssist.Hint="{loc:Localize ServerPort}"
+          ItemsSource="{Binding JellyfinPorts}"
+          Width="75"
+          BorderBrush="#FF000B25"/>
+
                             </Grid>
 
                             <!-- Jellyfin API key -->

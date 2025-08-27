@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Primitives;
 using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
@@ -12,7 +11,6 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
-using static MaterialDesignThemes.Wpf.Theme.ToolBar;
 
 namespace Samsung_Jellyfin_Installer.Services
 {
@@ -294,21 +292,21 @@ namespace Samsung_Jellyfin_Installer.Services
                         userIds = await GetUsersFromJellyfin();
                     else
                         userIds = new[] { Settings.Default.JellyfinUserId };
-                    
-                    if (Settings.Default.ConfigUpdateMode.Contains("Server") || 
+
+                    if (Settings.Default.ConfigUpdateMode.Contains("Server") ||
                         Settings.Default.ConfigUpdateMode.Contains("Browser") ||
                         Settings.Default.ConfigUpdateMode.Contains("All"))
                     {
                         await ModifyJellyfinConfigAsync(packageUrl, PackageCertificate, userIds);
                     }
-                        
+
 
                     if (Settings.Default.ConfigUpdateMode.Contains("User") ||
                         Settings.Default.ConfigUpdateMode.Contains("All"))
                     {
                         await UpdateJellyfinUserConfiguration(userIds);
                     }
-                        
+
                 }
 
                 updateStatus("PackagingWgtWithCertificate".Localized());
@@ -386,7 +384,7 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         public async Task<InstallResult> ModifyJellyfinConfigAsync(string packageUrl, string certificateName, string[] userIds)
         {
-            
+
             try
             {
                 string baseDir = Path.GetDirectoryName(packageUrl);
@@ -402,13 +400,13 @@ namespace Samsung_Jellyfin_Installer.Services
                 if (Settings.Default.ConfigUpdateMode.Contains("Server") ||
                     Settings.Default.ConfigUpdateMode.Contains("All"))
                     await ModifyWwwConfigJson(tempDir);
-                    
+
 
 
                 if (Settings.Default.ConfigUpdateMode.Contains("Browser") ||
                     Settings.Default.ConfigUpdateMode.Contains("All"))
                     await ModifyRootIndexHtml(tempDir, userIds);
-                    
+
 
 
                 if (File.Exists(packageUrl))
@@ -559,7 +557,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                         userNode["EnableAutoLogin"] = Settings.Default.UserAutoLogin;
 
-                        var userContent = new StringContent(userNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }),Encoding.UTF8, "application/json");
+                        var userContent = new StringContent(userNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.UTF8, "application/json");
 
                         var userResponse = await _httpClient.PostAsync($"http://{Settings.Default.JellyfinIP}/Users?userId={userId}", userContent);
                         userResponse.EnsureSuccessStatusCode();
@@ -871,7 +869,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (!certInstalled)
                 {
-                    var certCrit = MessageBox.Show("There was a error during the installation of Tizen Certificate tooling! \r\nTry again?","Certificat Tooling Critical Error",MessageBoxButton.YesNo);
+                    var certCrit = MessageBox.Show("There was a error during the installation of Tizen Certificate tooling! \r\nTry again?", "Certificat Tooling Critical Error", MessageBoxButton.YesNo);
                     if (certCrit == MessageBoxResult.No)
                     {
                         Application.Current.Shutdown();
@@ -886,7 +884,7 @@ namespace Samsung_Jellyfin_Installer.Services
                         }
                     }
                 }
-                    
+
 
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
 

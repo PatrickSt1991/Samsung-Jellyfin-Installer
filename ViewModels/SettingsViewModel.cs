@@ -133,7 +133,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             get => _forceSamsungLogin;
             set
             {
-                if(_forceSamsungLogin = value)
+                if (_forceSamsungLogin = value)
                 {
                     _forceSamsungLogin = value;
                     OnPropertyChanged(nameof(ForceSamsungLogin));
