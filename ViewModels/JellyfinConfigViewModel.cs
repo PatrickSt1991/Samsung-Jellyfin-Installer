@@ -17,7 +17,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private string? _selectedSubtitleMode;
         private string _jellyfinApiKey;
         private string _selectedUpdateMode;
-        private string _selectedJellyfinPort;
+        private string _selectedJellyfinPort = "8096";
         private bool _enableBackdrops;
         private bool _enableThemeSongs;
         private bool _enableThemeVideos;

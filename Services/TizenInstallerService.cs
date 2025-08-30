@@ -1,4 +1,4 @@
-using Samsung_Jellyfin_Installer.Converters;
+﻿using Samsung_Jellyfin_Installer.Converters;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
 using System.Diagnostics;
@@ -18,7 +18,6 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
-            "C:\\tizen-studio",
             "C:\\TizenStudioCli",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
@@ -197,6 +196,22 @@ namespace Samsung_Jellyfin_Installer.Services
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
             var localPath = Path.Combine(_downloadDirectory, fileName);
 
+            // First, make a HEAD request to get file size from server
+            using var headRequest = new HttpRequestMessage(HttpMethod.Head, downloadUrl);
+            using var headResponse = await _httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
+            headResponse.EnsureSuccessStatusCode();
+
+            long? expectedSize = headResponse.Content.Headers.ContentLength;
+
+            // If file exists locally, compare size
+            if (expectedSize.HasValue && File.Exists(localPath))
+            {
+                var fileInfo = new FileInfo(localPath);
+                if (fileInfo.Length == expectedSize.Value)
+                    return localPath;
+            }
+
+            // Otherwise, download file
             using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
@@ -204,8 +219,18 @@ namespace Samsung_Jellyfin_Installer.Services
             await using var fileStream = new FileStream(localPath, FileMode.Create);
 
             await contentStream.CopyToAsync(fileStream);
+
+            // Verify size after download
+            if (expectedSize.HasValue)
+            {
+                var newFileInfo = new FileInfo(localPath);
+                if (newFileInfo.Length != expectedSize.Value)
+                    throw new InvalidOperationException("File size mismatch after download.");
+            }
+
             return localPath;
         }
+
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, Action<string> updateStatus)
         {
             if (TizenCliPath is null || TizenSdbPath is null)
@@ -909,13 +934,6 @@ namespace Samsung_Jellyfin_Installer.Services
                             installingWindow.Close();
                         });
                     }
-
-                    try
-                    {
-                        if (installerPath != null && File.Exists(installerPath))
-                            File.Delete(installerPath);
-                    }
-                    catch { /* Ignore cleanup errors */ }
                 }
             }
         }
