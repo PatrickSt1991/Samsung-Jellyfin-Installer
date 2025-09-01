@@ -204,6 +204,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private async Task InitializeCertificates(ITizenInstallerService tizenService)
         {
+
             var (profilePath, tizenCrypto) = await tizenService.EnsureTizenCliAvailable();
 
             var certificates = GetAvailableCertificates(profilePath, tizenCrypto);

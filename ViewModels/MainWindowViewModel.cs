@@ -323,15 +323,13 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 }
                 else
                 {
-                    await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {result.ErrorMessage}\n\n please check the FAQ:\n" + 
-                        "https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki/FAQ");
+                    await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {result.ErrorMessage}\n\n please check the FAQ:\n https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki/FAQ");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex.Message}\n\n please check the FAQ:\n" +
-                                        "https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki/FAQ");
+                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex.Message}\n\n please check the FAQ:\n https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/wiki/FAQ");
                 return false;
             }
             finally

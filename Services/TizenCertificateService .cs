@@ -75,7 +75,6 @@ namespace Samsung_Jellyfin_Installer.Services
             var signedAuthorCsrPath = Path.Combine(outputPath, "signed_author.cer");
             await File.WriteAllBytesAsync(signedAuthorCsrPath, signedAuthorCsrBytes);
 
-
             updateStatus("PostFirstDistributorCSR".Localized());
             var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
             var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
@@ -92,8 +91,19 @@ namespace Samsung_Jellyfin_Installer.Services
             await CheckCertificateExistanceAsync(caPath);
 
             updateStatus("CreateNewCertificates".Localized());
-            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", "vd_tizen_dev_author_ca.cer");
-            await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", "vd_tizen_dev_public2.crt");
+            // Updated calls with new signature
+            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "author", new[] { "vd_tizen_dev_author_ca.cer" });
+            await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath, "distributor", new[] { "vd_tizen_dev_public2.crt" });
+
+            // Create a complete chain P12 for Tizen 8.0 compatibility
+            updateStatus("Creating complete certificate chain for Tizen 8.0...");
+            await CreateSingleChainP12Async(signedAuthorCsrBytes, signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, caPath);
+
+            // Verify the created P12 files
+            updateStatus("Verifying P12 certificate chains...");
+            await VerifyP12CertificateChain(Path.Combine(outputPath, "author.p12"), p12Plain);
+            await VerifyP12CertificateChain(Path.Combine(outputPath, "distributor.p12"), p12Plain);
+            await VerifyP12CertificateChain(Path.Combine(outputPath, "tizen_complete.p12"), p12Plain);
 
             updateStatus("MovingP12Files".Localized());
             string p12Location = MoveTizenCertificateFiles();
@@ -142,6 +152,7 @@ namespace Samsung_Jellyfin_Installer.Services
             keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
             return keyGen.GenerateKeyPair();
         }
+
         private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
         {
             var oids = new List<DerObjectIdentifier>
@@ -173,6 +184,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 return ms.ToArray();
             }
         }
+
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
         {
             // Build subject: CN=TizenSDK
@@ -180,11 +192,10 @@ namespace Samsung_Jellyfin_Installer.Services
 
             // Create SAN URIs as GeneralNames - Empty package ID like Python version
             var sanUris = new List<GeneralName>
-        {
-            new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
-            new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
-            //new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid:{duid}")
-        };
+            {
+                new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
+                new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
+            };
 
             var subjectAlternativeNames = new DerSequence(sanUris.ToArray());
 
@@ -233,12 +244,12 @@ namespace Samsung_Jellyfin_Installer.Services
             var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.AuthorEndpoint);
 
             var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("VD"), "platform"},
-            { new ByteArrayContent(csrData), "csr", "author.csr" }
-        };
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("VD"), "platform"},
+                { new ByteArrayContent(csrData), "csr", "author.csr" }
+            };
 
             request.Content = content;
 
@@ -253,14 +264,14 @@ namespace Samsung_Jellyfin_Installer.Services
             var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
 
             var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("Public"), "privilege_level" },
-            { new StringContent("Individual"), "developer_type" },
-            { new StringContent("VD"), "platform" },
-            { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
-        };
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("Public"), "privilege_level" },
+                { new StringContent("Individual"), "developer_type" },
+                { new StringContent("VD"), "platform" },
+                { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
+            };
 
             request.Content = content;
 
@@ -275,13 +286,13 @@ namespace Samsung_Jellyfin_Installer.Services
             var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V2);
 
             var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("Public"), "privilege_level" },
-            { new StringContent("Individual"), "developer_type" },
-            { new StringContent("VD"), "platform" }
-        };
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("Public"), "privilege_level" },
+                { new StringContent("Individual"), "developer_type" },
+                { new StringContent("VD"), "platform" }
+            };
 
             var csrFileBytes = await File.ReadAllBytesAsync(csrFilePath);
             content.Add(new ByteArrayContent(csrFileBytes), "csr", "distributor.csr");
@@ -293,6 +304,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             return await response.Content.ReadAsByteArrayAsync();
         }
+
         public async Task ExtractRootCertificateAsync(string jarPath)
         {
             if (string.IsNullOrEmpty(jarPath))
@@ -342,13 +354,25 @@ namespace Samsung_Jellyfin_Installer.Services
 
             await Task.CompletedTask;
         }
-        private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
+
+        // Updated method to handle multiple CA certificates
+        private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string[] caFiles)
         {
-            string caCertFile = Path.Combine(caPath, caFile);
+            // Read all CA certificates
+            var allCaCertBytes = new List<byte[]>();
 
-            var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
+            foreach (var caFile in caFiles)
+            {
+                string caCertFile = Path.Combine(caPath, caFile);
+                if (File.Exists(caCertFile))
+                {
+                    var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
+                    allCaCertBytes.Add(caCertBytes);
+                }
+            }
 
-            var chainBytes = CombineCertificates(signedCertBytes, caCertBytes);
+            // Combine all certificates into a chain
+            var chainBytes = CombineMultipleCertificates(signedCertBytes, allCaCertBytes);
 
             var parser = new X509CertificateParser();
             var certificates = new List<X509Certificate2>();
@@ -381,6 +405,7 @@ namespace Samsung_Jellyfin_Installer.Services
             var certCollection = new X509Certificate2Collection();
             certCollection.Add(certWithPrivateKey);
 
+            // Add all intermediate certificates to the collection
             for (int i = 1; i < certificates.Count; i++)
                 certCollection.Add(certificates[i]);
 
@@ -390,6 +415,173 @@ namespace Samsung_Jellyfin_Installer.Services
 
             foreach (var cert in certificates)
                 cert.Dispose();
+        }
+
+        // New method to combine multiple certificates
+        private static byte[] CombineMultipleCertificates(byte[] signedCertBytes, List<byte[]> caCertBytesList)
+        {
+            using var ms = new MemoryStream();
+
+            // Add the signed certificate first
+            ms.Write(signedCertBytes);
+
+            // Add newline if needed
+            if (signedCertBytes.Length > 0 && signedCertBytes[signedCertBytes.Length - 1] != (byte)'\n')
+                ms.WriteByte((byte)'\n');
+
+            // Add all CA certificates
+            foreach (var caCertBytes in caCertBytesList)
+            {
+                ms.Write(caCertBytes);
+
+                // Add newline between certificates if needed
+                if (caCertBytes.Length > 0 && caCertBytes[caCertBytes.Length - 1] != (byte)'\n')
+                    ms.WriteByte((byte)'\n');
+            }
+
+            return ms.ToArray();
+        }
+
+        // New method to create a single P12 with complete certificate chain for Tizen 8.0
+        private static async Task CreateSingleChainP12Async(
+            byte[] signedAuthorBytes,
+            byte[] signedDistributorBytes,
+            AsymmetricKeyParameter privateKey,
+            string password,
+            string outputPath,
+            string caPath)
+        {
+            // Create a complete certificate chain with proper order
+            var certList = new List<byte[]>();
+
+            // Add certificates in the correct order for Tizen 8.0
+            certList.Add(signedAuthorBytes);  // Author certificate first
+
+            // Add author intermediate CA
+            var authorCaPath = Path.Combine(caPath, "vd_tizen_dev_author_ca.cer");
+            if (File.Exists(authorCaPath))
+            {
+                certList.Add(await File.ReadAllBytesAsync(authorCaPath));
+            }
+
+            certList.Add(signedDistributorBytes);  // Distributor certificate
+
+            // Add distributor intermediate CA
+            var distributorCaPath = Path.Combine(caPath, "vd_tizen_dev_public2.crt");
+            if (File.Exists(distributorCaPath))
+            {
+                certList.Add(await File.ReadAllBytesAsync(distributorCaPath));
+            }
+
+            // Combine all certificates
+            var chainBytes = CombineMultipleCertificates(new byte[0], certList);
+
+            var parser = new X509CertificateParser();
+            var certificates = new List<X509Certificate2>();
+
+            using (var ms = new MemoryStream(chainBytes))
+            using (var reader = new StreamReader(ms))
+            {
+                var pemReader = new PemReader(reader);
+                object pemObject;
+
+                while ((pemObject = pemReader.ReadObject()) != null)
+                {
+                    if (pemObject is Org.BouncyCastle.X509.X509Certificate bcCert)
+                    {
+                        var cert = new X509Certificate2(bcCert.GetEncoded());
+                        certificates.Add(cert);
+                    }
+                }
+            }
+
+            if (certificates.Count == 0)
+                throw new Exception("No certificates found in chain");
+
+            var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
+            var certCollection = new X509Certificate2Collection();
+
+            // Add the first certificate (author) with private key
+            using var certWithPrivateKey = certificates[0].CopyWithPrivateKey(rsaPrivateKey);
+            certCollection.Add(certWithPrivateKey);
+
+            // Add all other certificates
+            for (int i = 1; i < certificates.Count; i++)
+                certCollection.Add(certificates[i]);
+
+            var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
+            var pfxPath = Path.Combine(outputPath, "tizen_complete.p12");
+            await File.WriteAllBytesAsync(pfxPath, pfxBytes);
+
+            Console.WriteLine($"[INFO] Created complete certificate chain P12: {pfxPath}");
+
+            foreach (var cert in certificates)
+                cert.Dispose();
+        }
+
+        // New method to verify P12 certificate chains
+        private static async Task VerifyP12CertificateChain(string p12Path, string password)
+        {
+            try
+            {
+                if (!File.Exists(p12Path))
+                {
+                    Console.WriteLine($"[WARNING] P12 file not found: {p12Path}");
+                    return;
+                }
+
+                var pfxBytes = await File.ReadAllBytesAsync(p12Path);
+                var cert = new X509Certificate2(pfxBytes, password, X509KeyStorageFlags.Exportable);
+
+                Console.WriteLine($"\n=== P12 File: {Path.GetFileName(p12Path)} ===");
+                Console.WriteLine($"Subject: {cert.Subject}");
+                Console.WriteLine($"Issuer: {cert.Issuer}");
+                Console.WriteLine($"Valid From: {cert.NotBefore}");
+                Console.WriteLine($"Valid To: {cert.NotAfter}");
+                Console.WriteLine($"Has Private Key: {cert.HasPrivateKey}");
+
+                // Check if there are additional certificates in the collection
+                var collection = new X509Certificate2Collection();
+                collection.Import(pfxBytes, password, X509KeyStorageFlags.Exportable);
+
+                Console.WriteLine($"Total certificates in P12: {collection.Count}");
+
+                foreach (var certificate in collection)
+                {
+                    Console.WriteLine($"  - Subject: {certificate.Subject}");
+                    Console.WriteLine($"    Issuer: {certificate.Issuer}");
+                }
+
+                // Try to build the chain
+                var chain = new X509Chain();
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+                bool chainBuilt = chain.Build(cert);
+                Console.WriteLine($"Chain building result: {chainBuilt}");
+
+                if (chain.ChainElements.Count > 0)
+                {
+                    Console.WriteLine("Certificate Chain:");
+                    foreach (var element in chain.ChainElements)
+                    {
+                        Console.WriteLine($"  - {element.Certificate.Subject}");
+                        Console.WriteLine($"    Issued by: {element.Certificate.Issuer}");
+                    }
+                }
+
+                foreach (var status in chain.ChainStatus)
+                {
+                    Console.WriteLine($"Chain Status: {status.Status} - {status.StatusInformation}");
+                }
+
+                cert.Dispose();
+                chain.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error verifying P12 {p12Path}: {ex.Message}");
+            }
         }
 
         private static byte[] CombineCertificates(byte[] signedCertBytes, byte[] caCertBytes)

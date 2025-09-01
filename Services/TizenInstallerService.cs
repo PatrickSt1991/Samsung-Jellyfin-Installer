@@ -262,15 +262,12 @@ namespace Samsung_Jellyfin_Installer.Services
                     try
                     {
                         string selectedCertificate = Settings.Default.Certificate;
-
                         if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || Settings.Default.ForceSamsungLogin)
                         {
                             SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
                             if (!string.IsNullOrEmpty(auth.access_token))
                             {
-
                                 updateStatus("SuccessAuthCode".Localized());
-
                                 var certificateService = new TizenCertificateService(_httpClient);
                                 (string p12Location, string p12Password) = await certificateService.GenerateProfileAsync(
                                     duid: tvDuid,
@@ -281,10 +278,26 @@ namespace Samsung_Jellyfin_Installer.Services
                                     TizenPluginPath ?? string.Empty
                                 );
 
-                                PackageCertificate = "Jelly2Sams";
+                                // Try registering the complete P12 profile first (for Tizen 8.0 compatibility)
+                                updateStatus("Registering complete certificate profile...");
+                                try
+                                {
+                                    await RegisterCompleteP12ProfileAsync(p12Location, p12Password, "Jelly2SamsComplete", TizenCliPath);
+                                    PackageCertificate = "Jelly2SamsComplete";
+                                    updateStatus("[INFO] Using complete certificate profile for Tizen 8.0 compatibility");
+                                }
+                                catch (Exception ex)
+                                {
+                                    updateStatus($"[WARNING] Failed to register complete profile, falling back to separate profiles: {ex.Message}");
+
+                                    // Fallback to separate P12 files
+                                    await RegisterSeparateP12ProfilesAsync(p12Location, p12Password, "Jelly2Sams", TizenCliPath);
+                                    PackageCertificate = "Jelly2Sams";
+                                }
+
                                 Settings.Default.Certificate = PackageCertificate;
                                 Settings.Default.Save();
-                                UpdateCertificateManager(p12Location, p12Password, "Jelly2Sams", updateStatus);
+                                UpdateCertificateManager(p12Location, p12Password, updateStatus);
                             }
                             else
                             {
@@ -305,8 +318,8 @@ namespace Samsung_Jellyfin_Installer.Services
                 else
                 {
                     updateStatus("UpdatingCertificateProfile".Localized());
-                    UpdateCertificateManager("custom", "custom", "custom_jelly", updateStatus);
-                    PackageCertificate = "custom_jelly";
+                    UpdateProfileCertificatePaths();
+                    PackageCertificate = "custom";
                 }
 
                 if (!string.IsNullOrEmpty(Settings.Default.JellyfinIP) && !Settings.Default.ConfigUpdateMode.Contains("None"))
@@ -338,7 +351,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 string packageUrlExtension = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
 
                 await RunCommandAsync(TizenCliPath, $"package -t {packageUrlExtension} -s {PackageCertificate} -- \"{packageUrl}\"");
-
+                
                 if (Settings.Default.DeletePreviousInstall)
                 {
                     updateStatus("Removing old Jellyfin app");
@@ -353,7 +366,10 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 updateStatus("InstallingPackage".Localized());
 
-                string installOutput = await RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
+                string packageFile = Path.GetFileName(packageUrl);
+                string packageDir = Path.GetDirectoryName(packageUrl);
+
+                string installOutput = await RunCommandAsync(TizenCliPath, $"install -n {packageFile} -t {tvName} -- \"{packageDir}\"");
 
                 if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
                 {
@@ -374,6 +390,103 @@ namespace Samsung_Jellyfin_Installer.Services
                 await RunCommandAsync(TizenSdbPath, $"disconnect {tvIpAddress}");
             }
         }
+        // Add these methods to the same class where your try block is located
+
+        private static async Task RegisterCompleteP12ProfileAsync(string p12Location, string password, string profileName, string tizenCliPath)
+        {
+            try
+            {
+                // Path to the complete P12 file
+                string completeP12Path = Path.Combine(p12Location, "tizen_complete.p12");
+
+                if (!File.Exists(completeP12Path))
+                {
+                    throw new FileNotFoundException($"Complete P12 file not found: {completeP12Path}");
+                }
+
+                // Remove existing profile if it exists
+                await RunTizenCommandAsync(tizenCliPath, $"security-profiles remove -n {profileName}");
+
+                // Add new profile with the complete P12
+                string addProfileCommand = $"security-profiles add -n {profileName} -a \"{completeP12Path}\" -p {password}";
+                await RunTizenCommandAsync(tizenCliPath, addProfileCommand);
+
+                Console.WriteLine($"[INFO] Registered complete P12 profile: {profileName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to register complete P12 profile: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task RegisterSeparateP12ProfilesAsync(string p12Location, string password, string profileName, string tizenCliPath)
+        {
+            try
+            {
+                string authorP12Path = Path.Combine(p12Location, "author.p12");
+                string distributorP12Path = Path.Combine(p12Location, "distributor.p12");
+
+                if (!File.Exists(authorP12Path) || !File.Exists(distributorP12Path))
+                {
+                    throw new FileNotFoundException("Author or Distributor P12 files not found");
+                }
+
+                // Remove existing profile if it exists
+                await RunTizenCommandAsync(tizenCliPath, $"security-profiles remove -n {profileName}");
+
+                // Add new profile with both P12 files
+                string addProfileCommand = $"security-profiles add -n {profileName} -a \"{authorP12Path}\" -d \"{distributorP12Path}\" -p {password}";
+                await RunTizenCommandAsync(tizenCliPath, addProfileCommand);
+
+                Console.WriteLine($"[INFO] Registered separate P12 profiles: {profileName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to register separate P12 profiles: {ex.Message}");
+                throw;
+            }
+        }
+
+        private static async Task<string> RunTizenCommandAsync(string tizenCliPath, string arguments)
+        {
+            try
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = tizenCliPath,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(processInfo);
+                if (process != null)
+                {
+                    string output = await process.StandardOutput.ReadToEndAsync();
+                    string error = await process.StandardError.ReadToEndAsync();
+
+                    await process.WaitForExitAsync();
+
+                    if (process.ExitCode != 0 && !error.Contains("does not exist")) // Ignore "profile doesn't exist" errors
+                    {
+                        Console.WriteLine($"[WARNING] Tizen command failed: {error}");
+                    }
+
+                    return output;
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to run tizen command '{arguments}': {ex.Message}");
+                return string.Empty;
+            }
+        }
+
         public async Task<string> GetTvNameAsync(string tvIpAddress)
         {
             if (TizenSdbPath is null)
@@ -613,49 +726,25 @@ namespace Samsung_Jellyfin_Installer.Services
                 Debug.WriteLine($"General error updating user configurations: {ex.Message}");
             }
         }
-        private void UpdateCertificateManager(string p12Location, string p12Password, string profileName, Action<string> updateStatus)
+        private void UpdateCertificateManager(string p12Location, string p12Password, Action<string> updateStatus)
         {
-            if (string.IsNullOrEmpty(p12Location))
-            {
-                throw new ArgumentException("p12Location cannot be null or empty", nameof(p12Location));
-            }
-
-            if (string.IsNullOrEmpty(p12Password))
-            {
-                throw new ArgumentException("p12Password cannot be null or empty", nameof(p12Password));
-            }
-
-            string distributorFile = "distributor.p12";
-            string distributorPassword = p12Password;
-            string authorPassword = p12Password;
-            string distributorLocation = p12Location;
-            string authorLocation = p12Location;
-
-            if (profileName == "custom_jelly")
-            {
-                distributorFile = "tizen-distributor-signer.p12";
-                distributorPassword = "Vy63flx5JBMc5GA4iEf8oFy+8aKE7FX/+arrDcO4I5k=";
-                distributorLocation = Path.Combine(TizenRootPath, "tools", "certificate-generator", "certificates", "distributor");
-                authorPassword = "eF0GFnArm/35qusNw7gjmQ==";
-                authorLocation = Path.GetFullPath("TizenProfile/preSign/");
-            }
-
             updateStatus("SettingCertificateManager".Localized());
 
+            string profileName = "Jelly2Sams";
             XElement jelly2SamsProfile = new XElement("profile",
                 new XAttribute("name", profileName),
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "0"),
-                    new XAttribute("key", Path.Combine(authorLocation, "author.p12")),
-                    new XAttribute("password", $"{authorPassword}"),
+                    new XAttribute("key", Path.Combine(p12Location, "author.p12")),
+                    new XAttribute("password", $"{p12Password}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "1"),
-                    new XAttribute("key", Path.Combine(distributorLocation, distributorFile)),
-                    new XAttribute("password", $"{distributorPassword}"),
+                    new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
+                    new XAttribute("password", $"{p12Password}"),
                     new XAttribute("rootca", "")
                 ),
                 new XElement("profileitem",
@@ -679,7 +768,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 doc = new XDocument(
                     new XDeclaration("1.0", "UTF-8", "no"),
                     new XElement("profiles",
-                        new XAttribute("active", profileName),
+                        new XAttribute("active", "Jelly2Sams"),
                         new XAttribute("version", "3.1"),
                         jelly2SamsProfile
                     )
@@ -695,10 +784,12 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 if (existingProfile is null)
                 {
+                    // Add new profile if it doesn't exist
                     root.Add(jelly2SamsProfile);
                 }
                 else if (string.Equals(profileName, "Jelly2Sams", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Update password only for specific keys in Jelly2Sams profile
                     foreach (var item in existingProfile.Elements("profileitem"))
                     {
                         string? keyValue = item.Attribute("key")?.Value;
@@ -710,26 +801,39 @@ namespace Samsung_Jellyfin_Installer.Services
                         }
                     }
                 }
-                else if (string.Equals(profileName, "custom", StringComparison.OrdinalIgnoreCase))
-                {
-                    foreach (var item in existingProfile.Elements("profileitem"))
-                    {
-                        string? keyValue = item.Attribute("key")?.Value;
-
-                        if (!string.IsNullOrEmpty(keyValue))
-                        {
-                            if (keyValue.EndsWith("author.p12", StringComparison.OrdinalIgnoreCase))
-                                item.SetAttributeValue("password", authorPassword);
-
-                            else if (keyValue.EndsWith("distributor.p12", StringComparison.OrdinalIgnoreCase))
-                                item.SetAttributeValue("password", distributorPassword);
-                        }
-                    }
-                }
-
             }
 
             doc.Save(TizenDataPath);
+        }
+        private static void UpdateProfileCertificatePaths()
+        {
+            string profilePath = Path.GetFullPath("TizenProfile/preSign/profiles.xml");
+
+            // Ensure the directory exists before trying to load the file
+            var directoryPath = Path.GetDirectoryName(profilePath);
+            if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            var xml = XDocument.Load(profilePath);
+            var profileItems = xml.Descendants("profileitem").ToList();
+
+            foreach (var item in profileItems)
+            {
+                string distributor = item.Attribute("distributor")?.Value;
+
+                if (distributor == "0")
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/author.p12"));
+
+
+
+
+                if (distributor == "1")
+                    item.SetAttributeValue("key", Path.GetFullPath("TizenProfile/preSign/distributor.p12"));
+            }
+
+            xml.Save(profilePath);
         }
         private static string? FindTizenRoot()
         {
@@ -913,6 +1017,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
 
+                TizenRootPath = tizenRoot;
                 TizenCliPath = Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat");
                 TizenSdbPath = Path.Combine(tizenRoot, "tools", "sdb.exe");
 
