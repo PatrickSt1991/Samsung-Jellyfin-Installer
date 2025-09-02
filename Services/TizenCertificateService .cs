@@ -146,17 +146,56 @@ namespace Samsung_Jellyfin_Installer.Services
         {
             var oids = new List<DerObjectIdentifier>
             {
-                X509Name.CN
+                X509Name.CN,
+                X509Name.O,
+                X509Name.OU,
+                X509Name.EmailAddress
             };
 
             var values = new List<string>
             {
-                "Jelly2Sams"
+                "Jelly2Sams",
+                "Individual",
+                "TizenSDK",
+                "dev@example.com"
             };
 
             var subject = new X509Name(oids, values);
 
-            var csr = new Pkcs10CertificationRequest("SHA256WITHRSA", subject, keyPair.Public, null, keyPair.Private);
+            var extensionGenerator = new X509ExtensionsGenerator();
+
+            extensionGenerator.AddExtension(
+                X509Extensions.BasicConstraints,
+                true,
+                new BasicConstraints(false)
+            );
+
+            extensionGenerator.AddExtension(
+                X509Extensions.KeyUsage,
+                true,
+                new KeyUsage(KeyUsage.DigitalSignature)
+            );
+
+            extensionGenerator.AddExtension(
+                X509Extensions.ExtendedKeyUsage,
+                false,
+                new ExtendedKeyUsage(KeyPurposeID.IdKPCodeSigning)
+            );
+
+            var extensions = extensionGenerator.Generate();
+
+            var attribute = new AttributePkcs(
+                PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
+                new DerSet(extensions)
+            );
+
+            var csr = new Pkcs10CertificationRequest(
+                "SHA256WITHRSA",
+                subject,
+                keyPair.Public,
+                new DerSet(attribute),
+                keyPair.Private
+            );
 
             using (var writer = new StreamWriter("author.csr"))
                 new PemWriter(writer).WriteObject(csr);
@@ -175,21 +214,57 @@ namespace Samsung_Jellyfin_Installer.Services
         }
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
         {
-            // Build subject: CN=TizenSDK
-            var subject = new X509Name(new List<DerObjectIdentifier> { X509Name.CN }, new List<string> { "TizenSDK" });
+            var oids = new List<DerObjectIdentifier>
+            {
+                X509Name.CN,
+                X509Name.O,
+                X509Name.OU
+            };
 
-            // Create SAN URIs as GeneralNames - Empty package ID like Python version
+            var values = new List<string>
+            {
+                "TizenSDK",
+                "Individual",
+                "TizenSDK"
+            };
+
+            var subject = new X509Name(oids, values);
+
+            // Create SAN URIs
             var sanUris = new List<GeneralName>
-        {
-            new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
-            new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
-            //new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid:{duid}")
-        };
+            {
+                new GeneralName(
+                    GeneralName.UniformResourceIdentifier,
+                    "URN:tizen:packageid="
+                ),
+                new GeneralName(
+                    GeneralName.UniformResourceIdentifier,
+                    $"URN:tizen:deviceid={duid}"
+                )
+            };
 
             var subjectAlternativeNames = new DerSequence(sanUris.ToArray());
 
-            // Create Extensions object with SAN extension (critical = false)
             var extensionsGenerator = new X509ExtensionsGenerator();
+
+            extensionsGenerator.AddExtension(
+                X509Extensions.BasicConstraints,
+                true,
+                new BasicConstraints(false)
+            );
+
+            extensionsGenerator.AddExtension(
+                X509Extensions.KeyUsage,
+                true,
+                new KeyUsage(KeyUsage.DigitalSignature)
+            );
+
+            extensionsGenerator.AddExtension(
+                X509Extensions.ExtendedKeyUsage,
+                false,
+                new ExtendedKeyUsage(KeyPurposeID.IdKPCodeSigning)
+            );
+
             extensionsGenerator.AddExtension(
                 X509Extensions.SubjectAlternativeName,
                 false,
@@ -198,13 +273,11 @@ namespace Samsung_Jellyfin_Installer.Services
 
             var extensions = extensionsGenerator.Generate();
 
-            // Create the Attribute for extensionRequest (OID 1.2.840.113549.1.9.14)
             var attribute = new AttributePkcs(
                 PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
                 new DerSet(extensions)
             );
 
-            // Create CSR with extensions attribute
             var csr = new Pkcs10CertificationRequest(
                 "SHA256WITHRSA",
                 subject,
@@ -213,11 +286,9 @@ namespace Samsung_Jellyfin_Installer.Services
                 keyPair.Private
             );
 
-            // Write to PEM file
             using (var writer = new StreamWriter("distributor.csr"))
                 new PemWriter(writer).WriteObject(csr);
 
-            // Return as byte[] in PEM format
             using (var ms = new MemoryStream())
             using (var sw = new StreamWriter(ms))
             {
@@ -237,11 +308,11 @@ namespace Samsung_Jellyfin_Installer.Services
             { new StringContent(accessToken), "access_token" },
             { new StringContent(userId), "user_id" },
             { new StringContent("VD"), "platform"},
+            { new StringContent("8.0"), "tizen_version" },
             { new ByteArrayContent(csrData), "csr", "author.csr" }
         };
 
             request.Content = content;
-
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
@@ -259,11 +330,11 @@ namespace Samsung_Jellyfin_Installer.Services
             { new StringContent("Public"), "privilege_level" },
             { new StringContent("Individual"), "developer_type" },
             { new StringContent("VD"), "platform" },
+            { new StringContent("8.0"), "tizen_version" },
             { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
         };
 
             request.Content = content;
-
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
@@ -280,6 +351,7 @@ namespace Samsung_Jellyfin_Installer.Services
             { new StringContent(userId), "user_id" },
             { new StringContent("Public"), "privilege_level" },
             { new StringContent("Individual"), "developer_type" },
+            { new StringContent("8.0"), "tizen_version" },
             { new StringContent("VD"), "platform" }
         };
 
