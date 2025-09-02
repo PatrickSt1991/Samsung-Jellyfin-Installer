@@ -13,6 +13,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Windows;
 
 namespace Samsung_Jellyfin_Installer.Services
@@ -66,7 +67,7 @@ namespace Samsung_Jellyfin_Installer.Services
             await File.WriteAllBytesAsync(authorCsrPath, authorCsrData);
 
             updateStatus("CreateDistributorCSR".Localized());
-            var distributorCsrData = GenerateDistributorCsr(keyPair, duid);
+            var distributorCsrData = GenerateDistributorCsr(keyPair);
             var distributorCsrPath = Path.Combine(outputPath, "distributor.csr");
             await File.WriteAllBytesAsync(distributorCsrPath, distributorCsrData);
 
@@ -75,14 +76,15 @@ namespace Samsung_Jellyfin_Installer.Services
             var signedAuthorCsrPath = Path.Combine(outputPath, "signed_author.cer");
             await File.WriteAllBytesAsync(signedAuthorCsrPath, signedAuthorCsrBytes);
 
+            updateStatus("PostDistributorCSR".Localized());
+            var (profileXmlBytes, signedDistributorCsrBytes) = await PostDistributorCsrAsync(accessToken, userId, distributorCsrData, duid);
 
-            updateStatus("PostFirstDistributorCSR".Localized());
-            var profileXmlBytes = await PostCsrV1Async(accessToken, userId, distributorCsrData);
-            var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
-            await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
+            if (profileXmlBytes != null)
+            {
+                var profileXmlPath = Path.Combine(outputPath, "device-profile.xml");
+                await File.WriteAllBytesAsync(profileXmlPath, profileXmlBytes);
+            }
 
-            updateStatus("PostSecondDistributorCSR".Localized());
-            var signedDistributorCsrBytes = await PostCsrV2Async(accessToken, userId, distributorCsrData, distributorCsrPath, outputPath);
             var signedDistributorCsrPath = Path.Combine(outputPath, "signed_distributor.cer");
             await File.WriteAllBytesAsync(signedDistributorCsrPath, signedDistributorCsrBytes);
 
@@ -125,12 +127,10 @@ namespace Samsung_Jellyfin_Installer.Services
                         return;
                     }
 
-                    Directory.CreateDirectory(caPath); // Ensure target directory exists
-
+                    Directory.CreateDirectory(caPath);
                     await using var sourceStream = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                     await using var targetStream = new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
                     await sourceStream.CopyToAsync(targetStream);
-
                     Console.WriteLine($"[INFO] Copied missing file: {fileName} from ca_local to ca.");
                 }
             }
@@ -142,66 +142,23 @@ namespace Samsung_Jellyfin_Installer.Services
             keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
             return keyGen.GenerateKeyPair();
         }
+
         private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
         {
-            var oids = new List<DerObjectIdentifier>
-            {
-                X509Name.CN,
-                X509Name.O,
-                X509Name.OU,
-                X509Name.EmailAddress
-            };
-
-            var values = new List<string>
-            {
-                "Jelly2Sams",
-                "Individual",
-                "TizenSDK",
-                "dev@example.com"
-            };
-
-            var subject = new X509Name(oids, values);
-
-            var extensionGenerator = new X509ExtensionsGenerator();
-
-            extensionGenerator.AddExtension(
-                X509Extensions.BasicConstraints,
-                true,
-                new BasicConstraints(false)
-            );
-
-            extensionGenerator.AddExtension(
-                X509Extensions.KeyUsage,
-                true,
-                new KeyUsage(KeyUsage.DigitalSignature)
-            );
-
-            extensionGenerator.AddExtension(
-                X509Extensions.ExtendedKeyUsage,
-                false,
-                new ExtendedKeyUsage(KeyPurposeID.IdKPCodeSigning)
-            );
-
-            var extensions = extensionGenerator.Generate();
+            var subject = new X509Name("CN=v3api, O=Individual, OU=TizenSDK, C=KR");
 
             var attribute = new AttributePkcs(
                 PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
-                new DerSet(extensions)
+                new DerSet()
             );
 
             var csr = new Pkcs10CertificationRequest(
-                "SHA256WITHRSA",
+                "SHA512WithRSA",
                 subject,
                 keyPair.Public,
                 new DerSet(attribute),
                 keyPair.Private
             );
-
-            using (var writer = new StreamWriter("author.csr"))
-                new PemWriter(writer).WriteObject(csr);
-
-            using (var writer = new StreamWriter("author.key"))
-                new PemWriter(writer).WriteObject(keyPair.Private);
 
             using (var ms = new MemoryStream())
             using (var sw = new StreamWriter(ms))
@@ -212,82 +169,23 @@ namespace Samsung_Jellyfin_Installer.Services
                 return ms.ToArray();
             }
         }
-        private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid)
+
+        private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair)
         {
-            var oids = new List<DerObjectIdentifier>
-            {
-                X509Name.CN,
-                X509Name.O,
-                X509Name.OU
-            };
-
-            var values = new List<string>
-            {
-                "TizenSDK",
-                "Individual",
-                "TizenSDK"
-            };
-
-            var subject = new X509Name(oids, values);
-
-            // Create SAN URIs
-            var sanUris = new List<GeneralName>
-            {
-                new GeneralName(
-                    GeneralName.UniformResourceIdentifier,
-                    "URN:tizen:packageid="
-                ),
-                new GeneralName(
-                    GeneralName.UniformResourceIdentifier,
-                    $"URN:tizen:deviceid={duid}"
-                )
-            };
-
-            var subjectAlternativeNames = new DerSequence(sanUris.ToArray());
-
-            var extensionsGenerator = new X509ExtensionsGenerator();
-
-            extensionsGenerator.AddExtension(
-                X509Extensions.BasicConstraints,
-                true,
-                new BasicConstraints(false)
-            );
-
-            extensionsGenerator.AddExtension(
-                X509Extensions.KeyUsage,
-                true,
-                new KeyUsage(KeyUsage.DigitalSignature)
-            );
-
-            extensionsGenerator.AddExtension(
-                X509Extensions.ExtendedKeyUsage,
-                false,
-                new ExtendedKeyUsage(KeyPurposeID.IdKPCodeSigning)
-            );
-
-            extensionsGenerator.AddExtension(
-                X509Extensions.SubjectAlternativeName,
-                false,
-                subjectAlternativeNames
-            );
-
-            var extensions = extensionsGenerator.Generate();
+            var subject = new X509Name("CN=TizenSDK, O=Individual, OU=TizenSDK, C=KR");
 
             var attribute = new AttributePkcs(
                 PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
-                new DerSet(extensions)
+                new DerSet()
             );
 
             var csr = new Pkcs10CertificationRequest(
-                "SHA256WITHRSA",
+                "SHA512WithRSA",
                 subject,
                 keyPair.Public,
                 new DerSet(attribute),
                 keyPair.Private
             );
-
-            using (var writer = new StreamWriter("distributor.csr"))
-                new PemWriter(writer).WriteObject(csr);
 
             using (var ms = new MemoryStream())
             using (var sw = new StreamWriter(ms))
@@ -301,88 +199,123 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.AuthorEndpoint);
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://svdca.samsungqbe.com/apis/v3/authors");
 
             var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("VD"), "platform"},
-            { new StringContent("8.0"), "tizen_version" },
-            { new ByteArrayContent(csrData), "csr", "author.csr" }
-        };
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("VD"), "platform"},
+                { new ByteArrayContent(csrData), "csr", "author.csr" }
+            };
 
             request.Content = content;
             var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await HandleErrorResponse(response);
+                response.EnsureSuccessStatusCode();
+            }
 
             return await response.Content.ReadAsByteArrayAsync();
         }
 
-        private async Task<byte[]> PostCsrV1Async(string accessToken, string userId, byte[] csrBytes)
+        private async Task<(byte[] profileXml, byte[] distributorCert)> PostDistributorCsrAsync(string accessToken, string userId, byte[] csrBytes, string duid)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
+            // v1 request - device-profile.xml (requires duid parameter)
+            var v1Request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v1/distributors");
+            var v1Content = new MultipartFormDataContent
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("Public"), "privilege_level" },
+                { new StringContent("Individual"), "developer_type" },
+                { new StringContent("VD"), "platform" },
+                { new StringContent(duid), "duid" }, // DUID is required for v1
+                { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
+            };
+            v1Request.Content = v1Content;
+            var v1Response = await _httpClient.SendAsync(v1Request);
 
-            var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("Public"), "privilege_level" },
-            { new StringContent("Individual"), "developer_type" },
-            { new StringContent("VD"), "platform" },
-            { new StringContent("8.0"), "tizen_version" },
-            { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
-        };
+            if (!v1Response.IsSuccessStatusCode)
+            {
+                await HandleErrorResponse(v1Response);
+                v1Response.EnsureSuccessStatusCode();
+            }
 
-            request.Content = content;
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+            var profileXml = await v1Response.Content.ReadAsByteArrayAsync();
 
-            return await response.Content.ReadAsByteArrayAsync();
+            // v3 request - signed distributor certificate (does NOT require duid parameter)
+            var v3Request = new HttpRequestMessage(HttpMethod.Post, "https://svdca.samsungqbe.com/apis/v3/distributors");
+            var v3Content = new MultipartFormDataContent
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("Public"), "privilege_level" },
+                { new StringContent("Individual"), "developer_type" },
+                { new StringContent("VD"), "platform" },
+                // NO duid parameter for v3 - it's not in the HAR file
+                { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
+            };
+            v3Request.Content = v3Content;
+            var v3Response = await _httpClient.SendAsync(v3Request);
+
+            if (!v3Response.IsSuccessStatusCode)
+            {
+                await HandleErrorResponse(v3Response);
+                v3Response.EnsureSuccessStatusCode();
+            }
+
+            var distributorCert = await v3Response.Content.ReadAsByteArrayAsync();
+
+            return (profileXml, distributorCert);
         }
 
-        private async Task<byte[]> PostCsrV2Async(string accessToken, string userId, byte[] csrBytes, string csrFilePath, string outputPath)
+        private async Task HandleErrorResponse(HttpResponseMessage response)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V2);
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new Exception("You've made too many requests in a given amount of time.\nPlease wait and try your request again later.");
+            }
 
-            var content = new MultipartFormDataContent
-        {
-            { new StringContent(accessToken), "access_token" },
-            { new StringContent(userId), "user_id" },
-            { new StringContent("Public"), "privilege_level" },
-            { new StringContent("Individual"), "developer_type" },
-            { new StringContent("8.0"), "tizen_version" },
-            { new StringContent("VD"), "platform" }
-        };
+            try
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(errorContent))
+                {
+                    var errorJson = JsonSerializer.Deserialize<JsonElement>(errorContent);
+                    if (errorJson.TryGetProperty("error", out var errorObj))
+                    {
+                        var name = errorObj.TryGetProperty("name", out var nameEl) ? nameEl.ToString() : "";
+                        var status = errorObj.TryGetProperty("status", out var statusEl) ? statusEl.ToString() : "";
+                        var code = errorObj.TryGetProperty("code", out var codeEl) ? codeEl.ToString() : "";
+                        var description = errorObj.TryGetProperty("description", out var descEl) ? descEl.ToString() : "";
 
-            var csrFileBytes = await File.ReadAllBytesAsync(csrFilePath);
-            content.Add(new ByteArrayContent(csrFileBytes), "csr", "distributor.csr");
+                        throw new Exception($"Samsung API Error - Name: {name}, Status: {status}, Code: {code}, Description: {description}");
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+            }
 
-            request.Content = content;
-
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsByteArrayAsync();
+            throw new Exception($"Server response code: {response.StatusCode}");
         }
+
         public async Task ExtractRootCertificateAsync(string jarPath)
         {
             if (string.IsNullOrEmpty(jarPath))
-            {
                 throw new ArgumentException("jarPath cannot be null or empty", nameof(jarPath));
-            }
 
             if (!Directory.Exists(jarPath))
-            {
                 throw new DirectoryNotFoundException($"JAR directory not found: {jarPath}");
-            }
 
             var jarFiles = Directory.GetFiles(jarPath, "*.jar");
 
             foreach (var jar in jarFiles)
             {
                 var fileName = Path.GetFileName(jar);
-
                 if (fileName.StartsWith("org.tizen.common.cert") && fileName.EndsWith(".jar"))
                 {
                     using var fileStream = File.OpenRead(jar);
@@ -394,15 +327,12 @@ namespace Samsung_Jellyfin_Installer.Services
                     foreach (var member in jarZip.Entries)
                     {
                         string memberFileName = Path.GetFileName(member.FullName);
-
-                        if (memberFileName == ("vd_tizen_dev_author_ca.cer") || memberFileName == "vd_tizen_dev_public2.crt")
+                        if (memberFileName == "vd_tizen_dev_author_ca.cer" || memberFileName == "vd_tizen_dev_public2.crt")
                         {
                             var targetPath = Path.Combine("TizenProfile", "ca", memberFileName);
                             var directoryName = Path.GetDirectoryName(targetPath);
                             if (!string.IsNullOrEmpty(directoryName))
-                            {
                                 Directory.CreateDirectory(directoryName);
-                            }
 
                             using var entryStream = member.Open();
                             using var fileStreamOut = File.Create(targetPath);
@@ -411,108 +341,74 @@ namespace Samsung_Jellyfin_Installer.Services
                     }
                 }
             }
-
-            await Task.CompletedTask;
         }
+
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
         {
             string caCertFile = Path.Combine(caPath, caFile);
 
-            var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
+            if (!File.Exists(caCertFile))
+            {
+                throw new FileNotFoundException($"CA certificate file not found: {caCertFile}");
+            }
 
-            var chainBytes = CombineCertificates(signedCertBytes, caCertBytes);
+            var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
 
             var parser = new X509CertificateParser();
             var certificates = new List<X509Certificate2>();
 
-            using (var ms = new MemoryStream(chainBytes))
-            using (var reader = new StreamReader(ms))
+            // Parse the signed certificate
+            var signedCert = parser.ReadCertificate(signedCertBytes);
+            if (signedCert == null)
             {
-                var pemReader = new PemReader(reader);
-                object pemObject;
-
-                while ((pemObject = pemReader.ReadObject()) != null)
-                {
-                    if (pemObject is Org.BouncyCastle.X509.X509Certificate bcCert)
-                    {
-                        var cert = new X509Certificate2(bcCert.GetEncoded());
-                        certificates.Add(cert);
-                    }
-                }
+                throw new Exception("Failed to parse signed certificate");
             }
+            var signedCertDotNet = new X509Certificate2(signedCert.GetEncoded());
+            certificates.Add(signedCertDotNet);
 
-            if (certificates.Count == 0)
-                throw new Exception("No certificates found in chain");
+            // Parse the CA certificate
+            var caCert = parser.ReadCertificate(caCertBytes);
+            if (caCert == null)
+            {
+                throw new Exception("Failed to parse CA certificate");
+            }
+            var caCertDotNet = new X509Certificate2(caCert.GetEncoded());
+            certificates.Add(caCertDotNet);
 
+            // Export to PFX
             var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
-
-            var endEntityCert = certificates[0];
-
-            using var certWithPrivateKey = endEntityCert.CopyWithPrivateKey(rsaPrivateKey);
+            using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
 
             var certCollection = new X509Certificate2Collection();
             certCollection.Add(certWithPrivateKey);
-
-            for (int i = 1; i < certificates.Count; i++)
-                certCollection.Add(certificates[i]);
+            certCollection.Add(caCertDotNet);
 
             var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
             var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
             await File.WriteAllBytesAsync(pfxPath, pfxBytes);
 
-            foreach (var cert in certificates)
-                cert.Dispose();
-        }
-
-        private static byte[] CombineCertificates(byte[] signedCertBytes, byte[] caCertBytes)
-        {
-            using var ms = new MemoryStream();
-
-            ms.Write(signedCertBytes);
-
-            if (signedCertBytes.Length > 0 && signedCertBytes[signedCertBytes.Length - 1] != (byte)'\n')
-                ms.WriteByte((byte)'\n');
-
-            ms.Write(caCertBytes);
-
-            return ms.ToArray();
+            // Clean up
+            signedCertDotNet.Dispose();
+            caCertDotNet.Dispose();
         }
 
         public static string MoveTizenCertificateFiles()
         {
             string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             if (string.IsNullOrEmpty(userHome))
-            {
                 throw new InvalidOperationException("Unable to get user profile directory");
-            }
 
             string destinationFolder = Path.Combine(userHome, "SamsungCertificate", "Jelly2Sams");
-
-            if (Directory.Exists(destinationFolder))
-            {
-                foreach (string file in Directory.GetFiles(destinationFolder))
-                    File.Delete(file);
-
-                foreach (string subDirectory in Directory.GetDirectories(destinationFolder))
-                    Directory.Delete(subDirectory, recursive: true);
-            }
-            else
-            {
-                Directory.CreateDirectory(destinationFolder);
-            }
+            Directory.CreateDirectory(destinationFolder);
 
             string sourceFolder = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
             if (!Directory.Exists(sourceFolder))
-            {
                 throw new DirectoryNotFoundException($"Source folder not found: {sourceFolder}");
-            }
 
             string[] fileExtensions = { "*.xml", "*.pri", "*.p12", "*.pwd", "*.csr", "*.crt", "*.cer", "*.txt" };
-
             foreach (var pattern in fileExtensions)
             {
-                string[] files = Directory.GetFiles(sourceFolder, pattern);
-                foreach (var file in files)
+                foreach (var file in Directory.GetFiles(sourceFolder, pattern))
                 {
                     string fileName = Path.GetFileName(file);
                     if (!string.IsNullOrEmpty(fileName))

@@ -240,6 +240,7 @@ namespace Samsung_Jellyfin_Installer.Services
                     {
                         string selectedCertificate = Settings.Default.Certificate;
 
+
                         if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || Settings.Default.ForceSamsungLogin)
                         {
                             SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
