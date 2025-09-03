@@ -2,8 +2,6 @@
 
 <div style="display: flex; align-items: center; gap: 20px;">
 
-<div style="display: flex; align-items: center; gap: 20px;">
-
   <div>
     <img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/jellyfin-tizen-logo.svg" width="250" height="250" />
   </div>
@@ -14,7 +12,7 @@
       ✅ <b>Supports all Tizen versions</b>
     </p>
 
-    <div style="display:inline-block; background:#2ecc71; color:white; padding:8px 14px; border-radius:20px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.15); margin:10px 0;">
+    <div style="display:inline-block; background:#2ecc71; color:white; padding:10px 16px; border-radius:25px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.15); margin:12px 0; font-size:15px;">
       😤 Tired of the certificate error? You’re in the right place!
     </div>
 
@@ -26,23 +24,25 @@
 
 </div>
 
-
-
 ---
-## 🔥[Check out the official page for Jellyfin 2 Samsung](https://patrickst1991.github.io/Samsung-Jellyfin-Installer/)
+
+## 🔥 [Check out the official page for Jellyfin 2 Samsung](https://patrickst1991.github.io/Samsung-Jellyfin-Installer/)
+
 ## 📦 Current Versions
 
 <!-- versions:start -->
 
 | Channel    | Version                                | Notes                                      |
 |------------|----------------------------------------|--------------------------------------------|
-| **Stable** | [v1.7.4](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.7.4)           | Recommended for most users                 |
-| **Beta**   | [N/A](#)               | Includes new features, may be less stable  |
+| **Stable** | [v1.7.4](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.7.4) | Recommended for most users |
+| **Beta**   | [N/A](#) | Includes new features, may be less stable |
 
 <!-- versions:end -->
 
 ---
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M71JOT9R)
+
 ## 🚀 How It Works
 
 ### 1. Launch the Tool  
@@ -107,63 +107,44 @@ Choose an existing certificate or let the tool generate a new one automatically.
 
 - **Custom WGT:** Upload your own `.wgt` file(s) (randomizes the package name to allow side-by-side installs).  
 - **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
-- **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).
-- **Force Samsung Login:** Force the tool to login in order to forcefully create a new certificate.
-- **Right-to-left Reading:** Languages the are right-to-left need to have the IP inverted in order for Tizen Studio to work (192.168.1.2 -> 2.1.168.192)
-- **Jellyfin Config:** Lets you set your Jellyfin App configuration in advance, so once the app is installed, you won’t need to configure it on the TV.
-  
+- **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).  
+- **Force Samsung Login:** Force the tool to login in order to forcefully create a new certificate.  
+- **Right-to-left Reading:** Languages that are right-to-left need to have the IP inverted in order for Tizen Studio to work (192.168.1.2 -> 2.1.168.192).  
+- **Jellyfin Config:** Lets you set your Jellyfin App configuration in advance, so once the app is installed, you won’t need to configure it on the TV.  
+
 ## 📝 Jellyfin Config
 <img width="510" height="283" alt="image" src="https://github.com/user-attachments/assets/8296671f-2fbb-4d7a-b1a9-d2db0228b48e" />
 
-Update Mode consists of;
-<table>
-  <tr style="font-weight: bold;">
-    <td>Type</td><td>Requirements</td>
-  </tr>
-  <tr>
-    <td>None</td><td>-</td>
-  </tr>
-  <tr>
-    <td>Server Settings</td><td>Server IP and port</td>
-  </tr>
-  <tr>
-    <td>Browser Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-  <tr>
-    <td>User Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-  <tr>
-    <td>Server & Browser Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-  <tr>
-    <td>Server & Users Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-  <tr>
-    <td>Browser & User Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-  <tr>
-    <td>All Settings</td><td>Server IP and port, API Key and Jellyfin user selection</td>
-  </tr>
-</table>
+Update Mode consists of:  
+
+| Type | Requirements |
+|------|--------------|
+| None | - |
+| Server Settings | Server IP and port |
+| Browser Settings | Server IP and port, API Key and Jellyfin user selection |
+| User Settings | Server IP and port, API Key and Jellyfin user selection |
+| Server & Browser Settings | Server IP and port, API Key and Jellyfin user selection |
+| Server & Users Settings | Server IP and port, API Key and Jellyfin user selection |
+| Browser & User Settings | Server IP and port, API Key and Jellyfin user selection |
+| All Settings | Server IP and port, API Key and Jellyfin user selection |
 
 ### Server Settings
 <img width="483" height="219" alt="image" src="https://github.com/user-attachments/assets/f6e6a72f-35e4-4027-9a9d-f94632a851cd" />
 
-This lets you set the Jellyfin server IP address in the config file, so the app doesn't have to search for the server.
- - Fill in the Address information; Server IP and Port.
+This lets you set the Jellyfin server IP address in the config file, so the app doesn't have to search for the server.  
+- Fill in the Address information; Server IP and Port.
 
-###  Browser Settings
-<img width="482" height="510" alt="image" src="https://github.com/user-attachments/assets/7a32e9d8-54c5-4ab5-8079-25e8052d17cb" />
+### Browser Settings
+<img width="482" height="510" alt="image" src="https://github.com/user-attachments/assets/25e8052d17cb" />
 
-**Requirements: API Key and Jellyfin User selection**
-This lets you set the browser specific information for the chosen user(s) like Theme selection, Skip Into etc. Jellyfin saves this information in your browser.
+**Requirements: API Key and Jellyfin User selection**  
+This lets you set the browser-specific information for the chosen user(s) like Theme selection, Skip Intro etc. Jellyfin saves this information in your browser.
 
 ### User Settings
 <img width="484" height="268" alt="image" src="https://github.com/user-attachments/assets/ba09248f-a7e1-4021-a719-8f1cc7a63676" />
 
-**Requirements: API Key and Jellyfin User selection**
-This lets you set all the Jellyfin user specifics for the chosen user(s) like Auto Login, Subtitle Mode etc. Jellyfin saves this on it's server.
-
+**Requirements: API Key and Jellyfin User selection**  
+This lets you set all the Jellyfin user specifics for the chosen user(s) like Auto Login, Subtitle Mode etc. Jellyfin saves this on its server.
 
 ---
 
@@ -171,11 +152,11 @@ This lets you set all the Jellyfin user specifics for the chosen user(s) like Au
 
 Before getting started, ensure you have the following:
 
-- A **Samsung Tizen Smart TV** with **Developer Mode enabled**
-- **Tizen Web CLI** installed
-- **Certificate Manager**
-- **Microsoft Edge WebView2 Runtime**
-- A valid **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+)
+- A **Samsung Tizen Smart TV** with **Developer Mode enabled**  
+- **Tizen Web CLI** installed  
+- **Certificate Manager**  
+- **Microsoft Edge WebView2 Runtime**  
+- A valid **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+)  
 
 > ℹ️ Don’t worry—the installer checks for missing dependencies and guides you through installation if needed.
 
@@ -189,6 +170,6 @@ Need help or want to report a bug?
 
 Got an idea for improvement?  
 💡 Share it on the [Discussions board](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/discussions)  
-or [submit a feature request](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)
+or [submit a feature request](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)  
 
-We welcome all contributions and feedback to improve the experience for everyone!  
+We welcome all contributions and feedback to improve the experience for everyone!
