@@ -997,7 +997,7 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Posting to Samsung endpoint....
+        ///   Looks up a localized string similar to Posting to Samsung author endpoint....
         /// </summary>
         public static string PostAuthorCSR {
             get {
@@ -1006,20 +1006,11 @@ namespace Samsung_Jellyfin_Installer.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Posting to first Samsung distributor....
+        ///   Looks up a localized string similar to Posting to Samsung distributor....
         /// </summary>
-        public static string PostFirstDistributorCSR {
+        public static string PostDistributorCSR {
             get {
-                return ResourceManager.GetString("PostFirstDistributorCSR", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Posting to second Samsung distributor....
-        /// </summary>
-        public static string PostSecondDistributorCSR {
-            get {
-                return ResourceManager.GetString("PostSecondDistributorCSR", resourceCulture);
+                return ResourceManager.GetString("PostDistributorCSR", resourceCulture);
             }
         }
         

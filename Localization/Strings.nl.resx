@@ -205,13 +205,10 @@
     <value>Genereren van een distributeur-CSR met DUID...</value>
   </data>
   <data name="PostAuthorCSR" xml:space="preserve">
-    <value>Bericht sturen naar Samsung-eindpunt...</value>
+    <value>Posten naar Samsung-auteurseindpunt...</value>
   </data>
-  <data name="PostFirstDistributorCSR" xml:space="preserve">
-    <value>Bericht naar eerste Samsung-distributeur...</value>
-  </data>
-  <data name="PostSecondDistributorCSR" xml:space="preserve">
-    <value>Posten naar tweede Samsung-distributeur...</value>
+  <data name="PostDistributorCSR" xml:space="preserve">
+    <value>Posten naar Samsung-distributeur...</value>
   </data>
   <data name="CreateNewCertificates" xml:space="preserve">
     <value>De ondertekende P12-bestanden maken...</value>

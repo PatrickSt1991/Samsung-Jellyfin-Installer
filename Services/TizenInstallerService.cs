@@ -226,16 +226,11 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 await TizenLibraryCheck();
 
-                tizenOs = "8.0";
-
                 if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ConfigUpdateMode != "None")
                 {
                     try
                     {
-                        Debug.WriteLine($"HIER: {Settings.Default.Certificate}");
-
                         string selectedCertificate = Settings.Default.Certificate;
-
 
                         if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || Settings.Default.ForceSamsungLogin)
                         {
