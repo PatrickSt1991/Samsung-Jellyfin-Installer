@@ -14,6 +14,7 @@
 
     ![Certificate Error Fixed](https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge)
 
+
     <blockquote>
       Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> 
       for providing the Jellyfin Tizen <code>.wgt</code> builds—super helpful and much appreciated!
