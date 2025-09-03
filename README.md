@@ -1,26 +1,14 @@
 # Jellyfin 2 Samsung (Samsung-Jellyfin-Installer)
 
-<div style="display: flex; align-items: center; gap: 20px;">
+<img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/jellyfin-tizen-logo.svg" width="250" height="250" align="left" />
 
-  <div>
-    <img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/jellyfin-tizen-logo.svg" width="250" height="250" />
-  </div>
+A simple tool for installing **Jellyfin** on your **Samsung Smart TV** — quickly and effortlessly.  
+✅ **Supports all Tizen versions**
 
-  <div>
-    <p>
-      A simple tool for installing <b>Jellyfin</b> on your <b>Samsung Smart TV</b>—quickly and effortlessly.<br/>
-      ✅ <b>Supports all Tizen versions</b>
-    </p>
+![Certificate Error Fixed](https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge)
 
-    ![Certificate Error Fixed](https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge)
-
-    <blockquote>
-      Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> 
-      for providing the Jellyfin Tizen <code>.wgt</code> builds—super helpful and much appreciated!
-    </blockquote>
-  </div>
-
-</div>
+> Huge thanks to [jeppevinkel](https://github.com/jeppevinkel/jellyfin-tizen-builds)  
+> for providing the Jellyfin Tizen `.wgt` builds — super helpful and much appreciated!
 
 ---
 
