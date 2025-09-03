@@ -205,13 +205,10 @@
     <value>Generating Distributor CSR with DUID...</value>
   </data>
   <data name="PostAuthorCSR" xml:space="preserve">
-    <value>Posting to Samsung endpoint...</value>
+    <value>Posting to Samsung author endpoint...</value>
   </data>
-  <data name="PostFirstDistributorCSR" xml:space="preserve">
-    <value>Posting to first Samsung distributor...</value>
-  </data>
-  <data name="PostSecondDistributorCSR" xml:space="preserve">
-    <value>Posting to second Samsung distributor...</value>
+  <data name="PostDistributorCSR" xml:space="preserve">
+    <value>Posting to Samsung distributor...</value>
   </data>
   <data name="CreateNewCertificates" xml:space="preserve">
     <value>Creating the signed P12 files...</value>

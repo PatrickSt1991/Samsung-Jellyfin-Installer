@@ -28,7 +28,7 @@ namespace Samsung_Jellyfin_Installer
             {
                 var client = new HttpClient();
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-                client.Timeout = TimeSpan.FromSeconds(30);
+                client.Timeout = TimeSpan.FromMinutes(2);
                 return client;
             });
 

@@ -97,7 +97,7 @@ namespace Samsung_Jellyfin_Installer {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("v1.7.3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("v1.7.4-beta-4")]
         public string AppVersion {
             get {
                 return ((string)(this["AppVersion"]));
@@ -445,6 +445,30 @@ namespace Samsung_Jellyfin_Installer {
         public string JellyfinAvRelease {
             get {
                 return ((string)(this["JellyfinAvRelease"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://svdca.samsungqbe.com/apis/v3/distributors")]
+        public string DistributorsEndpoint_V3 {
+            get {
+                return ((string)(this["DistributorsEndpoint_V3"]));
+            }
+            set {
+                this["DistributorsEndpoint_V3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://svdca.samsungqbe.com/apis/v3/authors")]
+        public string AuthorEndpoint_V3 {
+            get {
+                return ((string)(this["AuthorEndpoint_V3"]));
+            }
+            set {
+                this["AuthorEndpoint_V3"] = value;
             }
         }
     }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Samsung_Jellyfin_Installer.Models;
 using Samsung_Jellyfin_Installer.Views;
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using System.Web;
@@ -45,6 +46,8 @@ public class SamsungLoginService
         });
 
         await service.StopCallbackServer();
+
+        Debug.WriteLine(authResult);
 
         return authResult;
     }

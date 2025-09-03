@@ -18,14 +18,8 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private static readonly string[] PossibleTizenPaths =
         [
-            "C:\\tizen-studio",
             "C:\\TizenStudioCli",
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tizen Studio"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Tizen Studio"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TizenStudio"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "TizenStudio"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "TizenStudioCli"),
-            Environment.GetEnvironmentVariable("TIZEN_STUDIO_HOME") ?? string.Empty
         ];
 
         private readonly HttpClient _httpClient;
@@ -251,6 +245,7 @@ namespace Samsung_Jellyfin_Installer.Services
                                     duid: tvDuid,
                                     accessToken: auth.access_token,
                                     userId: auth.userId,
+                                    userEmail: auth.inputEmailID,
                                     outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
                                     updateStatus,
                                     TizenPluginPath ?? string.Empty

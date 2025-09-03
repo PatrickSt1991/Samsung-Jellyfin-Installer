@@ -29,6 +29,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         private GitHubRelease _selectedRelease;
         private Asset _selectedAsset;
         private NetworkDevice? _selectedDevice;
+        private SettingsViewModel _settingsViewModel;
         private bool _isLoading, _isLoadingDevices;
 
         private string _statusBar;
@@ -182,6 +183,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                 await LoadReleasesAsync();
                 StatusBar = "ScanningNetwork".Localized();
                 await LoadDevicesAsync();
+                _settingsViewModel = _serviceProvider.GetRequiredService<SettingsViewModel>();
             }
             catch (Exception ex)
             {
@@ -213,9 +215,10 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private void OpenSettings()
         {
-            var settingsViewModel = _serviceProvider.GetRequiredService<SettingsViewModel>();
-            var settingsWindow = new SettingsView();
-            settingsWindow.DataContext = settingsViewModel;
+            var settingsWindow = new SettingsView
+            {
+                DataContext = _settingsViewModel
+            };
             settingsWindow.ShowDialog();
         }
         private bool CanExecuteDownloadCommand(GitHubRelease release)

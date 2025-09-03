@@ -205,13 +205,10 @@
     <value>Generering af distributør-CSR med DUID...</value>
   </data>
   <data name="PostAuthorCSR" xml:space="preserve">
-    <value>Sender til Samsung-slutpunktet...</value>
+    <value>Sender til Samsungs forfatter-slutpunkt...</value>
   </data>
-  <data name="PostFirstDistributorCSR" xml:space="preserve">
-    <value>Sender til den første Samsung-distributør...</value>
-  </data>
-  <data name="PostSecondDistributorCSR" xml:space="preserve">
-    <value>Sender til anden Samsung-distributør...</value>
+  <data name="PostDistributorCSR" xml:space="preserve">
+    <value>Sender til Samsung-distributør...</value>
   </data>
   <data name="CreateNewCertificates" xml:space="preserve">
     <value>Opretter de signerede P12-filer...</value>
