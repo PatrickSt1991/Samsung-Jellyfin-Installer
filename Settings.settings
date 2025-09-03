@@ -116,5 +116,8 @@
     <Setting Name="DistributorsEndpoint_V3" Type="System.String" Scope="User">
       <Value Profile="(Default)">https://svdca.samsungqbe.com/apis/v3/distributors</Value>
     </Setting>
+    <Setting Name="AuthorEndpoint_V3" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://svdca.samsungqbe.com/apis/v3/authors</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -459,5 +459,17 @@ namespace Samsung_Jellyfin_Installer {
                 this["DistributorsEndpoint_V3"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://svdca.samsungqbe.com/apis/v3/authors")]
+        public string AuthorEndpoint_V3 {
+            get {
+                return ((string)(this["AuthorEndpoint_V3"]));
+            }
+            set {
+                this["AuthorEndpoint_V3"] = value;
+            }
+        }
     }
 }

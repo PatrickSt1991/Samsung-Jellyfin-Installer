@@ -22,8 +22,6 @@
 	<ItemGroup>
     <None Remove="Localization\Strings.resx~RFce770a.TMP" />
     <None Remove="TizenProfile\author.p12" />
-    <None Remove="TizenProfile\ca\ca_local\vd_tizen_dev_author_ca.cer" />
-    <None Remove="TizenProfile\ca\ca_local\vd_tizen_dev_public2.crt" />
     <None Remove="TizenProfile\ca\do_not_delete_me.txt" />
     <None Remove="TizenProfile\profiles.xml" />
   </ItemGroup>

@@ -12,6 +12,7 @@ using Samsung_Jellyfin_Installer.Converters;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Windows;
@@ -22,7 +23,7 @@ namespace Samsung_Jellyfin_Installer.Services
     {
         private readonly HttpClient _httpClient = httpClient;
 
-        public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string outputPath, Action<string> updateStatus, string jarPath)
+        public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(string duid, string accessToken, string userId, string userEmail, string outputPath, Action<string> updateStatus, string jarPath)
         {
             if (string.IsNullOrEmpty(jarPath))
             {
@@ -67,7 +68,7 @@ namespace Samsung_Jellyfin_Installer.Services
             await File.WriteAllBytesAsync(authorCsrPath, authorCsrData);
 
             updateStatus("CreateDistributorCSR".Localized());
-            var distributorCsrData = GenerateDistributorCsr(keyPair);
+            var distributorCsrData = GenerateDistributorCsr(keyPair, duid, userEmail);
             var distributorCsrPath = Path.Combine(outputPath, "distributor.csr");
             await File.WriteAllBytesAsync(distributorCsrPath, distributorCsrData);
 
@@ -139,24 +140,19 @@ namespace Samsung_Jellyfin_Installer.Services
         private static AsymmetricCipherKeyPair GenerateKeyPair()
         {
             var keyGen = new RsaKeyPairGenerator();
-            keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
+            keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 4096));
             return keyGen.GenerateKeyPair();
         }
 
         private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
         {
-            var subject = new X509Name("CN=v3api, O=Individual, OU=TizenSDK, C=KR");
-
-            var attribute = new AttributePkcs(
-                PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
-                new DerSet()
-            );
+            var subject = new X509Name("C=, ST=, L=, O=, OU=, CN=Jelly2Sams");
 
             var csr = new Pkcs10CertificationRequest(
                 "SHA512WithRSA",
                 subject,
                 keyPair.Public,
-                new DerSet(attribute),
+                null, // No attributes/extensions needed for Author CSR
                 keyPair.Private
             );
 
@@ -170,13 +166,31 @@ namespace Samsung_Jellyfin_Installer.Services
             }
         }
 
-        private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair)
+        private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid, string userEmail)
         {
-            var subject = new X509Name("CN=TizenSDK, O=Individual, OU=TizenSDK, C=KR");
+            var subject = new X509Name($"E={userEmail}, CN=TizenSDK, OU=, O=, L=, ST=, C=");
 
+            // Create the SubjectAlternativeName extension required by the distributor endpoint.
+            var generalNameList = new List<GeneralName>
+            {
+                new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
+                new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}"),
+                new GeneralName(GeneralName.Rfc822Name, userEmail)
+            };
+            var generalNames = new GeneralNames(generalNameList.ToArray());
+
+            // Explicitly use the Bouncy Castle X509Extension class to resolve ambiguity
+            var extensions = new X509Extensions(
+                new Dictionary<DerObjectIdentifier, Org.BouncyCastle.Asn1.X509.X509Extension>
+                {
+                    { X509Extensions.SubjectAlternativeName, new Org.BouncyCastle.Asn1.X509.X509Extension(false, new DerOctetString(generalNames)) }
+                }
+            );
+
+            // Wrap extensions in a pkcs-9-at-extensionRequest attribute.
             var attribute = new AttributePkcs(
                 PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
-                new DerSet()
+                new DerSet(extensions)
             );
 
             var csr = new Pkcs10CertificationRequest(
@@ -199,7 +213,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         public async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://svdca.samsungqbe.com/apis/v3/authors");
+            var request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.AuthorEndpoint_V3);
 
             var content = new MultipartFormDataContent
             {
@@ -223,8 +237,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<(byte[] profileXml, byte[] distributorCert)> PostDistributorCsrAsync(string accessToken, string userId, byte[] csrBytes, string duid)
         {
-            // v1 request - device-profile.xml (requires duid parameter)
-            var v1Request = new HttpRequestMessage(HttpMethod.Post, "https://dev.tizen.samsung.com/apis/v1/distributors");
+            var v1Request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
             var v1Content = new MultipartFormDataContent
             {
                 { new StringContent(accessToken), "access_token" },
@@ -232,7 +245,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 { new StringContent("Public"), "privilege_level" },
                 { new StringContent("Individual"), "developer_type" },
                 { new StringContent("VD"), "platform" },
-                { new StringContent(duid), "duid" }, // DUID is required for v1
                 { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
             };
             v1Request.Content = v1Content;
@@ -246,8 +258,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
             var profileXml = await v1Response.Content.ReadAsByteArrayAsync();
 
-            // v3 request - signed distributor certificate (does NOT require duid parameter)
-            var v3Request = new HttpRequestMessage(HttpMethod.Post, "https://svdca.samsungqbe.com/apis/v3/distributors");
+            var v3Request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V3);
             var v3Content = new MultipartFormDataContent
             {
                 { new StringContent(accessToken), "access_token" },
@@ -255,7 +266,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 { new StringContent("Public"), "privilege_level" },
                 { new StringContent("Individual"), "developer_type" },
                 { new StringContent("VD"), "platform" },
-                // NO duid parameter for v3 - it's not in the HAR file
                 { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
             };
             v3Request.Content = v3Content;
@@ -342,7 +352,7 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
             }
         }
-
+        /*
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
         {
             string caCertFile = Path.Combine(caPath, caFile);
@@ -391,7 +401,55 @@ namespace Samsung_Jellyfin_Installer.Services
             signedCertDotNet.Dispose();
             caCertDotNet.Dispose();
         }
+        */
 
+        private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
+        {
+            string caCertFile = Path.Combine(caPath, caFile);
+
+            if (!File.Exists(caCertFile))
+            {
+                throw new FileNotFoundException($"CA certificate file not found: {caCertFile}");
+            }
+
+            var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
+
+            var parser = new X509CertificateParser();
+            var certificates = new List<X509Certificate2>();
+
+            // Parse the signed certificate
+            var signedCert = parser.ReadCertificate(signedCertBytes);
+            if (signedCert == null)
+            {
+                throw new Exception("Failed to parse signed certificate");
+            }
+            var signedCertDotNet = new X509Certificate2(signedCert.GetEncoded());
+
+            // Parse the CA certificate
+            var caCert = parser.ReadCertificate(caCertBytes);
+            if (caCert == null)
+            {
+                throw new Exception("Failed to parse CA certificate");
+            }
+            var caCertDotNet = new X509Certificate2(caCert.GetEncoded());
+
+            // Export to PFX
+            var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
+            using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
+
+            // Create the certificate collection and add certificates in the CORRECT order
+            var certCollection = new X509Certificate2Collection();
+            certCollection.Add(caCertDotNet);      // Add the Intermediate CA first
+            certCollection.Add(certWithPrivateKey); // Add the signed certificate with its private key next
+
+            var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
+            var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
+            await File.WriteAllBytesAsync(pfxPath, pfxBytes);
+
+            // Clean up
+            signedCertDotNet.Dispose();
+            caCertDotNet.Dispose();
+        }
         public static string MoveTizenCertificateFiles()
         {
             string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
