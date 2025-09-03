@@ -1,6 +1,8 @@
 # Jellyfin 2 Samsung (Samsung-Jellyfin-Installer)
 
-<img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/jellyfin-tizen-logo.svg" width="250" height="250" align="left" />
+<p align="center">
+  <img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/jellyfin-tizen-logo.svg" width="250" height="250" />
+</p>
 
 A simple tool for installing **Jellyfin** on your **Samsung Smart TV** — quickly and effortlessly.  
 ✅ **Supports all Tizen versions**
