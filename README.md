@@ -12,9 +12,7 @@
       ✅ <b>Supports all Tizen versions</b>
     </p>
 
-    <div style="display:inline-block; background:#2ecc71; color:white; padding:10px 16px; border-radius:25px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.15); margin:12px 0; font-size:15px;">
-      😤 Tired of the certificate error? You’re in the right place!
-    </div>
+    ![Certificate Error Fixed](https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge)
 
     <blockquote>
       Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> 
