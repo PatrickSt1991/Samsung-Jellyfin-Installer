@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-First off—thank you for your interest in contributing to **Samsung-Jellyfin-Installer**! This project exists thanks to community support and we welcome improvements, big or small. Whether you'd like to report a bug, suggest a feature, or contribute code, your help is appreciated.
+First off—thank you for your interest in contributing to **Samsung‑Jellyfin‑Installer**! This project exists thanks to community support and we welcome improvements, big or small. Whether you'd like to report a bug, suggest a feature, or contribute code, your help is appreciated.
 
 ---
 
@@ -26,7 +26,7 @@ First off—thank you for your interest in contributing to **Samsung-Jellyfin-In
 
 ### Reporting Bugs
 Please use the **Issues** tab to report bugs. Include:
-- The version you're using (e.g. Stable v1.7.4, release date Sep 3, 2025) :contentReference[oaicite:0]{index=0}
+- The version you're using (e.g. Stable v1.7.4, release date Sep 3, 2025)
 - Your OS, .NET version, and TV model
 - Steps to reproduce the issue, along with any error messages or logs
 
@@ -42,7 +42,7 @@ Found something unclear in the README or wiki? Let us know!
 
 ### Submitting Code Changes (Pull Requests)
 We welcome pull requests! Please:
-- Follow the existing project structure (folders: `.github`, `Services`, `Views`, etc.) :contentReference[oaicite:1]{index=1}
+- Follow the existing project structure (folders: `.github`, `Services`, `Views`, etc.)
 - Keep code clean, concise, and well-commented
 - Include tests or manual validation steps if applicable
 - Fill out the PR template
@@ -55,3 +55,57 @@ We welcome pull requests! Please:
 2. Clone your fork locally:  
    ```bash
    git clone https://github.com/your-username/Samsung-Jellyfin-Installer.git
+   ```  
+3. Open the solution in Visual Studio or your preferred IDE. Ensure you have:
+   - Microsoft Edge WebView2 Runtime  
+   - .NET SDK compatible with the project  
+   - Tizen Web CLI and Certificate Manager (for end-to-end testing)  
+4. Run and explore the tool. Enhancements are welcome!
+
+---
+
+## 3. Code Style & Workflow
+
+- Follow current C# naming conventions and file organization.  
+- For user interface updates, maintain consistency with existing XAML layouts.  
+- Keep commits focused and descriptive. Use messages like `Fix: …`, `Add: …`, `Refactor: …`.
+
+---
+
+## 4. Development Process
+
+### Running Locally & Testing
+- The app scans your local network to detect compatible Samsung TVs.  
+- For Tizen 7+, a Samsung account is required for certificate generation.  
+- Test your changes thoroughly—try both “manually enter IP” and automatic detection.
+
+### Staying Up to Date
+- Periodically sync with upstream:
+  ```bash
+  git remote add upstream https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer.git
+  git fetch upstream
+  git rebase upstream/master
+  ```
+
+---
+
+## 5. License
+
+This repository is licensed under the **MIT License**. By contributing, you agree that your work will be licensed under the same terms.
+
+---
+
+## 6. Code of Conduct
+
+Please abide by our [Code of Conduct](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/CODE_OF_CONDUCT.md). Maintain a respectful, welcoming environment for all contributors.
+
+---
+
+## 7. Contact & Support
+
+- **Issues**: for bugs or feature requests  
+- **Discussions**: for broader conversations  
+- **Wiki**: for documentation  
+- **[Sponsor Page / ko-fi](https://ko-fi.com/patrickst)**: if you'd like to support the project financially  
+
+Thanks again for your contributions—together, we can make installation smoother and more reliable for Jellyfin users on Samsung Tizen TVs!  
