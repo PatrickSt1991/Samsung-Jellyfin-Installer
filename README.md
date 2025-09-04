@@ -1,4 +1,4 @@
-# Jellyfin 2 Samsung (Samsung-Jellyfin-Installer)
+# Jellyfin 2 Samsung
 
 <p align="center">
   <img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/.github/jellyfin-tizen-logo.svg" width="250" height="250" />
