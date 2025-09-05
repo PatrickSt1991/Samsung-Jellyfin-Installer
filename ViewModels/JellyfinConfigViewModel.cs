@@ -123,10 +123,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     Settings.Default.JellyfinApiKey = value;
                     Settings.Default.Save();
 
-                    ApiKeySet = !string.IsNullOrEmpty(Settings.Default.JellyfinIP) &&
-                                !string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) &&
-                                Settings.Default.JellyfinApiKey.Length == 32;
-
+                    UpdateApiKeyStatus();
                     _ = LoadJellyfinUsersAsync();
                 }
             }
@@ -142,8 +139,9 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                     OnPropertyChanged(nameof(SelectedUpdateMode));
 
                     ApiKeyEnabled =
-                        !SelectedUpdateMode.Contains("Server") &&
-                        !SelectedUpdateMode.Contains("None");
+                        !string.IsNullOrEmpty(value) &&
+                        !value.Contains("Server") &&
+                        !value.Contains("None");
 
                     Settings.Default.ConfigUpdateMode = value;
                     Settings.Default.Save();
@@ -444,6 +442,13 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             {
                 _selectedJellyfinUser = value;
                 OnPropertyChanged(nameof(SelectedJellyfinUser));
+
+                // Save selected user ID
+                if (value != null)
+                {
+                    Settings.Default.JellyfinUserId = value.Id;
+                    Settings.Default.Save();
+                }
             }
         }
 
@@ -454,6 +459,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
 
             AvailableJellyfinUsers = [];
 
+            // Initialize with default values if settings are empty
             var jellyfinIP = Settings.Default.JellyfinIP;
             if (!string.IsNullOrWhiteSpace(jellyfinIP) && jellyfinIP.Contains(':'))
             {
@@ -467,15 +473,16 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             else
             {
                 JellyfinServerIp = "";
+                SelectedJellyfinPort = "8096"; // Default port
             }
 
-            SelectedUpdateMode = Settings.Default.ConfigUpdateMode;
-            JellyfinApiKey = Settings.Default.JellyfinApiKey;
+            SelectedUpdateMode = Settings.Default.ConfigUpdateMode ?? "None";
+            JellyfinApiKey = Settings.Default.JellyfinApiKey ?? "";
 
-            SelectedTheme = Settings.Default.SelectedTheme;
-            SelectedSubtitleMode = Settings.Default.SelectedSubtitleMode;
-            AudioLanguagePreference = Settings.Default.AudioLanguagePreference;
-            SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference;
+            SelectedTheme = Settings.Default.SelectedTheme ?? "dark";
+            SelectedSubtitleMode = Settings.Default.SelectedSubtitleMode ?? "None";
+            AudioLanguagePreference = Settings.Default.AudioLanguagePreference ?? "";
+            SubtitleLanguagePreference = Settings.Default.SubtitleLanguagePreference ?? "";
 
             EnableBackdrops = Settings.Default.EnableBackdrops;
             EnableThemeSongs = Settings.Default.EnableThemeSongs;
@@ -492,55 +499,132 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             PlayDefaultAudioTrack = Settings.Default.PlayDefaultAudioTrack;
             UserAutoLogin = Settings.Default.UserAutoLogin;
 
+            UpdateApiKeyStatus();
             _ = LoadJellyfinUsersAsync();
         }
+
         private void UpdateJellyfinAddress()
         {
             if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && !string.IsNullOrWhiteSpace(SelectedJellyfinPort))
             {
                 Settings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
-                Debug.WriteLine(Settings.Default.JellyfinIP);
+                Debug.WriteLine($"Updated Jellyfin IP: {Settings.Default.JellyfinIP}");
                 Settings.Default.Save();
+
+                UpdateApiKeyStatus();
+                _ = LoadJellyfinUsersAsync();
             }
         }
+
+        private void UpdateApiKeyStatus()
+        {
+            ApiKeySet = !string.IsNullOrEmpty(Settings.Default.JellyfinIP) &&
+                        !string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) &&
+                        Settings.Default.JellyfinApiKey.Length == 32;
+        }
+
+        private bool IsValidJellyfinConfiguration()
+        {
+            return !string.IsNullOrEmpty(Settings.Default.JellyfinIP) &&
+                   !string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) &&
+                   Settings.Default.JellyfinApiKey.Length == 32 &&
+                   IsValidUrl($"http://{Settings.Default.JellyfinIP}/Users");
+        }
+
+        private static bool IsValidUrl(string url)
+        {
+            return Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+        }
+
         private async Task LoadJellyfinUsersAsync()
         {
-            if (string.IsNullOrEmpty(Settings.Default.JellyfinIP) ||
-                string.IsNullOrEmpty(Settings.Default.JellyfinApiKey) ||
-                Settings.Default.JellyfinApiKey.Length != 32)
-                return;
+            // Clear existing users first
+            AvailableJellyfinUsers.Clear();
 
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
-
-            var response = await _httpClient.GetAsync($"http://{Settings.Default.JellyfinIP}/Users");
-
-            if (response.IsSuccessStatusCode)
+            if (!IsValidJellyfinConfiguration())
             {
-                var json = await response.Content.ReadAsStringAsync();
-                var users = JsonSerializer.Deserialize<List<JellyfinAuth>>(json);
+                Debug.WriteLine("Invalid Jellyfin configuration - skipping user load");
+                return;
+            }
 
-                AvailableJellyfinUsers.Clear();
-                foreach (var user in users)
-                    AvailableJellyfinUsers.Add(user);
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{Settings.Default.JellyfinApiKey}\"");
 
-                if (AvailableJellyfinUsers.Count > 1)
+                var url = $"http://{Settings.Default.JellyfinIP}/Users";
+                Debug.WriteLine($"Attempting to load users from: {url}");
+
+                using var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    AvailableJellyfinUsers.Add(new JellyfinAuth
+                    var json = await response.Content.ReadAsStringAsync();
+                    var users = JsonSerializer.Deserialize<List<JellyfinAuth>>(json, new JsonSerializerOptions
                     {
-                        Id = "everyone",
-                        Name = "Everyone"
+                        PropertyNameCaseInsensitive = true
                     });
+
+                    if (users != null && users.Any())
+                    {
+                        foreach (var user in users)
+                        {
+                            AvailableJellyfinUsers.Add(user);
+                        }
+
+                        // Add "Everyone" option if there are multiple users
+                        if (AvailableJellyfinUsers.Count > 1)
+                        {
+                            AvailableJellyfinUsers.Add(new JellyfinAuth
+                            {
+                                Id = "everyone",
+                                Name = "Everyone"
+                            });
+                        }
+
+                        // Restore previously selected user
+                        var savedUserId = Settings.Default.JellyfinUserId;
+                        if (!string.IsNullOrEmpty(savedUserId))
+                        {
+                            SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == savedUserId);
+                        }
+
+                        // If no user selected and only one user available, select it
+                        if (SelectedJellyfinUser == null && AvailableJellyfinUsers.Count == 1)
+                        {
+                            SelectedJellyfinUser = AvailableJellyfinUsers.First();
+                        }
+
+                        Debug.WriteLine($"Successfully loaded {AvailableJellyfinUsers.Count} users");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("No users found in response");
+                    }
                 }
-
-                var savedUserId = Settings.Default.JellyfinUserId;
-                if (!string.IsNullOrEmpty(savedUserId))
-                    SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == savedUserId);
-
-                if (SelectedJellyfinUser == null && AvailableJellyfinUsers.Count == 1)
-                    SelectedJellyfinUser = AvailableJellyfinUsers.First();
+                else
+                {
+                    Debug.WriteLine($"Failed to load users - Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Debug.WriteLine($"HTTP error loading Jellyfin users: {ex.Message}");
+            }
+            catch (TaskCanceledException ex)
+            {
+                Debug.WriteLine($"Request timeout loading Jellyfin users: {ex.Message}");
+            }
+            catch (JsonException ex)
+            {
+                Debug.WriteLine($"JSON parsing error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unexpected error loading Jellyfin users: {ex.Message}");
             }
         }
-
     }
 }
