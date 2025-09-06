@@ -574,7 +574,6 @@ namespace Samsung_Jellyfin_Installer.ViewModels
                             AvailableJellyfinUsers.Add(user);
                         }
 
-                        // Add "Everyone" option if there are multiple users
                         if (AvailableJellyfinUsers.Count > 1)
                         {
                             AvailableJellyfinUsers.Add(new JellyfinAuth
