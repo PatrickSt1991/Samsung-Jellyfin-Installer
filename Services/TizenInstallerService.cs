@@ -48,6 +48,11 @@ namespace Samsung_Jellyfin_Installer.Services
 
             DetermineInstallPath();
 
+            InitializeTizenPaths();
+        }
+
+        private void InitializeTizenPaths()
+        {
             string? tizenRoot = FindTizenRoot();
 
             if (tizenRoot is not null)
@@ -60,6 +65,16 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 string tizenDataRoot = Path.Combine(Path.GetDirectoryName(tizenRoot) ?? tizenRoot, Path.GetFileName(tizenRoot) + "-data");
                 TizenDataPath = Path.Combine(tizenDataRoot, "profile", "profiles.xml");
+            }
+            else
+            {
+                // Explicitly set paths to null if root is not found
+                TizenRootPath = null;
+                TizenCliPath = null;
+                TizenSdbPath = null;
+                TizenCypto = null;
+                TizenPluginPath = null;
+                TizenDataPath = null;
             }
         }
         private void DetermineInstallPath()
@@ -158,6 +173,7 @@ namespace Samsung_Jellyfin_Installer.Services
             }
 
             tizenInstallationPath = await InstallMinimalCli();
+            InitializeTizenPaths();
             return (tizenInstallationPath, TizenCypto);
         }
 
