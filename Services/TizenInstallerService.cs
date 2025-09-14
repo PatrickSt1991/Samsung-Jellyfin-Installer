@@ -242,7 +242,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
                 await TizenLibraryCheck();
 
-                if (new Version(tizenOs) >= new Version("6.0") || Settings.Default.ConfigUpdateMode != "None")
+                if (new Version(tizenOs) >= new Version("7.0") || Settings.Default.ConfigUpdateMode != "None")
                 {
                     try
                     {
