@@ -569,6 +569,11 @@ namespace Samsung_Jellyfin_Installer.ViewModels
             }
 
             var device = await _networkService.ValidateManualTizenAddress(ip);
+            if(device == null)
+            {
+                SelectedDevice = AvailableDevices.FirstOrDefault(d => d.IpAddress != "Other");
+                await _dialogService.ShowErrorAsync("InvalidDeviceIp".Localized());
+            }
 
             var samsungDevice = await GetDeverloperInfoAsync(device);
 
