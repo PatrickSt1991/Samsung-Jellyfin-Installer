@@ -6,6 +6,10 @@
 
 <div align="center">
   <p>A simple tool for installing <strong>Jellyfin</strong> on your <strong>Samsung Smart TV</strong> — quickly and effortlessly.</p>
+
+<h2 style="color:red; font-weight:bold;">
+⚠️ Samsung endpoint outage: Tizen 7+ cannot generate or install signed certificates
+</h2>
   
   <img src="https://img.shields.io/badge/✅_Supports_all_Tizen_versions-blue?style=for-the-badge" /> 
   <img src="https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge" />
