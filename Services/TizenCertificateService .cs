@@ -388,9 +388,11 @@ namespace Samsung_Jellyfin_Installer.Services
             using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
 
             // Create the certificate collection and add certificates in the CORRECT order
-            var certCollection = new X509Certificate2Collection();
-            certCollection.Add(caCertDotNet);      // Add the Intermediate CA first
-            certCollection.Add(certWithPrivateKey); // Add the signed certificate with its private key next
+            var certCollection = new X509Certificate2Collection
+            {
+                certWithPrivateKey,
+                caCertDotNet
+            };
 
             var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
             var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
