@@ -237,7 +237,7 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private async Task<(byte[] profileXml, byte[] distributorCert)> PostDistributorCsrAsync(string accessToken, string userId, byte[] csrBytes, string duid)
         {
-            var v1Request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V1);
+            var v1Request = new HttpRequestMessage(HttpMethod.Post, Settings.Default.DistributorsEndpoint_V3);
             var v1Content = new MultipartFormDataContent
             {
                 { new StringContent(accessToken), "access_token" },
