@@ -140,7 +140,7 @@ namespace Samsung_Jellyfin_Installer.Services
         private static AsymmetricCipherKeyPair GenerateKeyPair()
         {
             var keyGen = new RsaKeyPairGenerator();
-            keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 4096));
+            keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 2048));
             return keyGen.GenerateKeyPair();
         }
 
@@ -352,56 +352,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 }
             }
         }
-        /*
-        private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
-        {
-            string caCertFile = Path.Combine(caPath, caFile);
-
-            if (!File.Exists(caCertFile))
-            {
-                throw new FileNotFoundException($"CA certificate file not found: {caCertFile}");
-            }
-
-            var caCertBytes = await File.ReadAllBytesAsync(caCertFile);
-
-            var parser = new X509CertificateParser();
-            var certificates = new List<X509Certificate2>();
-
-            // Parse the signed certificate
-            var signedCert = parser.ReadCertificate(signedCertBytes);
-            if (signedCert == null)
-            {
-                throw new Exception("Failed to parse signed certificate");
-            }
-            var signedCertDotNet = new X509Certificate2(signedCert.GetEncoded());
-            certificates.Add(signedCertDotNet);
-
-            // Parse the CA certificate
-            var caCert = parser.ReadCertificate(caCertBytes);
-            if (caCert == null)
-            {
-                throw new Exception("Failed to parse CA certificate");
-            }
-            var caCertDotNet = new X509Certificate2(caCert.GetEncoded());
-            certificates.Add(caCertDotNet);
-
-            // Export to PFX
-            var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
-            using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
-
-            var certCollection = new X509Certificate2Collection();
-            certCollection.Add(certWithPrivateKey);
-            certCollection.Add(caCertDotNet);
-
-            var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
-            var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
-            await File.WriteAllBytesAsync(pfxPath, pfxBytes);
-
-            // Clean up
-            signedCertDotNet.Dispose();
-            caCertDotNet.Dispose();
-        }
-        */
 
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
         {
