@@ -241,7 +241,6 @@ namespace Samsung_Jellyfin_Installer.Services
                 string tizenOs = await FetchTizenOsVersion(TizenSdbPath);
 
                 await TizenLibraryCheck();
-                tizenOs = "7.0";
 
                 if (new Version(tizenOs) >= new Version("7.0") || Settings.Default.ConfigUpdateMode != "None")
                 {
