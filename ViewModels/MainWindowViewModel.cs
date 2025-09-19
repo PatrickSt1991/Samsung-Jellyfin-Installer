@@ -395,6 +395,7 @@ namespace Samsung_Jellyfin_Installer.ViewModels
         }
         private async Task LoadReleasesAsync()
         {
+            Settings.Default.CustomWgtPath = string.Empty;
             IsLoading = true;
             Releases.Clear();
 

@@ -168,14 +168,13 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid, string userEmail)
         {
-            var subject = new X509Name($"E={userEmail}, CN=TizenSDK, OU=, O=, L=, ST=, C=");
+            var subject = new X509Name($"CN=TizenSDK, OU=, O=, L=, ST=, C=, emailAddress={userEmail}");
 
             // Create the SubjectAlternativeName extension required by the distributor endpoint.
             var generalNameList = new List<GeneralName>
             {
                 new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
-                new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}"),
-                new GeneralName(GeneralName.Rfc822Name, userEmail)
+                new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}")
             };
             var generalNames = new GeneralNames(generalNameList.ToArray());
 
@@ -388,9 +387,11 @@ namespace Samsung_Jellyfin_Installer.Services
             using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
 
             // Create the certificate collection and add certificates in the CORRECT order
-            var certCollection = new X509Certificate2Collection();
-            certCollection.Add(caCertDotNet);      // Add the Intermediate CA first
-            certCollection.Add(certWithPrivateKey); // Add the signed certificate with its private key next
+            var certCollection = new X509Certificate2Collection
+            {
+                caCertDotNet,      // Add the Intermediate CA first
+                certWithPrivateKey // Add the signed certificate with its private key next
+            };
 
             var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
             var pfxPath = Path.Combine(outputPath, $"{filename}.p12");
