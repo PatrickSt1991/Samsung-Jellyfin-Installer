@@ -13,6 +13,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Mail;
+using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Windows;
@@ -168,14 +169,13 @@ namespace Samsung_Jellyfin_Installer.Services
 
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid, string userEmail)
         {
-            var subject = new X509Name($"E={userEmail}, CN=TizenSDK, OU=, O=, L=, ST=, C=");
+            var subject = new X509Name($"CN=TizenSDK, OU=, O=, L=, ST=, C=, emailAddress={userEmail}");
 
             // Create the SubjectAlternativeName extension required by the distributor endpoint.
             var generalNameList = new List<GeneralName>
             {
                 new GeneralName(GeneralName.UniformResourceIdentifier, "URN:tizen:packageid="),
                 new GeneralName(GeneralName.UniformResourceIdentifier, $"URN:tizen:deviceid={duid}"),
-                new GeneralName(GeneralName.Rfc822Name, userEmail)
             };
             var generalNames = new GeneralNames(generalNameList.ToArray());
 
@@ -390,8 +390,9 @@ namespace Samsung_Jellyfin_Installer.Services
             // Create the certificate collection and add certificates in the CORRECT order
             var certCollection = new X509Certificate2Collection
             {
-                certWithPrivateKey,
-                caCertDotNet
+                caCertDotNet,
+                certWithPrivateKey
+                
             };
 
             var pfxBytes = certCollection.Export(X509ContentType.Pkcs12, password);
