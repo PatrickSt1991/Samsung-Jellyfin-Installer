@@ -152,7 +152,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             DownloadAndInstallCommand.NotifyCanExecuteChanged();
         }
 
-        private async void InitializeAsync()
+        public async Task InitializeAsync()
         {
             try
             {

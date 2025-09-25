@@ -28,7 +28,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 Title = title,
                 Width = 420,
-                Height = 220,
+                Height = 250,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = Brushes.White,

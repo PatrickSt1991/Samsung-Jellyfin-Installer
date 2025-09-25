@@ -1,4 +1,5 @@
-﻿using Jellyfin2SamsungCrossOS.Extensions;
+﻿using Avalonia.Threading;
+using Jellyfin2SamsungCrossOS.Extensions;
 using Jellyfin2SamsungCrossOS.Helpers;
 using Jellyfin2SamsungCrossOS.Models;
 using System;
@@ -198,9 +199,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                     : "certificate-manager";
 
                 string[] certManagerPaths = {
-            Path.Combine(TizenRootPath, "certificate-manager", certManagerExe),
-            Path.Combine(TizenRootPath, "tools", "certificate-manager", certManagerExe)
-        };
+                    Path.Combine(TizenRootPath, "certificate-manager", certManagerExe),
+                    Path.Combine(TizenRootPath, "tools", "certificate-manager", certManagerExe)
+                };
 
                 bool certManagerOk = certManagerPaths.Any(File.Exists);
 
@@ -236,7 +237,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             try
             {
                 var result = await _processHelper.RunCommandAsync(TizenSdbPath, $"connect {tvIpAddress}");
-                return result.Contains($"connected to {tvIpAddress}");
+                return result.Output.Contains($"connected to {tvIpAddress}");
             }
             catch
             {
@@ -248,16 +249,27 @@ namespace Jellyfin2SamsungCrossOS.Services
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
             var localPath = Path.Combine(_downloadDirectory, fileName);
 
+            // If file already exists, return the path immediately
+            if (File.Exists(localPath))
+            {
+                return localPath;
+            }
+
+            // Make sure the download directory exists
+            Directory.CreateDirectory(_downloadDirectory);
+
             using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(localPath, FileMode.Create);
+            await using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
 
             await contentStream.CopyToAsync(fileStream);
+
             return localPath;
         }
-        
+
+
         public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, ProgressCallback? progress = null)
         {
             if (TizenCliPath is null || TizenSdbPath is null)
@@ -364,9 +376,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                 await _processHelper.RunCommandAsync(TizenCliPath, $"package -t {packageExt} -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 progress?.Invoke("InstallingPackage".Localized());
-                string installOutput = await _processHelper.RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
+                var installOutput = await _processHelper.RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
-                if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
+                if (File.Exists(packageUrl) && !installOutput.Output.Contains("Failed"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
@@ -393,22 +405,25 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             await ConnectToTvAsync(tvIpAddress);
             var output = await _processHelper.RunCommandAsync(TizenSdbPath, "devices");
-            var match = Regex.Match(output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
+            var match = Regex.Match(output.Output, @"(?<=\n)([^\s]+)\s+device\s+(?<name>[^\s]+)");
             return match.Success ? match.Groups["name"].Value.Trim() : string.Empty;
         }
         private async Task<string> FetchTizenOsAsync()
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath, "capability");
-            var match = Regex.Match(output, @"platform_version:([\d.]+)");
+            var match = Regex.Match(output.Output, @"platform_version:([\d.]+)");
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
         private async Task<string> GetTvDuidAsync()
         {
             if (TizenSdbPath is null) return string.Empty;
-            string output = await _processHelper.RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
-            return string.IsNullOrWhiteSpace(output)
-                ? (await _processHelper.RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"")).Trim()
-                : output.Trim();
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath, "shell \"0 getduid\"");
+            var result = string.IsNullOrWhiteSpace(output.Output)
+                ? await _processHelper.RunCommandAsync(TizenSdbPath, "shell \"/opt/etc/duid-gadget 2 2> /dev/null\"")
+                : output;
+
+            return result.Output.Trim();
+
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, string profileName)
         {
@@ -476,6 +491,7 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             try
             {
+                // 1️⃣ Determine CLI URL
                 string cliUrl = OperatingSystem.IsWindows() ? AppSettings.Default.TizenCliWindows :
                                 OperatingSystem.IsLinux() ? AppSettings.Default.TizenCliLinux :
                                 OperatingSystem.IsMacOS() ? AppSettings.Default.TizenCliMac :
@@ -483,55 +499,80 @@ namespace Jellyfin2SamsungCrossOS.Services
 
                 string installPath = _osHelper.GetInstallPath();
 
-                var result = await _dialogService.ShowConfirmationAsync(
+                // 2️⃣ Ask user for confirmation
+                bool userConfirmed = await _dialogService.ShowConfirmationAsync(
                     "minimalCliTitle".Localized(),
                     "minimalCliMessage".Localized(),
                     "keyContinue".Localized(),
                     "keyStop".Localized());
 
-                if (!result)
+                if (!userConfirmed)
                     return "minimalCliStop".Localized();
 
+                // 3️⃣ Show installing window
                 installingWindow = new InstallingWindow
                 {
                     WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen
                 };
                 installingWindow.Show();
 
-                
+                // 4️⃣ Download installer
                 installingWindow.ViewModel.StatusText = "Downloading Tizen CLI...";
+                
+
                 installerPath = await DownloadPackageAsync(cliUrl);
 
                 if (!Directory.Exists(installPath))
                     Directory.CreateDirectory(installPath);
 
+                // 5️⃣ Install Tizen CLI
+                
                 installingWindow.ViewModel.StatusText = "Installing Tizen CLI...";
+                
 
-                if (OperatingSystem.IsWindows())
+                bool cliInstalled = false;
+
+                try
                 {
-                    var startInfo = new ProcessStartInfo
+                    if (OperatingSystem.IsWindows())
                     {
-                        FileName = installerPath,
-                        Arguments = $"--accept-license \"{installPath}\"",
-                        UseShellExecute = true,
-                        CreateNoWindow = false
-                    };
+                        var startInfo = new ProcessStartInfo
+                        {
+                            FileName = installerPath,
+                            Arguments = $"--accept-license \"{installPath}\"",
+                            UseShellExecute = true,
+                            CreateNoWindow = false,
+                            Verb = "runas"
+                        };
 
-                    using var process = Process.Start(startInfo);
-                    await process.WaitForExitAsync();
-
-                    if (process.ExitCode != 0)
-                        return "Tizen CLI installation failed.";
+                        using var process = Process.Start(startInfo);
+                        await process.WaitForExitAsync();
+                        
+                        cliInstalled = process.ExitCode == 0;
+                    }
+                    else
+                    {
+                        // Linux / macOS
+                        await _processHelper.RunCommandAsync("chmod", $"+x \"{installerPath}\"");
+                        var result = await _processHelper.RunCommandAsync("bash", $"\"{installerPath}\" --accept-license \"{installPath}\"");
+                        cliInstalled = result.ExitCode == 0;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    await _processHelper.RunCommandAsync("chmod", $"+x \"{installerPath}\"");
-                    await _processHelper.RunCommandAsync("bash", $"\"{installerPath}\" --accept-license \"{installPath}\"");
+                    Debug.WriteLine($"Tizen CLI installation failed: {ex}");
                 }
 
-                installingWindow.ViewModel.StatusText = "Installing Tizen Certificate tooling...";
-                bool certInstalled = await InstallSamsungCertificateExtensionAsync(installPath, installingWindow);
+                if (!cliInstalled)
+                    return "Tizen CLI installation failed.";
 
+                // 6️⃣ Install Certificate tooling
+                installingWindow.ViewModel.StatusText = "Installing Tizen Certificate tooling...";
+
+                bool certInstalled = await InstallSamsungCertificateExtensionAsync(installPath, installingWindow);
+                Debug.WriteLine($"certInstalled: {certInstalled}");
+
+                // 7️⃣ Retry logic if certificate failed
                 if (!certInstalled)
                 {
                     bool retry = await _dialogService.ShowConfirmationAsync(
@@ -548,6 +589,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                         return "certRetryFailed".Localized();
                 }
 
+                // 8️⃣ Set Tizen paths
                 var tizenRoot = FindTizenRoot() ?? string.Empty;
                 TizenCliPath = OperatingSystem.IsWindows()
                     ? Path.Combine(tizenRoot, "tools", "ide", "bin", "tizen.bat")
@@ -557,7 +599,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                     ? Path.Combine(tizenRoot, "tools", "sdb.exe")
                     : Path.Combine(tizenRoot, "tools", "sdb");
 
-                return !string.IsNullOrEmpty(tizenRoot) ? TizenCliPath : "Tizen root folder not found after installation.";
+                return !string.IsNullOrEmpty(tizenRoot)
+                    ? TizenCliPath
+                    : "Tizen root folder not found after installation.";
             }
             catch (Exception ex)
             {
@@ -566,32 +610,30 @@ namespace Jellyfin2SamsungCrossOS.Services
             finally
             {
                 if (installingWindow != null)
-                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => installingWindow.Close());
+                    await Dispatcher.UIThread.InvokeAsync(() => installingWindow.Close());
             }
         }
+
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
-            string certManagerExecutable = OperatingSystem.IsWindows()
-                ? "certificate-manager.exe"
-                : "certificate-manager";
-
+            string certManagerExe = OperatingSystem.IsWindows() ? "certificate-manager.exe" : "certificate-manager";
             string[] possiblePaths = {
-                Path.Combine(installPath, "tools", "certificate-manager", certManagerExecutable),
-                Path.Combine(installPath, "certificate-manager", certManagerExecutable)
+                Path.Combine(installPath, "tools", "certificate-manager", certManagerExe),
+                Path.Combine(installPath, "certificate-manager", certManagerExe)
             };
 
             // Already installed?
             if (possiblePaths.Any(File.Exists))
                 return true;
 
-            string packageManagerExecutable = OperatingSystem.IsWindows()
-                ? "package-manager-cli.exe"
-                : "package-manager-cli";
+            string packageManagerExe = OperatingSystem.IsWindows() ? "package-manager-cli.exe" : "package-manager-cli";
+            string packageManagerPath = Path.Combine(installPath, "package-manager", packageManagerExe);
 
-            string packageManagerPath = Path.Combine(installPath, "package-manager", packageManagerExecutable);
             if (!File.Exists(packageManagerPath))
             {
-                await _dialogService.ShowErrorAsync("Package manager CLI not found. Please ensure Tizen Studio is properly installed.");
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                    installingWindow.ViewModel.SetStatusText("Package manager CLI not found. Please ensure Tizen Studio is properly installed.")
+                );
                 return false;
             }
 
@@ -599,32 +641,64 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             try
             {
-                // Install Certificate-Manager
-                installingWindow.ViewModel.SetStatusText("Installing Certificate Manager...");
-                string certArgs = OperatingSystem.IsWindows()
-                    ? "install \"Certificate-Manager\" --accept-license"
-                    : "install 'Certificate-Manager' --accept-license";
+                if (OperatingSystem.IsWindows())
+                {
+                    // ---- Certificate Manager ----
+                    installingWindow.ViewModel.SetStatusText("Installing Certificate Manager...");
+                    var certProcessInfo = new ProcessStartInfo
+                    {
+                        FileName = packageManagerPath,
+                        Arguments = "install \"Certificate-Manager\" --accept-license",
+                        UseShellExecute = true,
+                        CreateNoWindow = false,
+                        WorkingDirectory = installPath
+                    };
 
-                await _processHelper.RunCommandAsync(packageManagerPath, certArgs, installPath);
+                    using var certProcess = Process.Start(certProcessInfo);
+                    await certProcess.WaitForExitAsync();
+                    if (certProcess.ExitCode != 0)
+                        return false;
 
-                // Install cert-add-on package
-                installingWindow.ViewModel.SetStatusText("Installing Certificate Add-On...");
-                string addOnArgs = OperatingSystem.IsWindows()
-                    ? "install \"cert-add-on\" --accept-license"
-                    : "install 'cert-add-on' --accept-license";
+                    // ---- Cert Add-On ----
+                    installingWindow.ViewModel.SetStatusText("Installing Certificate Add-On...");
+                    var addOnProcessInfo = new ProcessStartInfo
+                    {
+                        FileName = packageManagerPath,
+                        Arguments = "install \"cert-add-on\" --accept-license",
+                        UseShellExecute = true,
+                        CreateNoWindow = false,
+                        WorkingDirectory = installPath
+                    };
 
-                await _processHelper.RunCommandAsync(packageManagerPath, addOnArgs, installPath);
+                    using var addOnProcess = Process.Start(addOnProcessInfo);
+                    await addOnProcess.WaitForExitAsync();
+                    if (addOnProcess.ExitCode != 0)
+                        return false;
+                }
+                else
+                {
+                    // Linux/macOS CLI-based installation
+                    installingWindow.ViewModel.SetStatusText("Installing Certificate Manager...");
+                    await _processHelper.RunCommandAsync(packageManagerPath, "install 'Certificate-Manager' --accept-license", installPath);
+
+                    installingWindow.ViewModel.SetStatusText("Installing Certificate Add-On...");
+                    await _processHelper.RunCommandAsync(packageManagerPath, "install 'cert-add-on' --accept-license", installPath);
+                }
 
                 // Verify installation
                 if (possiblePaths.Any(File.Exists))
                     return true;
 
-                await _dialogService.ShowErrorAsync("Installation completed but certificate manager executable not found.");
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                    installingWindow.ViewModel.SetStatusText("Installation completed but certificate manager executable not found.")
+                );
                 return false;
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"Samsung Certificate Extension installation failed: {ex.Message}");
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                    installingWindow.ViewModel.SetStatusText($"Samsung Certificate Extension installation failed: {ex.Message}")
+                );
                 return false;
             }
         }
@@ -632,11 +706,11 @@ namespace Jellyfin2SamsungCrossOS.Services
         {
             installingWindow.ViewModel.SetStatusText("CheckingPackageManagerList".Localized());
 
-            var output = await _processHelper.RunCommandAsync(
-                packageManagerPath,
-                "extra --list --detail",
-                installPath
-            );
+            var result = OperatingSystem.IsWindows()
+                ? await _processHelper.RunElevatedAndCaptureOutputAsync(packageManagerPath, "extra --list --detail", installPath)
+                : await _processHelper.RunCommandAsync(packageManagerPath, "extra --list --detail", installPath);
+
+            string output = result?.Output ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(output))
             {
@@ -666,10 +740,15 @@ namespace Jellyfin2SamsungCrossOS.Services
 
                     var args = $"extra -act {ext.Index}";
 
-                    var result = await _processHelper.RunCommandAsync(packageManagerPath, args, installPath);
+                    var activationResult = OperatingSystem.IsWindows()
+                        ? await _processHelper.RunElevatedAndCaptureOutputAsync(packageManagerPath, args, installPath)
+                        : await _processHelper.RunCommandAsync(packageManagerPath, args, installPath);
 
-                    if (result.Contains("activated", StringComparison.OrdinalIgnoreCase) ||
-                        result.Contains("success", StringComparison.OrdinalIgnoreCase))
+                    string activationOutput = activationResult?.Output ?? string.Empty;
+
+
+                    if (activationOutput.Contains("activated", StringComparison.OrdinalIgnoreCase) ||
+                        activationOutput.Contains("success", StringComparison.OrdinalIgnoreCase))
                     {
                         installingWindow.ViewModel.SetStatusText($"Activated: {target}");
                     }
@@ -681,6 +760,5 @@ namespace Jellyfin2SamsungCrossOS.Services
                 }
             }
         }
-
     }
 }
