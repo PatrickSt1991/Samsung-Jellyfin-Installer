@@ -1,0 +1,12 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<Style Selector="ComboBox.clean">
+		<Setter Property="Background" Value="White"/>
+		<Setter Property="Foreground" Value="#2C3E50"/>
+		<Setter Property="BorderBrush" Value="#BDC3C7"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="4"/>
+		<Setter Property="Padding" Value="12,8"/>
+		<Setter Property="FontSize" Value="14"/>
+	</Style>
+</Styles>

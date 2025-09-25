@@ -1,0 +1,85 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:Jellyfin2SamsungCrossOS.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="420"
+        d:DesignHeight="220"
+        x:Class="Jellyfin2SamsungCrossOS.IpInputDialog"
+        x:DataType="viewModels:IpInputDialogViewModel"
+        Width="420"
+        Height="220"
+		Title="{Binding Title}"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="White"
+        CornerRadius="12">
+
+	<Border Background="White"
+            Padding="20"
+            CornerRadius="12"
+            Margin="10"
+            BorderBrush="#E5E7EB"
+            BorderThickness="1">
+		<Border.Effect>
+			<DropShadowEffect BlurRadius="20"
+                              OffsetX="2"
+                              OffsetY="2"
+                              Color="#00000020"
+                              Opacity="0.2"/>
+		</Border.Effect>
+
+		<StackPanel Spacing="14">
+
+			<!-- Title -->
+			<TextBlock Text="{Binding Title}"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,10"/>
+
+			<!-- Message -->
+			<TextBlock Text="{Binding Message}"
+                       Foreground="#111827"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,8"/>
+
+			<!-- IP Input -->
+			<TextBox Text="{Binding EnteredIp}"
+                     Watermark="Enter IP address..."
+                     CaretBrush="Black"
+                     SelectionBrush="#2563eb"
+                     BorderBrush="#9CA3AF"
+                     CornerRadius="8"
+                     Padding="8"
+                     FontSize="14"
+                     Margin="0,0,0,10"/>
+
+			<!-- Buttons -->
+			<StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="12">
+				<Button Content="{Binding OkText}"
+                        MinWidth="90"
+                        Height="35"
+                        Background="#2563eb"
+                        Foreground="White"
+                        CornerRadius="8"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Command="{Binding OkCommand}"/>
+				<Button Content="{Binding CancelText}"
+                        MinWidth="90"
+                        Height="35"
+                        Background="#9ca3af"
+                        Foreground="White"
+                        CornerRadius="8"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Command="{Binding CancelCommand}"/>
+			</StackPanel>
+		</StackPanel>
+	</Border>
+</Window>

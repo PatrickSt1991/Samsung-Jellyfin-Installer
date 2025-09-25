@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Jellyfin2SamsungCrossOS.Views.MainWindow"
+		x:DataType="viewModels:MainWindowViewModel"
+        xmlns:viewModels="clr-namespace:Jellyfin2SamsungCrossOS.ViewModels"
+		xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+        Width="580"
+        Height="410"
+        WindowStartupLocation="CenterScreen"
+        Title="Jellyfin2Samsung"
+        Background="#F5F5F5">
+
+	<Window.Styles>
+		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
+		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
+	</Window.Styles>
+
+	<Border Background="White"
+            Padding="16"
+            CornerRadius="8"
+            Margin="6"
+            BorderBrush="#E8E8E8"
+            BorderThickness="1">
+
+		<Border.Effect>
+			<DropShadowEffect BlurRadius="15" OffsetX="2" OffsetY="2" Color="#00000020" Opacity="0.15"/>
+		</Border.Effect>
+
+		<StackPanel Spacing="14">
+			<Border Background="#2C3E50"
+                    Padding="24,20"
+                    CornerRadius="8"
+                    BorderBrush="#E9ECEF"
+                    BorderThickness="1">
+				<StackPanel Spacing="12" HorizontalAlignment="Center">
+					<TextBlock
+                               Text="Jellyfin Installer for Samsung (Tizen)"
+								HorizontalAlignment="Center"
+								Foreground="White"
+								FontWeight="Medium"/>
+				</StackPanel>
+			</Border>
+
+			<!-- Form fields - side by side layout -->
+			<StackPanel Spacing="18">
+
+				<!-- Release -->
+				<Grid ColumnDefinitions="100,*,Auto" ColumnSpacing="8">
+					<TextBlock Classes="label"
+							   Text="{Binding LblRelease}"
+							   VerticalAlignment="Center"
+							   Grid.Column="0"/>
+					<ComboBox Classes="clean"
+							  SelectedItem="{Binding SelectedRelease}"
+							  Grid.Column="1"
+							  HorizontalAlignment="Stretch"
+							  ItemsSource="{Binding Releases}">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Name}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+					<!-- Spacer removed -->
+				</Grid>
+
+				<!-- Version -->
+				<Grid ColumnDefinitions="100,*,Auto" ColumnSpacing="8">
+					<TextBlock Classes="label"
+							   Text="{Binding LblVersion}"
+							   VerticalAlignment="Center"
+							   Grid.Column="0"/>
+					<ComboBox Classes="clean"
+							  Grid.Column="1"
+							  HorizontalAlignment="Stretch"
+							  ItemsSource="{Binding AvailableAssets}"
+							  SelectedItem="{Binding SelectedAsset, Mode=TwoWay}">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding DisplayText}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+				</Grid>
+
+				<!-- TV Selection -->
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8">
+					<TextBlock Classes="label"
+							   Text="{Binding LblSelectTv}"
+							   VerticalAlignment="Center"
+							   Grid.Column="0"/>
+					<ComboBox Classes="clean"
+							  Grid.Column="1"
+							  HorizontalAlignment="Stretch"
+							  ItemsSource="{Binding AvailableDevices}"
+							  SelectedItem="{Binding SelectedDevice, Mode=TwoWay}">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding DisplayText}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+					<Button Classes="icon" Grid.Column="2" Command="{Binding RefreshDevicesCommand}">
+						<fa:SymbolIcon Symbol="Refresh" Width="20" Height="20"/>
+					</Button>
+				</Grid>
+
+			</StackPanel>
+
+			<!-- Status - Clean and simple -->
+			<Border Background="#2C3E50"
+                    Padding="16"
+                    CornerRadius="6">
+				<TextBlock Text="{Binding StatusBar}"
+                           HorizontalAlignment="Center"
+                           Foreground="White"
+                           FontWeight="Medium"/>
+			</Border>
+
+			<!-- Action Buttons -->
+			<StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="12">
+				<Button Classes="primary"
+                        Content="{Binding DownloadAndInstall}"
+						Command="{Binding DownloadAndInstallCommand} "/>
+				<Button Classes="icon" Command="{Binding OpenSettingsCommand}">
+					<fa:SymbolIcon Symbol="Settings"  Width="20" Height="20"/>
+				</Button>
+			</StackPanel>
+
+			<!-- Clean footer -->
+			<TextBlock HorizontalAlignment="Center"
+                       FontSize="11"
+                       Foreground="#95A5A6"
+                       Text="{Binding FooterText}"/>
+
+		</StackPanel>
+	</Border>
+</Window>

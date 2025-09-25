@@ -1,0 +1,13 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<Style Selector="TextBlock.label">
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="FontWeight" Value="Medium"/>
+		<Setter Property="Foreground" Value="#2C3E50"/>
+	</Style>
+
+	<Style Selector="TextBlock.subtitle">
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="Foreground" Value="#7F8C8D"/>
+	</Style>
+</Styles>
