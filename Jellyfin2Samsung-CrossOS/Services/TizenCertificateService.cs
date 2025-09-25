@@ -205,7 +205,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                     string fileName = Path.GetFileName(entry.FullName);
                     if (fileName == "vd_tizen_dev_author_ca.cer" || fileName == "vd_tizen_dev_public2.crt")
                     {
-                        string target = Path.Combine("TizenProfile", "ca", fileName);
+                        string target = Path.Combine("Assets", "TizenProfile", "ca", fileName);
                         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                         using var outStream = File.Create(target);
                         using var entryStream = entry.Open();
@@ -239,7 +239,7 @@ namespace Jellyfin2SamsungCrossOS.Services
         {
             string dest = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SamsungCertificate", "Jelly2Sams");
             Directory.CreateDirectory(dest);
-            string src = Path.Combine(Environment.CurrentDirectory, "TizenProfile");
+            string src = Path.Combine(Environment.CurrentDirectory, "Assets", "TizenProfile");
             foreach (var file in Directory.GetFiles(src, "*.*"))
                 File.Move(file, Path.Combine(dest, Path.GetFileName(file)!), true);
             return dest;

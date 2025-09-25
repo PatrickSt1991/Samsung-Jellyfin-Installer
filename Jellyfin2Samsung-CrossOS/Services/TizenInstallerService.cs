@@ -305,7 +305,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                                 accessToken: auth.access_token,
                                 userId: auth.userId,
                                 userEmail: auth.inputEmailID,
-                                outputPath: Path.Combine(Environment.CurrentDirectory, "TizenProfile"),
+                                outputPath: Path.Combine(Environment.CurrentDirectory, "Assets", "TizenProfile"),
                                 TizenPluginPath ?? string.Empty,
                                 progress
                             );

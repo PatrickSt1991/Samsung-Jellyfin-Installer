@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-	<None Update="Assets\Localization\*.json">
-		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</None>
+    <None Update="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
