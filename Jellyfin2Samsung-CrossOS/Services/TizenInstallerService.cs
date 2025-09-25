@@ -288,7 +288,6 @@ namespace Jellyfin2SamsungCrossOS.Services
                 if (string.IsNullOrEmpty(tizenOs))
                     tizenOs = "7.0";
 
-                tizenOs = "7.0";
                 if (new Version(tizenOs) >= new Version("7.0") || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
                 {
                     string selectedCertificate = _appSettings.Certificate;
