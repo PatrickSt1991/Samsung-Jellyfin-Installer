@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Jellyfin2SamsungCrossOS
 {
@@ -27,7 +26,7 @@ namespace Jellyfin2SamsungCrossOS
             AvaloniaXamlLoader.Load(this);
         }
 
-        public async override void OnFrameworkInitializationCompleted()
+        public override void OnFrameworkInitializationCompleted()
         {
             ConfigureServices();
 
@@ -35,84 +34,18 @@ namespace Jellyfin2SamsungCrossOS
             {
                 DisableAvaloniaDataAnnotationValidation();
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-                var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
                 desktop.MainWindow = mainWindow;
-                if (!OperatingSystem.IsWindows())
-                    await RequestInitialPrivilegesWithUI();
-
-                await viewModel.InitializeAsync();
+        if (!OperatingSystem.IsWindows())
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1500); // Let UI fully load first
+                await RequestInitialPrivilegesWithUI();
+            });
+        }
             }
 
             base.OnFrameworkInitializationCompleted();
-        }
-
-        private async Task RequestInitialPrivilegesWithUI()
-        {
-            try
-            {
-                var dialogService = _serviceProvider.GetRequiredService<IDialogService>();
-
-                await dialogService.ShowMessageAsync(
-                    "Administrator Privileges Required",
-                    "This application needs administrator privileges to install software on your system. " +
-                    "You will be prompted for your password once at the beginning.");
-
-                
-                // Request privileges
-                var processHelper = _serviceProvider.GetRequiredService<ProcessHelper>();
-                var success = await RequestInitialPrivileges(processHelper);
-
-                if (success)
-                {
-                    await dialogService.ShowMessageAsync(
-                        "Authentication Successful",
-                        "Administrator privileges have been granted. You can now install software without additional password prompts.");
-                }
-                else
-                {
-                    await dialogService.ShowMessageAsync(
-                        "Authentication Failed",
-                        "Could not obtain administrator privileges. You may be prompted for passwords during installation.");
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle any errors silently or log them
-                Console.WriteLine($"Privilege request failed: {ex.Message}");
-            }
-        }
-
-        private async Task<bool> RequestInitialPrivileges(ProcessHelper processHelper)
-        {
-            try
-            {
-                if (OperatingSystem.IsLinux())
-                {
-                    // Use pkexec to authenticate, then extend sudo timeout
-                    var result1 = await processHelper.RunCommandAsync("pkexec", "sudo -v");
-                    if (result1.ExitCode == 0)
-                    {
-                        // Extend the sudo timeout to maximum (usually 15 minutes)
-                        var result2 = await processHelper.RunCommandAsync("sudo", "-v");
-                        return result2.ExitCode == 0;
-                    }
-                    return false;
-                }
-                else if (OperatingSystem.IsMacOS())
-                {
-                    // Test macOS authentication
-                    var result = await processHelper.RunCommandAsync("osascript",
-                        "-e \"do shell script \\\"true\\\" with administrator privileges\"");
-                    return result.ExitCode == 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Authentication error: {ex.Message}");
-                return false;
-            }
-
-            return false;
         }
 
         private void ConfigureServices()
