@@ -5,8 +5,11 @@ using System.Linq;
 
 namespace Jellyfin2SamsungCrossOS.Models
 {
+
     public class GitHubRelease
     {
+        [JsonProperty("url")]
+        public string Url { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -20,6 +23,10 @@ namespace Jellyfin2SamsungCrossOS.Models
         public List<Asset> Assets { get; set; } = new List<Asset>();
 
         public string PrimaryDownloadUrl => Assets?.FirstOrDefault()?.DownloadUrl;
+        [JsonConstructor]
+        public GitHubRelease()
+        {
+        }
     }
 
     public class Asset
@@ -46,6 +53,10 @@ namespace Jellyfin2SamsungCrossOS.Models
                 len /= 1024;
             }
             return $"{len:0.##} {sizes[order]}";
+        }
+        [JsonConstructor]
+        public Asset()
+        {
         }
     }
 }

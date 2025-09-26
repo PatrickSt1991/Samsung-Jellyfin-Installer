@@ -32,13 +32,13 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         private readonly ILocalizationService _localizationService;
 
         [ObservableProperty]
-        private ObservableCollection<GitHubRelease> releases = [];
+        private ObservableCollection<GitHubRelease> releases = new ObservableCollection<GitHubRelease>();
 
         [ObservableProperty]
-        private ObservableCollection<Asset> availableAssets = [];
+        private ObservableCollection<Asset> availableAssets = new ObservableCollection<Asset>();
 
         [ObservableProperty]
-        private ObservableCollection<NetworkDevice> availableDevices = [];
+        private ObservableCollection<NetworkDevice> availableDevices = new ObservableCollection<NetworkDevice>();
 
         [ObservableProperty]
         private GitHubRelease? selectedRelease;
@@ -305,10 +305,15 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
             try
             {
+                var settings = new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                };
+
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
                 var response = await _httpClient.GetStringAsync(AppSettings.Default.ReleasesUrl);
 
-                var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response)?
+                var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
                     .OrderByDescending(r => r.PublishedAt)
                     .Take(10);
 
@@ -319,7 +324,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 }
 
                 var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
-                var avRelease = JsonConvert.DeserializeObject<GitHubRelease>(avResponse);
+                var avRelease = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
                 if (avRelease != null)
                 {
                     Releases.Add(avRelease);
