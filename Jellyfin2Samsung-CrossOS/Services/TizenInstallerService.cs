@@ -175,7 +175,7 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             if (defaultPath.Length > MaxSafePathLength)
             {
-                _dialogService.ShowMessageAsync("Path length exceeded the safe limit. Using fallback path.").Wait();
+                _dialogService.ShowMessageAsync("Path length exceeded", "Path length exceeded the safe limit. Using fallback path.").Wait();
                 _installPath = fallbackPath;
             }
             else
@@ -552,7 +552,6 @@ namespace Jellyfin2SamsungCrossOS.Services
                     }
                     else
                     {
-                        // Linux / macOS
                         await _processHelper.RunCommandAsync("chmod", $"+x \"{installerPath}\"");
                         var result = await _processHelper.RunCommandAsync("bash", $"\"{installerPath}\" --accept-license \"{installPath}\"");
                         cliInstalled = result.ExitCode == 0;
@@ -566,18 +565,15 @@ namespace Jellyfin2SamsungCrossOS.Services
                 if (!cliInstalled)
                     return "Tizen CLI installation failed.";
 
-                // 6️⃣ Install Certificate tooling
                 installingWindow.ViewModel.StatusText = "Installing Tizen Certificate tooling...";
 
                 bool certInstalled = await InstallSamsungCertificateExtensionAsync(installPath, installingWindow);
-                Debug.WriteLine($"certInstalled: {certInstalled}");
 
-                // 7️⃣ Retry logic if certificate failed
                 if (!certInstalled)
                 {
                     bool retry = await _dialogService.ShowConfirmationAsync(
-                        "retryCertTitle".Localized(),
-                        "retryCertMessage".Localized(),
+                        "InstallationFailed".Localized(),
+                        "ReInstallingCertificateManager".Localized(),
                         "keyYes".Localized(),
                         "keyNo".Localized());
 
@@ -616,7 +612,7 @@ namespace Jellyfin2SamsungCrossOS.Services
 
         public async Task<bool> InstallSamsungCertificateExtensionAsync(string installPath, InstallingWindow installingWindow)
         {
-            string certManagerExe = OperatingSystem.IsWindows() ? "certificate-manager.exe" : "certificate-manager";
+            string certManagerExe = OperatingSystem.IsWindows() ? "certificate-manager.exe" : "certificate-manager.bin";
             string[] possiblePaths = {
                 Path.Combine(installPath, "tools", "certificate-manager", certManagerExe),
                 Path.Combine(installPath, "certificate-manager", certManagerExe)
@@ -626,7 +622,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             if (possiblePaths.Any(File.Exists))
                 return true;
 
-            string packageManagerExe = OperatingSystem.IsWindows() ? "package-manager-cli.exe" : "package-manager-cli";
+            string packageManagerExe = OperatingSystem.IsWindows() ? "package-manager-cli.exe" : "package-manager-cli.bin";
             string packageManagerPath = Path.Combine(installPath, "package-manager", packageManagerExe);
 
             if (!File.Exists(packageManagerPath))
@@ -679,10 +675,11 @@ namespace Jellyfin2SamsungCrossOS.Services
                 {
                     // Linux/macOS CLI-based installation
                     installingWindow.ViewModel.SetStatusText("Installing Certificate Manager...");
-                    await _processHelper.RunCommandAsync(packageManagerPath, "install 'Certificate-Manager' --accept-license", installPath);
+                    await _processHelper.RunCommandAsync(packageManagerPath, "install Certificate-Manager --accept-license");
 
                     installingWindow.ViewModel.SetStatusText("Installing Certificate Add-On...");
-                    await _processHelper.RunCommandAsync(packageManagerPath, "install 'cert-add-on' --accept-license", installPath);
+                    //await _processHelper.RunCommandAsyncEx("pkexec",new[] { packageManagerPath, "install", "cert-add-on", "--accept-license" });
+                    await _processHelper.RunPrivilegedCommandAsync(packageManagerPath,new[] { "install", "cert-add-on", "--accept-license" });
                 }
 
                 // Verify installation

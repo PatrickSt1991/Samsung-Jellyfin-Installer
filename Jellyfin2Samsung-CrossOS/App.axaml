@@ -11,5 +11,8 @@
   
     <Application.Styles>
         <FluentTheme />
+		<Style Selector="Window">
+			<Setter Property="Icon" Value="avares://Jellyfin2SamsungCrossOS/Assets/jelly2sams.ico" />
+		</Style>
     </Application.Styles>
 </Application>

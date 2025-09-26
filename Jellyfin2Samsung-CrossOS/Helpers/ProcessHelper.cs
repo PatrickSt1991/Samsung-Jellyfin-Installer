@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -151,6 +152,86 @@ namespace Jellyfin2SamsungCrossOS.Helpers
             {
                 return null;
             }
+        }
+        public async Task<ProcessResult> RunPrivilegedCommandAsync(string programPath, string[] arguments, string? workingDirectory = null)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                throw new PlatformNotSupportedException("RunPrivilegedCommandAsync only supports Linux/macOS currently.");
+            }
+
+            string fileName;
+            string args;
+
+            if (OperatingSystem.IsMacOS())
+            {
+                // Use osascript for macOS GUI privilege escalation
+                fileName = "osascript";
+                var command = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
+                args = $"-e \"do shell script \\\"{EscapeAppleScriptString(command)}\\\" with administrator privileges\"";
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                // Try pkexec first (GUI prompt), fallback to gksu/kdesu
+                var escalationTool = await GetLinuxPrivilegeEscalationTool();
+                fileName = escalationTool;
+
+                if (escalationTool == "pkexec")
+                {
+                    args = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
+                }
+                else if (escalationTool == "gksu" || escalationTool == "kdesu")
+                {
+                    var command = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
+                    args = $"\"{command}\"";
+                }
+                else
+                {
+                    throw new InvalidOperationException("No GUI privilege escalation tool found. Please install pkexec, gksu, or kdesu.");
+                }
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Unsupported OS.");
+            }
+
+            return await RunCommandAsync(fileName, args, workingDirectory);
+        }
+
+        private static string EscapeShellArgument(string arg)
+        {
+            if (string.IsNullOrEmpty(arg))
+                return "\"\"";
+
+            // Escape single quotes and wrap in single quotes for shell safety
+            return $"'{arg.Replace("'", "'\"'\"'")}'";
+        }
+
+        private static string EscapeAppleScriptString(string str)
+        {
+            // Escape quotes and backslashes for AppleScript
+            return str.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        }
+        private async Task<string> GetLinuxPrivilegeEscalationTool()
+        {
+            // Check which GUI privilege escalation tools are available
+            var tools = new[] { "pkexec", "gksu", "kdesu" };
+
+            foreach (var tool in tools)
+            {
+                try
+                {
+                    var result = await RunCommandAsync("which", tool);
+                    if (result.ExitCode == 0)
+                        return tool;
+                }
+                catch
+                {
+                    // Continue to next tool
+                }
+            }
+
+            return "pkexec"; // Default fallback
         }
     }
 }

@@ -71,6 +71,7 @@
   "DownloadingSetupFile": "Downloader installer...",
   "InstallingSetupFile": "Installerer Tizen Studio CLI...",
   "InstallingCertificateManager": "Installerer Certificate Manager...",
+  "ReInstallingCertificateManager": "Installation af Certifikathåndtering-tilføjelsen mislykkedes. Vil du prøve igen?",
   "InstallingCertificateAddOn": "Installerer Certificate Manager add-on...",
   "CheckingPackageManagerList": "Checker Tizen Package manager",
   "PermissionDenied": "Adgang nægtet",
@@ -138,5 +139,6 @@
   "minimalCliTitle": "Tizen CLI og certifikatadministrator kræves",
   "minimalCliMessage": "Tizen CLI og certifikatadministrator er nødvendige for at fortsætte.\n\nVi downloader og installerer nu Tizen CLI efterfulgt af certifikatadministrator.\nDette kan tage et par minutter. Vær tålmodig under installationsprocessen.",
   "minimalCliStop": "Brugeren afviste at installere Tizen CLI",
-  "packageAndSign": "Emballering og signering..."
+  "packageAndSign": "Emballering og signering...",
+  "certRetryFailed": "Gentagelse mislykkedes, opret venligst en fejl"
 }

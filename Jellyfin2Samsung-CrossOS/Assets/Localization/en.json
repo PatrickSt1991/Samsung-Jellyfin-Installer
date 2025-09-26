@@ -71,6 +71,7 @@
   "DownloadingSetupFile": "Downloading installer...",
   "InstallingSetupFile": "Installing Tizen Studio CLI...",
   "InstallingCertificateManager": "Installing Certificate Manager...",
+  "ReInstallingCertificateManager": "Installing Certificate Manager add-on failed, want to try again?",
   "InstallingCertificateAddOn": "Installing Certificate Manager add-on...",
   "CheckingPackageManagerList": "Checking Tizen Package manager",
   "PermissionDenied": "Permission Denied",
@@ -138,5 +139,6 @@
   "minimalCliTitle": "Tizen CLI & Certificate manager required",
   "minimalCliMessage": "Tizen CLI & Certificate manager are required to continue.\n\nWe will now download and install Tizen CLI followed by Certificate manager.\nThis may take a few minutes. Please be patient during the installation process.",
   "minimalCliStop": "User declined to install Tizen CLI",
-  "packageAndSign": "Packaging and signing..."
+  "packageAndSign": "Packaging and signing...",
+  "certRetryFailed": "Retry failed, please create an issue"
 }

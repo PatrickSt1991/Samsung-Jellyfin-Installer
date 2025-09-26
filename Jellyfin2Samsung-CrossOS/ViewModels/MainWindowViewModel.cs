@@ -89,8 +89,6 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             _localizationService = localizationService;
 
             _localizationService.LanguageChanged += OnLanguageChanged;
-
-            InitializeAsync();
         }
 
         private void OnLanguageChanged(object? sender, EventArgs e)
@@ -326,9 +324,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
                 var avRelease = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
                 if (avRelease != null)
-                {
                     Releases.Add(avRelease);
-                }
             }
             catch (Exception ex)
             {

@@ -7,7 +7,22 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>Jellyfin2SamsungCrossOS</AssemblyName>
+	<PublishSingleFile>true</PublishSingleFile>
+	<SelfContained>true</SelfContained>
+	<!-- Windows icon -->
     <ApplicationIcon>Assets\jelly2sams.ico</ApplicationIcon>
+	<!-- macOS bundle info -->
+	<CFBundleName>Jellyfin2SamsungCrossOS</CFBundleName>
+	<CFBundleDisplayName>Jellyfin to Samsung TV</CFBundleDisplayName>
+	<CFBundleIdentifier>com.yourcompany.jellyfin2samsung</CFBundleIdentifier>
+	<CFBundleVersion>1.0.0</CFBundleVersion>
+	<CFBundlePackageType>APPL</CFBundlePackageType>
+	<CFBundleSignature>????</CFBundleSignature>
+	<CFBundleExecutable>Jellyfin2SamsungCrossOS</CFBundleExecutable>
+	<CFBundleIconFile>jelly2sams.icns</CFBundleIconFile>
+	<!-- Linux desktop entry info -->
+	<LinuxDesktopFile>true</LinuxDesktopFile>
+	<LinuxDesktopFileName>jellyfin2samsung.desktop</LinuxDesktopFileName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +48,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Assets\jelly2sams.ico">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	<None Include="Assets\jelly2sams.icns" Condition="Exists('Assets\jelly2sams.icns')">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	<None Include="Assets\jelly2sams.png" Condition="Exists('Assets\jelly2sams.png')">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.6" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.6" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />

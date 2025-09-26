@@ -71,6 +71,7 @@
   "DownloadingSetupFile": "Installer downloaden...",
   "InstallingSetupFile": "Tizen Studio CLI installeren...",
   "InstallingCertificateManager": "Certificate Manager installeren...",
+  "ReInstallingCertificateManager": "Het installeren van de Certificate Manager-invoegtoepassing is mislukt. Wilt u het opnieuw proberen?",
   "InstallingCertificateAddOn": "Certificate Manager add-on installeren...",
   "CheckingPackageManagerList": "Tizen Package manager controleren",
   "PermissionDenied": "Toestemming geweigerd",
@@ -138,5 +139,6 @@
   "minimalCliTitle": "Tizen CLI & Certificaatbeheerder vereist",
   "minimalCliMessage": "Tizen CLI en Certificaatbeheer zijn vereist om door te gaan.\n\nWe gaan nu Tizen CLI downloaden en installeren, gevolgd door Certificaatbeheer.\nDit kan enkele minuten duren. Wees geduldig tijdens het installatieproces.",
   "minimalCliStop": "Gebruiker weigerde Tizen CLI te installeren",
-  "packageAndSign": "Inpakken en ondertekenen..."
+  "packageAndSign": "Inpakken en ondertekenen...",
+  "certRetryFailed": "Opnieuw proberen mislukt, maak een probleem aan"
 }

@@ -100,10 +100,10 @@ namespace Jellyfin2SamsungCrossOS.Services
             return dialog;
         }
 
-        public async Task ShowMessageAsync(string message)
+        public async Task ShowMessageAsync(string title, string message)
         {
             var window = GetMainWindow();
-            var dialog = CreateStyledDialog("Message", new TextBlock
+            var dialog = CreateStyledDialog(title, new TextBlock
             {
                 Text = message,
                 TextWrapping = TextWrapping.Wrap,
