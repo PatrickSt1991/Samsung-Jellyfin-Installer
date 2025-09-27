@@ -11,6 +11,9 @@ if (Test-Path $OutputDir) {
     Remove-Item $OutputDir -Recurse -Force
 }
 
+# -------------------------------
+# Publish for all platforms
+# -------------------------------
 Write-Host "Publishing for Windows..." -ForegroundColor Green
 dotnet publish -c $Configuration -r win-x64 --self-contained -o "$OutputDir/win-x64"
 
@@ -23,31 +26,50 @@ dotnet publish -c $Configuration -r osx-arm64 --self-contained -o "$OutputDir/os
 Write-Host "Publishing for Linux..." -ForegroundColor Green
 dotnet publish -c $Configuration -r linux-x64 --self-contained -o "$OutputDir/linux-x64"
 
-# Create macOS osx64 app bundle
-Write-Host "Creating macOS app bundle..." -ForegroundColor Green
-$MacOSAppPath = "$OutputDir/osx-x64/$ProjectName.app"
-New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/MacOS" -Force
-New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Resources" -Force
+# -------------------------------
+# Create macOS app bundles
+# -------------------------------
+function Create-MacOSAppBundle($arch) {
+    $MacOSAppPath = "$OutputDir/$arch/$ProjectName.app"
+    Write-Host "Creating macOS $arch app bundle..." -ForegroundColor Green
 
-Move-Item "$OutputDir/osx-x64/$ProjectName" "$MacOSAppPath/Contents/MacOS/"
-Copy-Item "Info.plist" "$MacOSAppPath/Contents/"
-if (Test-Path "Assets/jelly2sams.icns") {
-    Copy-Item "Assets/jelly2sams.icns" "$MacOSAppPath/Contents/Resources/"
+    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/MacOS" -Force
+    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Resources" -Force
+    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Frameworks" -Force
+
+    # Move executable
+    Move-Item "$OutputDir/$arch/$ProjectName" "$MacOSAppPath/Contents/MacOS/"
+
+    # Copy Info.plist
+    Copy-Item "Info.plist" "$MacOSAppPath/Contents/"
+
+    # Copy Assets folder next to executable
+    if (Test-Path "Assets") {
+        Copy-Item "Assets" "$MacOSAppPath/Contents/MacOS/" -Recurse
+    }
+
+    # Copy dylibs into Frameworks
+    $dylibs = Get-ChildItem "$OutputDir/$arch" -Filter "*.dylib"
+    foreach ($lib in $dylibs) {
+        Copy-Item $lib.FullName "$MacOSAppPath/Contents/Frameworks/"
+    }
+
+    $RunScriptSource = "./run_macos.sh"   # adjust if needed
+    $RunScriptDest = "$OutputDir/$arch/run_macos.sh"
+    if (Test-Path $RunScriptSource) {
+        Copy-Item $RunScriptSource $RunScriptDest -Force
+        Write-Host "Copied run_macos.sh to $RunScriptDest"
+    } else {
+        Write-Host "WARNING: run_macos.sh not found at $RunScriptSource" -ForegroundColor Yellow
+    }
 }
 
-# Create macOS osx-arm64 app bundle
-Write-Host "Creating macOS osx-arm64 app bundle..." -ForegroundColor Green
-$MacOSAppPath = "$OutputDir/osx-arm64/$ProjectName.app"
-New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/MacOS" -Force
-New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Resources" -Force
+Create-MacOSAppBundle "osx-x64"
+Create-MacOSAppBundle "osx-arm64"
 
-Move-Item "$OutputDir/osx-arm64/$ProjectName" "$MacOSAppPath/Contents/MacOS/"
-Copy-Item "Info.plist" "$MacOSAppPath/Contents/"
-if (Test-Path "Assets/jelly2sams.icns") {
-    Copy-Item "Assets/jelly2sams.icns" "$MacOSAppPath/Contents/Resources/"
-}
-
+# -------------------------------
 # Copy Linux desktop file and icon
+# -------------------------------
 Write-Host "Setting up Linux package..." -ForegroundColor Green
 Copy-Item "jellyfin2samsung.desktop" "$OutputDir/linux-x64/"
 if (Test-Path "Assets/jelly2sams.png") {
