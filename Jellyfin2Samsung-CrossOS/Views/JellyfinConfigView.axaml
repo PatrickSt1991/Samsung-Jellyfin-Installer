@@ -70,14 +70,33 @@
 						</Grid>
 
 						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding ServerIP}" Classes="label" VerticalAlignment="Center"/>
-							<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-								<TextBox Text="{Binding JellyfinServerIp}" Width="200" Classes="clean"/>
-								<TextBlock Text=":" VerticalAlignment="Center"/>
-								<ComboBox ItemsSource="{Binding JellyfinPorts}"
-										  SelectedItem="{Binding SelectedJellyfinPort}"
-										  Width="80" Classes="clean"/>
-							</StackPanel>
+							<TextBlock Grid.Column="0"
+									   Text="{Binding ServerIP}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+
+							<Grid Grid.Column="1">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+
+								<TextBox Grid.Column="0"
+										 Text="{Binding JellyfinServerIp}"
+										 Classes="clean"
+										 HorizontalAlignment="Stretch"/>
+
+								<TextBlock Grid.Column="1"
+										   Text=":"
+										   VerticalAlignment="Center"/>
+
+								<AutoCompleteBox Grid.Column="2"
+										   ItemsSource="{Binding JellyfinPorts}"
+										   Text="{Binding SelectedJellyfinPort, Mode=TwoWay}"
+										   Classes="clean" />
+
+							</Grid>
 						</Grid>
 
 						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">

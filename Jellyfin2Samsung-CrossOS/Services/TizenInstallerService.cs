@@ -346,6 +346,8 @@ namespace Jellyfin2SamsungCrossOS.Services
                     PackageCertificate = "custom_jelly";
                 }
 
+                Debug.WriteLine($"Jellyfin IP: {AppSettings.Default.JellyfinIP}");
+                Debug.WriteLine($"Update mode: {AppSettings.Default.ConfigUpdateMode}");
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
                 {
                     string[] userIds = [];

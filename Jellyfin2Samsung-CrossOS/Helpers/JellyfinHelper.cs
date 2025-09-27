@@ -135,6 +135,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
                     AppSettings.Default.ConfigUpdateMode.Contains("All"))
                 {
+                    Debug.WriteLine(tempDir);
                     UpdateMultiServerConfig(tempDir);
                 }
 
