@@ -35,7 +35,6 @@ if (Test-Path "Assets/jelly2sams.icns") {
 # Copy Linux desktop file and icon
 Write-Host "Setting up Linux package..." -ForegroundColor Green
 Copy-Item "jellyfin2samsung.desktop" "$OutputDir/linux-x64/"
-Copy-Item "start-jellyfin2samsung.sh" "$OutputDir/linux-x64/"
 if (Test-Path "Assets/jelly2sams.png") {
     Copy-Item "Assets/jelly2sams.png" "$OutputDir/linux-x64/"
 }

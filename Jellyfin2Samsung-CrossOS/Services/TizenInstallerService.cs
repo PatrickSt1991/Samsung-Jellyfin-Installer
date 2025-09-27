@@ -678,8 +678,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                     await _processHelper.RunCommandAsync(packageManagerPath, "install Certificate-Manager --accept-license");
 
                     installingWindow.ViewModel.SetStatusText("Installing Certificate Add-On...");
-                    //await _processHelper.RunCommandAsyncEx("pkexec",new[] { packageManagerPath, "install", "cert-add-on", "--accept-license" });
-                    await _processHelper.RunPrivilegedCommandAsync(packageManagerPath,new[] { "install", "cert-add-on", "--accept-license" });
+                    await _processHelper.RunCommandAsync(packageManagerPath, "install cert-add-on --accept-license");
                 }
 
                 // Verify installation
