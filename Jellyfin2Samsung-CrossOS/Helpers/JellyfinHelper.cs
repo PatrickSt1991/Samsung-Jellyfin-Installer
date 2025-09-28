@@ -152,7 +152,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 File.Delete(packagePath);
                 File.Move(tempPackage, packagePath);
 
-                await _processHelper.RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packagePath}\"");
+                await _processHelper.RunCommandCmdAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packagePath}\"");
 
                 return InstallResult.SuccessResult();
             }

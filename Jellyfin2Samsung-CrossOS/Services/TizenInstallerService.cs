@@ -375,10 +375,10 @@ namespace Jellyfin2SamsungCrossOS.Services
 
                 progress?.Invoke("packageAndSign".Localized());
                 string packageExt = Path.GetExtension(packageUrl).TrimStart('.').ToLowerInvariant();
-                await _processHelper.RunCommandAsync(TizenCliPath, $"package -t {packageExt} -s {PackageCertificate} -- \"{packageUrl}\"");
+                await _processHelper.RunCommandCmdAsync(TizenCliPath, $"package -t {packageExt} -s {PackageCertificate} -- \"{packageUrl}\"");
 
                 progress?.Invoke("InstallingPackage".Localized());
-                var installOutput = await _processHelper.RunCommandAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
+                var installOutput = await _processHelper.RunCommandCmdAsync(TizenCliPath, $"install -n \"{packageUrl}\" -t {tvName}");
 
                 if (File.Exists(packageUrl) && !installOutput.Output.Contains("Failed"))
                 {

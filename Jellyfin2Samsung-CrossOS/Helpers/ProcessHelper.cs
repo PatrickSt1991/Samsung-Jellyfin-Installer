@@ -32,6 +32,11 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 Debug.WriteLine($"Failed to stop SDB server: {ex.Message}");
             }
         }
+        public Task<ProcessResult> RunCommandCmdAsync(string fileName, string arguments, string? workingDirectory = null)
+        {
+            var cmdArgs = $"/c \"\"{fileName}\" {arguments}\"";
+            return RunCommandAsync("cmd.exe", cmdArgs, workingDirectory);
+        }
         public async Task<ProcessResult> RunCommandAsync(string fileName, string arguments, string? workingDirectory = null)
         {
             var tcs = new TaskCompletionSource<ProcessResult>();
@@ -197,7 +202,6 @@ namespace Jellyfin2SamsungCrossOS.Helpers
 
             return await RunCommandAsync(fileName, args, workingDirectory);
         }
-
         private static string EscapeShellArgument(string arg)
         {
             if (string.IsNullOrEmpty(arg))
@@ -206,7 +210,6 @@ namespace Jellyfin2SamsungCrossOS.Helpers
             // Escape single quotes and wrap in single quotes for shell safety
             return $"'{arg.Replace("'", "'\"'\"'")}'";
         }
-
         private static string EscapeAppleScriptString(string str)
         {
             // Escape quotes and backslashes for AppleScript

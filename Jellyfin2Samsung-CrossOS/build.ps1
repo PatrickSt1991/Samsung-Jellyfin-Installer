@@ -27,45 +27,20 @@ Write-Host "Publishing for Linux..." -ForegroundColor Green
 dotnet publish -c $Configuration -r linux-x64 --self-contained -o "$OutputDir/linux-x64"
 
 # -------------------------------
-# Create macOS app bundles
+# Setup macOS portable executables
 # -------------------------------
-function Create-MacOSAppBundle($arch) {
-    $MacOSAppPath = "$OutputDir/$arch/$ProjectName.app"
-    Write-Host "Creating macOS $arch app bundle..." -ForegroundColor Green
-
-    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/MacOS" -Force
-    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Resources" -Force
-    New-Item -ItemType Directory -Path "$MacOSAppPath/Contents/Frameworks" -Force
-
-    # Move executable
-    Move-Item "$OutputDir/$arch/$ProjectName" "$MacOSAppPath/Contents/MacOS/"
-
-    # Copy Info.plist
-    Copy-Item "Info.plist" "$MacOSAppPath/Contents/"
-
-    # Copy Assets folder next to executable
+function Setup-MacOSPortable($arch) {
+    Write-Host "Setting up macOS $arch portable executable..." -ForegroundColor Green
+    
+    # Copy Assets folder if it exists
     if (Test-Path "Assets") {
-        Copy-Item "Assets" "$MacOSAppPath/Contents/MacOS/" -Recurse
-    }
-
-    # Copy dylibs into Frameworks
-    $dylibs = Get-ChildItem "$OutputDir/$arch" -Filter "*.dylib"
-    foreach ($lib in $dylibs) {
-        Copy-Item $lib.FullName "$MacOSAppPath/Contents/Frameworks/"
-    }
-
-    $RunScriptSource = "./run_macos.sh"   # adjust if needed
-    $RunScriptDest = "$OutputDir/$arch/run_macos.sh"
-    if (Test-Path $RunScriptSource) {
-        Copy-Item $RunScriptSource $RunScriptDest -Force
-        Write-Host "Copied run_macos.sh to $RunScriptDest"
-    } else {
-        Write-Host "WARNING: run_macos.sh not found at $RunScriptSource" -ForegroundColor Yellow
+        Copy-Item "Assets" "$OutputDir/$arch/" -Recurse -Force
+        Write-Host "Copied Assets to $arch build"
     }
 }
 
-Create-MacOSAppBundle "osx-x64"
-Create-MacOSAppBundle "osx-arm64"
+Setup-MacOSPortable "osx-x64"
+Setup-MacOSPortable "osx-arm64"
 
 # -------------------------------
 # Copy Linux desktop file and icon
@@ -77,3 +52,4 @@ if (Test-Path "Assets/jelly2sams.png") {
 }
 
 Write-Host "Build complete! Check the $OutputDir folder." -ForegroundColor Yellow
+Write-Host "macOS users should run: chmod +x $ProjectName" -ForegroundColor Cyan
