@@ -34,7 +34,6 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 paths.Add(Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    "Library",
                     "TizenStudioCli"));
             }
             else if (OperatingSystem.IsLinux())
