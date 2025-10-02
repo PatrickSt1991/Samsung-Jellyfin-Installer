@@ -1,5 +1,6 @@
 ﻿using System;
 using Avalonia;
+using Avalonia.Media;
 
 namespace Jellyfin2SamsungCrossOS
 {
@@ -11,19 +12,16 @@ namespace Jellyfin2SamsungCrossOS
 
         public static AppBuilder BuildAvaloniaApp()
         {
-            bool isMacIntel =
-                OperatingSystem.IsMacOS() &&
-                RuntimeInformation.ProcessArchitecture == Architecture.X64;
-
-            return AppBuilder
-                .Configure<App>()
+            var builder = AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .WithInterFont()
-                .With(new SkiaOptions
+                .With(new FontManagerOptions
                 {
-                    UseGpu = !isMacIntel
+                    DefaultFamilyName = "Inter"
                 })
                 .LogToTrace();
+
+            return builder;
         }
     }
 }
