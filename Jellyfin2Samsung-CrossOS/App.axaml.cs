@@ -2,6 +2,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using Jellyfin2SamsungCrossOS.Extensions;
 using Jellyfin2SamsungCrossOS.Helpers;
 using Jellyfin2SamsungCrossOS.Services;
@@ -53,7 +54,7 @@ namespace Jellyfin2SamsungCrossOS
                 }
 
             }
-
+            RequestedThemeVariant = ThemeVariant.Light;
             base.OnFrameworkInitializationCompleted();
         }
         private async Task RequestInitialPrivilegesWithUI()
