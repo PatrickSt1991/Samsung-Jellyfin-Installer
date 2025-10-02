@@ -2,8 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Styling;                 // ThemeVariant, FindResource keys
-using Avalonia.Controls.Documents;      // TextElement (attached Foreground)
+using Avalonia.Styling;
+using Avalonia.Controls.Documents;
 using System.Threading.Tasks;
 
 namespace Jellyfin2SamsungCrossOS.Services
@@ -15,177 +15,119 @@ namespace Jellyfin2SamsungCrossOS.Services
             if (Application.Current?.ApplicationLifetime is
                 Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
                 return desktop.MainWindow;
-
             return null;
         }
 
-        private static IBrush GetThemeBrush(string key, IBrush fallback)
-        {
-            var obj = Application.Current?.FindResource(key);
-            if (obj is IBrush b) return b;
-            if (obj is Color c) return new SolidColorBrush(c);
-            return fallback;
+        private static IBrush B(string key, IBrush fb) {
+            var r = Application.Current?.FindResource(key);
+            if (r is IBrush b) return b;
+            if (r is Color c) return new SolidColorBrush(c);
+            return fb;
         }
 
         private Window CreateStyledDialog(
-            string title,
-            Control content,
-            bool showButtons = false,
-            TaskCompletionSource<bool>? tcs = null,
-            string yesText = "Yes",
-            string noText = "No")
+            string title, Control content, bool showButtons = false,
+            TaskCompletionSource<bool>? tcs = null, string yesText = "Yes", string noText = "No")
         {
-            // Resolve theme brushes (work in both Light/Dark)
-            var bg       = GetThemeBrush("ThemeBackgroundBrush", Brushes.White);
-            var fg       = GetThemeBrush("ThemeForegroundBrush", Brushes.Black);
-            var border   = GetThemeBrush("ThemeBorderBrush", new SolidColorBrush(Color.Parse("#E0E0E0")));
-            // Accent for primary button (fallback to a readable blue)
-            var accent   = GetThemeBrush("SystemAccentColor", new SolidColorBrush(Color.Parse("#2563eb")));
-            var accentH  = GetThemeBrush("SystemAccentColorDark1", new SolidColorBrush(Color.Parse("#1e54c6")));
+            var bg     = B("ThemeBackgroundBrush", Brushes.White);
+            var fg     = B("ThemeForegroundBrush", Brushes.Black);
+            var border = B("ThemeBorderBrush",    new SolidColorBrush(Color.Parse("#E0E0E0")));
+            var accent = B("SystemAccentColor",   new SolidColorBrush(Color.Parse("#2563eb")));
+            var accent1= B("SystemAccentColorDark1", accent);
+            var accent2= B("SystemAccentColorDark2", accent1);
 
-            var dialog = new Window
-            {
+            var dlg = new Window {
                 Title = title,
-                Width = 420,
-                Height = 250,
+                Width = 420, Height = 250,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                RequestedThemeVariant = ThemeVariant.Default, // follow app/OS theme
+                RequestedThemeVariant = ThemeVariant.Default,
                 Background = bg,
                 CornerRadius = new CornerRadius(12)
             };
 
-            var mainPanel = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                Spacing = 10,
-                Margin = new Thickness(20)
-            };
+            var root = new StackPanel { Orientation = Orientation.Vertical, Spacing = 10, Margin = new Thickness(20) };
+            root.SetValue(TextElement.ForegroundProperty, fg);
 
-            // Apply themed foreground to all text inside the dialog
-            mainPanel.SetValue(TextElement.ForegroundProperty, fg);
-
-            // Title inside the dialog content (not the window chrome)
-            mainPanel.Children.Add(new TextBlock
-            {
-                Text = title,
-                FontSize = 18,
-                FontWeight = FontWeight.Bold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 10)
+            root.Children.Add(new TextBlock {
+                Text = title, FontSize = 18, FontWeight = FontWeight.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0,0,0,10)
             });
 
-            mainPanel.Children.Add(content);
+            root.Children.Add(content);
 
             if (showButtons && tcs != null)
             {
-                var buttons = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Spacing = 10,
-                    Margin = new Thickness(0, 15, 0, 0)
-                };
+                var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 10, Margin = new Thickness(0,15,0,0) };
 
-                var yesButton = new Button
-                {
-                    Content = yesText,
-                    Width = 90,
-                    Height = 35,
-                    Background = accent,
-                    Foreground = Brushes.White,              // good contrast over accent
-                    CornerRadius = new CornerRadius(8),
-                    HorizontalContentAlignment = HorizontalAlignment.Center,
-                    VerticalContentAlignment = VerticalAlignment.Center
-                };
-                yesButton.PointerEnter += (_, __) => yesButton.Background = accentH;
-                yesButton.PointerLeave += (_, __) => yesButton.Background = accent;
+                var yesBtn = new Button { Content = yesText, Width = 90, Height = 35, Background = accent, Foreground = Brushes.White,
+                                          CornerRadius = new CornerRadius(8) };
+                // style via pseudo-classes, not events
+                yesBtn.Classes.Add("dialog-primary");
 
-                var noButton = new Button
-                {
-                    Content = noText,
-                    Width = 90,
-                    Height = 35,
-                    Background = bg,                         // match dialog background
-                    Foreground = fg,
-                    BorderBrush = border,
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(8),
-                    HorizontalContentAlignment = HorizontalAlignment.Center,
-                    VerticalContentAlignment = VerticalAlignment.Center
-                };
+                var noBtn  = new Button { Content = noText, Width = 90, Height = 35, Background = bg, Foreground = fg,
+                                          BorderBrush = border, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8) };
 
-                yesButton.Click += (_, _) => { tcs.SetResult(true); dialog.Close(); };
-                noButton.Click  += (_, _) => { tcs.SetResult(false); dialog.Close(); };
+                yesBtn.Click += (_,__) => { tcs.SetResult(true);  dlg.Close(); };
+                noBtn.Click  += (_,__) => { tcs.SetResult(false); dlg.Close(); };
 
-                buttons.Children.Add(yesButton);
-                buttons.Children.Add(noButton);
+                row.Children.Add(yesBtn);
+                row.Children.Add(noBtn);
+                root.Children.Add(row);
 
-                mainPanel.Children.Add(buttons);
+                // Local style so hover works without code-behind:
+                root.Styles.Add(new Style(x => x.OfType<Button>().Class("dialog-primary")) {
+                    Setters = {
+                        new Setter(Button.BackgroundProperty, accent),
+                        new Setter(Button.ForegroundProperty, Brushes.White)
+                    }
+                });
+                root.Styles.Add(new Style(x => x.OfType<Button>().Class("dialog-primary").PointerOver()) {
+                    Setters = { new Setter(Button.BackgroundProperty, accent1) }
+                });
+                root.Styles.Add(new Style(x => x.OfType<Button>().Class("dialog-primary").Pressed()) {
+                    Setters = { new Setter(Button.BackgroundProperty, accent2) }
+                });
             }
 
-            dialog.Content = mainPanel;
-            return dialog;
+            dlg.Content = root;
+            return dlg;
         }
 
         public async Task ShowMessageAsync(string title, string message)
         {
-            var window = GetMainWindow();
-            var dialog = CreateStyledDialog(title, new TextBlock
-            {
-                Text = message,
-                TextWrapping = TextWrapping.Wrap,
-                FontSize = 14,
-                Margin = new Thickness(0, 5, 0, 0)
+            var w = GetMainWindow();
+            var dlg = CreateStyledDialog(title, new TextBlock {
+                Text = message, TextWrapping = TextWrapping.Wrap, FontSize = 14, Margin = new Thickness(0,5,0,0)
             });
-
-            if (window != null)
-                await dialog.ShowDialog(window);
+            if (w != null) await dlg.ShowDialog(w);
         }
 
         public async Task ShowErrorAsync(string message)
         {
-            var window = GetMainWindow();
-            var dialog = CreateStyledDialog("Error", new TextBlock
-            {
-                Text = message,
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = Brushes.Red, // stays readable on both themes
-                FontSize = 14,
-                Margin = new Thickness(0, 5, 0, 0)
+            var w = GetMainWindow();
+            var dlg = CreateStyledDialog("Error", new TextBlock {
+                Text = message, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Red, FontSize = 14, Margin = new Thickness(0,5,0,0)
             });
-
-            if (window != null)
-                await dialog.ShowDialog(window);
+            if (w != null) await dlg.ShowDialog(w);
         }
 
-        public async Task<bool> ShowConfirmationAsync(string title, string message, string yesText = "Yes", string noText = "No")
+        public async Task<bool> ShowConfirmationAsync(string title, string message, string yesText="Yes", string noText="No")
         {
-            var window = GetMainWindow();
+            var w = GetMainWindow();
             var tcs = new TaskCompletionSource<bool>();
-
-            var dialog = CreateStyledDialog(title, new TextBlock
-            {
-                Text = message,
-                TextWrapping = TextWrapping.Wrap,
-                FontSize = 14,
-                Margin = new Thickness(0, 5, 0, 0)
+            var dlg = CreateStyledDialog(title, new TextBlock {
+                Text = message, TextWrapping = TextWrapping.Wrap, FontSize = 14, Margin = new Thickness(0,5,0,0)
             }, showButtons: true, tcs: tcs, yesText: yesText, noText: noText);
-
-            if (window != null)
-                await dialog.ShowDialog(window);
-
+            if (w != null) await dlg.ShowDialog(w);
             return await tcs.Task;
         }
 
         public async Task<string?> PromptForIpAsync()
         {
-            var window = GetMainWindow();
-            var dialog = new IpInputDialog();
-
-            if (window != null)
-                return await dialog.ShowDialog<string?>(window);
-
+            var w = GetMainWindow();
+            var dlg = new IpInputDialog();
+            if (w != null) return await dlg.ShowDialog<string?>(w);
             return null;
         }
     }
