@@ -1,16 +1,16 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Jellyfin2SamsungCrossOS.App"
+             xmlns:faStyling="using:FluentAvalonia.Styling"
+			 x:Class="Jellyfin2SamsungCrossOS.App"
              xmlns:local="using:Jellyfin2SamsungCrossOS"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
   
     <Application.Styles>
-        <FluentTheme />
+		<faStyling:FluentAvaloniaTheme PreferSystemTheme="True" />
 		<Style Selector="Window">
 			<Setter Property="Icon" Value="avares://Jellyfin2SamsungCrossOS/Assets/jelly2sams.ico" />
 		</Style>

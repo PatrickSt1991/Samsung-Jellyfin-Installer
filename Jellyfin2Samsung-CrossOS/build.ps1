@@ -15,16 +15,16 @@ if (Test-Path $OutputDir) {
 # Publish for all platforms
 # -------------------------------
 Write-Host "Publishing for Windows..." -ForegroundColor Green
-dotnet publish -c $Configuration -r win-x64 --self-contained -o "$OutputDir/win-x64"
+dotnet publish -c $Configuration -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o "$OutputDir/win-x64"
 
 Write-Host "Publishing for macOS x64..." -ForegroundColor Green
-dotnet publish -c $Configuration -r osx-x64 --self-contained -o "$OutputDir/osx-x64"
+dotnet publish -c $Configuration -r osx-x64 --self-contained -p:PublishSingleFile=false -p:PublishTrimmed=false -o "$OutputDir/osx-x64"
 
 Write-Host "Publishing for macOS arm64..." -ForegroundColor Green
-dotnet publish -c $Configuration -r osx-arm64 --self-contained -o "$OutputDir/osx-arm64"
+dotnet publish -c $Configuration -r osx-arm64 --self-contained -p:PublishSingleFile=false -p:PublishTrimmed=false -o "$OutputDir/osx-arm64"
 
 Write-Host "Publishing for Linux..." -ForegroundColor Green
-dotnet publish -c $Configuration -r linux-x64 --self-contained -o "$OutputDir/linux-x64"
+dotnet publish -c $Configuration -r linux-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o "$OutputDir/linux-x64"
 
 # -------------------------------
 # Setup macOS portable executables

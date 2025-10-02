@@ -7,8 +7,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>Jellyfin2SamsungCrossOS</AssemblyName>
-	<PublishSingleFile>true</PublishSingleFile>
-	<SelfContained>true</SelfContained>
 	<!-- Windows icon -->
     <ApplicationIcon>Assets\jelly2sams.ico</ApplicationIcon>
 	<!-- macOS bundle info -->
@@ -65,8 +63,8 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
-	<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.6" />
-	<PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="2.88.6" />
+	<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.9" />
+	<PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="2.88.9" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.6">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
