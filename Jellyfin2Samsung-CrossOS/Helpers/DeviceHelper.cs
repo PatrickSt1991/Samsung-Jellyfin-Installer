@@ -88,9 +88,6 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                     try
                     {
                         var samsungDevice = await GetDeveloperInfoAsync(device);
-                        Debug.WriteLine(samsungDevice.DeveloperIP);
-                        Debug.WriteLine(samsungDevice.DeviceName);
-                        Debug.WriteLine(samsungDevice.DeveloperMode);
                         if (!string.IsNullOrEmpty(samsungDevice.DeviceName))
                             devices.Add(samsungDevice);
                     }

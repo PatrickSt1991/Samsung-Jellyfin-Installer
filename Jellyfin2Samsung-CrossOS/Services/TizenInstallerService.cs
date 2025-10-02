@@ -1,4 +1,5 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Controls;
+using Avalonia.Threading;
 using Jellyfin2SamsungCrossOS.Extensions;
 using Jellyfin2SamsungCrossOS.Helpers;
 using Jellyfin2SamsungCrossOS.Models;
@@ -583,7 +584,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                         "InstallationFailed".Localized(),
                         "ReInstallingCertificateManager".Localized(),
                         "keyYes".Localized(),
-                        "keyNo".Localized());
+                        "keyNo".Localized(),
+                        owner: installingWindow
+                    );
 
                     if (!retry)
                         return "certFailed".Localized();

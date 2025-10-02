@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Avalonia.Controls;
+using System.Threading.Tasks;
 
 namespace Jellyfin2SamsungCrossOS.Services
 {
@@ -6,7 +7,7 @@ namespace Jellyfin2SamsungCrossOS.Services
     {
         Task ShowMessageAsync(string title, string message);
         Task ShowErrorAsync(string message);
-        Task<bool> ShowConfirmationAsync(string title, string message, string yes, string no);
+        Task<bool> ShowConfirmationAsync(string title, string message, string yes, string no, Window? owner = null);
         Task<string?> PromptForIpAsync();
 
     }

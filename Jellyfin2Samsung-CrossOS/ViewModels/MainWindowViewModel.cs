@@ -379,16 +379,15 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                     StatusBar = L("Ready");
                 }
 
-                if(SelectedDevice == null)
+                if (AvailableDevices.Any())
                 {
-                    SelectedDevice = AvailableDevices[0];
-
-                }else if (!string.IsNullOrEmpty(selectedIp))
-                {
-                    var previousDevice = AvailableDevices.FirstOrDefault(it => it.IpAddress == selectedIp);
-                    if (previousDevice != null)
+                    if (SelectedDevice == null)
+                        SelectedDevice = AvailableDevices[0];
+                    else if (!string.IsNullOrEmpty(selectedIp))
                     {
-                        SelectedDevice = previousDevice;
+                        var previousDevice = AvailableDevices.FirstOrDefault(it => it.IpAddress == selectedIp);
+                        if (previousDevice != null)
+                            SelectedDevice = previousDevice;
                     }
                 }
             }

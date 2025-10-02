@@ -131,9 +131,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                 await dialog.ShowDialog(window);
         }
 
-        public async Task<bool> ShowConfirmationAsync(string title, string message, string yesText = "Yes", string noText = "No")
+        public async Task<bool> ShowConfirmationAsync(string title, string message, string yesText = "Yes", string noText = "No", Window? owner = null)
         {
-            var window = GetMainWindow();
+            var window = owner ?? GetMainWindow();
             var tcs = new TaskCompletionSource<bool>();
 
             var dialog = CreateStyledDialog(title, new TextBlock
