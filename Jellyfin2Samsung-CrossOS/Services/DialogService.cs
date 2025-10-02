@@ -1,7 +1,9 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;                 // ThemeVariant, FindResource keys
+using Avalonia.Controls.Documents;      // TextElement (attached Foreground)
 using System.Threading.Tasks;
 
 namespace Jellyfin2SamsungCrossOS.Services
@@ -10,10 +12,19 @@ namespace Jellyfin2SamsungCrossOS.Services
     {
         private Window? GetMainWindow()
         {
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+            if (Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
                 return desktop.MainWindow;
 
             return null;
+        }
+
+        private static IBrush GetThemeBrush(string key, IBrush fallback)
+        {
+            var obj = Application.Current?.FindResource(key);
+            if (obj is IBrush b) return b;
+            if (obj is Color c) return new SolidColorBrush(c);
+            return fallback;
         }
 
         private Window CreateStyledDialog(
@@ -24,6 +35,14 @@ namespace Jellyfin2SamsungCrossOS.Services
             string yesText = "Yes",
             string noText = "No")
         {
+            // Resolve theme brushes (work in both Light/Dark)
+            var bg       = GetThemeBrush("ThemeBackgroundBrush", Brushes.White);
+            var fg       = GetThemeBrush("ThemeForegroundBrush", Brushes.Black);
+            var border   = GetThemeBrush("ThemeBorderBrush", new SolidColorBrush(Color.Parse("#E0E0E0")));
+            // Accent for primary button (fallback to a readable blue)
+            var accent   = GetThemeBrush("SystemAccentColor", new SolidColorBrush(Color.Parse("#2563eb")));
+            var accentH  = GetThemeBrush("SystemAccentColorDark1", new SolidColorBrush(Color.Parse("#1e54c6")));
+
             var dialog = new Window
             {
                 Title = title,
@@ -31,7 +50,8 @@ namespace Jellyfin2SamsungCrossOS.Services
                 Height = 250,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = Brushes.White,
+                RequestedThemeVariant = ThemeVariant.Default, // follow app/OS theme
+                Background = bg,
                 CornerRadius = new CornerRadius(12)
             };
 
@@ -42,6 +62,10 @@ namespace Jellyfin2SamsungCrossOS.Services
                 Margin = new Thickness(20)
             };
 
+            // Apply themed foreground to all text inside the dialog
+            mainPanel.SetValue(TextElement.ForegroundProperty, fg);
+
+            // Title inside the dialog content (not the window chrome)
             mainPanel.Children.Add(new TextBlock
             {
                 Text = title,
@@ -68,27 +92,31 @@ namespace Jellyfin2SamsungCrossOS.Services
                     Content = yesText,
                     Width = 90,
                     Height = 35,
-                    Background = new SolidColorBrush(Color.Parse("#2563eb")),
-                    Foreground = Brushes.White,
+                    Background = accent,
+                    Foreground = Brushes.White,              // good contrast over accent
                     CornerRadius = new CornerRadius(8),
                     HorizontalContentAlignment = HorizontalAlignment.Center,
                     VerticalContentAlignment = VerticalAlignment.Center
                 };
+                yesButton.PointerEnter += (_, __) => yesButton.Background = accentH;
+                yesButton.PointerLeave += (_, __) => yesButton.Background = accent;
 
                 var noButton = new Button
                 {
                     Content = noText,
                     Width = 90,
                     Height = 35,
-                    Background = new SolidColorBrush(Color.Parse("#9ca3af")),
-                    Foreground = Brushes.White,
+                    Background = bg,                         // match dialog background
+                    Foreground = fg,
+                    BorderBrush = border,
+                    BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(8),
                     HorizontalContentAlignment = HorizontalAlignment.Center,
                     VerticalContentAlignment = VerticalAlignment.Center
                 };
 
                 yesButton.Click += (_, _) => { tcs.SetResult(true); dialog.Close(); };
-                noButton.Click += (_, _) => { tcs.SetResult(false); dialog.Close(); };
+                noButton.Click  += (_, _) => { tcs.SetResult(false); dialog.Close(); };
 
                 buttons.Children.Add(yesButton);
                 buttons.Children.Add(noButton);
@@ -122,7 +150,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 Text = message,
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = Brushes.Red,
+                Foreground = Brushes.Red, // stays readable on both themes
                 FontSize = 14,
                 Margin = new Thickness(0, 5, 0, 0)
             });
