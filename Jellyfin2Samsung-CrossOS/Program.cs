@@ -5,18 +5,25 @@ namespace Jellyfin2SamsungCrossOS
 {
     internal sealed class Program
     {
-        // Initialization code. Don't use any Avalonia, third-party APIs or any
-        // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-        // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args) => 
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 
-        // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
-            => AppBuilder.Configure<App>()
+        {
+            bool isMacIntel =
+                OperatingSystem.IsMacOS() &&
+                RuntimeInformation.ProcessArchitecture == Architecture.X64;
+
+            return AppBuilder
+                .Configure<App>()
                 .UsePlatformDetect()
                 .WithInterFont()
+                .With(new SkiaOptions
+                {
+                    UseGpu = !isMacIntel
+                })
                 .LogToTrace();
+        }
     }
 }
