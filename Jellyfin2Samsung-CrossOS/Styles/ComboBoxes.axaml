@@ -1,39 +1,17 @@
-<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-  <!-- Base look -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Style Selector="ComboBox.clean">
-    <Setter Property="Background"     Value="{DynamicResource ThemeBackgroundBrush}" />
-    <Setter Property="Foreground"     Value="{DynamicResource ThemeForegroundBrush}" />
-    <Setter Property="BorderBrush"    Value="{DynamicResource ThemeBorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius"   Value="4" />
-    <Setter Property="Padding"        Value="12,8" />
-    <Setter Property="FontSize"       Value="14" />
+    <Setter Property="Background"      Value="{DynamicResource ThemeControlLowBrush}"/>
+    <Setter Property="Foreground"      Value="{DynamicResource ThemeForegroundBrush}"/>
+    <Setter Property="BorderBrush"     Value="{DynamicResource ThemeBorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius"    Value="4"/>
+    <Setter Property="Padding"         Value="12,8"/>
+    <Setter Property="FontSize"        Value="14"/>
   </Style>
-
-  <!-- Hover: subtle accent on border -->
   <Style Selector="ComboBox.clean:pointerover">
-    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
   </Style>
-
-  <!-- Focus: accent border for accessibility -->
   <Style Selector="ComboBox.clean:focus">
-    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
   </Style>
-
-  <!-- Optional: make popup/list items theme-aware too -->
-  <Style Selector="ComboBoxItem">
-    <Setter Property="Background" Value="{DynamicResource ThemeBackgroundBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-  </Style>
-  <Style Selector="ComboBoxItem:pointerover">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-  </Style>
-  <Style Selector="ComboBoxItem:selected">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark1}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-  </Style>
-
 </Styles>
