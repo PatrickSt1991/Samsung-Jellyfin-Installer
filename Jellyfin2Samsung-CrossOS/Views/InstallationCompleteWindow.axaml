@@ -10,84 +10,89 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         SizeToContent="WidthAndHeight"
-        Background="#F5F5F5"
-		ExtendClientAreaToDecorationsHint="True"
+        Background="{DynamicResource ThemeBackgroundBrush}"
+        ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1">
-	<!-- Solid background -->
 
-	<Window.Styles>
-		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
-	</Window.Styles>
+    <!-- Styles -->
+    <Window.Styles>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
+    </Window.Styles>
 
-	<Border Background="White"
+    <Border Background="{DynamicResource ThemeBackgroundBrush}"
             Padding="10"
             CornerRadius="8"
             Margin="20"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource ThemeBorderBrush}"
             BorderThickness="1">
-		<Border.Effect>
-			<DropShadowEffect BlurRadius="15"
-                              OffsetX="2" OffsetY="2"
+        
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="15"
+                              OffsetX="2"
+                              OffsetY="2"
                               Color="#00000020"
                               Opacity="0.15"/>
-		</Border.Effect>
+        </Border.Effect>
 
-		<StackPanel Margin="20" HorizontalAlignment="Center" Spacing="14">
+        <StackPanel Margin="20"
+                    HorizontalAlignment="Center"
+                    Spacing="14">
 
-			<!-- ✅ Icon -->
-			<TextBlock Text="✅"
+            <!-- ✅ Icon -->
+            <TextBlock Text="✅"
                        FontSize="40"
                        TextAlignment="Center"
-                       HorizontalAlignment="Center"/>
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource SystemAccentColor}"/>
 
-			<!-- Success Message -->
-			<TextBlock Text="{Binding SuccessMessage}"
+            <!-- Success Message -->
+            <TextBlock Text="{Binding SuccessMessage}"
                        TextWrapping="Wrap"
                        FontSize="16"
                        TextAlignment="Center"
-                       Foreground="#2C3E50"
+                       Foreground="{DynamicResource ThemeForegroundBrush}"
                        FontWeight="Medium"/>
 
-			<!-- Extra Info -->
-			<TextBlock Text="{Binding EasyRight}"
+            <!-- Extra Info -->
+            <TextBlock Text="{Binding EasyRight}"
                        TextWrapping="Wrap"
                        TextAlignment="Center"
-                       Foreground="#7F8C8D"
+                       Foreground="{DynamicResource ThemeForegroundLowBrush}"
                        FontSize="14"/>
 
-			<!-- Action Buttons -->
-			<StackPanel Orientation="Horizontal"
+            <!-- Action Buttons -->
+            <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         Spacing="20"
                         Margin="0,12,0,0">
 
-				<!-- Ko-fi Button -->
-				<Button Content="{Binding Validation}"
+                <!-- Ko-fi Button -->
+                <Button Content="{Binding Validation}"
                         Command="{Binding OpenKoFiCommand}"
-                        Background="#2C3E50"
+                        Background="{DynamicResource SystemAccentColor}"
                         Foreground="White"
-                        BorderThickness="2"
+                        BorderThickness="0"
                         CornerRadius="6"
                         Padding="15,8"
                         FontWeight="Medium"
                         Cursor="Hand"/>
 
-				<!-- Close Button -->
-				<Button Content="{Binding Close}"
+                <!-- Close Button -->
+                <Button Content="{Binding Close}"
                         Command="{Binding CloseWindowCommand}"
-                        Background="#2C3E50"
-                        Foreground="White"
+                        Background="{DynamicResource ThemeControlLowBrush}"
+                        Foreground="{DynamicResource ThemeForegroundBrush}"
                         BorderThickness="0"
                         CornerRadius="6"
                         Padding="15,8"
                         Width="90"
                         FontWeight="Medium"
                         Cursor="Hand"/>
-			</StackPanel>
-		</StackPanel>
-	</Border>
+            </StackPanel>
+        </StackPanel>
+    </Border>
 </Window>
