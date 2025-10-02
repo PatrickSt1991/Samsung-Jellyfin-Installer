@@ -1,46 +1,43 @@
-<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <!-- Primary button -->
   <Style Selector="Button.primary">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-    <Setter Property="BorderBrush" Value="Transparent"/>
-    <Setter Property="CornerRadius" Value="6"/>
-    <Setter Property="Padding" Value="24,12"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
-    <Setter Property="FontSize" Value="14"/>
-    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Background"     Value="{DynamicResource SystemAccentColor}"/>
+    <Setter Property="Foreground"     Value="{DynamicResource ThemeForegroundBrush}"/>
+    <Setter Property="BorderBrush"    Value="Transparent"/>
+    <Setter Property="CornerRadius"   Value="6"/>
+    <Setter Property="Padding"        Value="16,10"/>
+    <Setter Property="FontWeight"     Value="SemiBold"/>
+    <Setter Property="FontSize"       Value="14"/>
+    <Setter Property="Cursor"         Value="Hand"/>
   </Style>
-
   <Style Selector="Button.primary:pointerover">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark1}" />
+    <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark1}"/>
+  </Style>
+  <Style Selector="Button.primary:pressed">
+    <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark2}"/>
   </Style>
 
-  <!-- Icon button -->
+  <!-- Icon button (neutral) -->
   <Style Selector="Button.icon">
-    <Setter Property="Width" Value="40"/>
-    <Setter Property="Height" Value="40"/>
-    <Setter Property="CornerRadius" Value="20"/>
-    <Setter Property="Background" Value="{DynamicResource ThemeBackgroundBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}" />
+    <Setter Property="Width"          Value="40"/>
+    <Setter Property="Height"         Value="40"/>
+    <Setter Property="CornerRadius"   Value="20"/>
+    <Setter Property="Background"     Value="{DynamicResource ThemeControlLowBrush}"/>
+    <Setter Property="Foreground"     Value="{DynamicResource ThemeForegroundBrush}"/>
+    <Setter Property="BorderBrush"    Value="{DynamicResource ThemeBorderBrush}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="FontSize" Value="16"/>
-    <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="HorizontalContentAlignment" Value="Center"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
-    <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="Padding" Value="0"/>
+    <Setter Property="VerticalContentAlignment"   Value="Center"/>
+    <Setter Property="Cursor"         Value="Hand"/>
+    <Setter Property="Padding"        Value="0"/>
   </Style>
-
   <Style Selector="Button.icon:pointerover">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
-    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="Background" Value="{DynamicResource ThemeControlMediumBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+  </Style>
+  <Style Selector="Button.icon:pressed">
+    <Setter Property="Background" Value="{DynamicResource ThemeControlHighBrush}"/>
   </Style>
 
-  <Style Selector="Button.icon:pressed">
-    <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark2}" />
-  </Style>
 </Styles>
