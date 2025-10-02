@@ -15,10 +15,6 @@ namespace Jellyfin2SamsungCrossOS
             var builder = AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .WithInterFont()
-                .With(new FontManagerOptions
-                {
-                    DefaultFamilyName = "Inter"
-                })
                 .LogToTrace();
 
             return builder;
