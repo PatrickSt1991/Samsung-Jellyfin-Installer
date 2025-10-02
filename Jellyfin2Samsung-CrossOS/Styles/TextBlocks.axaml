@@ -1,17 +1,11 @@
-<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-  <!-- Label text: medium emphasis -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Style Selector="TextBlock.label">
-    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="FontSize"   Value="14"/>
     <Setter Property="FontWeight" Value="Medium"/>
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrush}"/>
   </Style>
-
-  <!-- Subtitle text: lower emphasis -->
   <Style Selector="TextBlock.subtitle">
-    <Setter Property="FontSize" Value="14"/>
-    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrushLow}" />
+    <Setter Property="FontSize"   Value="14"/>
+    <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundBrushLow}"/>
   </Style>
-
 </Styles>
