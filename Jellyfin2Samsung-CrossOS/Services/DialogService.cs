@@ -98,8 +98,8 @@ namespace Jellyfin2SamsungCrossOS.Services
                     HorizontalContentAlignment = HorizontalAlignment.Center,
                     VerticalContentAlignment = VerticalAlignment.Center
                 };
-                yesButton.PointerEnter += (_, __) => yesButton.Background = accentH;
-                yesButton.PointerLeave += (_, __) => yesButton.Background = accent;
+                yesButton.PointerEntered += (_, __) => yesButton.Background = accentH;
+                yesButton.PointerExited += (_, __) => yesButton.Background = accent;
 
                 var noButton = new Button
                 {
