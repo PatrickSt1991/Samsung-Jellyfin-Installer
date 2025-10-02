@@ -9,185 +9,213 @@
         Title="Jellyfin Config"
         Width="600"
         Height="900"
-        Background="#F5F5F5">
+        Background="{DynamicResource ThemeBackgroundBrush}">
 
-	<Window.Styles>
-		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
-	</Window.Styles>
+    <Window.Styles>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
+        <StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
+    </Window.Styles>
 
-	<Border Background="White"
+    <Border Background="{DynamicResource ThemeBackgroundBrush}"
             Padding="16"
             CornerRadius="8"
             Margin="6"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource ThemeBorderBrush}"
             BorderThickness="1">
 
-		<Border.Effect>
-			<DropShadowEffect BlurRadius="15" OffsetX="2" OffsetY="2" Color="#00000020" Opacity="0.15"/>
-		</Border.Effect>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="15"
+                              OffsetX="2"
+                              OffsetY="2"
+                              Color="#00000020"
+                              Opacity="0.15"/>
+        </Border.Effect>
 
-		<Grid>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="*"/>
-			</Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-			<!-- Header -->
-			<Border Grid.Row="0"
-                    Background="#2C3E50"
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SystemAccentColor}"
                     CornerRadius="8"
                     Padding="24,20"
                     Margin="0,0,0,14">
-				<TextBlock Text="{Binding LblJellyfinConfig}"
-                           Foreground="White"
+                <TextBlock Text="{Binding LblJellyfinConfig}"
+                           Foreground="{DynamicResource ThemeForegroundBrush}"
                            FontSize="18"
                            FontWeight="Medium"
                            HorizontalAlignment="Center"/>
-			</Border>
+            </Border>
 
-			<!-- Settings Content -->
-			<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-				<StackPanel Spacing="18" Margin="0,0,20,0">
+            <!-- Settings Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="18" Margin="0,0,20,0">
 
-					<!-- Server Settings -->
-					<StackPanel Spacing="12">
-						<TextBlock Text="{Binding LblServerSettings}"
-								   FontSize="16"
-								   FontWeight="SemiBold"
-								   Foreground="#2C3E50"/>
+                    <!-- Server Settings -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="{Binding LblServerSettings}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource ThemeForegroundBrush}"/>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding UpdateMode}" Classes="label" VerticalAlignment="Center"/>
-							<ComboBox Grid.Column="1"
-									  ItemsSource="{Binding AvailableUpdateModes}"
-									  SelectedItem="{Binding SelectedUpdateMode}"
-									  Classes="clean"
-									  HorizontalAlignment="Stretch"/>
-						</Grid>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding UpdateMode}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableUpdateModes}"
+                                      SelectedItem="{Binding SelectedUpdateMode}"
+                                      Classes="clean"
+                                      HorizontalAlignment="Stretch"/>
+                        </Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0"
-									   Text="{Binding ServerIP}"
-									   Classes="label"
-									   VerticalAlignment="Center"/>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding ServerIP}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-							<Grid Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*" />
-									<ColumnDefinition Width="Auto" />
-									<ColumnDefinition Width="Auto" />
-								</Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding JellyfinServerIp}"
+                                         Classes="clean"
+                                         HorizontalAlignment="Stretch"/>
 
-								<TextBox Grid.Column="0"
-										 Text="{Binding JellyfinServerIp}"
-										 Classes="clean"
-										 HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1"
+                                           Text=":"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource ThemeForegroundBrush}"/>
 
-								<TextBlock Grid.Column="1"
-										   Text=":"
-										   VerticalAlignment="Center"/>
+                                <AutoCompleteBox Grid.Column="2"
+                                                 ItemsSource="{Binding JellyfinPorts}"
+                                                 Text="{Binding SelectedJellyfinPort, Mode=TwoWay}"
+                                                 Classes="clean"/>
+                            </Grid>
+                        </Grid>
 
-								<AutoCompleteBox Grid.Column="2"
-										   ItemsSource="{Binding JellyfinPorts}"
-										   Text="{Binding SelectedJellyfinPort, Mode=TwoWay}"
-										   Classes="clean" />
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding LblJellyfinServerApi}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding JellyfinApiKey}"
+                                     IsEnabled="{Binding ApiKeyEnabled}"
+                                     Classes="clean"
+                                     HorizontalAlignment="Stretch"/>
+                        </Grid>
 
-							</Grid>
-						</Grid>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding LblJellyfinUser}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableJellyfinUsers}"
+                                      SelectedItem="{Binding SelectedJellyfinUser}"
+                                      IsEnabled="{Binding ApiKeySet}"
+                                      Classes="clean"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </StackPanel>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding LblJellyfinServerApi}" Classes="label" VerticalAlignment="Center"/>
-							<TextBox Grid.Column="1"
-									 Text="{Binding JellyfinApiKey}"
-									 IsEnabled="{Binding ApiKeyEnabled}"
-									 Classes="clean"
-									 HorizontalAlignment="Stretch"/>
-						</Grid>
+                    <Border Height="1" Background="{DynamicResource ThemeBorderBrush}"/>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding LblJellyfinUser}" Classes="label" VerticalAlignment="Center"/>
-							<ComboBox Grid.Column="1"
-									  ItemsSource="{Binding AvailableJellyfinUsers}"
-									  SelectedItem="{Binding SelectedJellyfinUser}"
-									  IsEnabled="{Binding ApiKeySet}"
-									  Classes="clean"
-									  HorizontalAlignment="Stretch">
-								<ComboBox.ItemTemplate>
-									<DataTemplate>
-										<TextBlock Text="{Binding Name}"/>
-									</DataTemplate>
-								</ComboBox.ItemTemplate>
-							</ComboBox>
-						</Grid>
-					</StackPanel>
+                    <!-- Browser Settings -->
+                    <StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
+                        <TextBlock Text="{Binding LblBrowserSettings}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource ThemeForegroundBrush}"/>
 
-					<Border Height="1" Background="#E8E8E8"/>
+                        <CheckBox Content="{Binding LblEnableBackdrops}" IsChecked="{Binding EnableBackdrops}"/>
+                        <CheckBox Content="{Binding LblEnableThemeSongs}" IsChecked="{Binding EnableThemeSongs}"/>
+                        <CheckBox Content="{Binding LblEnableThemeVideos}" IsChecked="{Binding EnableThemeVideos}"/>
+                        <CheckBox Content="{Binding LblBackdropScreensaver}" IsChecked="{Binding BackdropScreensaver}"/>
+                        <CheckBox Content="{Binding LblDetailsBanner}" IsChecked="{Binding DetailsBanner}"/>
+                        <CheckBox Content="{Binding LblCinemaMode}" IsChecked="{Binding CinemaMode}"/>
+                        <CheckBox Content="{Binding LblNextUpEnabled}" IsChecked="{Binding NextUpEnabled}"/>
+                        <CheckBox Content="{Binding LblEnableExternalVideoPlayers}" IsChecked="{Binding EnableExternalVideoPlayers}"/>
+                        <CheckBox Content="{Binding LblSkipIntros}" IsChecked="{Binding SkipIntros}"/>
 
-					<!-- Browser Settings -->
-					<StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
-						<TextBlock Text="{Binding LblBrowserSettings}"
-								   FontSize="16"
-								   FontWeight="SemiBold"
-								   Foreground="#2C3E50"/>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding LblAudioLanguagePreference}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding AudioLanguagePreference}"
+                                     Classes="clean"/>
+                        </Grid>
 
-						<CheckBox Content="{Binding LblEnableBackdrops}" IsChecked="{Binding EnableBackdrops}"/>
-						<CheckBox Content="{Binding LblEnableThemeSongs}" IsChecked="{Binding EnableThemeSongs}"/>
-						<CheckBox Content="{Binding LblEnableThemeVideos}" IsChecked="{Binding EnableThemeVideos}"/>
-						<CheckBox Content="{Binding LblBackdropScreensaver}" IsChecked="{Binding BackdropScreensaver}"/>
-						<CheckBox Content="{Binding LblDetailsBanner}" IsChecked="{Binding DetailsBanner}"/>
-						<CheckBox Content="{Binding LblCinemaMode}" IsChecked="{Binding CinemaMode}"/>
-						<CheckBox Content="{Binding LblNextUpEnabled}" IsChecked="{Binding NextUpEnabled}"/>
-						<CheckBox Content="{Binding LblEnableExternalVideoPlayers}" IsChecked="{Binding EnableExternalVideoPlayers}"/>
-						<CheckBox Content="{Binding LblSkipIntros}" IsChecked="{Binding SkipIntros}"/>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding LblSubtitleLanguagePreference}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding SubtitleLanguagePreference}"
+                                     Classes="clean"/>
+                        </Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding LblAudioLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
-							<TextBox Grid.Column="1" Text="{Binding AudioLanguagePreference}" Classes="clean"/>
-						</Grid>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Theme}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableThemes}"
+                                      SelectedItem="{Binding SelectedTheme}"
+                                      Classes="clean"/>
+                        </Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding LblSubtitleLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
-							<TextBox Grid.Column="1" Text="{Binding SubtitleLanguagePreference}" Classes="clean"/>
-						</Grid>
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding LblSubtitleMode}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableSubtitleModes}"
+                                      SelectedItem="{Binding SelectedSubtitleMode}"
+                                      Classes="clean"/>
+                        </Grid>
+                    </StackPanel>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding Theme}" Classes="label" VerticalAlignment="Center"/>
-							<ComboBox Grid.Column="1"
-									  ItemsSource="{Binding AvailableThemes}"
-									  SelectedItem="{Binding SelectedTheme}"
-									  Classes="clean"/>
-						</Grid>
+                    <Border Height="1" Background="{DynamicResource ThemeBorderBrush}"/>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding LblSubtitleMode}" Classes="label" VerticalAlignment="Center"/>
-							<ComboBox Grid.Column="1"
-									  ItemsSource="{Binding AvailableSubtitleModes}"
-									  SelectedItem="{Binding SelectedSubtitleMode}"
-									  Classes="clean"/>
-						</Grid>
-					</StackPanel>
+                    <!-- User Settings -->
+                    <StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
+                        <TextBlock Text="{Binding LblUserSettings}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource ThemeForegroundBrush}"/>
 
-					<Border Height="1" Background="#E8E8E8"/>
+                        <CheckBox Content="{Binding LblAutoPlayNextEpisode}" IsChecked="{Binding AutoPlayNextEpisode}"/>
+                        <CheckBox Content="{Binding LblRememberAudioSelections}" IsChecked="{Binding RememberAudioSelections}"/>
+                        <CheckBox Content="{Binding LblRememberSubtitleSelections}" IsChecked="{Binding RememberSubtitleSelections}"/>
+                        <CheckBox Content="{Binding LblPlayDefaultAudioTrack}" IsChecked="{Binding PlayDefaultAudioTrack}"/>
+                        <CheckBox Content="{Binding LbluserAutoLogin}" IsChecked="{Binding UserAutoLogin}"/>
+                    </StackPanel>
 
-					<!-- User Settings -->
-					<StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
-						<TextBlock Text="{Binding LblUserSettings}"
-								   FontSize="16"
-								   FontWeight="SemiBold"
-								   Foreground="#2C3E50"/>
-
-						<CheckBox Content="{Binding LblAutoPlayNextEpisode}" IsChecked="{Binding AutoPlayNextEpisode}"/>
-						<CheckBox Content="{Binding LblRememberAudioSelections}" IsChecked="{Binding RememberAudioSelections}"/>
-						<CheckBox Content="{Binding LblRememberSubtitleSelections}" IsChecked="{Binding RememberSubtitleSelections}"/>
-						<CheckBox Content="{Binding LblPlayDefaultAudioTrack}" IsChecked="{Binding PlayDefaultAudioTrack}"/>
-						<CheckBox Content="{Binding LbluserAutoLogin}" IsChecked="{Binding UserAutoLogin}"/>
-					</StackPanel>
-
-				</StackPanel>
-			</ScrollViewer>
-		</Grid>
-	</Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </Window>
