@@ -39,7 +39,16 @@
 
 ## 🚀 How It Works
 ---
-⚠️ On macOS, launch the app via the run_macos.sh shell script
+### ⚠️ Before Running on Unix-Based Systems
+
+Make sure the script is executable.
+
+```sh
+chmod +x Jellyfin2Samsung
+./Jellyfin2Samsung
+
+```
+
 ---
 ### 1. Launch the Tool  
 ![Start screen](https://github.com/user-attachments/assets/d7666ba7-a1a4-4b31-8035-a8a3eef3b7e2)  
