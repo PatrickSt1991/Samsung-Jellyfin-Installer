@@ -48,10 +48,11 @@ jobs:
       - name: Generate version table markdown
         run: |
           cat <<EOF > version_table.md
-          | Channel    | Version                                | Notes                                      |
-          |------------|----------------------------------------|--------------------------------------------|
-          | **Stable** | [$STABLE_TAG]($STABLE_URL)           | Recommended for most users                 |
-          | **Beta**   | [$BETA_TAG]($BETA_URL)               | Includes new features, may be less stable  |
+          | Channel    | Version                                                             | Notes                        |
+          |------------|---------------------------------------------------------------------|------------------------------|
+          | **Stable** | [$STABLE_TAG]($STABLE_URL)                                        | Recommended for most users   |
+          | **Beta**   | [$BETA_TAG]($BETA_URL)                                            | Includes new features        |
+          | **Legacy** | [v1.7.9](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.7.9) | Legacy Win x64 version       |
           EOF
       - name: Inject version table into README
         run: |
