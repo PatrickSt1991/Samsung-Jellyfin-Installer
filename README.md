@@ -13,7 +13,7 @@
 
   ![OS Support](https://img.shields.io/badge/Windows-Stable-brightgreen?style=for-the-badge)
   ![OS Support](https://img.shields.io/badge/Linux-Beta-yellow?style=for-the-badge)
-  ![OS Support](https://img.shields.io/badge/macOS-Unstable-red?style=for-the-badge)
+  ![OS Support](https://img.shields.io/badge/macOS-Beta-red?style=for-the-badge)
   
   Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> for providing the Jellyfin Tizen `.wgt` builds — super helpful and much appreciated!
 </div>
