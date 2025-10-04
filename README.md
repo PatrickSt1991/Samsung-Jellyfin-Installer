@@ -26,10 +26,11 @@
 
 <!-- versions:start -->
 
-| Channel    | Version                                | Notes                                      |
-|------------|----------------------------------------|--------------------------------------------|
-| **Stable** | [v1.8.2](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.8.2)           | Recommended for most users                 |
-| **Beta**   | [N/A](#)               | Includes new features, may be less stable  |
+| Channel    | Version                                                             | Notes                        |
+|------------|---------------------------------------------------------------------|------------------------------|
+| **Stable** | [v1.8.2](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.8.2)                                        | Recommended for most users   |
+| **Beta**   | [N/A](#)                                            | Includes new features        |
+| **Legacy** | [v1.7.9](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.7.9) | Legacy Win x64 version       |
 
 <!-- versions:end -->
 
