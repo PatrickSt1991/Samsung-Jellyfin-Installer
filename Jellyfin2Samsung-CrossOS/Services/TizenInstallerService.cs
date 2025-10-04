@@ -394,7 +394,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
-                return InstallResult.FailureResult($"Output: {installOutput}");
+                return InstallResult.FailureResult($"Output: {installOutput.Output}");
             }
             catch (Exception ex)
             {
