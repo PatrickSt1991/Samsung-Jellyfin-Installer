@@ -10,6 +10,7 @@ using Jellyfin2SamsungCrossOS.ViewModels;
 using Jellyfin2SamsungCrossOS.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -114,8 +115,10 @@ namespace Jellyfin2SamsungCrossOS
         {
             var services = new ServiceCollection();
 
+            var settings = AppSettings.Load();
+            Debug.WriteLine($"LANG SETUP: {settings.Language}");
             // Services
-            services.AddSingleton<AppSettings>(AppSettings.Default);
+            services.AddSingleton<AppSettings>(settings);
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
             services.AddSingleton<INetworkService, NetworkService>();

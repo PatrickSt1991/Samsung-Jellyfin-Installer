@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 
@@ -57,7 +58,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         public string TizenCliMac { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_macos-64.bin";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/239769070";
 
-        private AppSettings() { }
+        public AppSettings() { }
 
         public void Save()
         {
@@ -76,7 +77,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
             }
         }
 
-        private static AppSettings Load()
+        public static AppSettings Load()
         {
             try
             {
@@ -85,7 +86,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                     var json = File.ReadAllText(FilePath);
                     var settings = JsonSerializer.Deserialize<AppSettings>(json);
                     if (settings != null)
-                        return settings;
+                        _instance = settings;
                 }
             }
             catch
@@ -93,7 +94,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 // ignore load errors
             }
 
-            return new AppSettings();
+            return _instance ??= new AppSettings();
         }
     }
 }

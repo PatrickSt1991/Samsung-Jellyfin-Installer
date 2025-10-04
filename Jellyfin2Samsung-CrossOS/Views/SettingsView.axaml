@@ -105,8 +105,7 @@
                                  Watermark="{Binding SelectWGT}"/>
 						<Button Grid.Column="2"
                                 Classes="icon"
-                                Command="{Binding BrowseWgtCommand}"
-                                ToolTip.Tip="Browse for WGT file">
+                                Command="{Binding BrowseWgtCommand}">
 							<fa:SymbolIcon Symbol="Folder" Width="16" Height="16"/>
 						</Button>
 					</Grid>

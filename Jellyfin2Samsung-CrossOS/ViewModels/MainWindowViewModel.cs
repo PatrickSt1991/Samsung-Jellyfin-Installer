@@ -58,6 +58,8 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         [ObservableProperty]
         private string statusBar = string.Empty;
 
+        private string _currentStatusKey = string.Empty;
+
         private string? _downloadedPackagePath;
         private string L(string key) => _localizationService.GetString(key);
 
@@ -93,8 +95,15 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
-            // Refresh all localized properties
             RefreshLocalizedProperties();
+
+            if (!string.IsNullOrEmpty(_currentStatusKey))
+                StatusBar = L(_currentStatusKey);
+        }
+        private void SetStatus(string key)
+        {
+            _currentStatusKey = key;
+            StatusBar = L(key);
         }
 
         private void RefreshLocalizedProperties()
@@ -154,26 +163,26 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         {
             try
             {
-                StatusBar = L("CheckingTizenCli");
+                SetStatus("CheckingTizenCli");
 
 
                 var (tizenDataPath, tizenCliPath) = await _tizenInstaller.EnsureTizenCliAvailable();
 
                 if (string.IsNullOrEmpty(tizenDataPath))
                 {
-                    StatusBar = L("TizenCliFailed");
+                    SetStatus("TizenCliFailed");
                     return;
                 }
 
                 ProcessHelper.KillSdbServers();
 
                 await LoadReleasesAsync();
-                StatusBar = L("ScanningNetwork");
+                SetStatus("ScanningNetwork");
                 await LoadDevicesAsync();
             }
             catch (Exception ex)
             {
-                StatusBar = L("InitializationFailed");
+                SetStatus("InitializationFailed");
             }
         }
 
@@ -354,7 +363,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 {
                     if (!virtualScan)
                     {
-                        StatusBar = L("NoDevicesFoundRetry");
+                        SetStatus("NoDevicesFoundRetry");
                         var rescan = await _dialogService.ShowConfirmationAsync(
                             L("NoDevicesFound"),
                             L("RetySearchMsg"),
@@ -365,18 +374,18 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                             await LoadDevicesAsync(cancellationToken, true);
                         else
                         {
-                            StatusBar = L("NoDevicesFound");
+                            SetStatus("NoDevicesFound");
                             return;
                         }
                     }
                     else
                     {
-                        StatusBar = L("NoDevicesFound");
+                        SetStatus("NoDevicesFound");
                     }
                 }
                 else
                 {
-                    StatusBar = L("Ready");
+                    SetStatus("Ready");
                 }
 
                 if (AvailableDevices.Any())

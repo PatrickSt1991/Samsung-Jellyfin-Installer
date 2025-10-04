@@ -105,6 +105,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             OnPropertyChanged(nameof(lblRTL));
             OnPropertyChanged(nameof(lblModifyConfig));
             OnPropertyChanged(nameof(lblOpenConfig));
+            OnPropertyChanged(nameof(SelectWGT));
         }
 
         partial void OnSelectedLanguageChanged(LanguageOption? value)
