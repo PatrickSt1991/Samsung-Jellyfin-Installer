@@ -52,36 +52,37 @@ chmod +x Jellyfin2Samsung
 
 ---
 ### 1. Launch the Tool  
-![Start screen](https://github.com/user-attachments/assets/d7666ba7-a1a4-4b31-8035-a8a3eef3b7e2)  
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/a5413292-b6cf-4d6d-bcb5-4fe242f2f4ae" />
+
 The tool automatically scans your local network for compatible Samsung Smart TVs.
 
 ---
 
 ### 2. Select a Release  
-<img width="536" height="368" alt="image" src="https://github.com/user-attachments/assets/083b92d3-b09a-440f-95a1-a1fe30c83576" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/22870ab8-92e1-40d3-b094-ecbebe312cd6" />
 
 Choose the desired Jellyfin release.
 
 ---
 
 ### 3. Pick a Version  
-<img width="536" height="368" alt="image" src="https://github.com/user-attachments/assets/68b2f5cf-9e2d-4963-856f-bc45995ed8fe" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/bba53f99-e45b-45ac-896c-d19edfa6fad8" />
 
 Select the specific Jellyfin version you’d like to install.
 
 ---
 
 ### 4. Select Your TV  
-<img width="536" height="368" alt="image" src="https://github.com/user-attachments/assets/720545a4-45b7-438f-9b07-a6fec1d67ea5" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/c2ff42bb-1ba3-46a7-9009-2853666ed96b" />
 
 The tool lists all detected Samsung TVs. You can also manually enter an IP if your TV isn’t found.
 
-![Device_not_listed](https://github.com/user-attachments/assets/d9272aad-562a-4485-b52f-885652cd720b)  
+<img width="422" height="252" alt="image" src="https://github.com/user-attachments/assets/c38f9fc5-2bd3-4139-bcb3-acbf108b02bd" />
 
 ---
 
 ### 5. Sit Back and Watch the Magic ✨  
-<img width="536" height="368" alt="image" src="https://github.com/user-attachments/assets/56d77990-d6c8-47ba-8d8b-2dfe57d658c5" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/12e69906-59e5-44f8-a44e-dcb2de46c14f" />
 
 Once started, the installer takes care of everything else automatically.
 
@@ -99,17 +100,17 @@ Tizen 7+ requires a **Samsung account login** during the install. This step is n
 ## ⚙️ Settings
 
 ### Language
-<img width="536" height="443" alt="image" src="https://github.com/user-attachments/assets/68bd8a74-785e-4edb-9075-73991c42ac39" />
+<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/f7c03582-965a-4218-b2ff-40a7a0b30f44" />
 
 Select your preferred language.
 
 ### Certificate
-<img width="536" height="443" alt="image" src="https://github.com/user-attachments/assets/252e9dfb-fbd9-41df-a5ac-a67d51201ab4" />
+<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/b34fc1ad-6bd0-44c3-a0c7-6cdd256ffa0e" />
 
 Choose an existing certificate or let the tool generate a new one automatically.
 
 ### Advanced Options
-<img width="536" height="443" alt="image" src="https://github.com/user-attachments/assets/c297f7e3-19a9-44c6-81c1-1c53116fa1b3" />
+<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/b3deb013-ee16-47c9-ad47-07182c53f4d1" />
 
 - **Custom WGT:** Upload your own `.wgt` file(s) (randomizes the package name to allow side-by-side installs).  
 - **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
@@ -119,7 +120,7 @@ Choose an existing certificate or let the tool generate a new one automatically.
 - **Jellyfin Config:** Lets you set your Jellyfin App configuration in advance, so once the app is installed, you won’t need to configure it on the TV.  
 
 ## 📝 Jellyfin Config
-<img width="510" height="283" alt="image" src="https://github.com/user-attachments/assets/8296671f-2fbb-4d7a-b1a9-d2db0228b48e" />
+<img width="602" height="343" alt="image" src="https://github.com/user-attachments/assets/21c5bc54-95b3-4e26-a07a-ccfd61394088" />
 
 Update Mode consists of:  
 
@@ -135,19 +136,19 @@ Update Mode consists of:
 | All Settings | Server IP and port, API Key and Jellyfin user selection |
 
 ### Server Settings
-<img width="483" height="219" alt="image" src="https://github.com/user-attachments/assets/f6e6a72f-35e4-4027-9a9d-f94632a851cd" />
+<img width="602" height="222" alt="image" src="https://github.com/user-attachments/assets/d385d90c-3fe2-4594-b275-4457d7d60786" />
 
 This lets you set the Jellyfin server IP address in the config file, so the app doesn't have to search for the server.  
 - Fill in the Address information; Server IP and Port.
 
 ### Browser Settings
-<img width="482" height="510" alt="image" src="https://github.com/user-attachments/assets/25e8052d17cb" />
+<img width="602" height="626" alt="image" src="https://github.com/user-attachments/assets/33730755-9b19-42dd-90c7-bd6461f8ea61" />
 
 **Requirements: API Key and Jellyfin User selection**  
 This lets you set the browser-specific information for the chosen user(s) like Theme selection, Skip Intro etc. Jellyfin saves this information in your browser.
 
 ### User Settings
-<img width="484" height="268" alt="image" src="https://github.com/user-attachments/assets/ba09248f-a7e1-4021-a719-8f1cc7a63676" />
+<img width="602" height="275" alt="image" src="https://github.com/user-attachments/assets/29891c48-c620-4bc3-a141-16d28ef38d9d" />
 
 **Requirements: API Key and Jellyfin User selection**  
 This lets you set all the Jellyfin user specifics for the chosen user(s) like Auto Login, Subtitle Mode etc. Jellyfin saves this on its server.
