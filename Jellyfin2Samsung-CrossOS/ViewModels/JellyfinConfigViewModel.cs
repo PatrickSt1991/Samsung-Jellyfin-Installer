@@ -128,8 +128,6 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             "All Settings"
         };
 
-        private string L(string key) => _localizationService.GetString(key);
-
         public string LblJellyfinConfig => _localizationService.GetString("lblJellyfinConfig");
         public string LblServerSettings => _localizationService.GetString("lblServerSettings");
         public string UpdateMode => _localizationService.GetString("UpdateMode");
@@ -172,18 +170,37 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
-            // Refresh all localized properties
             RefreshLocalizedProperties();
         }
 
         private void RefreshLocalizedProperties()
         {
-            //OnPropertyChanged(nameof(LblRelease));
-            //OnPropertyChanged(nameof(LblVersion));
-            //OnPropertyChanged(nameof(LblSelectTv));
-            //OnPropertyChanged(nameof(DownloadAndInstall));
-            //OnPropertyChanged(nameof(FooterText));
-            //OnPropertyChanged(nameof(StatusBar));
+            OnPropertyChanged(nameof(LblJellyfinConfig));
+            OnPropertyChanged(nameof(LblServerSettings));
+            OnPropertyChanged(nameof(UpdateMode));
+            OnPropertyChanged(nameof(ServerIP));
+            OnPropertyChanged(nameof(LblJellyfinServerApi));
+            OnPropertyChanged(nameof(LblJellyfinUser));
+            OnPropertyChanged(nameof(LblEnableBackdrops));
+            OnPropertyChanged(nameof(LblEnableThemeSongs));
+            OnPropertyChanged(nameof(LblEnableThemeVideos));
+            OnPropertyChanged(nameof(LblBackdropScreensaver));
+            OnPropertyChanged(nameof(LblDetailsBanner));
+            OnPropertyChanged(nameof(LblCinemaMode));
+            OnPropertyChanged(nameof(LblNextUpEnabled));
+            OnPropertyChanged(nameof(LblEnableExternalVideoPlayers));
+            OnPropertyChanged(nameof(LblSkipIntros));
+            OnPropertyChanged(nameof(LblAudioLanguagePreference));
+            OnPropertyChanged(nameof(LblSubtitleLanguagePreference));
+            OnPropertyChanged(nameof(Theme));
+            OnPropertyChanged(nameof(LblSubtitleMode));
+            OnPropertyChanged(nameof(LblAutoPlayNextEpisode));
+            OnPropertyChanged(nameof(LblRememberAudioSelections));
+            OnPropertyChanged(nameof(LblRememberSubtitleSelections));
+            OnPropertyChanged(nameof(LblPlayDefaultAudioTrack));
+            OnPropertyChanged(nameof(LbluserAutoLogin));
+            OnPropertyChanged(nameof(LblUserSettings));
+            OnPropertyChanged(nameof(LblBrowserSettings));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)

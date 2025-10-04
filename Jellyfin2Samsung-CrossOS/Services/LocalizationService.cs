@@ -1,4 +1,5 @@
 ﻿using Avalonia.Platform;
+using Jellyfin2SamsungCrossOS.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -50,13 +51,22 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             // Set initial language based on system culture
             var systemLang = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-            if (_allStrings.ContainsKey(systemLang))
+            string configLang = AppSettings.Default.Language;
+
+            if (string.IsNullOrEmpty(configLang))
             {
-                SetLanguage(systemLang);
+                if (_allStrings.ContainsKey(systemLang))
+                {
+                    SetLanguage(systemLang);
+                }
+                else
+                {
+                    SetLanguage("en");
+                }
             }
             else
             {
-                SetLanguage("en");
+                SetLanguage(configLang);
             }
         }
 

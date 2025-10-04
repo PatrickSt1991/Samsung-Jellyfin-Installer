@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 return new NetworkDevice
                 {
                     IpAddress = jsonObject["device"]?["ip"]?.ToString(),
-                    DeviceName = jsonObject["device"]?["name"]?.ToString(),
+                    DeviceName = WebUtility.HtmlDecode(jsonObject["device"]?["name"]?.ToString()),
                     ModelName = jsonObject["device"]?["modelName"].ToString(),
                     Manufacturer = jsonObject["device"]?["type"]?.ToString(),
                     DeveloperMode = jsonObject["device"]?["developerMode"]?.ToString() ?? string.Empty,
