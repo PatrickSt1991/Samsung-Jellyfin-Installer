@@ -40,7 +40,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 paths.Add(Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".tizen-studio-cli"));
+                    "tizen-studio-cli"));
             }
 
             return paths.ToArray();
@@ -163,7 +163,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 defaultPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".tizen-studio-cli"
+                    "tizen-studio-cli"
                 );
             }
 

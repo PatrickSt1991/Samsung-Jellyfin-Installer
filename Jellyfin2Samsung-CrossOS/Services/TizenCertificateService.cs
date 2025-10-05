@@ -177,7 +177,7 @@ namespace Jellyfin2SamsungCrossOS.Services
         {
             var certificateHelper = new CertificateHelper();
 
-            var distributorContent = new MultipartFormDataContent
+            var v1Content = new MultipartFormDataContent
             {
                 { new StringContent(accessToken), "access_token" },
                 { new StringContent(userId), "user_id" },
@@ -188,7 +188,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             };
 
             var v1Request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V1);
-            v1Request.Content = distributorContent;
+            v1Request.Content = v1Content;
             var v1Response = await _httpClient.SendAsync(v1Request);
 
             if (!v1Response.IsSuccessStatusCode)
@@ -199,8 +199,18 @@ namespace Jellyfin2SamsungCrossOS.Services
 
             var profileXml = await v1Response.Content.ReadAsByteArrayAsync();
 
+            var v3Content = new MultipartFormDataContent
+            {
+                { new StringContent(accessToken), "access_token" },
+                { new StringContent(userId), "user_id" },
+                { new StringContent("Public"), "privilege_level" },
+                { new StringContent("Individual"), "developer_type" },
+                { new StringContent("VD"), "platform" },
+                { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
+            };
+
             var v3Request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V3);
-            v3Request.Content = distributorContent;
+            v3Request.Content = v3Content; 
             var v3Response = await _httpClient.SendAsync(v3Request);
 
             if (!v3Response.IsSuccessStatusCode)
