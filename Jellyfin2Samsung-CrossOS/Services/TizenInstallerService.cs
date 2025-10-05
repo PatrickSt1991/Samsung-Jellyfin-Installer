@@ -1,5 +1,4 @@
-﻿using Avalonia.Controls;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using Jellyfin2SamsungCrossOS.Extensions;
 using Jellyfin2SamsungCrossOS.Helpers;
 using Jellyfin2SamsungCrossOS.Models;

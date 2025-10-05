@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using System.Threading.Tasks;
+using System;
 
 namespace Jellyfin2SamsungCrossOS.Services
 {
@@ -27,12 +28,14 @@ namespace Jellyfin2SamsungCrossOS.Services
             var dialog = new Window
             {
                 Title = title,
-                Width = 420,
-                Height = 250,
+                Width = 420, // max width
+                MinWidth = 300,
+                MaxWidth = 600,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = Brushes.White,
-                CornerRadius = new CornerRadius(12)
+                CornerRadius = new CornerRadius(12),
+                SizeToContent = SizeToContent.Height, // dynamic height
             };
 
             var mainPanel = new StackPanel
@@ -51,7 +54,16 @@ namespace Jellyfin2SamsungCrossOS.Services
                 Margin = new Thickness(0, 0, 0, 10)
             });
 
-            mainPanel.Children.Add(content);
+            // Wrap content in ScrollViewer to handle long messages
+            var scrollViewer = new ScrollViewer
+            {
+                Content = content,
+                VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+                MaxHeight = 400 // max height before scroll appears
+            };
+
+            mainPanel.Children.Add(scrollViewer);
 
             if (showButtons && tcs != null)
             {
