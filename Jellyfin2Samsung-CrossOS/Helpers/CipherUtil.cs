@@ -97,9 +97,11 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 Padding = PaddingMode.PKCS7
             };
 
-            byte[] encrypted = tdes.CreateEncryptor().TransformFinalBlock(Encoding.UTF8.GetBytes(plainText), 0, plainText.Length);
+            var data = Encoding.UTF8.GetBytes(plainText);
+            byte[] encrypted = tdes.CreateEncryptor().TransformFinalBlock(data, 0, data.Length);
             return Convert.ToBase64String(encrypted);
         }
+
 
         public string GetDecryptedString(string encryptedBase64)
         {

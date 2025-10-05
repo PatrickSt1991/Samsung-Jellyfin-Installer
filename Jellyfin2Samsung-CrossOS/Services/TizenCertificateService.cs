@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -104,7 +105,7 @@ namespace Jellyfin2SamsungCrossOS.Services
         private static byte[] GenerateAuthorCsr(AsymmetricCipherKeyPair keyPair)
         {
             var subject = new X509Name("C=, ST=, L=, O=, OU=, CN=Jelly2Sams");
-            var csr = new Pkcs10CertificationRequest("SHA512WithRSA", subject, keyPair.Public, null, keyPair.Private);
+            var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, null, keyPair.Private);
 
             using var ms = new MemoryStream();
             using var sw = new StreamWriter(ms);
@@ -128,7 +129,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             });
 
             var attribute = new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(extensions));
-            var csr = new Pkcs10CertificationRequest("SHA512WithRSA", subject, keyPair.Public, new DerSet(attribute), keyPair.Private);
+            var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, new DerSet(attribute), keyPair.Private);
 
             using var ms = new MemoryStream();
             using var sw = new StreamWriter(ms);
@@ -248,6 +249,69 @@ namespace Jellyfin2SamsungCrossOS.Services
             }
         }
 
+        private static async Task ExportPfxWithCaChainAsync(
+            byte[] signedCertBytes,
+            AsymmetricKeyParameter privateKey,
+            string password,
+            string outputPath,
+            string caPath,
+            string filename,
+            string caFile /* kept for compat but verified below */)
+        {
+            var parser = new Org.BouncyCastle.X509.X509CertificateParser();
+            var endEntityBc = parser.ReadCertificate(signedCertBytes);
+            using var endEntity = new X509Certificate2(endEntityBc.GetEncoded());
+
+            // Load requested CA if present
+            X509Certificate2? candidate = null;
+            var requested = Path.Combine(caPath, caFile);
+            if (File.Exists(requested))
+            {
+                var bc = parser.ReadCertificate(await File.ReadAllBytesAsync(requested));
+                candidate = new X509Certificate2(bc.GetEncoded());
+            }
+
+            // Load all CA files in folder as a fallback pool
+            var allCa = new List<X509Certificate2>();
+            if (Directory.Exists(caPath))
+            {
+                foreach (var p in Directory.EnumerateFiles(caPath, "*.*")
+                         .Where(f => f.EndsWith(".cer", StringComparison.OrdinalIgnoreCase)
+                                  || f.EndsWith(".crt", StringComparison.OrdinalIgnoreCase)))
+                {
+                    try { allCa.Add(new X509Certificate2(parser.ReadCertificate(await File.ReadAllBytesAsync(p)).GetEncoded())); }
+                    catch { /* ignore */ }
+                }
+            }
+
+            static bool IsMatchingIntermediate(X509Certificate2 ca, X509Certificate2 ee) =>
+                !ca.Subject.Equals(ca.Issuer, StringComparison.Ordinal) &&   // skip self-signed roots
+                 ca.Subject.Equals(ee.Issuer, StringComparison.Ordinal);     // Subject must equal leaf Issuer
+
+            // Verify candidate or auto-pick the right intermediate by issuer match
+            if (candidate == null || !IsMatchingIntermediate(candidate, endEntity))
+            {
+                candidate?.Dispose();
+                candidate = allCa.FirstOrDefault(c => IsMatchingIntermediate(c, endEntity))
+                    ?? throw new InvalidOperationException(
+                        $"No matching intermediate in '{caPath}'. Expected Subject: '{endEntity.Issuer}'.");
+            }
+
+            // Attach private key to the end-entity
+            var rsa = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
+            using var endWithKey = endEntity.CopyWithPrivateKey(rsa);
+
+            // IMPORTANT: leaf first, then intermediate (no root)
+            var bundle = new X509Certificate2Collection { endWithKey, candidate };
+
+            // Export
+            var pfxBytes = bundle.Export(X509ContentType.Pkcs12, password);
+            await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{filename}.p12"), pfxBytes);
+
+            foreach (var c in allCa) c.Dispose();
+        }
+
+        /*
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
         {
             string caCertFile = Path.Combine(caPath, caFile);
@@ -267,7 +331,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             signedCertDotNet.Dispose();
             caCertDotNet.Dispose();
         }
-
+        */
         public static string MoveTizenCertificateFiles()
         {
             string dest = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SamsungCertificate", "Jelly2Sams");
