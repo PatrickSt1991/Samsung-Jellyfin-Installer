@@ -25,7 +25,9 @@ namespace Jellyfin2SamsungCrossOS.Services
         private readonly HttpClient _httpClient;
         private readonly IDialogService _dialogService;
 
-        public TizenCertificateService(HttpClient httpClient, IDialogService dialogService)
+        public TizenCertificateService(
+            HttpClient httpClient, 
+            IDialogService dialogService)
         {
             _httpClient = httpClient;
             _dialogService = dialogService;
@@ -156,7 +158,7 @@ namespace Jellyfin2SamsungCrossOS.Services
 
         // Simplified Http Post for Author CSR
         private async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
-        {
+        {       
             var request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.AuthorEndpoint_V3);
             var content = new MultipartFormDataContent
             {
@@ -171,11 +173,11 @@ namespace Jellyfin2SamsungCrossOS.Services
             return await response.Content.ReadAsByteArrayAsync();
         }
 
-        // Simplified Http Post for Distributor CSR
         private async Task<(byte[] profileXml, byte[] distributorCert)> PostDistributorCsrAsync(string accessToken, string userId, byte[] csrBytes, string duid)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V3);
-            var content = new MultipartFormDataContent
+            var certificateHelper = new CertificateHelper();
+
+            var distributorContent = new MultipartFormDataContent
             {
                 { new StringContent(accessToken), "access_token" },
                 { new StringContent(userId), "user_id" },
@@ -184,11 +186,32 @@ namespace Jellyfin2SamsungCrossOS.Services
                 { new StringContent("VD"), "platform" },
                 { new ByteArrayContent(csrBytes), "csr", "distributor.csr" }
             };
-            request.Content = content;
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            var bytes = await response.Content.ReadAsByteArrayAsync();
-            return (bytes, bytes); // same for simplicity
+
+            var v1Request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V1);
+            v1Request.Content = distributorContent;
+            var v1Response = await _httpClient.SendAsync(v1Request);
+
+            if (!v1Response.IsSuccessStatusCode)
+            {
+                await certificateHelper.HandleErrorResponse(v1Response);
+                v1Response.EnsureSuccessStatusCode();
+            }
+
+            var profileXml = await v1Response.Content.ReadAsByteArrayAsync();
+
+            var v3Request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V3);
+            v3Request.Content = distributorContent;
+            var v3Response = await _httpClient.SendAsync(v3Request);
+
+            if (!v3Response.IsSuccessStatusCode)
+            {
+                await certificateHelper.HandleErrorResponse(v3Response);
+                v3Response.EnsureSuccessStatusCode();
+            }
+
+            var distributorCert = await v3Response.Content.ReadAsByteArrayAsync();
+
+            return (profileXml, distributorCert);
         }
 
         public async Task ExtractRootCertificateAsync(string jarPath)

@@ -3,7 +3,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Jellyfin2SamsungCrossOS.Extensions;
 using Jellyfin2SamsungCrossOS.Helpers;
 using Jellyfin2SamsungCrossOS.Models;
 using Jellyfin2SamsungCrossOS.Services;
@@ -12,7 +11,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -30,6 +28,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         private readonly DeviceHelper _deviceHelper;
         private readonly PackageHelper _packageHelper;
         private readonly ILocalizationService _localizationService;
+        private readonly SettingsViewModel _settingsViewModel;
 
         [ObservableProperty]
         private ObservableCollection<GitHubRelease> releases = new ObservableCollection<GitHubRelease>();
@@ -76,7 +75,6 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             ITizenInstallerService tizenInstaller,
             IDialogService dialogService,
             INetworkService networkService,
-            IServiceProvider serviceProvider,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
             PackageHelper packageHelper,
@@ -89,6 +87,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             _deviceHelper = deviceHelper;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
+            _settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
 
             _localizationService.LanguageChanged += OnLanguageChanged;
         }
@@ -261,15 +260,12 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         [RelayCommand]
         private void OpenSettings()
         {
-            var settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
-
             var settingsWindow = new SettingsView
             {
-                DataContext = settingsViewModel
+                DataContext = _settingsViewModel
             };
 
-            if (Application.Current?.ApplicationLifetime is
-                IClassicDesktopStyleApplicationLifetime desktop)
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 settingsWindow.ShowDialog(desktop.MainWindow);
             }

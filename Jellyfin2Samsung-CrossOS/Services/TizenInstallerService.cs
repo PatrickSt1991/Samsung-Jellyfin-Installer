@@ -249,13 +249,9 @@ namespace Jellyfin2SamsungCrossOS.Services
             var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
             var localPath = Path.Combine(_downloadDirectory, fileName);
 
-            // If file already exists, return the path immediately
             if (File.Exists(localPath))
-            {
                 return localPath;
-            }
 
-            // Make sure the download directory exists
             Directory.CreateDirectory(_downloadDirectory);
 
             using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
@@ -303,8 +299,9 @@ namespace Jellyfin2SamsungCrossOS.Services
                 if (new Version(tizenOs) >= new Version("7.0") || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
                 {
                     string selectedCertificate = _appSettings.Certificate;
-                    
-                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)")
+                    var certDuid = _appSettings.ChosenCertificates?.Duid;
+
+                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid)
                     {
                         progress?.Invoke("SamsungLogin".Localized());;
                         SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
@@ -394,7 +391,7 @@ namespace Jellyfin2SamsungCrossOS.Services
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
-                return InstallResult.FailureResult($"Output: {installOutput}");
+                return InstallResult.FailureResult($"Installation failed: {installOutput.Output}");
             }
             catch (Exception ex)
             {

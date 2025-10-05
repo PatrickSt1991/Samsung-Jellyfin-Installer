@@ -6,8 +6,8 @@ using Jellyfin2SamsungCrossOS.Models;
 using Jellyfin2SamsungCrossOS.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -136,6 +136,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             AppSettings.Default.Save();
 
             SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
+            AppSettings.Default.ChosenCertificates = SelectedCertificateObject;
         }
 
         partial void OnCustomWgtPathChanged(string value)
@@ -239,17 +240,17 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 if (!string.IsNullOrEmpty(savedCertName))
                     selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName);
 
-                if (selectedCert == null)
-                    selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams (default)")
+                selectedCert ??= AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams (default)")
                                 ?? AvailableCertificates.FirstOrDefault();
 
                 if (selectedCert != null)
                     SelectedCertificate = selectedCert.Name;
+
+                AppSettings.Default.ChosenCertificates = selectedCert;
             });
         }
         public void Dispose()
         {
-            // Unsubscribe from events to prevent memory leaks
             _localizationService.LanguageChanged -= OnLanguageChanged;
         }
     }

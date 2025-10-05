@@ -1,7 +1,8 @@
-﻿using System;
-using System.Diagnostics;
+﻿using Jellyfin2SamsungCrossOS.Models;
+using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin2SamsungCrossOS.Helpers
 {
@@ -12,6 +13,10 @@ namespace Jellyfin2SamsungCrossOS.Helpers
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jellyfin2SamsungCrossOS", FileName);
 
         private static AppSettings? _instance;
+
+        // --- Runtime-only cached object (not saved to disk) ---
+        [JsonIgnore]
+        public ExistingCertificates? ChosenCertificates { get; set; }
 
         public static AppSettings Default => _instance ??= Load();
 
@@ -46,13 +51,14 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         public string JellyfinApiKey { get; set; } = "";
         public string JellyfinUserId { get; set; } = "";
         public bool UserAutoLogin { get; set; } = true;
+        public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.2";
+        public string AppVersion { get; set; } = "v1.8.3";
         public string TizenCliWindows { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_windows-64.exe";
         public string TizenCliLinux { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin";
         public string TizenCliMac { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_macos-64.bin";
