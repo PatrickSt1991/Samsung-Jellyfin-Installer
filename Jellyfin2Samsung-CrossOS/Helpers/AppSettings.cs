@@ -10,7 +10,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
     {
         private const string FileName = "settings.json";
         private static readonly string FilePath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jellyfin2SamsungCrossOS", FileName);
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SamsungJellyfinInstaller", FileName);
 
         private static AppSettings? _instance;
 
