@@ -259,57 +259,85 @@ namespace Jellyfin2SamsungCrossOS.Services
             string caFile /* kept for compat but verified below */)
         {
             var parser = new Org.BouncyCastle.X509.X509CertificateParser();
-            var endEntityBc = parser.ReadCertificate(signedCertBytes);
-            using var endEntity = new X509Certificate2(endEntityBc.GetEncoded());
 
-            // Load requested CA if present
-            X509Certificate2? candidate = null;
-            var requested = Path.Combine(caPath, caFile);
+            var leafBc = parser.ReadCertificate(signedCertBytes);
+            using var leafDot = new X509Certificate2(leafBc.GetEncoded());
+
+            X509Certificate2? candidateDot = null;
+            string requested = Path.Combine(caPath, caFile);
             if (File.Exists(requested))
             {
                 var bc = parser.ReadCertificate(await File.ReadAllBytesAsync(requested));
-                candidate = new X509Certificate2(bc.GetEncoded());
+                candidateDot = new X509Certificate2(bc.GetEncoded());
             }
 
-            // Load all CA files in folder as a fallback pool
-            var allCa = new List<X509Certificate2>();
+            // --- Load all CAs in folder as fallback pool ---
+            var allCaDot = new List<X509Certificate2>();
             if (Directory.Exists(caPath))
             {
                 foreach (var p in Directory.EnumerateFiles(caPath, "*.*")
-                         .Where(f => f.EndsWith(".cer", StringComparison.OrdinalIgnoreCase)
-                                  || f.EndsWith(".crt", StringComparison.OrdinalIgnoreCase)))
+                         .Where(f => f.EndsWith(".cer", StringComparison.OrdinalIgnoreCase) ||
+                                     f.EndsWith(".crt", StringComparison.OrdinalIgnoreCase)))
                 {
-                    try { allCa.Add(new X509Certificate2(parser.ReadCertificate(await File.ReadAllBytesAsync(p)).GetEncoded())); }
-                    catch { /* ignore */ }
+                    try
+                    {
+                        var caTemp = parser.ReadCertificate(await File.ReadAllBytesAsync(p));
+                        allCaDot.Add(new X509Certificate2(caTemp.GetEncoded()));
+                    }
+                    catch { /* ignore bad files */ }
                 }
             }
 
             static bool IsMatchingIntermediate(X509Certificate2 ca, X509Certificate2 ee) =>
-                !ca.Subject.Equals(ca.Issuer, StringComparison.Ordinal) &&   // skip self-signed roots
-                 ca.Subject.Equals(ee.Issuer, StringComparison.Ordinal);     // Subject must equal leaf Issuer
+                !ca.Subject.Equals(ca.Issuer, StringComparison.Ordinal) &&  // not self-signed
+                 ca.Subject.Equals(ee.Issuer, StringComparison.Ordinal);    // issuer match
 
-            // Verify candidate or auto-pick the right intermediate by issuer match
-            if (candidate == null || !IsMatchingIntermediate(candidate, endEntity))
+            // --- Pick/verify the correct INTERMEDIATE (never a root) ---
+            if (candidateDot == null || !IsMatchingIntermediate(candidateDot, leafDot))
             {
-                candidate?.Dispose();
-                candidate = allCa.FirstOrDefault(c => IsMatchingIntermediate(c, endEntity))
+                candidateDot?.Dispose();
+                candidateDot = allCaDot.FirstOrDefault(c => IsMatchingIntermediate(c, leafDot))
                     ?? throw new InvalidOperationException(
-                        $"No matching intermediate in '{caPath}'. Expected Subject: '{endEntity.Issuer}'.");
+                        $"No matching intermediate in '{caPath}'. Expected Subject: '{leafDot.Issuer}'.");
             }
 
-            // Attach private key to the end-entity
-            var rsa = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
-            using var endWithKey = endEntity.CopyWithPrivateKey(rsa);
+            // --- Convert chosen CA back to BC type for Pkcs12Store ---
+            var caBcCert = parser.ReadCertificate(candidateDot.RawData);
 
-            // IMPORTANT: leaf first, then intermediate (no root)
-            var bundle = new X509Certificate2Collection { endWithKey, candidate };
+            // --- Build PKCS#12 deterministically with BC (alias + order) ---
+            var store = new Pkcs12StoreBuilder().Build();
 
-            // Export
-            var pfxBytes = bundle.Export(X509ContentType.Pkcs12, password);
-            await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{filename}.p12"), pfxBytes);
+            var keyEntry = new AsymmetricKeyEntry(privateKey);
+            var leafEntry = new X509CertificateEntry(leafBc);
+            var caEntry = new X509CertificateEntry(caBcCert);
 
-            foreach (var c in allCa) c.Dispose();
+            // Chain MUST be [leaf, intermediate]
+            var chain = new[] { leafEntry, caEntry };
+
+            const string keyAlias = "usercertificate"; // visible in cert viewers
+            store.SetKeyEntry(keyAlias, keyEntry, chain);
+            string caAlias = caBcCert.SubjectDN.ToString();  // keeps escaped commas (\,) as expected
+            store.SetCertificateEntry(caAlias, caEntry);
+
+            // --- Write .p12 ---
+            var target = Path.Combine(outputPath, $"{filename}.p12");
+            using (var ms = new MemoryStream())
+            {
+                store.Save(ms, password.ToCharArray(), new Org.BouncyCastle.Security.SecureRandom());
+                await File.WriteAllBytesAsync(target, ms.ToArray());
+            }
+
+            // --- Optional sanity check ---
+            var verify = new X509Certificate2Collection();
+            verify.Import(target, password, X509KeyStorageFlags.EphemeralKeySet);
+            var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
+                       ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
+            var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
+                       ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
+            if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
+                throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
         }
+
 
         /*
         private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
