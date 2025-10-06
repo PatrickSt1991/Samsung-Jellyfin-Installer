@@ -1,7 +1,5 @@
 # Jellyfin 2 Samsung
 
-## ⚠️ Tizen 7+ certificate is currently is maintenance, we'll be back soon! ⚠️
-
 <p align="center">
   <img src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/blob/master/.github/jellyfin-tizen-logo.svg" width="250" height="250" />
 </p>
