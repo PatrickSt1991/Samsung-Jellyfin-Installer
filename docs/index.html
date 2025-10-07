@@ -1,250 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <link rel="icon" href="/Samsung-Jellyfin-Installer/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/Samsung-Jellyfin-Installer/favicon.ico">
   <title>Jellyfin2Samsung</title>
-  <meta property="og:title" content="Samsung Jellyfin Installer" />
-  <meta property="og:description" content="One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions." />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.svg" />
-  <meta name="theme-color" content="#141729" />
   <meta name="description" content="One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions!" />
-  <link rel="icon" href="https://raw.githubusercontent.com/PatrickSt1991/Samsung-Jellyfin-Installer/master/jellyfin.ico" />
   <style>
-    :root {
-      --bg: #0b0f1a;
-      --bg-2: #0f1424;
-      --card: #12172a;
-      --muted: #96a0c3;
-      --text: #eef1ff;
-      --accent: #7c8cff;
-      --accent-2: #61dafb;
-      --button: #1e2342;
-      --button-hover: #2b315a;
-      --ring: rgba(124,140,255,.4);
-      --radius: 18px;
-    }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      color: var(--text);
-      background: radial-gradient(1200px 800px at 10% 10%, #141a33 0%, var(--bg) 45%),
-                  radial-gradient(900px 700px at 90% 20%, #151b38 0%, transparent 45%),
-                  linear-gradient(180deg, var(--bg-2), var(--bg));
-      display: grid;
-      place-items: center;
-      padding: 40px 16px;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-    body {
-      margin: 0;
-      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      color: var(--text);
-      background: radial-gradient(1200px 800px at 10% 10%, #1a1d34 0%, var(--bg) 35%),
-                  radial-gradient(800px 600px at 90% 20%, #1b203b 0%, transparent 40%),
-                  var(--bg);
-      display: grid;
-      place-items: center;
-      padding: 32px 16px;
-    }
-    .card {
-      width: min(980px, 100%);
-      position: relative;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: var(--radius);
-      padding: 36px 28px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-      backdrop-filter: blur(8px);
-      overflow: hidden;
-    }
-    .card:before {
-      content: "";
-      position: absolute; inset: -1px;
-      border-radius: calc(var(--radius) + 1px);
-      padding: 1px;
-      background: linear-gradient(120deg, rgba(97,218,251,.35), rgba(124,140,255,.25), transparent 60%);
-      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      pointer-events: none;
-    }
-    h1 { font-size: clamp(30px, 4.6vw, 44px); margin: 0 0 8px; letter-spacing: 0.2px; }
-    h1 .sub { font-size: .55em; font-weight: 600; color: var(--muted); display: block; margin-top: 6px; }
-    h2 { font-weight: 600; font-size: clamp(16px, 2.5vw, 20px); margin: 0 0 18px; color: var(--muted); }
-    .meta { margin: 12px 0 22px; color: var(--muted); font-size: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .meta strong { color: var(--text); }
-    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .btn {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: var(--button);
-      color: var(--text);
-      padding: 11px 18px;
-      border-radius: 999px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
-      font-weight: 650;
-      will-change: transform;
-      box-shadow: 0 0 0 0 rgba(124,140,255,0);
-    }
-    .btn:hover { background: var(--button-hover); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); box-shadow: 0 0 0 3px var(--ring); }
-    .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
-    .btn:hover { background: var(--button-hover); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
-    .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #0b0f1c; border-color: transparent; }
-    .btn.primary:hover { filter: brightness(1.05); }
-    .chip { font-variant-numeric: tabular-nums; padding: 4px 10px; border: 1px dashed rgba(255,255,255,.22); border-radius: 999px; color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
-    .content { margin-top: 26px; color: var(--muted); }
-    .content h3 { color: var(--text); margin: 18px 0 8px; }
-    .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: start; }
-    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
-    .content h3 { color: var(--text); margin: 16px 0 6px; }
-    .footer { margin-top: 22px; color: var(--muted); font-size: 13px; }
-    .footer a { color: var(--muted); }
-    code.inline { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); color: #e9eaff; }
-    pre { position: relative; margin: 0; }
-    pre code { display: block; padding: 14px 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow-x: auto; }
-    .copy { position: absolute; top: 8px; right: 8px; }
-    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
-    .badge { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
-      .logo { height: 64px; width: auto; display: block; margin: 0 0 12px; }
+    body {font-family: system-ui, -apple-system, sans-serif; background:#0b0f1a; color:#eef1ff; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;}
+    main {background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:40px; max-width:800px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.4)}
+    img.logo {height:72px; margin-bottom:12px}
+    h1{font-size:2.2rem;margin:.5em 0 .2em}
+    h2{color:#a0a8d5;font-weight:500;margin:0 0 1.2em}
+    .btn{display:inline-block;padding:10px 18px;margin:6px;border-radius:999px;text-decoration:none;color:#0b0f1a;background:linear-gradient(90deg,#7c8cff,#61dafb);font-weight:600}
+    .btn:hover{filter:brightness(1.1)}
+    .meta{margin:1em 0;color:#96a0c3}
+    .chip{border:1px dashed rgba(255,255,255,0.2);border-radius:999px;padding:3px 10px;margin:0 4px;font-size:.9em}
   </style>
 </head>
 <body>
-  <main class="card" role="main" aria-labelledby="title">
-    <header>
-      <img class="logo" src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.svg" alt="Jellyfin for Samsung Tizen" />
-      <h1 id="title">Samsung Jellyfin Installer</h1>
-      <h2>One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions</h2>
-      <div class="badges" aria-label="compatibility">
-        <span class="badge">Tizen 2.x–7.x</span>
-        <span class="badge">LAN & Manual IP</span>
-        <span class="badge">Windows / macOS / Linux</span>
-        <span class="badge">Cert optional</span>
-      </div>
-      <p class="meta">
-        <span class="chip">Latest version: <strong id="latestVersion">checking…</strong></span>
-        <span class="chip">Released on <strong id="releaseDate">—</strong></span>
-      </p>
-      <div class="row" role="group" aria-label="primary actions">
-        <a id="downloadBtn" class="btn primary" href="#" rel="noopener" target="_blank">⬇️ Download</a>
-        <a class="btn" href="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" rel="noopener" target="_blank">🧰 Source Code</a>
-        <a class="btn" href="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer#readme" rel="noopener" target="_blank">📖 Readme</a>
-        <a class="btn" href="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/tags" rel="noopener" target="_blank">🏷️ All Versions</a>
-      </div>
-    </header>
-
-    <section class="content" aria-label="quick info">
-      <div class="grid">
-        <div>
-          <h3>Quick start</h3>
-          <div style="position:relative">
-            <button class="btn copy" aria-label="Copy commands" data-copy="chmod +x Jellyfin2Samsung&#10;./Jellyfin2Samsung">📋 Copy</button>
-            <pre><code>chmod +x Jellyfin2Samsung
-./Jellyfin2Samsung</code></pre>
-          </div>
-          <p>On Windows, run <code class="inline">Jellyfin2Samsung.exe</code> and follow the prompts.</p>
-
-          <h3>What is this?</h3>
-          <p>
-            A tiny helper that discovers your Samsung TV and installs the latest compatible Jellyfin build. It supports
-            manual IP entry, optional certificate generation, and advanced options like pre‑configuring your Jellyfin server.
-          </p>
-        </div>
-        <aside>
-          <h3>Why you’ll like it</h3>
-          <ul>
-            <li>🔎 Auto‑discovers Samsung TVs on your network</li>
-            <li>⚡ One‑click install of the newest compatible Jellyfin app</li>
-            <li>🔒 Optional self‑signed certificate set‑up</li>
-            <li>🧰 Power‑user flags for advanced scenarios</li>
-          </ul>
-        </aside>
-      </div>
-    </section>
-
-    <p class="footer">
-      © <span id="year"></span> Patrick Stel • This page is hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a>
+  <main>
+    <img class="logo" src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.svg" alt="Jellyfin for Samsung Tizen">
+    <h1>Samsung Jellyfin Installer</h1>
+    <h2>One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions</h2>
+    <div class="meta">
+      <span class="chip">Latest version: <strong id="latestVersion">checking…</strong></span>
+      <span class="chip">Released on <strong id="releaseDate">—</strong></span>
+    </div>
+    <p>
+      <a id="downloadBtn" class="btn" href="#" target="_blank" rel="noopener">⬇️ Download</a>
+      <a class="btn" href="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" target="_blank" rel="noopener">🧰 Source Code</a>
     </p>
+    <p style="color:#96a0c3;font-size:.9em">© <span id="year"></span> Patrick Stel — Hosted on GitHub Pages</p>
   </main>
 
   <script>
-    (function () {
-      const owner = "PatrickSt1991";
-      const repo = "Samsung-Jellyfin-Installer";
-      const els = {
-        ver: document.getElementById('latestVersion'),
-        date: document.getElementById('releaseDate'),
-        dl: document.getElementById('downloadBtn')
-      };
-
-      // add copy button handler
-      document.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-copy]');
-        if (!btn) return;
-        const text = btn.getAttribute('data-copy');
-        navigator.clipboard.writeText(text).then(() => {
-          const old = btn.textContent;
-          btn.textContent = '✅ Copied';
-          setTimeout(() => (btn.textContent = old), 1200);
-        });
-      });
-
-      const fmtDate = (s) => new Date(s).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
-
-      async function tryFetch(url) {
-        const tsUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-        const res = await fetch(tsUrl, { headers: { 'Accept': 'application/vnd.github+json' }, cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }
-
-      async function fromReleases() {
-        const data = await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-        const tag = data.tag_name || data.name;
-        const date = data.published_at || data.created_at;
-        // prefer first asset if present, else fall back to source zip
-        let href = data.assets?.[0]?.browser_download_url
-          || `https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;
-        return { tag, date, href };
-      }
-
-      async function fromTags() {
-        const tags = await tryFetch(`https://api.github.com/repos/${owner}/${repo}/tags`);
-        if (!Array.isArray(tags) || tags.length === 0) throw new Error('No tags');
-        const latest = tags[0];
-        const commit = await tryFetch(`https://api.github.com/repos/${owner}/${repo}/commits/${latest.commit.sha}`);
-        const date = commit.commit?.committer?.date || commit.commit?.author?.date;
-        const tag = latest.name;
-        const href = `https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;
-        return { tag, date, href };
-      }
-
-      async function init() {
-        try {
-          var info = await fromReleases();
-        } catch (e) {
-          try { info = await fromTags(); } catch (_) {}
-        }
-        if (info) {
-          els.ver.textContent = info.tag;
-          els.date.textContent = info.date ? fmtDate(info.date) : 'n/a';
-          els.dl.href = info.href;
-        } else {
-          els.ver.textContent = 'unavailable';
-          els.date.textContent = 'n/a';
-          els.dl.removeAttribute('href');
-        }
-      }
-
-      init().catch(console.error);
-      document.getElementById('year').textContent = new Date().getFullYear();
+    (async function(){
+      const owner='PatrickSt1991', repo='Samsung-Jellyfin-Installer';
+      const els={ver:document.getElementById('latestVersion'),date:document.getElementById('releaseDate'),dl:document.getElementById('downloadBtn')};
+      const os=(()=>{const p=navigator.platform.toLowerCase();if(p.includes('win'))return'windows';if(p.includes('mac'))return'macos';if(p.includes('linux'))return'linux';return'other'})();
+      const fmtDate=s=>new Date(s).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
+      async function tryFetch(url){const res=await fetch(url,{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
+      async function getRelease(){const data=await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);const tag=data.tag_name||data.name;const date=data.published_at||data.created_at;let asset=data.assets?.find(a=>os==='windows'?a.name.match(/\.exe$/i):os==='macos'?a.name.match(/mac|osx/i):a.name.match(/linux|\.sh$/i));if(!asset&&data.assets?.length)asset=data.assets[0];const href=asset?asset.browser_download_url:`https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;return{tag,date,href};}
+      try{const info=await getRelease();els.ver.textContent=info.tag;els.date.textContent=fmtDate(info.date);els.dl.href=info.href;}catch(e){els.ver.textContent='unavailable';els.date.textContent='n/a';}
+      document.getElementById('year').textContent=new Date().getFullYear();
     })();
   </script>
 </body>
