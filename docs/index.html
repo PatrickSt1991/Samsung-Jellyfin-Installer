@@ -33,18 +33,47 @@
     </p>
     <p style="color:#96a0c3;font-size:.9em">© <span id="year"></span> Patrick Stel — Hosted on GitHub Pages</p>
   </main>
+	<script>
+	(async function(){
+	  const owner='PatrickSt1991', repo='Samsung-Jellyfin-Installer';
+	  const els={
+		ver:document.getElementById('latestVersion'),
+		date:document.getElementById('releaseDate'),
+		dl:document.getElementById('downloadBtn')
+	  };
 
-  <script>
-    (async function(){
-      const owner='PatrickSt1991', repo='Samsung-Jellyfin-Installer';
-      const els={ver:document.getElementById('latestVersion'),date:document.getElementById('releaseDate'),dl:document.getElementById('downloadBtn')};
-      const os=(()=>{const p=navigator.platform.toLowerCase();if(p.includes('win'))return'windows';if(p.includes('mac'))return'macos';if(p.includes('linux'))return'linux';return'other'})();
-      const fmtDate=s=>new Date(s).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
-      async function tryFetch(url){const res=await fetch(url,{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
-      async function getRelease(){const data=await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);const tag=data.tag_name||data.name;const date=data.published_at||data.created_at;let asset=data.assets?.find(a=>os==='windows'?a.name.match(/\.exe$/i):os==='macos'?a.name.match(/mac|osx/i):a.name.match(/linux|\.sh$/i));if(!asset&&data.assets?.length)asset=data.assets[0];const href=asset?asset.browser_download_url:`https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;return{tag,date,href};}
-      try{const info=await getRelease();els.ver.textContent=info.tag;els.date.textContent=fmtDate(info.date);els.dl.href=info.href;}catch(e){els.ver.textContent='unavailable';els.date.textContent='n/a';}
-      document.getElementById('year').textContent=new Date().getFullYear();
-    })();
-  </script>
+	  const os=(()=>{
+		const p=(navigator.userAgentData?.platform||navigator.platform||'').toLowerCase();
+		if(p.includes('win'))return'win';
+		if(p.includes('mac'))return'osx';
+		if(p.includes('linux'))return'linux';
+		return'other';
+	  })();
+
+	  const fmtDate=s=>new Date(s).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
+	  async function tryFetch(u){const r=await fetch(u,{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json();}
+
+	  async function getRelease(){
+		const d=await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+		const tag=d.tag_name||d.name, date=d.published_at||d.created_at;
+		let a=d.assets?.find(x=>x.name.toLowerCase().includes(`-${os}-x64`));
+		if(!a&&d.assets?.length)a=d.assets[0];
+		const href=a?a.browser_download_url:`https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;
+		return{tag,date,href};
+	  }
+
+	  try{
+		const i=await getRelease();
+		els.ver.textContent=i.tag;
+		els.date.textContent=fmtDate(i.date);
+		els.dl.href=i.href;
+	  }catch(e){
+		els.ver.textContent='unavailable';
+		els.date.textContent='n/a';
+	  }
+
+	  document.getElementById('year').textContent=new Date().getFullYear();
+	})();
+	</script>
 </body>
 </html>
