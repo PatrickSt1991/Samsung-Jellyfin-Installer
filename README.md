@@ -20,8 +20,6 @@
 
 ---
 
-## 🔥 [Check out the official page for Jellyfin 2 Samsung](https://patrickst1991.github.io/Samsung-Jellyfin-Installer/)
-
 ## 📦 Current Versions
 
 <!-- versions:start -->
