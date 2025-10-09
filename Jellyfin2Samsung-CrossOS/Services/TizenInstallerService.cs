@@ -435,44 +435,130 @@ namespace Jellyfin2SamsungCrossOS.Services
             if (string.IsNullOrEmpty(TizenDataPath))
                 throw new Exception("Tizen data path is not set.");
 
-            XElement profile = new XElement("profile",
-                new XAttribute("name", profileName),
-                new XElement("profileitem",
-                    new XAttribute("ca", ""),
-                    new XAttribute("distributor", "0"),
-                    new XAttribute("key", Path.Combine(p12Location, "author.p12")),
-                    new XAttribute("password", p12Password),
-                    new XAttribute("rootca", "")
-                ),
-                new XElement("profileitem",
-                    new XAttribute("ca", ""),
-                    new XAttribute("distributor", "1"),
-                    new XAttribute("key", Path.Combine(p12Location, "distributor.p12")),
-                    new XAttribute("password", p12Password),
-                    new XAttribute("rootca", "")
-                )
-            );
+            // If the password arg is actually a .pwd file path, read its content
+            string resolvedPassword = TryReadPwdFile(p12Password);
 
-            XDocument doc;
-            string dir = Path.GetDirectoryName(TizenDataPath);
+            // Try to encrypt the password on Windows, so it matches what the Tizen tools expect
+            string finalPassword = TryEncryptPassword(resolvedPassword);
+
+            string dir = Path.GetDirectoryName(TizenDataPath)!;
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
+            XDocument doc;
+            XElement root;
+
             if (!File.Exists(TizenDataPath))
             {
-                doc = new XDocument(new XElement("profiles", profile));
+                root = new XElement("profiles",
+                    new XAttribute("active", profileName),
+                    new XAttribute("version", "3.1"));
+                doc = new XDocument(new XDeclaration("1.0", "utf-8", "no"), root);
             }
             else
             {
                 doc = XDocument.Load(TizenDataPath);
-                var root = doc.Element("profiles")!;
-                var existing = root.Elements("profile").FirstOrDefault(p => p.Attribute("name")?.Value == profileName);
-                if (existing == null) root.Add(profile);
-                else existing.ReplaceWith(profile);
+                root = doc.Element("profiles") ?? new XElement("profiles");
+                if (doc.Root == null)
+                    doc.Add(root);
+
+                // Ensure root has required attributes
+                if (root.Attribute("version") == null) root.SetAttributeValue("version", "3.1");
+                if (root.Attribute("active") == null) root.SetAttributeValue("active", profileName);
             }
 
+            // Normalize p12Location to a directory; callers sometimes give a file path
+            string authorP12 = p12Location.EndsWith(".p12", StringComparison.OrdinalIgnoreCase)
+                ? p12Location
+                : Path.Combine(p12Location, "author.p12");
+
+            string distributorP12 = p12Location.EndsWith(".p12", StringComparison.OrdinalIgnoreCase)
+                ? Path.Combine(Path.GetDirectoryName(p12Location)!, "distributor.p12")
+                : Path.Combine(p12Location, "distributor.p12");
+
+            var profile = new XElement("profile",
+                new XAttribute("name", profileName),
+
+                // Author (distributor="0")
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "0"),
+                    new XAttribute("key", authorP12),
+                    new XAttribute("password", finalPassword),
+                    new XAttribute("rootca", "")
+                ),
+
+                // Distributor (distributor="1")
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "1"),
+                    new XAttribute("key", distributorP12),
+                    new XAttribute("password", finalPassword),
+                    new XAttribute("rootca", "")
+                ),
+
+                // Optional stub some tools expect; keep empty
+                new XElement("profileitem",
+                    new XAttribute("ca", ""),
+                    new XAttribute("distributor", "2"),
+                    new XAttribute("key", ""),
+                    new XAttribute("password", ""),
+                    new XAttribute("rootca", "")
+                )
+            );
+
+            // Insert or replace
+            var existing = root.Elements("profile")
+                .FirstOrDefault(p => (string?)p.Attribute("name") == profileName);
+
+            if (existing is null) root.Add(profile);
+            else existing.ReplaceWith(profile);
+
+            // Make sure the 'active' profile is set to this one
+            root.SetAttributeValue("active", profileName);
+
+            // Save
             doc.Save(TizenDataPath);
         }
+
+        private string TryReadPwdFile(string passwordOrPath)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(passwordOrPath) &&
+                    passwordOrPath.EndsWith(".pwd", StringComparison.OrdinalIgnoreCase) &&
+                    File.Exists(passwordOrPath))
+                {
+                    return File.ReadAllText(passwordOrPath).Trim();
+                }
+            }
+            catch { /* ignore and fallback to raw string */ }
+
+            return passwordOrPath ?? string.Empty;
+        }
+
+        private string TryEncryptPassword(string plain)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(plain)) return "";
+
+                // Only available on Windows in your code; else return plain
+                if (!OperatingSystem.IsWindows() || string.IsNullOrEmpty(TizenCypto) || !File.Exists(TizenCypto))
+                    return plain;
+
+                // wincrypt.exe -e <password>
+                var res = _processHelper.RunCommandAsync(TizenCypto, $"-e \"{plain}\"").GetAwaiter().GetResult();
+                var output = (res.Output ?? "").Trim();
+                // Basic sanity: encrypted values are typically base64-like and often end with '='
+                if (!string.IsNullOrEmpty(output))
+                    return output;
+            }
+            catch { /* fall through */ }
+
+            return plain;
+        }
+
         private static string? FindTizenRoot()
         {
             foreach (var basePath in PossibleTizenPaths)

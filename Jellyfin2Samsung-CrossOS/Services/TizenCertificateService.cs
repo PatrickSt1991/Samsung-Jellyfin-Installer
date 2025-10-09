@@ -339,27 +339,6 @@ namespace Jellyfin2SamsungCrossOS.Services
         }
 
 
-        /*
-        private static async Task ExportPfxWithCaChainAsync(byte[] signedCertBytes, AsymmetricKeyParameter privateKey, string password, string outputPath, string caPath, string filename, string caFile)
-        {
-            string caCertFile = Path.Combine(caPath, caFile);
-            var parser = new X509CertificateParser();
-            var signedCert = parser.ReadCertificate(signedCertBytes);
-            var caCert = parser.ReadCertificate(await File.ReadAllBytesAsync(caCertFile));
-
-            var signedCertDotNet = new X509Certificate2(signedCert.GetEncoded());
-            var caCertDotNet = new X509Certificate2(caCert.GetEncoded());
-
-            var rsaPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)privateKey);
-            using var certWithPrivateKey = signedCertDotNet.CopyWithPrivateKey(rsaPrivateKey);
-
-            var collection = new X509Certificate2Collection { caCertDotNet, certWithPrivateKey };
-            await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{filename}.p12"), collection.Export(X509ContentType.Pkcs12, password));
-
-            signedCertDotNet.Dispose();
-            caCertDotNet.Dispose();
-        }
-        */
         public static string MoveTizenCertificateFiles()
         {
             string dest = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SamsungCertificate", "Jelly2Sams");
