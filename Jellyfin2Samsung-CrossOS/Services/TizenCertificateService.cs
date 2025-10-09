@@ -89,8 +89,23 @@ namespace Jellyfin2SamsungCrossOS.Services
             await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(outputPath, "ca"), "author", "vd_tizen_dev_author_ca.cer");
             await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(outputPath, "ca"), "distributor", "vd_tizen_dev_public2.crt");
 
-            progress?.Invoke("MovingP12Files".Localized());
+            // in GenerateProfileAsync, right after the two exports:
+            System.Diagnostics.Debug.WriteLine("[CERT] ExportPfx done, about to invoke progress: MovingP12Files");
+            try
+            {
+                progress?.Invoke("MovingP12Files".Localized());
+                System.Diagnostics.Debug.WriteLine("[CERT] progress.Invoke(MovingP12Files) returned");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CERT] progress.Invoke threw: {ex}");
+                throw;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[CERT] Calling MoveTizenCertificateFiles()");
             string p12Location = MoveTizenCertificateFiles();
+            System.Diagnostics.Debug.WriteLine($"[CERT] MoveTizenCertificateFiles() returned: {p12Location}");
+
 
             return (p12Location, p12Encrypted);
         }
@@ -338,15 +353,46 @@ namespace Jellyfin2SamsungCrossOS.Services
                 throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
         }
 
-
         public static string MoveTizenCertificateFiles()
         {
-            string dest = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SamsungCertificate", "Jelly2Sams");
-            Directory.CreateDirectory(dest);
+            string dest = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "SamsungCertificate", "Jelly2Sams");
             string src = Path.Combine(Environment.CurrentDirectory, "Assets", "TizenProfile");
-            foreach (var file in Directory.GetFiles(src, "*.*"))
-                File.Move(file, Path.Combine(dest, Path.GetFileName(file)!), true);
+
+            System.Diagnostics.Debug.WriteLine($"[CERT] Move start: src='{src}', dest='{dest}'");
+
+            Directory.CreateDirectory(dest);
+
+            if (!Directory.Exists(src))
+            {
+                System.Diagnostics.Debug.WriteLine("[CERT] SRC does not exist!");
+                return dest;
+            }
+
+            var files = Directory.GetFiles(src, "*.*");
+            System.Diagnostics.Debug.WriteLine($"[CERT] Files to move: {files.Length}");
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    var target = Path.Combine(dest, Path.GetFileName(file)!);
+                    var len = new FileInfo(file).Length;
+                    System.Diagnostics.Debug.WriteLine($"[CERT] Moving '{file}' ({len} bytes) -> '{target}'");
+                    File.Move(file, target, true);
+                    System.Diagnostics.Debug.WriteLine($"[CERT] Moved '{file}'");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CERT] Move failed for '{file}': {ex}");
+                    throw;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("[CERT] Move complete");
             return dest;
         }
+
     }
 }

@@ -432,24 +432,28 @@ namespace Jellyfin2SamsungCrossOS.Services
         }
         private void UpdateCertificateManager(string p12Location, string p12Password, string profileName)
         {
+            void Trace(string m) => Debug.WriteLine($"{DateTime.Now:HH:mm:ss.fff} [PROFILES] {m}");
+            var swTotal = Stopwatch.StartNew();
+
+            Trace($"ENTER name='{profileName}', TizenDataPath='{TizenDataPath}'");
             if (string.IsNullOrEmpty(TizenDataPath))
                 throw new Exception("Tizen data path is not set.");
 
-            // If the password arg is actually a .pwd file path, read its content
-            string resolvedPassword = TryReadPwdFile(p12Password);
-
-            // Try to encrypt the password on Windows, so it matches what the Tizen tools expect
-            string finalPassword = TryEncryptPassword(resolvedPassword);
 
             string dir = Path.GetDirectoryName(TizenDataPath)!;
+            Trace($"Ensure dir exists: '{dir}' (exists={Directory.Exists(dir)})");
             if (!Directory.Exists(dir))
+            {
                 Directory.CreateDirectory(dir);
+                Trace("Created dir.");
+            }
 
             XDocument doc;
             XElement root;
 
             if (!File.Exists(TizenDataPath))
             {
+                Trace("profiles.xml NOT found. Creating new XDocument with root + attrs.");
                 root = new XElement("profiles",
                     new XAttribute("active", profileName),
                     new XAttribute("version", "3.1"));
@@ -457,17 +461,22 @@ namespace Jellyfin2SamsungCrossOS.Services
             }
             else
             {
+                Trace("profiles.xml found. Loading XDocument...");
                 doc = XDocument.Load(TizenDataPath);
+                Trace("Loaded XDocument.");
                 root = doc.Element("profiles") ?? new XElement("profiles");
                 if (doc.Root == null)
+                {
+                    Trace("doc.Root was null, adding 'profiles' root.");
                     doc.Add(root);
+                }
 
-                // Ensure root has required attributes
-                if (root.Attribute("version") == null) root.SetAttributeValue("version", "3.1");
-                if (root.Attribute("active") == null) root.SetAttributeValue("active", profileName);
+                if (root.Attribute("version") == null) { Trace("Setting version attr."); root.SetAttributeValue("version", "3.1"); }
+                if (root.Attribute("active") == null) { Trace("Setting active attr."); root.SetAttributeValue("active", profileName); }
             }
 
-            // Normalize p12Location to a directory; callers sometimes give a file path
+            // Normalize p12 paths
+            Trace($"Normalize p12 paths. p12Location='{p12Location}'");
             string authorP12 = p12Location.EndsWith(".p12", StringComparison.OrdinalIgnoreCase)
                 ? p12Location
                 : Path.Combine(p12Location, "author.p12");
@@ -476,28 +485,25 @@ namespace Jellyfin2SamsungCrossOS.Services
                 ? Path.Combine(Path.GetDirectoryName(p12Location)!, "distributor.p12")
                 : Path.Combine(p12Location, "distributor.p12");
 
+            Trace($"authorP12='{authorP12}', distributorP12='{distributorP12}'");
+
+            Trace("Building <profile> element...");
             var profile = new XElement("profile",
                 new XAttribute("name", profileName),
-
-                // Author (distributor="0")
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "0"),
                     new XAttribute("key", authorP12),
-                    new XAttribute("password", finalPassword),
+                    new XAttribute("password", p12Password),
                     new XAttribute("rootca", "")
                 ),
-
-                // Distributor (distributor="1")
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "1"),
                     new XAttribute("key", distributorP12),
-                    new XAttribute("password", finalPassword),
+                    new XAttribute("password", p12Password),
                     new XAttribute("rootca", "")
                 ),
-
-                // Optional stub some tools expect; keep empty
                 new XElement("profileitem",
                     new XAttribute("ca", ""),
                     new XAttribute("distributor", "2"),
@@ -506,57 +512,34 @@ namespace Jellyfin2SamsungCrossOS.Services
                     new XAttribute("rootca", "")
                 )
             );
+            Trace("Built profile element.");
 
-            // Insert or replace
-            var existing = root.Elements("profile")
-                .FirstOrDefault(p => (string?)p.Attribute("name") == profileName);
+            // Insert / Replace
+            Trace("Searching for existing profile...");
+            var existing = root.Elements("profile").FirstOrDefault(p => (string?)p.Attribute("name") == profileName);
+            if (existing is null)
+            {
+                Trace("Existing profile NOT found. Adding new.");
+                root.Add(profile);
+            }
+            else
+            {
+                Trace("Existing profile found. Replacing.");
+                existing.ReplaceWith(profile);
+            }
 
-            if (existing is null) root.Add(profile);
-            else existing.ReplaceWith(profile);
-
-            // Make sure the 'active' profile is set to this one
+            Trace("Setting 'active' attribute on root...");
             root.SetAttributeValue("active", profileName);
 
             // Save
+            Trace($"Saving XDocument to '{TizenDataPath}'...");
+            var swSave = Stopwatch.StartNew();
             doc.Save(TizenDataPath);
-        }
+            swSave.Stop();
+            Trace($"Saved profiles.xml in {swSave.ElapsedMilliseconds} ms.");
 
-        private string TryReadPwdFile(string passwordOrPath)
-        {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(passwordOrPath) &&
-                    passwordOrPath.EndsWith(".pwd", StringComparison.OrdinalIgnoreCase) &&
-                    File.Exists(passwordOrPath))
-                {
-                    return File.ReadAllText(passwordOrPath).Trim();
-                }
-            }
-            catch { /* ignore and fallback to raw string */ }
-
-            return passwordOrPath ?? string.Empty;
-        }
-
-        private string TryEncryptPassword(string plain)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(plain)) return "";
-
-                // Only available on Windows in your code; else return plain
-                if (!OperatingSystem.IsWindows() || string.IsNullOrEmpty(TizenCypto) || !File.Exists(TizenCypto))
-                    return plain;
-
-                // wincrypt.exe -e <password>
-                var res = _processHelper.RunCommandAsync(TizenCypto, $"-e \"{plain}\"").GetAwaiter().GetResult();
-                var output = (res.Output ?? "").Trim();
-                // Basic sanity: encrypted values are typically base64-like and often end with '='
-                if (!string.IsNullOrEmpty(output))
-                    return output;
-            }
-            catch { /* fall through */ }
-
-            return plain;
+            swTotal.Stop();
+            Trace($"EXIT after {swTotal.ElapsedMilliseconds} ms.");
         }
 
         private static string? FindTizenRoot()
