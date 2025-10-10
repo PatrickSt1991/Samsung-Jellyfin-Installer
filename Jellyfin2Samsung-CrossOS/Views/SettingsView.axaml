@@ -115,6 +115,16 @@
 
 					<!-- Options Section -->
 					<StackPanel Spacing="12">
+						<!-- Permit Install (Tizen)-->
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+                                       Text="{Binding lblPermitInstall}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+							<CheckBox Grid.Column="1"
+                                      IsChecked="{Binding PermitInstall}"
+                                      VerticalAlignment="Center"/>
+						</Grid>
 						<!-- Remember IP -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"

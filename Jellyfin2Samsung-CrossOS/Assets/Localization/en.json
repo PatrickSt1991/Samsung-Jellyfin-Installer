@@ -140,5 +140,6 @@
   "minimalCliMessage": "Tizen CLI & Certificate manager are required to continue.\n\nWe will now download and install Tizen CLI followed by Certificate manager.\nThis may take a few minutes. Please be patient during the installation process.",
   "minimalCliStop": "User declined to install Tizen CLI",
   "packageAndSign": "Packaging and signing...",
-  "certRetryFailed": "Retry failed, please create an issue"
+  "certRetryFailed": "Retry failed, please create an issue",
+  "lblPermitInstall": "Permit Install (Tizen =< 4.0)"
 }

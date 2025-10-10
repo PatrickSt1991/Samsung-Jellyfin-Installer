@@ -292,10 +292,24 @@ namespace Jellyfin2SamsungCrossOS.Services
                 }
 
                 string tizenOs = await FetchTizenOsAsync();
+
                 if (string.IsNullOrEmpty(tizenOs))
                     tizenOs = "7.0";
 
-                if (new Version(tizenOs) >= new Version("7.0") || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
+                Version tizenVersion = new(tizenOs);
+                Version certVersion = new("7.0");
+                Version oldVersion = new("4.0");
+
+                if (tizenVersion <= oldVersion)
+                {
+                    if (!string.IsNullOrEmpty(tvName))
+                    {
+                        AppSettings.Default.PermitInstall = true;
+                        allowPermitInstall(tvName);
+                    }
+                }
+
+                if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
                 {
                     string selectedCertificate = _appSettings.Certificate;
                     var certDuid = _appSettings.ChosenCertificates?.Duid;
@@ -430,6 +444,14 @@ namespace Jellyfin2SamsungCrossOS.Services
             return result.Output.Trim();
 
         }
+
+        private async Task allowPermitInstall(string tvName)
+        {
+            await _processHelper.RunCommandAsync(TizenCliPath, $"install-permit -t {tvName}");
+            return;
+
+        }
+
         private void UpdateCertificateManager(string p12Location, string p12Password, string profileName)
         {
             void Trace(string m) => Debug.WriteLine($"{DateTime.Now:HH:mm:ss.fff} [PROFILES] {m}");

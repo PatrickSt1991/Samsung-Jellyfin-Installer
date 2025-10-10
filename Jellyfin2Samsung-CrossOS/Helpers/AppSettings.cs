@@ -45,6 +45,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         public bool RememberAudioSelections { get; set; } = true;
         public bool RememberSubtitleSelections { get; set; } = true;
         public bool PlayDefaultAudioTrack { get; set; } = true;
+        public bool PermitInstall { get; set; } = false;
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
         public string ConfigUpdateMode { get; set; } = "None";

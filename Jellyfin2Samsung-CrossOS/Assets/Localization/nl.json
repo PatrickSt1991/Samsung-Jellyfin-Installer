@@ -140,5 +140,6 @@
   "minimalCliMessage": "Tizen CLI en Certificaatbeheer zijn vereist om door te gaan.\n\nWe gaan nu Tizen CLI downloaden en installeren, gevolgd door Certificaatbeheer.\nDit kan enkele minuten duren. Wees geduldig tijdens het installatieproces.",
   "minimalCliStop": "Gebruiker weigerde Tizen CLI te installeren",
   "packageAndSign": "Inpakken en ondertekenen...",
-  "certRetryFailed": "Opnieuw proberen mislukt, maak een probleem aan"
+  "certRetryFailed": "Opnieuw proberen mislukt, maak een probleem aan",
+  "lblPermitInstall": "Installatie toestaan ​​(Tizen =< 4.0)"
 }

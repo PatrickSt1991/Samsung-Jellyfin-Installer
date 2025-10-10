@@ -33,6 +33,9 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         private string customWgtPath = string.Empty;
 
         [ObservableProperty]
+        private bool permitInstall;
+
+        [ObservableProperty]
         private bool rememberCustomIP;
 
         [ObservableProperty]
@@ -57,6 +60,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         public string lblModifyConfig => _localizationService.GetString("lblModifyConfig");
         public string lblOpenConfig => _localizationService.GetString("lblOpenConfig");
         public string SelectWGT => _localizationService.GetString("SelectWGT");
+        public string lblPermitInstall => _localizationService.GetString("lblPermitInstall");
 
 
         public SettingsViewModel(
@@ -145,6 +149,12 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnPermitInstallChanged(bool value)
+        {
+            AppSettings.Default.PermitInstall = value;
+            AppSettings.Default.Save();
+        }
+
         partial void OnRememberCustomIPChanged(bool value)
         {
             AppSettings.Default.RememberCustomIP = value;
@@ -205,6 +215,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 ?? AvailableLanguages.FirstOrDefault();
 
             CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
+            PermitInstall = AppSettings.Default.PermitInstall;
             RememberCustomIP = AppSettings.Default.RememberCustomIP;
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
