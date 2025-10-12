@@ -1,5 +1,6 @@
-﻿using Jellyfin2SamsungCrossOS.Helpers;
-using Jellyfin2SamsungCrossOS.Models;
+﻿using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Services
 {
     public class NetworkService : INetworkService
     {
@@ -120,8 +121,8 @@ namespace Jellyfin2SamsungCrossOS.Services
                 .Where(ni =>
                     virtualScan
                         ? true
-                        : (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
-                           ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
+                        : ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                           ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                 .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
                 .Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork)
                 .Where(ip => !IPAddress.IsLoopback(ip.Address))

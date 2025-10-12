@@ -4,14 +4,16 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using System.Threading.Tasks;
 using System;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Services
 {
     public class DialogService : IDialogService
     {
         private Window? GetMainWindow()
         {
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+            if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
                 return desktop.MainWindow;
 
             return null;

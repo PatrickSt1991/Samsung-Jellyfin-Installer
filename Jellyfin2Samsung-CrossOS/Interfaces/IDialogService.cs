@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Interfaces
 {
     public interface IDialogService
     {

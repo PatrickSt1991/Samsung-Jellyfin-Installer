@@ -1,4 +1,4 @@
-﻿namespace Jellyfin2SamsungCrossOS.Models
+﻿namespace Jellyfin2Samsung.Models
 {
     public class JellyfinAuth
     {

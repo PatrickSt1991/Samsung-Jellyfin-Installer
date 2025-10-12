@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewModels="clr-namespace:Jellyfin2SamsungCrossOS.ViewModels"
+        xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         mc:Ignorable="d"
-        x:Class="Jellyfin2SamsungCrossOS.InstallationCompleteWindow"
+        x:Class="Jellyfin2Samsung.InstallationCompleteWindow"
         x:DataType="viewModels:InstallationCompleteViewModel"
         Title="{Binding Title}"
         WindowStartupLocation="CenterScreen"
@@ -19,9 +19,9 @@
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/Buttons.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/TextBlocks.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
 	<Border Background="White"

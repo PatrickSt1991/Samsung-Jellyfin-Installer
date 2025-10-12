@@ -1,17 +1,16 @@
 ﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Jellyfin2SamsungCrossOS.Helpers;
-using Jellyfin2SamsungCrossOS.Models;
-using Jellyfin2SamsungCrossOS.Services;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.ViewModels
+namespace Jellyfin2Samsung.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
@@ -237,8 +236,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
         private async Task InitializeCertificatesAsync()
         {
-            var (profilePath, tizenCrypto) = await _tizenService.EnsureTizenCliAvailable();
-            var certificates = _certificateHelper.GetAvailableCertificates(profilePath, tizenCrypto);
+            var certificates = _certificateHelper.GetAvailableCertificates(AppSettings.CertificatePath);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -249,16 +247,25 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 ExistingCertificates? selectedCert = null;
 
                 if (!string.IsNullOrEmpty(savedCertName))
-                    selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName);
+                {
+                    selectedCert = AvailableCertificates
+                        .FirstOrDefault(c => c.Name == savedCertName);
+                }
 
-                selectedCert ??= AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams (default)")
-                                ?? AvailableCertificates.FirstOrDefault();
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams");
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams (default)");
+
+                selectedCert ??= AvailableCertificates.FirstOrDefault();
 
                 if (selectedCert != null)
                     SelectedCertificate = selectedCert.Name;
 
                 AppSettings.Default.ChosenCertificates = selectedCert;
             });
+
         }
         public void Dispose()
         {

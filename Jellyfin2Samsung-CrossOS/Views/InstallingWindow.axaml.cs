@@ -1,7 +1,7 @@
 using Avalonia.Controls;
-using Jellyfin2SamsungCrossOS.ViewModels;
+using Jellyfin2Samsung.ViewModels;
 
-namespace Jellyfin2SamsungCrossOS;
+namespace Jellyfin2Samsung;
 
 public partial class InstallingWindow : Window
 {

@@ -1,25 +1,23 @@
-﻿using Jellyfin2SamsungCrossOS.Extensions;
-using Jellyfin2SamsungCrossOS.Helpers;
+﻿using Jellyfin2Samsung.Extensions;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Services
 {
     public class TizenCertificateService : ITizenCertificateService
     {
@@ -34,23 +32,18 @@ namespace Jellyfin2SamsungCrossOS.Services
             _dialogService = dialogService;
         }
 
-        public async Task<(string p12Location, string p12Password)> GenerateProfileAsync(
+        public async Task<(string authorP12, string distributorP12, string passwordP12)> GenerateProfileAsync(
             string duid,
             string accessToken,
             string userId,
             string userEmail,
             string outputPath,
-            string jarPath,
             ProgressCallback? progress = null)
         {
             if (string.IsNullOrEmpty(outputPath))
                 throw new ArgumentException("Output path cannot be empty", nameof(outputPath));
 
-            if (string.IsNullOrEmpty(jarPath) || !Directory.Exists(jarPath))
-                throw new ArgumentException($"Invalid jarPath: {jarPath}", nameof(jarPath));
-
             var cipherUtil = new CipherUtil();
-            await cipherUtil.ExtractPasswordAsync(jarPath);
 
             Directory.CreateDirectory(outputPath);
 
@@ -80,34 +73,12 @@ namespace Jellyfin2SamsungCrossOS.Services
                 await File.WriteAllBytesAsync(Path.Combine(outputPath, "device-profile.xml"), profileXmlBytes);
             await File.WriteAllBytesAsync(Path.Combine(outputPath, "signed_distributor.cer"), signedDistributorCsrBytes);
 
-            progress?.Invoke("ExtractRootCertificate".Localized());
-            await ExtractRootCertificateAsync(jarPath);
-
-            await CheckCertificateExistenceAsync(Path.Combine(outputPath, "ca"));
+            await CheckCertificateExistenceAsync(Path.Combine(AppSettings.ProfilePath, "ca"));
 
             progress?.Invoke("ExportPfxCertificates".Localized());
-            await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(outputPath, "ca"), "author", "vd_tizen_dev_author_ca.cer");
-            await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(outputPath, "ca"), "distributor", "vd_tizen_dev_public2.crt");
-
-            // in GenerateProfileAsync, right after the two exports:
-            System.Diagnostics.Debug.WriteLine("[CERT] ExportPfx done, about to invoke progress: MovingP12Files");
-            try
-            {
-                progress?.Invoke("MovingP12Files".Localized());
-                System.Diagnostics.Debug.WriteLine("[CERT] progress.Invoke(MovingP12Files) returned");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[CERT] progress.Invoke threw: {ex}");
-                throw;
-            }
-
-            System.Diagnostics.Debug.WriteLine("[CERT] Calling MoveTizenCertificateFiles()");
-            string p12Location = MoveTizenCertificateFiles();
-            System.Diagnostics.Debug.WriteLine($"[CERT] MoveTizenCertificateFiles() returned: {p12Location}");
-
-
-            return (p12Location, p12Encrypted);
+            string authorp12 = await ExportPfxWithCaChainAsync(signedAuthorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(AppSettings.ProfilePath, "ca"), "author", "vd_tizen_dev_author_ca.cer");
+            string distributorp12 = await ExportPfxWithCaChainAsync(signedDistributorCsrBytes, keyPair.Private, p12Plain, outputPath, Path.Combine(AppSettings.ProfilePath, "ca"), "distributor", "vd_tizen_dev_public2.crt");
+            return (authorp12, distributorp12, p12Plain);
         }
 
         private static AsymmetricCipherKeyPair GenerateKeyPair()
@@ -156,19 +127,12 @@ namespace Jellyfin2SamsungCrossOS.Services
         private async Task CheckCertificateExistenceAsync(string caPath)
         {
             string[] requiredFiles = { "vd_tizen_dev_author_ca.cer", "vd_tizen_dev_public2.crt" };
-            string caLocalPath = Path.Combine(caPath, "ca_local");
 
             foreach (var file in requiredFiles)
             {
                 string target = Path.Combine(caPath, file);
                 if (!File.Exists(target))
-                {
-                    string source = Path.Combine(caLocalPath, file);
-                    if (!File.Exists(source))
-                        await _dialogService.ShowErrorAsync($"Missing CA file: {file}");
-                    else
-                        File.Copy(source, target, true);
-                }
+                    await _dialogService.ShowErrorAsync($"Missing CA file: {file}");
             }
         }
 
@@ -240,31 +204,8 @@ namespace Jellyfin2SamsungCrossOS.Services
             return (profileXml, distributorCert);
         }
 
-        public async Task ExtractRootCertificateAsync(string jarPath)
-        {
-            if (!Directory.Exists(jarPath)) return;
 
-            foreach (var jar in Directory.GetFiles(jarPath, "*.jar"))
-            {
-                if (!Path.GetFileName(jar).StartsWith("org.tizen.common.cert")) continue;
-                using var fs = File.OpenRead(jar);
-                using var zip = new ZipArchive(fs, ZipArchiveMode.Read);
-                foreach (var entry in zip.Entries)
-                {
-                    string fileName = Path.GetFileName(entry.FullName);
-                    if (fileName == "vd_tizen_dev_author_ca.cer" || fileName == "vd_tizen_dev_public2.crt")
-                    {
-                        string target = Path.Combine("Assets", "TizenProfile", "ca", fileName);
-                        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                        using var outStream = File.Create(target);
-                        using var entryStream = entry.Open();
-                        await entryStream.CopyToAsync(outStream);
-                    }
-                }
-            }
-        }
-
-        private static async Task ExportPfxWithCaChainAsync(
+        private static async Task<string> ExportPfxWithCaChainAsync(
             byte[] signedCertBytes,
             AsymmetricKeyParameter privateKey,
             string password,
@@ -338,7 +279,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             var target = Path.Combine(outputPath, $"{filename}.p12");
             using (var ms = new MemoryStream())
             {
-                store.Save(ms, password.ToCharArray(), new Org.BouncyCastle.Security.SecureRandom());
+                store.Save(ms, password.ToCharArray(), new SecureRandom());
                 await File.WriteAllBytesAsync(target, ms.ToArray());
             }
 
@@ -351,48 +292,8 @@ namespace Jellyfin2SamsungCrossOS.Services
                        ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
             if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
                 throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
+
+            return target;
         }
-
-        public static string MoveTizenCertificateFiles()
-        {
-            string dest = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "SamsungCertificate", "Jelly2Sams");
-            string src = Path.Combine(Environment.CurrentDirectory, "Assets", "TizenProfile");
-
-            System.Diagnostics.Debug.WriteLine($"[CERT] Move start: src='{src}', dest='{dest}'");
-
-            Directory.CreateDirectory(dest);
-
-            if (!Directory.Exists(src))
-            {
-                System.Diagnostics.Debug.WriteLine("[CERT] SRC does not exist!");
-                return dest;
-            }
-
-            var files = Directory.GetFiles(src, "*.*");
-            System.Diagnostics.Debug.WriteLine($"[CERT] Files to move: {files.Length}");
-
-            foreach (var file in files)
-            {
-                try
-                {
-                    var target = Path.Combine(dest, Path.GetFileName(file)!);
-                    var len = new FileInfo(file).Length;
-                    System.Diagnostics.Debug.WriteLine($"[CERT] Moving '{file}' ({len} bytes) -> '{target}'");
-                    File.Move(file, target, true);
-                    System.Diagnostics.Debug.WriteLine($"[CERT] Moved '{file}'");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[CERT] Move failed for '{file}': {ex}");
-                    throw;
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine("[CERT] Move complete");
-            return dest;
-        }
-
     }
 }

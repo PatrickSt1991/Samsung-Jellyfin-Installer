@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace Jellyfin2SamsungCrossOS.Models
+namespace Jellyfin2Samsung.Models
 {
 
     public class GitHubRelease

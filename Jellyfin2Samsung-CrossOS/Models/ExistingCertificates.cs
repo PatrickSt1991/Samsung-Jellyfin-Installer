@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Jellyfin2SamsungCrossOS.Models
+namespace Jellyfin2Samsung.Models
 {
     public class ExistingCertificates
     {

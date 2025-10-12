@@ -3,9 +3,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Jellyfin2SamsungCrossOS.Helpers;
-using Jellyfin2SamsungCrossOS.Models;
-using Jellyfin2SamsungCrossOS.Services;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
@@ -17,7 +17,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.ViewModels
+namespace Jellyfin2Samsung.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
@@ -162,14 +162,14 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         {
             try
             {
-                SetStatus("CheckingTizenCli");
+                SetStatus("CheckingTizenSdb");
 
 
-                var (tizenDataPath, tizenCliPath) = await _tizenInstaller.EnsureTizenCliAvailable();
+                string tizenSdb = await _tizenInstaller.EnsureTizenSdbAvailable();
 
-                if (string.IsNullOrEmpty(tizenDataPath))
+                if (string.IsNullOrEmpty(tizenSdb))
                 {
-                    SetStatus("TizenCliFailed");
+                    SetStatus("FailedTizenSdb");
                     return;
                 }
 
@@ -182,6 +182,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
             catch (Exception ex)
             {
                 SetStatus("InitializationFailed");
+                await _dialogService.ShowErrorAsync($"{L("InitializationFailed")} {ex.Message}");
             }
         }
 

@@ -20,7 +20,7 @@ switch -Regex ($betaAnswer.Trim().ToLower()) {
 $ChannelSuffix = $(if ($IsBeta) { "-beta" } else { "" })
 
 # ---- Names & paths ----
-$ProjectName = "Jellyfin2SamsungCrossOS"   # executable name produced by dotnet publish
+$ProjectName = "Jellyfin2Samsung"   # executable name produced by dotnet publish
 $ProductName = "Jellyfin2Samsung"          # artifact prefix
 $OutputRoot  = Join-Path $PSScriptRoot "publish"
 $DistDir     = $OutputRoot

@@ -1,12 +1,13 @@
 ﻿using Avalonia.Platform;
-using Jellyfin2SamsungCrossOS.Helpers;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Services
 {
     public class LocalizationService : ILocalizationService
     {
@@ -31,7 +32,7 @@ namespace Jellyfin2SamsungCrossOS.Services
             {
                 try
                 {
-                    var uri = new Uri($"avares://Jellyfin2SamsungCrossOS/Assets/Localization/{lang}.json");
+                    var uri = new Uri($"avares://Jellyfin2Samsung/Assets/Localization/{lang}.json");
                     var asset = AssetLoader.Open(uri);
 
                     using var reader = new StreamReader(asset);

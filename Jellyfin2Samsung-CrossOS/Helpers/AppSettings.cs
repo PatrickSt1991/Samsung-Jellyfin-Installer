@@ -1,16 +1,20 @@
-﻿using Jellyfin2SamsungCrossOS.Models;
+﻿using Jellyfin2Samsung.Models;
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin2SamsungCrossOS.Helpers
+namespace Jellyfin2Samsung.Helpers
 {
     public class AppSettings
     {
         private const string FileName = "settings.json";
-        private static readonly string FilePath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SamsungJellyfinInstaller", FileName);
+        public static readonly string FolderPath = Environment.CurrentDirectory;
+        public static readonly string FilePath = Path.Combine(FolderPath, FileName);
+        public static readonly string TizenSdbPath = Path.Combine(FolderPath, "Assets", "TizenSDB");
+        public static readonly string CertificatePath = Path.Combine(FolderPath, "Assets", "Certificate");
+        public static readonly string ProfilePath = Path.Combine(FolderPath, "Assets", "TizenProfile");
+        public static readonly string DownloadPath = Path.Combine(FolderPath, "Downloads");
 
         private static AppSettings? _instance;
 
@@ -59,10 +63,8 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.3.5";
-        public string TizenCliWindows { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_windows-64.exe";
-        public string TizenCliLinux { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin";
-        public string TizenCliMac { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_macos-64.bin";
+        public string AppVersion { get; set; } = "v1.8.3.6";
+        public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/239769070";
 
         public AppSettings() { }

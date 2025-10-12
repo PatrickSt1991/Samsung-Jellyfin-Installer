@@ -1,13 +1,15 @@
-﻿using Jellyfin2SamsungCrossOS.Extensions;
-using Jellyfin2SamsungCrossOS.Models;
-using Jellyfin2SamsungCrossOS.Services;
+﻿using Jellyfin2Samsung;
+using Jellyfin2Samsung.Extensions;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Helpers
+namespace Jellyfin2Samsung.Helpers
 {
     public class PackageHelper
     {

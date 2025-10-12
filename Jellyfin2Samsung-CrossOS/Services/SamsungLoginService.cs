@@ -1,5 +1,5 @@
 ﻿using Avalonia.Controls;
-using Jellyfin2SamsungCrossOS.Models;
+using Jellyfin2Samsung.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +9,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Services
 {
     public class SamsungLoginService
     {

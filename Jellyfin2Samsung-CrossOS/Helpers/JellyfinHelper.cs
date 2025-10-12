@@ -1,5 +1,4 @@
-﻿using Jellyfin2SamsungCrossOS.Models;
-using Jellyfin2SamsungCrossOS.Services;
+﻿using Jellyfin2Samsung.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +11,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Helpers
+namespace Jellyfin2Samsung.Helpers
 {
     public class JellyfinHelper
     {
@@ -113,10 +112,8 @@ namespace Jellyfin2SamsungCrossOS.Helpers
 
             return users;
         }
-        public async Task<InstallResult> ApplyConfigAndResignPackageAsync(
-            string TizenCliPath,
+        public async Task<InstallResult> ApplyJellyfinConfigAsync(
             string packagePath,
-            string certificateName,
             string[] userIds)
         {
             string? tempDir = null;
@@ -152,10 +149,6 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                 File.Delete(packagePath);
                 File.Move(tempPackage, packagePath);
 
-                if (OperatingSystem.IsWindows())
-                    await _processHelper.RunCommandCmdAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packagePath}\"");
-                else
-                    await _processHelper.RunCommandAsync(TizenCliPath, $"sign --signing-profile {certificateName} \"{packagePath}\"");
 
                 return InstallResult.SuccessResult();
             }
@@ -292,11 +285,11 @@ namespace Jellyfin2SamsungCrossOS.Helpers
                         // Update additional user configurations
                         var userConfig = new
                         {
-                            PlayDefaultAudioTrack = AppSettings.Default.PlayDefaultAudioTrack,
-                            SubtitleLanguagePreference = AppSettings.Default.SubtitleLanguagePreference,
+                            AppSettings.Default.PlayDefaultAudioTrack,
+                            AppSettings.Default.SubtitleLanguagePreference,
                             SubtitleMode = AppSettings.Default.SelectedSubtitleMode,
-                            RememberAudioSelections = AppSettings.Default.RememberAudioSelections,
-                            RememberSubtitleSelections = AppSettings.Default.RememberSubtitleSelections,
+                            AppSettings.Default.RememberAudioSelections,
+                            AppSettings.Default.RememberSubtitleSelections,
                             EnableNextEpisodeAutoPlay = AppSettings.Default.AutoPlayNextEpisode,
                         };
 

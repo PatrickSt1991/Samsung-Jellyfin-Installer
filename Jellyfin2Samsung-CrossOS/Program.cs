@@ -1,7 +1,7 @@
 ﻿using System;
 using Avalonia;
 
-namespace Jellyfin2SamsungCrossOS
+namespace Jellyfin2Samsung
 {
     internal sealed class Program
     {

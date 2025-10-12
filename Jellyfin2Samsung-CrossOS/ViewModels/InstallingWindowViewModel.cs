@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Jellyfin2SamsungCrossOS.ViewModels
+namespace Jellyfin2Samsung.ViewModels
 {
     public partial class InstallingWindowViewModel : ObservableObject
     {
