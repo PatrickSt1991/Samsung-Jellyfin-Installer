@@ -49,24 +49,19 @@ namespace Jellyfin2Samsung.Services
         {
             string tizenSdbPath = AppSettings.TizenSdbPath;
 
-            // Find existing versioned file
             var existingFile = Directory.GetFiles(tizenSdbPath, GetSearchPattern())
                 .FirstOrDefault();
 
-            // Get latest version from GitHub
             var latestVersion = await GetLatestTizenSdbVersionAsync();
 
-            // Check if we need to update
             if (existingFile != null && !ShouldUpdateBinary(existingFile, latestVersion))
             {
                 TizenSdbPath = existingFile;
                 return TizenSdbPath;
             }
 
-            // Download new version
             string downloadedFile = await DownloadTizenSdbAsync(latestVersion);
 
-            // Remove old file if it exists
             if (existingFile != null && File.Exists(existingFile))
             {
                 File.Delete(existingFile);
