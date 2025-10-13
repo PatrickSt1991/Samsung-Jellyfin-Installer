@@ -64,12 +64,15 @@ namespace Jellyfin2Samsung.Services
 
             if (existingFile != null && File.Exists(existingFile))
             {
+                await _processHelper.MakeExecutableAsync(existingFile);
                 File.Delete(existingFile);
             }
+                
 
-            // Move to final location
             string finalPath = Path.Combine(tizenSdbPath, GetFinalFileName(latestVersion));
             File.Move(downloadedFile, finalPath, true);
+
+            await _processHelper.MakeExecutableAsync(finalPath);
 
             TizenSdbPath = finalPath;
             return TizenSdbPath;

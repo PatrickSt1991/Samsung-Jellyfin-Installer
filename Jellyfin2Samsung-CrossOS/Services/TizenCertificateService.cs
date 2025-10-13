@@ -282,10 +282,10 @@ namespace Jellyfin2Samsung.Services
                 store.Save(ms, password.ToCharArray(), new SecureRandom());
                 await File.WriteAllBytesAsync(target, ms.ToArray());
             }
-
+            
             // --- Optional sanity check ---
             var verify = new X509Certificate2Collection();
-            verify.Import(target, password, X509KeyStorageFlags.EphemeralKeySet);
+            verify.Import(target, password, GetX509KeyStorageFlags());
             var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
                        ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
             var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
@@ -294,6 +294,19 @@ namespace Jellyfin2Samsung.Services
                 throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
 
             return target;
+        }
+        private static X509KeyStorageFlags GetX509KeyStorageFlags()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return X509KeyStorageFlags.EphemeralKeySet;
+            }
+            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            {
+                return X509KeyStorageFlags.PersistKeySet;
+            }
+
+            throw new PlatformNotSupportedException("Unsupported operating system");
         }
     }
 }
