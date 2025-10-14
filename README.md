@@ -12,8 +12,8 @@
   <a href="https://discord.gg/7mga3zh8Cv"><img src="https://img.shields.io/badge/Ask%20it%20on%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white" /></a>
 
   ![OS Support](https://img.shields.io/badge/Windows-Stable-brightgreen?style=for-the-badge)
-  ![OS Support](https://img.shields.io/badge/Linux-Beta-yellow?style=for-the-badge)
-  ![OS Support](https://img.shields.io/badge/macOS-Beta-yellow?style=for-the-badge)
+  ![OS Support](https://img.shields.io/badge/Linux-Beta-green?style=for-the-badge)
+  ![OS Support](https://img.shields.io/badge/macOS-Stable-brightgreen?style=for-the-badge)
   
   Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> for providing the Jellyfin Tizen `.wgt` builds — super helpful and much appreciated!
 </div>
