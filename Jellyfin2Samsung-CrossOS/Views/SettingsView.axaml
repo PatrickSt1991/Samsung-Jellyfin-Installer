@@ -9,7 +9,7 @@
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="600"
+        Height="620"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>

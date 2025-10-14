@@ -235,7 +235,6 @@ namespace Jellyfin2Samsung.Services
                 if (string.IsNullOrEmpty(tizenOs))
                     tizenOs = "7.0";
 
-                tizenOs = "7.0";
                 Version tizenVersion = new(tizenOs);
                 Version certVersion = new("7.0");
                 Version oldVersion = new("4.0");
