@@ -298,15 +298,9 @@ namespace Jellyfin2Samsung.Services
         private static X509KeyStorageFlags GetX509KeyStorageFlags()
         {
             if (OperatingSystem.IsWindows())
-            {
                 return X509KeyStorageFlags.EphemeralKeySet;
-            }
-            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-            {
-                return X509KeyStorageFlags.PersistKeySet;
-            }
 
-            throw new PlatformNotSupportedException("Unsupported operating system");
+            return X509KeyStorageFlags.PersistKeySet;
         }
     }
 }
