@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -56,16 +57,51 @@ namespace Jellyfin2Samsung.Helpers
                         password,
                         X509KeyStorageFlags.Exportable);
 
-                    if(cert.NotAfter.Date >= DateTime.Today)
+                    var dist = new X509Certificate2(
+                        p12Path.Replace("author.p12", "distributor.p12"),
+                        password,
+                        X509KeyStorageFlags.Exportable);
+
+                    // Extract DUID
+                    string duid = "";
+                    foreach (var ext in dist.Extensions)
+                    {
+                        if (ext.Oid?.Value == "2.5.29.17") // Subject Alternative Name
+                        {
+                            try
+                            {
+                                var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
+                                var formatted = asnData.Format(true);
+
+                                var lines = formatted.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                foreach (var line in lines)
+                                {
+                                    if (line.Contains("URL=URN:tizen:deviceid=", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var parts = line.Split('=');
+                                        if (parts.Length == 3)
+                                        {
+                                            duid = parts[2].Trim();
+                                        }
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+
+                    if (cert.NotAfter.Date >= DateTime.Today)
                     {
                         certificates.Add(new ExistingCertificates
                         {
                             Name = cert.GetNameInfo(X509NameType.SimpleName, forIssuer: false),
                             File = p12Path,
                             ExpireDate = cert.NotAfter,
-                            Duid = string.Empty
+                            Duid = duid
                         });
                     }
+
                 }
                 catch (Exception ex)
                 {

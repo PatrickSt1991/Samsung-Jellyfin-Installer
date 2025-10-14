@@ -199,6 +199,22 @@ namespace Jellyfin2Samsung.Services
 
             try
             {
+
+                progress?.Invoke("diagnoseTv".Localized());
+                bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
+                if (!canDelete)
+                {
+                    Debug.WriteLine("TV can't delete apps");
+                    progress?.Invoke("diagnoseTv".Localized());
+                    string appId = await CheckForInstalledApp(tvIpAddress, Path.GetFileNameWithoutExtension(packageUrl));
+                    if (!string.IsNullOrEmpty(appId))
+                    {
+                        Debug.WriteLine("TV can't delete apps & app is already installed!");
+                        progress?.Invoke("InstallationFailed".Localized());
+                        return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                    }
+                }
+                
                 progress?.Invoke("ConnectingToDevice".Localized());
                 string tvName = await GetTvNameAsync(tvIpAddress);
                 if (string.IsNullOrEmpty(tvName))
@@ -219,6 +235,7 @@ namespace Jellyfin2Samsung.Services
                 if (string.IsNullOrEmpty(tizenOs))
                     tizenOs = "7.0";
 
+                tizenOs = "7.0";
                 Version tizenVersion = new(tizenOs);
                 Version certVersion = new("7.0");
                 Version oldVersion = new("4.0");
@@ -235,14 +252,13 @@ namespace Jellyfin2Samsung.Services
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
                 string p12Password = string.Empty;
-
+                bool packageResign = false;
+                
                 if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
                 {
+                    packageResign = true;
                     string selectedCertificate = _appSettings.Certificate;
                     var certDuid = _appSettings.ChosenCertificates?.Duid;
-
-                    Debug.WriteLine($"tvDuid = {tvDuid}");
-                    Debug.WriteLine($"certDuid = {certDuid}");
 
                     if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid)
                     {
@@ -273,16 +289,11 @@ namespace Jellyfin2Samsung.Services
                     }
                     else
                     {
+                        authorp12 = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File),"author.p12");
+                        distributorp12 = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "distributor.p12");
+                        p12Password = File.ReadAllText(Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "password.txt")).Trim();
                         PackageCertificate = selectedCertificate;
                     }
-                }
-                else
-                {
-                    progress?.Invoke("UpdatingCertificateProfile".Localized());
-                    PackageCertificate = "custom_jelly";
-                    authorp12 = Path.Combine(AppSettings.ProfilePath, "legacy", "author.p12");
-                    distributorp12 = Path.Combine(AppSettings.ProfilePath, "legacy", "tizen-distributor-signer-new.p12");
-                    p12Password = "tizenpkcs12passfordsigner";
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
@@ -310,20 +321,41 @@ namespace Jellyfin2Samsung.Services
 
                 }
 
-                progress?.Invoke("packageAndSign".Localized());
-                await ResignPackageAsync(packageUrl, authorp12, distributorp12, p12Password);
+                if (packageResign)
+                {
+                    progress?.Invoke("packageAndSign".Localized());
+                    var resignResults = await ResignPackageAsync(packageUrl, authorp12, distributorp12, p12Password);
 
+                    if (resignResults.ExitCode != 0 || resignResults.Output.Contains("Re-sign failed"))
+                    {
+                        progress?.Invoke("InstallationFailed".Localized());
+                        return InstallResult.FailureResult($"Package resigning failed: {resignResults.Output}");
+                    }
+                }
+                
                 progress?.Invoke("InstallingPackage".Localized());
-                var installOutput = await InstallPackageAsync(tvIpAddress, packageUrl);
+                var installResults = await InstallPackageAsync(tvIpAddress, packageUrl);
 
-                if (File.Exists(packageUrl) && !installOutput.Contains("Failed"))
+                if (installResults.Output.Contains("download failed[116]"))
+                {
+                    progress?.Invoke("InstallationFailed".Localized());
+                    return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                }
+
+                if (installResults.Output.Contains("failed"))
+                {
+                    progress?.Invoke("InstallationFailed".Localized());
+                    return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
+                }
+
+                if (installResults.Output.Contains("installing[100]"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
-                return InstallResult.FailureResult($"Installation failed: {installOutput}");
+                return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
             }
             catch (Exception ex)
             {
@@ -347,8 +379,8 @@ namespace Jellyfin2Samsung.Services
         }
         private async Task<string> FetchTizenOsAsync(string tvIpAddress)
         {
-            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}");
-            var match = Regex.Match(output.Output, @"platform_version:([\d.]+)");
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}");;
+            var match = Regex.Match(output.Output, @"platform_version:\s*([\d.]+)");
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
         private async Task<string> GetTvDuidAsync(string tvIpAddress)
@@ -360,15 +392,53 @@ namespace Jellyfin2Samsung.Services
 
             return duid;
         }
-        private async Task<string> ResignPackageAsync(string packagePath, string authorP12, string distributorP12, string certPass)
+        private async Task<bool> GetTvDiagnoseAsync(string tvIpAddress)
+        {
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"diagnose {tvIpAddress}");
+            string text = output.Output;
+
+            var match = Regex.Match(text,@"Testing '0 vd_appuninstall test':\s*FAILED",RegexOptions.IgnoreCase);
+
+            return !match.Success;
+        }
+        private async Task<string> CheckForInstalledApp(string tvIpAddress, string searchTerm)
+        {
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
+
+            Debug.WriteLine(output.Output);
+            Debug.WriteLine(searchTerm);
+
+            // Take only the base part (before first hyphen)
+            var baseSearch = searchTerm.Split('-')[0];
+
+            // Find the entire block that contains the matching app_title or partial match
+            var blockRegex = new Regex(
+                $@"(-+app_title\s*=\s*.*{Regex.Escape(baseSearch)}.*?)(?=-+app_title|$)",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline
+            );
+
+            var blockMatch = blockRegex.Match(output.Output);
+            if (!blockMatch.Success)
+                return "";
+
+            var block = blockMatch.Value;
+
+            // Now extract app_id from the same block
+            var appIdRegex = new Regex(@"app_id\s*=\s*([^\s-]+)", RegexOptions.IgnoreCase);
+            var appIdMatch = appIdRegex.Match(block);
+
+            return appIdMatch.Success ? appIdMatch.Groups[1].Value.Trim() : "";
+        }
+
+        private async Task<ProcessResult> ResignPackageAsync(string packagePath, string authorP12, string distributorP12, string certPass)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"resign \"{packagePath}\" \"{authorP12}\" \"{distributorP12}\" {certPass}");
-            return output.ToString();
+            return output;
         }
-        private async Task<string> InstallPackageAsync(string tvIpAddress, string packagePath)
+        private async Task<ProcessResult> InstallPackageAsync(string tvIpAddress, string packagePath)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"install {tvIpAddress} \"{packagePath}\"");
-            return output.ToString();
+            return output;
         }
         
         //UPDATE ALLOWPERMITINSTALL

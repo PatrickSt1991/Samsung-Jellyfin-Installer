@@ -55,7 +55,6 @@ namespace Jellyfin2Samsung
             var services = new ServiceCollection();
 
             var settings = AppSettings.Load();
-            Debug.WriteLine($"LANG SETUP: {settings.Language}");
 
             // Services
             services.AddSingleton(settings);

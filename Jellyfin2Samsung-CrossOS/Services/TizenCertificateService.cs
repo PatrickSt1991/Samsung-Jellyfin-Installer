@@ -48,7 +48,7 @@ namespace Jellyfin2Samsung.Services
             Directory.CreateDirectory(outputPath);
 
             progress?.Invoke("GenPassword".Localized());
-            string p12Plain = cipherUtil.GenerateRandomPassword();
+            string p12Plain = "tizenpkcs12passfordsigner";// cipherUtil.GenerateRandomPassword();
             string p12Encrypted = cipherUtil.GetEncryptedString(p12Plain);
             await File.WriteAllTextAsync(Path.Combine(outputPath, "password.txt"), p12Plain);
 

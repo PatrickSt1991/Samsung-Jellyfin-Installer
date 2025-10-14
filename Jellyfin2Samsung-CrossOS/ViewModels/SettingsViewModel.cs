@@ -7,6 +7,7 @@ using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -237,7 +238,7 @@ namespace Jellyfin2Samsung.ViewModels
         private async Task InitializeCertificatesAsync()
         {
             var certificates = _certificateHelper.GetAvailableCertificates(AppSettings.CertificatePath);
-
+            
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 foreach (var cert in certificates)

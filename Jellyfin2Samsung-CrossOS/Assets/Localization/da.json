@@ -139,5 +139,8 @@
   "minimalCliStop": "Brugeren afviste at installere Tizen CLI",
   "packageAndSign": "Emballering og signering...",
   "certRetryFailed": "Gentagelse mislykkedes, opret venligst en fejl",
-  "lblPermitInstall": "Tillad installation (Tizen =< 4.0)"
+  "lblPermitInstall": "Tillad installation (Tizen =< 4.0)",
+  "alreadyInstalled": "Jellyfin kunne ikke installeres, da den allerede er installeret. Fjern den først, og prøv igen.",
+  "diagnoseTv": "Diagnosticér tv-funktioner",
+  "searchApp": "Søger efter om appen allerede er installeret"
 }

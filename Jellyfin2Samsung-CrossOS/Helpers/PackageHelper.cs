@@ -1,8 +1,6 @@
-﻿using Jellyfin2Samsung;
-using Jellyfin2Samsung.Extensions;
+﻿using Jellyfin2Samsung.Extensions;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
-using Jellyfin2Samsung;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
