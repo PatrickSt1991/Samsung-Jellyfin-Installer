@@ -73,6 +73,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.4.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+  <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Core" Version="2.3.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
