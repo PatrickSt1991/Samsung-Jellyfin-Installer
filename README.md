@@ -157,12 +157,8 @@ This lets you set all the Jellyfin user specifics for the chosen user(s) like Au
 Before getting started, ensure you have the following:
 
 - A **Samsung Tizen Smart TV** with **Developer Mode enabled**  
-- **Tizen Web CLI** installed  
-- **Certificate Manager**  
-- **Microsoft Edge WebView2 Runtime**  
+- A **Default webbrowser**  
 - A valid **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+)  
-
-> ℹ️ Don’t worry—the installer checks for missing dependencies and guides you through installation if needed.
 
 ---
 
