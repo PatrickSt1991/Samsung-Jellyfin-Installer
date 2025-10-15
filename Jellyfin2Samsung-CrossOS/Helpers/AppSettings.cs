@@ -21,6 +21,8 @@ namespace Jellyfin2Samsung.Helpers
         // --- Runtime-only cached object (not saved to disk) ---
         [JsonIgnore]
         public ExistingCertificates? ChosenCertificates { get; set; }
+        [JsonIgnore]
+        public string CustomWgtPath { get; set; } = "";
 
         public static AppSettings Default => _instance ??= Load();
 
@@ -28,7 +30,6 @@ namespace Jellyfin2Samsung.Helpers
         public string Language { get; set; } = "en";
         public string Certificate { get; set; } = "Jelly2Sams";
         public bool RememberCustomIP { get; set; } = false;
-        public string CustomWgtPath { get; set; } = "";
         public bool DeletePreviousInstall { get; set; } = false;
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
@@ -63,9 +64,9 @@ namespace Jellyfin2Samsung.Helpers
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.3.9-beta";
+        public string AppVersion { get; set; } = "v1.8.3.9";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
-        public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/239769070";
+        public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
 
         public AppSettings() { }
 

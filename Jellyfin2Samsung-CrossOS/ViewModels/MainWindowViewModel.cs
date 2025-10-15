@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -223,7 +224,7 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand(CanExecute = nameof(CanDownload))]
         private async Task DownloadAndInstallAsync()
         {
-            if (SelectedRelease != null && SelectedDevice != null)
+            if ((SelectedRelease != null && SelectedDevice != null) || (!string.IsNullOrEmpty(AppSettings.Default.CustomWgtPath)))
             {
                 var customPaths = AppSettings.Default.CustomWgtPath?.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
@@ -279,7 +280,7 @@ namespace Jellyfin2Samsung.ViewModels
         {
             if (!string.IsNullOrEmpty(AppSettings.Default.CustomWgtPath))
             {
-                var files = AppSettings.Default.CustomWgtPath.Split(';');
+                var files = AppSettings.Default.CustomWgtPath.Split(';', StringSplitOptions.RemoveEmptyEntries);
                 return files.All(File.Exists) &&
                        !IsLoading &&
                        SelectedDevice != null &&
@@ -293,17 +294,28 @@ namespace Jellyfin2Samsung.ViewModels
                    !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
         }
 
+
         private bool CanInstall()
         {
+            // If custom wgt path is set, allow install without _downloadedPackagePath
+            if (!string.IsNullOrEmpty(AppSettings.Default.CustomWgtPath))
+            {
+                var files = AppSettings.Default.CustomWgtPath.Split(';');
+                return files.All(File.Exists) &&
+                       SelectedDevice != null &&
+                       !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
+            }
+
+            // Otherwise fallback to _downloadedPackagePath logic
             return !string.IsNullOrEmpty(_downloadedPackagePath) &&
                    File.Exists(_downloadedPackagePath) &&
                    SelectedDevice != null &&
                    !string.IsNullOrWhiteSpace(SelectedDevice.IpAddress);
         }
 
+
         private async Task LoadReleasesAsync()
         {
-            AppSettings.Default.CustomWgtPath = string.Empty;
             IsLoading = true;
             Releases.Clear();
 
@@ -328,12 +340,35 @@ namespace Jellyfin2Samsung.ViewModels
                 }
 
                 var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
-                var avRelease = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
-                if (avRelease != null)
+
+                List<GitHubRelease> avReleases;
+                if (avResponse.TrimStart().StartsWith("["))
+                {
+                    avReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(avResponse, settings);
+                }
+                else if (avResponse.TrimStart().StartsWith("{"))
+                {
+                    var single = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
+                    avReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
+                }
+                else
+                {
+                    avReleases = new List<GitHubRelease>();
+                }
+
+                avReleases = avReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
+
+                foreach (var avRelease in avReleases)
+                {
+                    Debug.WriteLine(avRelease.TagName);
+                    Debug.WriteLine(avRelease.Name);
                     Releases.Add(avRelease);
+                }
+
             }
             catch (Exception ex)
             {
+                Debug.WriteLine(ex.Message);
                 await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex.Message}");
             }
             finally

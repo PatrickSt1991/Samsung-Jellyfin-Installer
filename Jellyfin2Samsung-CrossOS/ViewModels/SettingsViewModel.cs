@@ -147,7 +147,12 @@ namespace Jellyfin2Samsung.ViewModels
         {
             AppSettings.Default.CustomWgtPath = value;
             AppSettings.Default.Save();
+
+            var mainVM = App.Services.GetRequiredService<MainWindowViewModel>();
+            mainVM?.DownloadAndInstallCommand?.NotifyCanExecuteChanged();
+            mainVM?.DownloadCommand?.NotifyCanExecuteChanged();
         }
+
 
         partial void OnPermitInstallChanged(bool value)
         {
