@@ -1,22 +1,28 @@
-﻿using Jellyfin2SamsungCrossOS.Models;
+﻿using Jellyfin2Samsung.Models;
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin2SamsungCrossOS.Helpers
+namespace Jellyfin2Samsung.Helpers
 {
     public class AppSettings
     {
         private const string FileName = "settings.json";
-        private static readonly string FilePath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SamsungJellyfinInstaller", FileName);
+        public static readonly string FolderPath = Environment.CurrentDirectory;
+        public static readonly string FilePath = Path.Combine(FolderPath, FileName);
+        public static readonly string TizenSdbPath = Path.Combine(FolderPath, "Assets", "TizenSDB");
+        public static readonly string CertificatePath = Path.Combine(FolderPath, "Assets", "Certificate");
+        public static readonly string ProfilePath = Path.Combine(FolderPath, "Assets", "TizenProfile");
+        public static readonly string DownloadPath = Path.Combine(FolderPath, "Downloads");
 
         private static AppSettings? _instance;
 
         // --- Runtime-only cached object (not saved to disk) ---
         [JsonIgnore]
         public ExistingCertificates? ChosenCertificates { get; set; }
+        [JsonIgnore]
+        public string CustomWgtPath { get; set; } = "";
 
         public static AppSettings Default => _instance ??= Load();
 
@@ -24,7 +30,6 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         public string Language { get; set; } = "en";
         public string Certificate { get; set; } = "Jelly2Sams";
         public bool RememberCustomIP { get; set; } = false;
-        public string CustomWgtPath { get; set; } = "";
         public bool DeletePreviousInstall { get; set; } = false;
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
@@ -45,6 +50,7 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         public bool RememberAudioSelections { get; set; } = true;
         public bool RememberSubtitleSelections { get; set; } = true;
         public bool PlayDefaultAudioTrack { get; set; } = true;
+        public bool PermitInstall { get; set; } = false;
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
         public string ConfigUpdateMode { get; set; } = "None";
@@ -58,11 +64,9 @@ namespace Jellyfin2SamsungCrossOS.Helpers
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.3.5";
-        public string TizenCliWindows { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_windows-64.exe";
-        public string TizenCliLinux { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin";
-        public string TizenCliMac { get; set; } = "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_macos-64.bin";
-        public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/Samsung-Jellyfin-Installer/releases/239769070";
+        public string AppVersion { get; set; } = "v1.8.3.9";
+        public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
+        public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
 
         public AppSettings() { }
 

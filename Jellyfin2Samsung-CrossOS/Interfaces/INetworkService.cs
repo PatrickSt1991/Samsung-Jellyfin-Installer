@@ -1,10 +1,10 @@
-﻿using Jellyfin2SamsungCrossOS.Models;
+﻿using Jellyfin2Samsung.Models;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Services
+namespace Jellyfin2Samsung.Interfaces
 {
     public interface INetworkService
     {

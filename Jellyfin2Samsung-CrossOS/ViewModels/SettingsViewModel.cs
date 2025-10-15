@@ -1,9 +1,9 @@
 ﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Jellyfin2SamsungCrossOS.Helpers;
-using Jellyfin2SamsungCrossOS.Models;
-using Jellyfin2SamsungCrossOS.Services;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.ViewModels
+namespace Jellyfin2Samsung.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
@@ -31,6 +31,9 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
         [ObservableProperty]
         private string customWgtPath = string.Empty;
+
+        [ObservableProperty]
+        private bool permitInstall;
 
         [ObservableProperty]
         private bool rememberCustomIP;
@@ -57,6 +60,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         public string lblModifyConfig => _localizationService.GetString("lblModifyConfig");
         public string lblOpenConfig => _localizationService.GetString("lblOpenConfig");
         public string SelectWGT => _localizationService.GetString("SelectWGT");
+        public string lblPermitInstall => _localizationService.GetString("lblPermitInstall");
 
 
         public SettingsViewModel(
@@ -143,6 +147,17 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
         {
             AppSettings.Default.CustomWgtPath = value;
             AppSettings.Default.Save();
+
+            var mainVM = App.Services.GetRequiredService<MainWindowViewModel>();
+            mainVM?.DownloadAndInstallCommand?.NotifyCanExecuteChanged();
+            mainVM?.DownloadCommand?.NotifyCanExecuteChanged();
+        }
+
+
+        partial void OnPermitInstallChanged(bool value)
+        {
+            AppSettings.Default.PermitInstall = value;
+            AppSettings.Default.Save();
         }
 
         partial void OnRememberCustomIPChanged(bool value)
@@ -205,6 +220,7 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 ?? AvailableLanguages.FirstOrDefault();
 
             CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
+            PermitInstall = AppSettings.Default.PermitInstall;
             RememberCustomIP = AppSettings.Default.RememberCustomIP;
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
@@ -226,9 +242,8 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
 
         private async Task InitializeCertificatesAsync()
         {
-            var (profilePath, tizenCrypto) = await _tizenService.EnsureTizenCliAvailable();
-            var certificates = _certificateHelper.GetAvailableCertificates(profilePath, tizenCrypto);
-
+            var certificates = _certificateHelper.GetAvailableCertificates(AppSettings.CertificatePath);
+            
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 foreach (var cert in certificates)
@@ -238,16 +253,25 @@ namespace Jellyfin2SamsungCrossOS.ViewModels
                 ExistingCertificates? selectedCert = null;
 
                 if (!string.IsNullOrEmpty(savedCertName))
-                    selectedCert = AvailableCertificates.FirstOrDefault(c => c.Name == savedCertName);
+                {
+                    selectedCert = AvailableCertificates
+                        .FirstOrDefault(c => c.Name == savedCertName);
+                }
 
-                selectedCert ??= AvailableCertificates.FirstOrDefault(c => c.Name == "Jelly2Sams (default)")
-                                ?? AvailableCertificates.FirstOrDefault();
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams");
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams (default)");
+
+                selectedCert ??= AvailableCertificates.FirstOrDefault();
 
                 if (selectedCert != null)
                     SelectedCertificate = selectedCert.Name;
 
                 AppSettings.Default.ChosenCertificates = selectedCert;
             });
+
         }
         public void Dispose()
         {

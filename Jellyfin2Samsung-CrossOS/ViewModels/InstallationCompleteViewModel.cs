@@ -2,12 +2,12 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Jellyfin2SamsungCrossOS.Services;
+using Jellyfin2Samsung.Interfaces;
 using System;
 using System.Diagnostics;
 
 
-namespace Jellyfin2SamsungCrossOS.ViewModels
+namespace Jellyfin2Samsung.ViewModels
 {
     public partial class InstallationCompleteViewModel : ObservableObject
     {

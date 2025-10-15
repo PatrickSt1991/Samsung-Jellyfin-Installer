@@ -1,4 +1,4 @@
-﻿using Jellyfin2SamsungCrossOS.Models;
+﻿using Jellyfin2Samsung.Models;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS.Helpers
+namespace Jellyfin2Samsung.Helpers
 {
     public class ProcessHelper
     {
@@ -74,167 +74,22 @@ namespace Jellyfin2SamsungCrossOS.Helpers
 
             return await tcs.Task;
         }
-        public async Task<ProcessResult?> RunElevatedAndCaptureOutputAsync(string filePath, string arguments, string workingDir)
+        public async Task MakeExecutableAsync(string filePath)
         {
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("filePath cannot be null or empty", nameof(filePath));
-
-            if (string.IsNullOrEmpty(workingDir))
-                workingDir = Environment.CurrentDirectory;
-
-            var tempFile = Path.Combine(Path.GetTempPath(), $"tizen_ext_{Guid.NewGuid():N}.txt");
-
-            try
-            {
-                ProcessStartInfo startInfo;
-
-                if (OperatingSystem.IsWindows())
-                {
-                    var fullCommand = $"echo === Checking Tizen Packages activation status === && \"{filePath}\" {arguments} > \"{tempFile}\" 2>&1";
-                    startInfo = new ProcessStartInfo
-                    {
-                        FileName = "cmd.exe",
-                        Arguments = $"/c {fullCommand}",
-                        WorkingDirectory = workingDir,
-                        UseShellExecute = true,
-                        Verb = "runas",
-                        CreateNoWindow = false
-                    };
-                }
-                else
-                {
-                    startInfo = new ProcessStartInfo
-                    {
-                        FileName = filePath,
-                        Arguments = arguments,
-                        WorkingDirectory = workingDir,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                }
-
-                using var process = Process.Start(startInfo);
-                if (process == null)
-                    return null;
-
-                string output;
-
-                if (OperatingSystem.IsWindows())
-                {
-                    await process.WaitForExitAsync();
-                    if (!File.Exists(tempFile))
-                        return null;
-
-                    output = await File.ReadAllTextAsync(tempFile);
-                    File.Delete(tempFile);
-                }
-                else
-                {
-                    var outputBuilder = new StringBuilder();
-                    process.OutputDataReceived += (_, e) => { if (e.Data != null) outputBuilder.AppendLine(e.Data); };
-                    process.ErrorDataReceived += (_, e) => { if (e.Data != null) outputBuilder.AppendLine(e.Data); };
-
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-
-                    await process.WaitForExitAsync();
-                    output = outputBuilder.ToString();
-                }
-
-                return new ProcessResult
-                {
-                    ExitCode = process.ExitCode,
-                    Output = output
-                };
-            }
-            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
-            {
-                return null; // user cancelled
-            }
-            catch
-            {
-                return null;
-            }
-        }
-        public async Task<ProcessResult> RunPrivilegedCommandAsync(string programPath, string[] arguments, string? workingDirectory = null)
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                throw new PlatformNotSupportedException("RunPrivilegedCommandAsync only supports Linux/macOS currently.");
-            }
-
-            string fileName;
-            string args;
-
-            if (OperatingSystem.IsMacOS())
-            {
-                // Use osascript for macOS GUI privilege escalation
-                fileName = "osascript";
-                var command = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
-                args = $"-e \"do shell script \\\"{EscapeAppleScriptString(command)}\\\" with administrator privileges\"";
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                // Try pkexec first (GUI prompt), fallback to gksu/kdesu
-                var escalationTool = await GetLinuxPrivilegeEscalationTool();
-                fileName = escalationTool;
-
-                if (escalationTool == "pkexec")
-                {
-                    args = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
-                }
-                else if (escalationTool == "gksu" || escalationTool == "kdesu")
-                {
-                    var command = $"{programPath} {string.Join(" ", arguments.Select(EscapeShellArgument))}";
-                    args = $"\"{command}\"";
-                }
-                else
-                {
-                    throw new InvalidOperationException("No GUI privilege escalation tool found. Please install pkexec, gksu, or kdesu.");
-                }
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Unsupported OS.");
-            }
-
-            return await RunCommandAsync(fileName, args, workingDirectory);
-        }
-        private static string EscapeShellArgument(string arg)
-        {
-            if (string.IsNullOrEmpty(arg))
-                return "\"\"";
-
-            // Escape single quotes and wrap in single quotes for shell safety
-            return $"'{arg.Replace("'", "'\"'\"'")}'";
-        }
-        private static string EscapeAppleScriptString(string str)
-        {
-            // Escape quotes and backslashes for AppleScript
-            return str.Replace("\\", "\\\\").Replace("\"", "\\\"");
-        }
-        private async Task<string> GetLinuxPrivilegeEscalationTool()
-        {
-            // Check which GUI privilege escalation tools are available
-            var tools = new[] { "pkexec", "gksu", "kdesu" };
-
-            foreach (var tool in tools)
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
             {
                 try
                 {
-                    var result = await RunCommandAsync("which", tool);
-                    if (result.ExitCode == 0)
-                        return tool;
+                    // Use chmod to make the file executable
+                    var output = await RunCommandAsync("chmod", $"+x \"{filePath}\"");
+                    Debug.WriteLine($"Set executable permissions on {filePath}");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Continue to next tool
+                    Debug.WriteLine($"Error setting executable permissions: {ex.Message}");
+                    throw;
                 }
             }
-
-            return "pkexec"; // Default fallback
         }
     }
 }

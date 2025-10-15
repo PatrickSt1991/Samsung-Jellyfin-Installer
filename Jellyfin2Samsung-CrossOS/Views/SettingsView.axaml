@@ -4,19 +4,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Jellyfin2SamsungCrossOS.SettingsView"
+        x:Class="Jellyfin2Samsung.SettingsView"
         x:DataType="viewModels:SettingsViewModel"
-        xmlns:viewModels="clr-namespace:Jellyfin2SamsungCrossOS.ViewModels"
+        xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="580"
+        Height="620"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/Buttons.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/TextBlocks.axaml"/>
-		<StyleInclude Source="avares://Jellyfin2SamsungCrossOS/Styles/ComboBoxes.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/Buttons.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/TextBlocks.axaml"/>
+		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
 
@@ -115,6 +115,16 @@
 
 					<!-- Options Section -->
 					<StackPanel Spacing="12">
+						<!-- Permit Install (Tizen)-->
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+                                       Text="{Binding lblPermitInstall}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+							<CheckBox Grid.Column="1"
+                                      IsChecked="{Binding PermitInstall}"
+                                      VerticalAlignment="Center"/>
+						</Grid>
 						<!-- Remember IP -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"

@@ -1,10 +1,11 @@
 using Avalonia.Controls;
-using Jellyfin2SamsungCrossOS.Services;
-using Jellyfin2SamsungCrossOS.ViewModels;
+using Jellyfin2Samsung;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS;
+namespace Jellyfin2Samsung;
 
 public partial class IpInputDialog : Window
 {

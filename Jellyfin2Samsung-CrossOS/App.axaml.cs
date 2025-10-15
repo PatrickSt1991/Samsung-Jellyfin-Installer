@@ -3,19 +3,19 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
-using Jellyfin2SamsungCrossOS.Extensions;
-using Jellyfin2SamsungCrossOS.Helpers;
-using Jellyfin2SamsungCrossOS.Services;
-using Jellyfin2SamsungCrossOS.ViewModels;
-using Jellyfin2SamsungCrossOS.Views;
+using Jellyfin2Samsung.Extensions;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Services;
+using Jellyfin2Samsung.ViewModels;
+using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 
-namespace Jellyfin2SamsungCrossOS
+namespace Jellyfin2Samsung
 {
     public partial class App : Application
     {
@@ -29,7 +29,7 @@ namespace Jellyfin2SamsungCrossOS
             AvaloniaXamlLoader.Load(this);
         }
 
-        public async override void OnFrameworkInitializationCompleted()
+        public override void OnFrameworkInitializationCompleted()
         {
             ConfigureServices();
 
@@ -37,88 +37,27 @@ namespace Jellyfin2SamsungCrossOS
             {
                 DisableAvaloniaDataAnnotationValidation();
 
-                if (!OperatingSystem.IsWindows())
-                {
-                    await RequestInitialPrivilegesWithUI();
-
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    {
-                        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-                        desktop.MainWindow = mainWindow;
-                        mainWindow.Show();
-                    });
-                }
-                else
+                // Always use Dispatcher.Post for cross-platform safety
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                     desktop.MainWindow = mainWindow;
-                }
-
+                    mainWindow.Show();
+                });
             }
+
             RequestedThemeVariant = ThemeVariant.Light;
             base.OnFrameworkInitializationCompleted();
         }
-        private async Task RequestInitialPrivilegesWithUI()
-        {
-            try
-            {
-                var dialogService = _serviceProvider.GetRequiredService<IDialogService>();
 
-                await dialogService.ShowMessageAsync(
-                    "Administrator Privileges Required",
-                    "This application needs administrator privileges to install software on your system. " +
-                    "You will be prompted for your password once at the beginning.");
-
-                // Request privileges
-                var processHelper = _serviceProvider.GetRequiredService<ProcessHelper>();
-                await RequestInitialPrivileges(processHelper);
-            }
-            catch (Exception ex)
-            {
-                // Handle any errors silently or log them
-                Console.WriteLine($"Privilege request failed: {ex.Message}");
-            }
-        }
-        private async Task<bool> RequestInitialPrivileges(ProcessHelper processHelper)
-        {
-            try
-            {
-                if (OperatingSystem.IsLinux())
-                {
-                    // Use pkexec to authenticate, then extend sudo timeout
-                    var result1 = await processHelper.RunCommandAsync("pkexec", "sudo -v");
-                    if (result1.ExitCode == 0)
-                    {
-                        // Extend the sudo timeout to maximum (usually 15 minutes)
-                        var result2 = await processHelper.RunCommandAsync("sudo", "-v");
-                        return result2.ExitCode == 0;
-                    }
-                    return false;
-                }
-                else if (OperatingSystem.IsMacOS())
-                {
-                    // Test macOS authentication
-                    var result = await processHelper.RunCommandAsync("osascript",
-                        "-e \"do shell script \\\"true\\\" with administrator privileges\"");
-                    return result.ExitCode == 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Authentication error: {ex.Message}");
-                return false;
-            }
-
-            return false;
-        }
         private void ConfigureServices()
         {
             var services = new ServiceCollection();
 
             var settings = AppSettings.Load();
-            Debug.WriteLine($"LANG SETUP: {settings.Language}");
+
             // Services
-            services.AddSingleton<AppSettings>(settings);
+            services.AddSingleton(settings);
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
             services.AddSingleton<INetworkService, NetworkService>();
@@ -132,9 +71,7 @@ namespace Jellyfin2SamsungCrossOS
             services.AddSingleton<JellyfinHelper>();
             services.AddSingleton<CertificateHelper>();
             services.AddSingleton<FileHelper>();
-            services.AddSingleton<OperatingSystemHelper>();
             services.AddSingleton<ProcessHelper>();
-
 
             // ViewModels
             services.AddSingleton<MainWindowViewModel>();
@@ -143,7 +80,7 @@ namespace Jellyfin2SamsungCrossOS
             services.AddTransient<InstallingWindowViewModel>();
 
             // JellyfinConfigViewModel requires JellyfinHelper
-            services.AddTransient<JellyfinConfigViewModel>(provider =>
+            services.AddTransient(provider =>
             {
                 var helper = provider.GetRequiredService<JellyfinHelper>();
                 var localization = provider.GetRequiredService<ILocalizationService>();
@@ -151,7 +88,7 @@ namespace Jellyfin2SamsungCrossOS
             });
 
             // Views
-            services.AddSingleton<MainWindow>(provider =>
+            services.AddSingleton(provider =>
             {
                 return new MainWindow
                 {
@@ -159,13 +96,13 @@ namespace Jellyfin2SamsungCrossOS
                 };
             });
 
-            services.AddTransient<JellyfinConfigView>(provider =>
+            services.AddTransient(provider =>
             {
                 var vm = provider.GetRequiredService<JellyfinConfigViewModel>();
                 return new JellyfinConfigView(vm);
             });
 
-            services.AddTransient<InstallingWindow>(provider =>
+            services.AddTransient(provider =>
             {
                 var vm = provider.GetRequiredService<InstallingWindowViewModel>();
                 return new InstallingWindow
@@ -174,7 +111,7 @@ namespace Jellyfin2SamsungCrossOS
                 };
             });
 
-            services.AddTransient<InstallationCompleteWindow>(provider =>
+            services.AddTransient(provider =>
             {
                 var vm = provider.GetRequiredService<InstallationCompleteViewModel>();
                 return new InstallationCompleteWindow(vm);

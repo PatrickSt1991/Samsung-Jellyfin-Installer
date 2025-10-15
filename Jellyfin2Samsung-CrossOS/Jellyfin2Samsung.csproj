@@ -6,23 +6,24 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <AssemblyName>Jellyfin2SamsungCrossOS</AssemblyName>
+    <AssemblyName>Jellyfin2Samsung</AssemblyName>
 	<PublishSingleFile>true</PublishSingleFile>
 	<SelfContained>true</SelfContained>
 	<!-- Windows icon -->
     <ApplicationIcon>Assets\jelly2sams.ico</ApplicationIcon>
 	<!-- macOS bundle info -->
-	<CFBundleName>Jellyfin2SamsungCrossOS</CFBundleName>
+	<CFBundleName>Jellyfin2Samsung</CFBundleName>
 	<CFBundleDisplayName>Jellyfin to Samsung TV</CFBundleDisplayName>
 	<CFBundleIdentifier>com.yourcompany.jellyfin2samsung</CFBundleIdentifier>
 	<CFBundleVersion>1.0.0</CFBundleVersion>
 	<CFBundlePackageType>APPL</CFBundlePackageType>
 	<CFBundleSignature>????</CFBundleSignature>
-	<CFBundleExecutable>Jellyfin2SamsungCrossOS</CFBundleExecutable>
+	<CFBundleExecutable>Jellyfin2Samsung</CFBundleExecutable>
 	<CFBundleIconFile>jelly2sams.icns</CFBundleIconFile>
 	<!-- Linux desktop entry info -->
 	<LinuxDesktopFile>true</LinuxDesktopFile>
 	<LinuxDesktopFileName>jellyfin2samsung.desktop</LinuxDesktopFileName>
+	<PackageId>Jellyfin2Samsung</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -78,4 +79,8 @@
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Assets\TizenSDB\" />
+	</ItemGroup>
 </Project>
