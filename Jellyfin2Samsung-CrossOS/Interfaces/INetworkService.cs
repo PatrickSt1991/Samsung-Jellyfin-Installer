@@ -14,5 +14,6 @@ namespace Jellyfin2Samsung.Interfaces
         Task<bool> IsPortOpenAsync(string ip, int port, CancellationToken ct);
         string GetLocalIPAddress();
         string InvertIPAddress(string ipAddress);
+        Task<string?> GetManufacturerFromIp(string ipAddress);
     }
 }

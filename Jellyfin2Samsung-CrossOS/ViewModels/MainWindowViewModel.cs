@@ -387,7 +387,6 @@ namespace Jellyfin2Samsung.ViewModels
                 string? selectedIp = SelectedDevice?.IpAddress;
 
                 var devices = await _deviceHelper.ScanForDevicesAsync(cancellationToken, virtualScan);
-
                 foreach (var device in devices)
                     AvailableDevices.Add(device);
 
