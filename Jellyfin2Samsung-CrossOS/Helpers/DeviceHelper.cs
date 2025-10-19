@@ -91,7 +91,7 @@ namespace Jellyfin2Samsung.Helpers
             Debug.WriteLine($"NetworkDevices: {networkDevices.Count()}");
             foreach (NetworkDevice device in networkDevices)
             {
-                if (await _networkService.IsPortOpenAsync(device.IpAddress, 80001, cancellationToken))
+                if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
                 {
                     try
                     {
