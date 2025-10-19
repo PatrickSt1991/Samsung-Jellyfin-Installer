@@ -130,26 +130,20 @@ dotnet publish -c $Configuration -r win-x64   -p:SelfContained=true -p:UseAppHos
 Write-Host "Publishing for macOS x64..." -ForegroundColor Green
 dotnet publish -c $Configuration -r osx-x64   -p:SelfContained=true -p:UseAppHost=true -o (Join-Path $OutputRoot "osx-x64")
 
-Write-Host "Publishing for macOS arm64..." -ForegroundColor Green
-dotnet publish -c $Configuration -r osx-arm64 -p:SelfContained=true -p:UseAppHost=true -o (Join-Path $OutputRoot "osx-arm64")
-
 Write-Host "Publishing for Linux..." -ForegroundColor Green
 dotnet publish -c $Configuration -r linux-x64 -p:SelfContained=true -p:UseAppHost=true -o (Join-Path $OutputRoot "linux-x64")
 
 # ---- Post-publish setup ----
 Setup-MacOSPortable "osx-x64"
-Setup-MacOSPortable "osx-arm64"
 Setup-LinuxPortable
 
 # ---- Package ----
 $winZip    = Join-Path $DistDir ("{0}-{1}{2}-win-x64.zip"      -f $ProductName, $VersionTag, $ChannelSuffix)
 $osxX64Tgz = Join-Path $DistDir ("{0}-{1}{2}-osx-x64.tar.gz"   -f $ProductName, $VersionTag, $ChannelSuffix)
-$osxArmTgz = Join-Path $DistDir ("{0}-{1}{2}-osx-arm64.tar.gz" -f $ProductName, $VersionTag, $ChannelSuffix)
 $linuxZip  = Join-Path $DistDir ("{0}-{1}{2}-linux-x64.tar.gz"    -f $ProductName, $VersionTag, $ChannelSuffix)
 
 Make-Zip   (Join-Path $OutputRoot "win-x64")    $winZip
 Make-TarGz (Join-Path $OutputRoot "osx-x64")    $osxX64Tgz
-Make-TarGz (Join-Path $OutputRoot "osx-arm64")  $osxArmTgz
 Make-TarGz (Join-Path $OutputRoot "linux-x64")  $linuxZip
 
 # ---- Done ----
@@ -157,7 +151,6 @@ Write-Host ""
 Write-Host ("Build complete! Artifacts in {0}:" -f $DistDir) -ForegroundColor Yellow
 Write-Host (" - {0}" -f [IO.Path]::GetFileName($winZip))
 Write-Host (" - {0}" -f [IO.Path]::GetFileName($osxX64Tgz))
-Write-Host (" - {0}" -f [IO.Path]::GetFileName($osxArmTgz))
 Write-Host (" - {0}" -f [IO.Path]::GetFileName($linuxZip))
 Write-Host ""
 Write-Host "macOS/Linux users: run ./postinstall.sh after extracting." -ForegroundColor Cyan
