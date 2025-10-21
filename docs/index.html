@@ -3,77 +3,187 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Install Jellyfin on Samsung TV (All Tizen Versions) — One-Click Setup</title>
+  <meta name="description" content="Easily install Jellyfin on your Samsung Smart TV — fully compatible with all Tizen versions. Free and open source." />
+  <meta name="keywords" content="Jellyfin Samsung TV, Jellyfin Tizen, install Jellyfin, Jellyfin app for Samsung, Jellyfin2Samsung, Patrick Stel" />
+  <link rel="canonical" href="https://patrickst1991.github.io/Samsung-Jellyfin-Installer/" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Install Jellyfin on Samsung TV — One-Click Setup" />
+  <meta property="og:description" content="Quickly install Jellyfin on your Samsung Smart TV. Fully compatible with all Tizen versions." />
+  <meta property="og:image" content="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.png" />
+  <meta property="og:url" content="https://patrickst1991.github.io/Samsung-Jellyfin-Installer/" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Install Jellyfin on Samsung TV — One-Click Setup">
+  <meta name="twitter:description" content="One-click install of Jellyfin on your Samsung TV — works with all Tizen versions!">
+  <meta name="twitter:image" content="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.png">
+
+  <!-- Favicon -->
   <link rel="icon" href="/Samsung-Jellyfin-Installer/favicon.ico">
-  <title>Jellyfin2Samsung</title>
-  <meta name="description" content="One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions!" />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Jellyfin2Samsung",
+    "operatingSystem": "Tizen",
+    "applicationCategory": "MediaApplication",
+    "author": {
+      "@type": "Person",
+      "name": "Patrick Stel"
+    },
+    "description": "One-click install of Jellyfin on Samsung TV — fully compatible with all Tizen versions.",
+    "url": "https://patrickst1991.github.io/Samsung-Jellyfin-Installer/",
+    "image": "https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.png"
+  }
+  </script>
+
   <style>
-    body {font-family: system-ui, -apple-system, sans-serif; background:#0b0f1a; color:#eef1ff; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;}
-    main {background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:40px; max-width:800px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.4)}
-    img.logo {height:72px; margin-bottom:12px}
-    h1{font-size:2.2rem;margin:.5em 0 .2em}
-    h2{color:#a0a8d5;font-weight:500;margin:0 0 1.2em}
-    .btn{display:inline-block;padding:10px 18px;margin:6px;border-radius:999px;text-decoration:none;color:#0b0f1a;background:linear-gradient(90deg,#7c8cff,#61dafb);font-weight:600}
-    .btn:hover{filter:brightness(1.1)}
-    .meta{margin:1em 0;color:#96a0c3}
-    .chip{border:1px dashed rgba(255,255,255,0.2);border-radius:999px;padding:3px 10px;margin:0 4px;font-size:.9em}
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b0f1a;
+      color: #eef1ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    main {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    img.logo {
+      height: 72px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 2.2rem; margin: .5em 0 .2em; }
+    h2 { color: #a0a8d5; font-weight: 500; margin: 0 0 1.2em; }
+    .btn {
+      display: inline-block;
+      padding: 10px 18px;
+      margin: 6px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: #0b0f1a;
+      background: linear-gradient(90deg,#7c8cff,#61dafb);
+      font-weight: 600;
+      transition: transform 0.15s ease;
+    }
+    .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .meta { margin: 1em 0; color: #96a0c3; }
+    .chip {
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin: 0 4px;
+      font-size: .9em;
+    }
+    /* Responsive video container */
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 ratio */
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin: 30px 0;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
   </style>
 </head>
 <body>
   <main>
     <img class="logo" src="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/raw/master/.github/jellyfin-tizen-logo.svg" alt="Jellyfin for Samsung Tizen">
     <h1>Samsung Jellyfin Installer</h1>
-    <h2>One‑click install of Jellyfin on your Samsung TV — fully compatible with all Tizen versions</h2>
+    <h2>One-click install of Jellyfin on your Samsung TV <br/> fully compatible with all Tizen versions</h2>
+
+    <!-- Responsive YouTube Embed -->
+    <div class="video-wrapper">
+      <iframe src="https://www.youtube.com/embed/_8mSV5pW-ic"
+        title="How to Install Jellyfin on Samsung TV"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+
     <div class="meta">
       <span class="chip">Latest version: <strong id="latestVersion">checking…</strong></span>
       <span class="chip">Released on <strong id="releaseDate">—</strong></span>
     </div>
+
     <p>
       <a id="downloadBtn" class="btn" href="#" target="_blank" rel="noopener">⬇️ Download</a>
       <a class="btn" href="https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer" target="_blank" rel="noopener">🧰 Source Code</a>
     </p>
-    <p style="color:#96a0c3;font-size:.9em">© <span id="year"></span> Patrick Stel — Hosted on GitHub Pages</p>
+
+    <p style="color:#96a0c3;font-size:.9em">
+      © <span id="year"></span> Patrick Stel — Hosted on GitHub Pages
+    </p>
   </main>
-	<script>
-	(async function(){
-	  const owner='PatrickSt1991', repo='Samsung-Jellyfin-Installer';
-	  const els={
-		ver:document.getElementById('latestVersion'),
-		date:document.getElementById('releaseDate'),
-		dl:document.getElementById('downloadBtn')
-	  };
 
-	  const os=(()=>{
-		const p=(navigator.userAgentData?.platform||navigator.platform||'').toLowerCase();
-		if(p.includes('win'))return'win';
-		if(p.includes('mac'))return'osx';
-		if(p.includes('linux'))return'linux';
-		return'other';
-	  })();
+  <script>
+  (async function(){
+    const owner='PatrickSt1991', repo='Samsung-Jellyfin-Installer';
+    const els={
+      ver:document.getElementById('latestVersion'),
+      date:document.getElementById('releaseDate'),
+      dl:document.getElementById('downloadBtn')
+    };
 
-	  const fmtDate=s=>new Date(s).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
-	  async function tryFetch(u){const r=await fetch(u,{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json();}
+    const os=(()=>{
+      const p=(navigator.userAgentData?.platform||navigator.platform||'').toLowerCase();
+      if(p.includes('win'))return'win';
+      if(p.includes('mac'))return'osx';
+      if(p.includes('linux'))return'linux';
+      return'other';
+    })();
 
-	  async function getRelease(){
-		const d=await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-		const tag=d.tag_name||d.name, date=d.published_at||d.created_at;
-		let a=d.assets?.find(x=>x.name.toLowerCase().includes(`-${os}-x64`));
-		if(!a&&d.assets?.length)a=d.assets[0];
-		const href=a?a.browser_download_url:`https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;
-		return{tag,date,href};
-	  }
+    const fmtDate=s=>new Date(s).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
+    async function tryFetch(u){
+      const r=await fetch(u,{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'});
+      if(!r.ok)throw new Error(r.status);
+      return r.json();
+    }
 
-	  try{
-		const i=await getRelease();
-		els.ver.textContent=i.tag;
-		els.date.textContent=fmtDate(i.date);
-		els.dl.href=i.href;
-	  }catch(e){
-		els.ver.textContent='unavailable';
-		els.date.textContent='n/a';
-	  }
+    async function getRelease(){
+      const d=await tryFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+      const tag=d.tag_name||d.name, date=d.published_at||d.created_at;
+      let a=d.assets?.find(x=>x.name.toLowerCase().includes(`-${os}-x64`));
+      if(!a&&d.assets?.length)a=d.assets[0];
+      const href=a?a.browser_download_url:`https://github.com/${owner}/${repo}/archive/refs/tags/${encodeURIComponent(tag)}.zip`;
+      return{tag,date,href};
+    }
 
-	  document.getElementById('year').textContent=new Date().getFullYear();
-	})();
-	</script>
+    try{
+      const i=await getRelease();
+      els.ver.textContent=i.tag;
+      els.date.textContent=fmtDate(i.date);
+      els.dl.href=i.href;
+    }catch(e){
+      els.ver.textContent='unavailable';
+      els.date.textContent='n/a';
+    }
+
+    document.getElementById('year').textContent=new Date().getFullYear();
+  })();
+  </script>
 </body>
 </html>
