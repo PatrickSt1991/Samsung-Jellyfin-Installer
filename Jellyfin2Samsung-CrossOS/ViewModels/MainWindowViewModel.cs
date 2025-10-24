@@ -272,6 +272,24 @@ namespace Jellyfin2Samsung.ViewModels
                 settingsWindow.ShowDialog(desktop.MainWindow);
             }
         }
+        [RelayCommand]
+        private async Task ShowBuildInfoAsync()
+        {
+            try
+            {
+                if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                    return;
+
+                var buildInfoWindow = new Views.BuildInfoWindow();
+
+                // Show as modal dialog centered on MainWindow
+                await buildInfoWindow.ShowDialog(desktop.MainWindow);
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex.Message}");
+            }
+        }
 
         private bool CanRefresh() => !IsLoading;
         private bool CanRefreshDevices() => !IsLoadingDevices;
