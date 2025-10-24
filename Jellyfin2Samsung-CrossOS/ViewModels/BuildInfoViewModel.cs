@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Jellyfin2Samsung.Helpers;
 
 namespace Jellyfin2Samsung.ViewModels
 {
@@ -16,8 +17,6 @@ namespace Jellyfin2Samsung.ViewModels
 
     public partial class BuildInfoViewModel : ViewModelBase
     {
-        private const string ReadmeUrl = "https://raw.githubusercontent.com/jeppevinkel/jellyfin-tizen-builds/refs/heads/master/README.md";
-
         public ObservableCollection<BuildVersion> Versions { get; } = new();
 
         public BuildInfoViewModel()
@@ -30,7 +29,7 @@ namespace Jellyfin2Samsung.ViewModels
             try
             {
                 using var client = new HttpClient();
-                var markdown = await client.GetStringAsync(ReadmeUrl);
+                var markdown = await client.GetStringAsync(AppSettings.Default.ReleaseInfo);
 
                 // Extract the "Versions" section
                 var sectionMatch = Regex.Match(markdown,

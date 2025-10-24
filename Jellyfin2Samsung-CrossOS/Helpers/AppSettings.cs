@@ -68,6 +68,7 @@ namespace Jellyfin2Samsung.Helpers
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";
+        public string ReleaseInfo { get; set; } = "https://raw.githubusercontent.com/jeppevinkel/jellyfin-tizen-builds/refs/heads/master/README.md";
 
         public AppSettings() { }
 
