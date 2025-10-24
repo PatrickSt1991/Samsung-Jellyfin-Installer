@@ -1,7 +1,9 @@
-﻿using Jellyfin2Samsung.Interfaces;
+﻿using FluentAvalonia.Core;
+using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Utilities.Net;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,15 +17,18 @@ namespace Jellyfin2Samsung.Helpers
     public class DeviceHelper
     {
         private readonly INetworkService _networkService;
+        private readonly ITizenInstallerService _installerService;
         private readonly IDialogService _dialogService;
         private readonly HttpClient _httpClient;
 
         public DeviceHelper(
             INetworkService networkService,
+            ITizenInstallerService installerService,
             IDialogService dialogService,
             HttpClient httpClient)
         {
             _networkService = networkService;
+            _installerService = installerService;
             _dialogService = dialogService;
             _httpClient = httpClient;
         }
@@ -82,6 +87,7 @@ namespace Jellyfin2Samsung.Helpers
 
             var networkDevices = await _networkService.GetLocalTizenAddresses(cancellationToken, virtualScan);
 
+            Debug.WriteLine($"NetworkDevices: {networkDevices.Count()}");
             foreach (NetworkDevice device in networkDevices)
             {
                 if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
@@ -95,6 +101,19 @@ namespace Jellyfin2Samsung.Helpers
                     catch
                     {
                     }
+                }
+                else
+                {
+                    try
+                    {
+                        device.ModelName = device.ModelName;
+                        device.Manufacturer = device.Manufacturer;
+                        device.DeveloperMode = "1";
+                        device.DeveloperIP = string.Empty;
+
+                        devices.Add(device);
+                    }
+                    catch { }
                 }
             }
 

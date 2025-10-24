@@ -373,7 +373,7 @@ namespace Jellyfin2Samsung.Services
             var deviceName = output.Output
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                 .FirstOrDefault()?.Trim() ?? string.Empty;
-            
+
             return deviceName;
         }
         private async Task<string> FetchTizenOsAsync(string tvIpAddress)

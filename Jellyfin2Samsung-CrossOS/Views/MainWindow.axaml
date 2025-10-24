@@ -68,11 +68,12 @@
 				</Grid>
 
 				<!-- Version -->
-				<Grid ColumnDefinitions="100,*,Auto" ColumnSpacing="8">
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8">
 					<TextBlock Classes="label"
 							   Text="{Binding LblVersion}"
 							   VerticalAlignment="Center"
 							   Grid.Column="0"/>
+
 					<ComboBox Classes="clean"
 							  Grid.Column="1"
 							  HorizontalAlignment="Stretch"
@@ -84,7 +85,13 @@
 							</DataTemplate>
 						</ComboBox.ItemTemplate>
 					</ComboBox>
+
+					<!-- Info Button -->
+					<Button Classes="icon" Grid.Column="2" Command="{Binding ShowBuildInfoCommand}">
+						<fa:SymbolIcon Symbol="Help" Width="20" Height="20"/>
+					</Button>
 				</Grid>
+
 
 				<!-- TV Selection -->
 				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8">

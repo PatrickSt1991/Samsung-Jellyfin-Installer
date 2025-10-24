@@ -272,6 +272,24 @@ namespace Jellyfin2Samsung.ViewModels
                 settingsWindow.ShowDialog(desktop.MainWindow);
             }
         }
+        [RelayCommand]
+        private async Task ShowBuildInfoAsync()
+        {
+            try
+            {
+                if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                    return;
+
+                var buildInfoWindow = new Views.BuildInfoWindow();
+
+                // Show as modal dialog centered on MainWindow
+                await buildInfoWindow.ShowDialog(desktop.MainWindow);
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex.Message}");
+            }
+        }
 
         private bool CanRefresh() => !IsLoading;
         private bool CanRefreshDevices() => !IsLoadingDevices;
@@ -334,11 +352,10 @@ namespace Jellyfin2Samsung.ViewModels
                     .Take(10);
 
                 if (allReleases != null)
-                {
                     foreach (var release in allReleases)
                         Releases.Add(release);
-                }
 
+                /* av release */
                 var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
 
                 List<GitHubRelease> avReleases;
@@ -359,10 +376,45 @@ namespace Jellyfin2Samsung.ViewModels
                 avReleases = avReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
 
                 foreach (var avRelease in avReleases)
+                    Releases.Add(new GitHubRelease
+                    {
+                        Name = $"Jellyfin AVPlay",
+                        Assets = avRelease.Assets,
+                        PublishedAt = avRelease.PublishedAt,
+                        TagName = avRelease.TagName,
+                        Url = avRelease.Url
+                    });
+
+                /* Legacy */
+                var legacyResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinLegacy);
+
+                List<GitHubRelease> legacyReleases;
+                if (legacyResponse.TrimStart().StartsWith("["))
                 {
-                    Debug.WriteLine(avRelease.TagName);
-                    Debug.WriteLine(avRelease.Name);
-                    Releases.Add(avRelease);
+                    legacyReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(legacyResponse, settings);
+                }
+                else if (avResponse.TrimStart().StartsWith("{"))
+                {
+                    var single = JsonConvert.DeserializeObject<GitHubRelease>(legacyResponse, settings);
+                    legacyReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
+                }
+                else
+                {
+                    legacyReleases = new List<GitHubRelease>();
+                }
+
+                legacyReleases = legacyReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
+
+                foreach (var legacyRelease in legacyReleases)
+                {
+                    Releases.Add(new GitHubRelease
+                    {
+                        Name = $"Jellyfin Legacy",
+                        Assets = legacyRelease.Assets,
+                        PublishedAt = legacyRelease.PublishedAt,
+                        TagName = legacyRelease.TagName,
+                        Url = legacyRelease.Url
+                    });
                 }
 
             }
@@ -387,7 +439,6 @@ namespace Jellyfin2Samsung.ViewModels
                 string? selectedIp = SelectedDevice?.IpAddress;
 
                 var devices = await _deviceHelper.ScanForDevicesAsync(cancellationToken, virtualScan);
-
                 foreach (var device in devices)
                     AvailableDevices.Add(device);
 

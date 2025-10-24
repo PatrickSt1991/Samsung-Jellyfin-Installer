@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Jellyfin2Samsung.Views.BuildInfoWindow"
+        xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
+        x:DataType="viewModels:BuildInfoViewModel"
+		SizeToContent="WidthAndHeight"
+		MinWidth="580"
+		MinHeight="410"
+        WindowStartupLocation="CenterOwner"
+        Title="Jellyfin Tizen Versions"
+        Background="#F5F5F5">
+	<Window.Styles>
+		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
+		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+	</Window.Styles>
+	<Border Background="White"
+            Padding="16"
+            CornerRadius="8"
+            Margin="12"
+            BorderBrush="#E8E8E8"
+            BorderThickness="1">
+		<Border.Effect>
+			<DropShadowEffect BlurRadius="15" OffsetX="2" OffsetY="2" Color="#00000020" Opacity="0.15"/>
+		</Border.Effect>
+		<StackPanel Spacing="12">
+			<!-- Header -->
+			<Border Background="#2C3E50"
+                    Padding="14,10"
+                    CornerRadius="6">
+				<TextBlock Text="Jellyfin Tizen Build Versions"
+                           Foreground="White"
+                           FontWeight="Medium"
+                           FontSize="16"
+                           HorizontalAlignment="Center"/>
+			</Border>
+			<!-- Data grid -->
+			<DataGrid ItemsSource="{Binding Versions}"
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="All"
+                      RowHeight="32"
+                      CanUserSortColumns="True"
+                      IsReadOnly="True"
+                      Margin="0,6,0,0">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="File name" Width="120">
+						<DataGridTextColumn.Binding>
+							<Binding Path="FileName" x:DataType="viewModels:BuildVersion"/>
+						</DataGridTextColumn.Binding>
+					</DataGridTextColumn>
+					<DataGridTextColumn Header="Description" Width="*">
+						<DataGridTextColumn.Binding>
+							<Binding Path="Description" x:DataType="viewModels:BuildVersion"/>
+						</DataGridTextColumn.Binding>
+					</DataGridTextColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+			<!-- Footer -->
+			<StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,10,0,0">
+				<Button Content="Close"
+                        Width="90"
+                        Command="{Binding CloseCommand}"/>
+			</StackPanel>
+		</StackPanel>
+	</Border>
+</Window>

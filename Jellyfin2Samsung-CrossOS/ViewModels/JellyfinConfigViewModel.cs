@@ -2,7 +2,6 @@
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
-using Jellyfin2Samsung.ViewModels;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;

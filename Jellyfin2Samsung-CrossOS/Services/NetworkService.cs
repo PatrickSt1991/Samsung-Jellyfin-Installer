@@ -176,7 +176,7 @@ namespace Jellyfin2Samsung.Services
             return $"{bytes[0]}.{bytes[1]}.{bytes[2]}";
         }
 
-        public static async Task<string?> GetManufacturerFromIp(string ipAddress)
+        public async Task<string?> GetManufacturerFromIp(string ipAddress)
         {
             string? macAddress = await GetMacAddressFromIp(ipAddress);
             return string.IsNullOrEmpty(macAddress)
