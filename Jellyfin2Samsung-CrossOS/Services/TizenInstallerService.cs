@@ -239,21 +239,15 @@ namespace Jellyfin2Samsung.Services
                 Version certVersion = new("7.0");
                 Version oldVersion = new("4.0");
 
-                if (tizenVersion <= oldVersion)
-                {
-                    if (!string.IsNullOrEmpty(tvName))
-                    {
-                        AppSettings.Default.PermitInstall = true;
-                        await AllowPermitInstall(tvName);
-                    }
-                }
+                if (tizenVersion <= oldVersion && !string.IsNullOrEmpty(tvIpAddress))
+                    AppSettings.Default.PermitInstall = true;
 
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
                 string p12Password = string.Empty;
                 bool packageResign = false;
                 
-                if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
+                if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin || AppSettings.Default.PermitInstall)
                 {
                     packageResign = true;
                     string selectedCertificate = _appSettings.Certificate;
@@ -293,6 +287,8 @@ namespace Jellyfin2Samsung.Services
                         p12Password = File.ReadAllText(Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "password.txt")).Trim();
                         PackageCertificate = selectedCertificate;
                     }
+
+                    await AllowPermitInstall(tvIpAddress);
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
@@ -339,6 +335,16 @@ namespace Jellyfin2Samsung.Services
                 {
                     progress?.Invoke("InstallationFailed".Localized());
                     return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                }
+
+                if(installResults.Output.Contains("install failed[118, -22]"))
+                {
+                    bool modAppId = await FileHelper.ModifyWgtPackageId(packageUrl);
+
+                    var installResultsRetry = await InstallPackageAsync(tvIpAddress, packageUrl);
+
+                    progress?.Invoke("InstallationFailed".Localized());
+                    return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
                 }
 
                 if (installResults.Output.Contains("failed"))
@@ -404,9 +410,6 @@ namespace Jellyfin2Samsung.Services
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
 
-            Debug.WriteLine(output.Output);
-            Debug.WriteLine(searchTerm);
-
             // Take only the base part (before first hyphen)
             var baseSearch = searchTerm.Split('-')[0];
 
@@ -440,11 +443,10 @@ namespace Jellyfin2Samsung.Services
             return output;
         }
         
-        //UPDATE ALLOWPERMITINSTALL
-        private async Task AllowPermitInstall(string tvName)
+        private async Task AllowPermitInstall(string tvIpAddress)
         {
-            await _processHelper.RunCommandAsync(TizenSdbPath!, $"install-permit -t {tvName}");
-            Console.WriteLine("This needs to be created, cause can't / won't use TIZEN CRAP");
+            string deviceXml = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "device-profile.xml");
+            await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} {deviceXml}");
             return;
         }
     }

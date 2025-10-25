@@ -1,9 +1,12 @@
 ﻿using Avalonia.Platform.Storage;
 using Jellyfin2Samsung.Models;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -89,6 +92,60 @@ namespace Jellyfin2Samsung.Helpers
 
             return extensions;
         }
-    }
+        public static async Task<bool> ModifyWgtPackageId(string wgtPath)
+        {
+            if (!File.Exists(wgtPath))
+                return false;
 
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var originalStream = File.OpenRead(wgtPath))
+                    originalStream.CopyTo(memoryStream);
+
+                memoryStream.Position = 0;
+
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Update, true))
+                {
+                    var configEntry = archive.GetEntry("config.xml");
+                    if (configEntry == null)
+                        return false;
+
+                    string configContent;
+                    using (var reader = new StreamReader(configEntry.Open(), Encoding.UTF8))
+                        configContent = reader.ReadToEnd();
+
+                    // Match the tizen:application line
+                    var regex = new Regex(@"<tizen:application\s+id=""(?<pkg>[A-Za-z0-9]+)\.Jellyfin""\s+package=""\k<pkg>""", RegexOptions.Multiline);
+                    var match = regex.Match(configContent);
+                    if (!match.Success)
+                        return false;
+
+                    string oldPkg = match.Groups["pkg"].Value;
+                    string newPkg = GenerateRandomString(oldPkg.Length);
+
+                    string newConfig = regex.Replace(configContent, m =>
+                        m.Value.Replace(oldPkg, newPkg));
+
+                    configEntry.Delete(); // remove old
+                    var newEntry = archive.CreateEntry("config.xml");
+
+                    using (var writer = new StreamWriter(newEntry.Open(), Encoding.UTF8))
+                        writer.Write(newConfig);
+                }
+
+                // Write back to the original file
+                File.WriteAllBytes(wgtPath, memoryStream.ToArray());
+                return true;
+            }
+        }
+        private static string GenerateRandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            var sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++)
+                sb.Append(chars[random.Next(chars.Length)]);
+            return sb.ToString();
+        }
+    }
 }
