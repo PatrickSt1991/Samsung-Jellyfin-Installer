@@ -2,9 +2,11 @@
 using Jellyfin2Samsung.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web;
@@ -14,15 +16,29 @@ namespace Jellyfin2Samsung.Services
     public class SamsungLoginService
     {
         private IWebHost _callbackServer;
-        private const string CallbackUrl = "http://localhost:4794/signin/callback";
+        private const string LoopbackIp = "127.0.0.1";
         private const string StateValue = "accountcheckdogeneratedstatetext";
+        private int _boundPort;
+        private string _boundCallbackUrl => _boundPort > 0
+            ? $"http://{LoopbackIp}:{_boundPort}/signin/callback"
+            : throw new InvalidOperationException("Callback server not started.");
 
         public Action<SamsungAuth> CallbackReceived;
 
         public static async Task<SamsungAuth> PerformSamsungLoginAsync()
         {
+            var service = new SamsungLoginService();
+            var tcs = new TaskCompletionSource<SamsungAuth>();
+
+            service.CallbackReceived += auth =>
+            {
+                tcs.TrySetResult(auth);
+            };
+
+            await service.StartCallbackServer();
+
             string loginUrl =
-                $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate?locale=&clientId=v285zxnl3h&redirect_uri={HttpUtility.UrlEncode(CallbackUrl)}&state={StateValue}&tokenType=TOKEN";
+                $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate?locale=&clientId=v285zxnl3h&redirect_uri={HttpUtility.UrlEncode(service._boundCallbackUrl)}&state={StateValue}&tokenType=TOKEN";
 
             // Open the system browser
             try
@@ -35,21 +51,11 @@ namespace Jellyfin2Samsung.Services
             }
             catch (Exception ex)
             {
+                await service.StopCallbackServer();
                 throw new InvalidOperationException("Failed to open system browser.", ex);
             }
 
-            SamsungAuth authResult = null;
-            var service = new SamsungLoginService();
-            await service.StartCallbackServer();
-
-            // Wait for CallbackReceived
-            var tcs = new TaskCompletionSource<SamsungAuth>();
-            service.CallbackReceived += auth =>
-            {
-                tcs.SetResult(auth);
-            };
-
-            authResult = await tcs.Task;
+            var authResult = await tcs.Task;
 
             await service.StopCallbackServer();
             return authResult;
@@ -60,7 +66,7 @@ namespace Jellyfin2Samsung.Services
         {
             _callbackServer = new WebHostBuilder()
                 .UseKestrel()
-                .UseUrls("http://localhost:4794")
+                .UseUrls($"http://{LoopbackIp}:0")
                 .Configure(app =>
                 {
                     app.Run(async context =>
@@ -104,6 +110,21 @@ namespace Jellyfin2Samsung.Services
                 .Build();
 
             await _callbackServer.StartAsync();
+
+            var addressFeature = _callbackServer.ServerFeatures.Get<IServerAddressesFeature>();
+            var address = addressFeature?.Addresses.FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(address))
+            {
+                var uri = new Uri(address);
+                _boundPort = uri.Port;
+                System.Diagnostics.Debug.WriteLine($"[SamsungLoginService] Bound successfully to IP {LoopbackIp} on port {_boundPort}");
+            }
+            else
+            {
+                await StopCallbackServer();
+                throw new InvalidOperationException("Failed to determine bound port after Kestrel start.");
+            }
         }
 
         public async Task StopCallbackServer()
@@ -114,6 +135,8 @@ namespace Jellyfin2Samsung.Services
                 _callbackServer.Dispose();
                 _callbackServer = null;
             }
+
+            _boundPort = 0;
         }
     }
 }
