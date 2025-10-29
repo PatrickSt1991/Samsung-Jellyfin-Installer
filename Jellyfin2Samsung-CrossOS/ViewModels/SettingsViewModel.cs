@@ -7,7 +7,6 @@ using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -47,6 +46,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool rtlReading;
 
+        [ObservableProperty]
+        private bool showSdbWindow;
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
 
@@ -61,6 +63,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string lblOpenConfig => _localizationService.GetString("lblOpenConfig");
         public string SelectWGT => _localizationService.GetString("SelectWGT");
         public string lblPermitInstall => _localizationService.GetString("lblPermitInstall");
+        public string lblSDB => _localizationService.GetString("lblSDB");
 
 
         public SettingsViewModel(
@@ -107,6 +110,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(lblDeletePrevious));
             OnPropertyChanged(nameof(lblForceLogin));
             OnPropertyChanged(nameof(lblRTL));
+            OnPropertyChanged(nameof(lblSDB));
             OnPropertyChanged(nameof(lblModifyConfig));
             OnPropertyChanged(nameof(lblOpenConfig));
             OnPropertyChanged(nameof(SelectWGT));
@@ -184,6 +188,12 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnShowSdbWindowChanged(bool value)
+        {
+            AppSettings.Default.ShowSdbWindow = value;
+            AppSettings.Default.Save();
+        }
+
         [RelayCommand]
         private void ModifyConfig()
         {
@@ -225,6 +235,7 @@ namespace Jellyfin2Samsung.ViewModels
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
             RtlReading = AppSettings.Default.RTLReading;
+            ShowSdbWindow = AppSettings.Default.ShowSdbWindow;
         }
 
         private static string GetLanguageDisplayName(string code)

@@ -32,48 +32,74 @@ namespace Jellyfin2Samsung.Helpers
                 Debug.WriteLine($"Failed to stop SDB server: {ex.Message}");
             }
         }
-        public Task<ProcessResult> RunCommandCmdAsync(string fileName, string arguments, string? workingDirectory = null)
-        {
-            var cmdArgs = $"/c \"\"{fileName}\" {arguments}\"";
-            return RunCommandAsync("cmd.exe", cmdArgs, workingDirectory);
-        }
         public async Task<ProcessResult> RunCommandAsync(string fileName, string arguments, string? workingDirectory = null)
         {
-            var tcs = new TaskCompletionSource<ProcessResult>();
-            var process = new Process
+            var result = new ProcessResult();
+
+            // Always run hidden (no console)
+            var startInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = fileName,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = workingDirectory ?? ""
-                },
-                EnableRaisingEvents = true
+                FileName = fileName,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory ?? ""
             };
 
-            var output = new StringBuilder();
-            process.OutputDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
-            process.ErrorDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
+            // Build log file path (next to app .exe)
+            string exeDir = AppContext.BaseDirectory;
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            string logFilePath = Path.Combine(exeDir, $"process_{arguments}_{timestamp}.log");
 
-            process.Exited += (_, _) =>
+            try
             {
-                tcs.SetResult(new ProcessResult
+                using var process = new Process { StartInfo = startInfo };
+
+                process.Start();
+
+                // Capture all output
+                string stdOut = await process.StandardOutput.ReadToEndAsync();
+                string stdErr = await process.StandardError.ReadToEndAsync();
+
+                await process.WaitForExitAsync();
+
+                // Combine both
+                var sb = new StringBuilder();
+                if (!string.IsNullOrEmpty(stdOut))
+                    sb.AppendLine(stdOut.TrimEnd());
+                if (!string.IsNullOrEmpty(stdErr))
                 {
-                    ExitCode = process.ExitCode,
-                    Output = output.ToString()
-                });
-            };
+                    sb.AppendLine();
+                    sb.AppendLine("--- STDERR ---");
+                    sb.AppendLine(stdErr.TrimEnd());
+                }
 
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+                result.ExitCode = process.ExitCode;
+                result.Output = sb.ToString();
 
-            return await tcs.Task;
+                // Always write everything to a log file
+                try
+                {
+                    Directory.CreateDirectory(exeDir);
+                    await File.WriteAllTextAsync(logFilePath, result.Output);
+                    result.Output += $"\n[Log written to: {logFilePath}]";
+                }
+                catch (Exception ex)
+                {
+                    result.Output += $"\n[Log write failed: {ex.Message}]";
+                }
+            }
+            catch (Exception ex)
+            {
+                result.ExitCode = -1;
+                result.Output = $"[Process start failed: {ex.Message}]";
+            }
+
+            return result;
         }
+
         public async Task MakeExecutableAsync(string filePath)
         {
             if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
