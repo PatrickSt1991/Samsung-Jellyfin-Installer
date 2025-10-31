@@ -240,7 +240,15 @@ namespace Jellyfin2Samsung.Services
                 Version oldVersion = new("4.0");
 
                 if (tizenVersion <= oldVersion && !string.IsNullOrEmpty(tvIpAddress))
+                {
                     AppSettings.Default.PermitInstall = true;
+                    AppSettings.Default.Save();
+                }
+                else
+                {
+                    AppSettings.Default.PermitInstall = false;
+                    AppSettings.Default.Save();
+                }
 
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
@@ -288,7 +296,8 @@ namespace Jellyfin2Samsung.Services
                         PackageCertificate = selectedCertificate;
                     }
 
-                    await AllowPermitInstall(tvIpAddress);
+                    if(AppSettings.Default.PermitInstall)
+                        await AllowPermitInstall(tvIpAddress);
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))

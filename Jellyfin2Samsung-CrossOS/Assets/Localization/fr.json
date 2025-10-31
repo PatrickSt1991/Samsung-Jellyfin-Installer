@@ -80,7 +80,7 @@
   "DeveloperModeRequired": "Le téléviseur Samsung n'est pas en mode développeur...",
   "DeveloperIPMismatch": "L'adresse IP du mode développeur Samsung ne correspond pas à l'adresse IP locale de cet appareil. Souhaitez-vous continuer ?",
   "lblRTL": "Lecture de droite à gauche (RTL)",
-  "lblSDB": "Afficher la sortie SDB",
+  "lblSDB": "Déboguer",
   "FailedToStopSdbServer": "Un serveur SDB est déjà en cours d'exécution, échec de l'arrêt...",
   "FailedToStopSdbServerTitle": "Échec de l'arrêt du serveur SDB !",
   "lblJellyfinServer": "Adresse",
