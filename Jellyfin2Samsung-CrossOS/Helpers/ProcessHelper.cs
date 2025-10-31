@@ -51,7 +51,11 @@ namespace Jellyfin2Samsung.Helpers
             // Build log file path (next to app .exe)
             string exeDir = AppContext.BaseDirectory;
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            string logFilePath = Path.Combine(exeDir, $"process_{arguments}_{timestamp}.log");
+            string sanitizedArguments = new string(arguments.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-').ToArray());
+            if (string.IsNullOrEmpty(sanitizedArguments))
+                sanitizedArguments = "unknown";
+
+            string logFilePath = Path.Combine(exeDir, $"process_{sanitizedArguments}_{timestamp}.log");
 
             try
             {

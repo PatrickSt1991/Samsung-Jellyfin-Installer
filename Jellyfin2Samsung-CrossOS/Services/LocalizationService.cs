@@ -26,7 +26,7 @@ namespace Jellyfin2Samsung.Services
 
         private void LoadLanguagesAsync()
         {
-            var languages = new[] { "en", "da", "nl" };
+            var languages = new[] { "en", "da", "nl", "fr" };
 
             foreach (var lang in languages)
             {
