@@ -204,12 +204,10 @@ namespace Jellyfin2Samsung.Services
                 bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
                 if (!canDelete)
                 {
-                    Debug.WriteLine("TV can't delete apps");
                     progress?.Invoke("diagnoseTv".Localized());
                     string appId = await CheckForInstalledApp(tvIpAddress, Path.GetFileNameWithoutExtension(packageUrl));
                     if (!string.IsNullOrEmpty(appId))
                     {
-                        Debug.WriteLine("TV can't delete apps & app is already installed!");
                         progress?.Invoke("InstallationFailed".Localized());
                         return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
                     }
@@ -253,6 +251,8 @@ namespace Jellyfin2Samsung.Services
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
                 string p12Password = string.Empty;
+                string deviceXml = string.Empty;
+
                 bool packageResign = false;
                 
                 if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin || AppSettings.Default.PermitInstall)
@@ -277,7 +277,7 @@ namespace Jellyfin2Samsung.Services
                                 outputPath: Path.Combine(AppSettings.CertificatePath, "Jelly2Sams"),
                                 progress
                             );
-
+                            
                             PackageCertificate = "Jelly2Sams";
                             _appSettings.Certificate = PackageCertificate;
                             _appSettings.Save();
@@ -293,11 +293,12 @@ namespace Jellyfin2Samsung.Services
                         authorp12 = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File),"author.p12");
                         distributorp12 = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "distributor.p12");
                         p12Password = File.ReadAllText(Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "password.txt")).Trim();
+                        
                         PackageCertificate = selectedCertificate;
                     }
 
-                    if(AppSettings.Default.PermitInstall)
-                        await AllowPermitInstall(tvIpAddress);
+                    if (AppSettings.Default.PermitInstall)
+                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"));
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
@@ -452,9 +453,8 @@ namespace Jellyfin2Samsung.Services
             return output;
         }
         
-        private async Task AllowPermitInstall(string tvIpAddress)
+        private async Task AllowPermitInstall(string tvIpAddress, string deviceXml)
         {
-            string deviceXml = Path.Combine(Path.GetDirectoryName(_appSettings.ChosenCertificates.File), "device-profile.xml");
             await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} {deviceXml}");
             return;
         }
