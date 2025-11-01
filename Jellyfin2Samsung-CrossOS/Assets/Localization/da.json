@@ -80,6 +80,7 @@
   "DeveloperModeRequired": "Samsung TV er ikke i developer mode...",
   "DeveloperIPMismatch": "Samsung Developer mode IP matcher ikke denne enheds lokale IP, vil du fortsætte?",
   "lblRTL": "Højre-til-venstre (RTL) læsning",
+  "lblSDB": "Fejlfinding",
   "FailedToStopSdbServer": "Der kører allerede en SDB Server, kunne ikke stoppe...",
   "FailedToStopSdbServerTitle": "SDB Server kunne ikke stoppe!",
   "lblJellyfinServer": "Adresse",
@@ -142,5 +143,6 @@
   "lblPermitInstall": "Tillad installation (Tizen =< 4.0)",
   "alreadyInstalled": "Jellyfin kunne ikke installeres, da den allerede er installeret. Fjern den først, og prøv igen.",
   "diagnoseTv": "Diagnosticér tv-funktioner",
-  "searchApp": "Søger efter om appen allerede er installeret"
+  "searchApp": "Søger efter om appen allerede er installeret",
+  "modiyConfigRequired": "Jellyfin-appen har brug for et nyt app-id!"
 }

@@ -9,7 +9,7 @@
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="620"
+        Height="675"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -166,6 +166,17 @@
                                        VerticalAlignment="Center"/>
 							<CheckBox Grid.Column="1"
                                       IsChecked="{Binding RtlReading}"
+                                      VerticalAlignment="Center"/>
+						</Grid>
+
+						<!-- SDB Window -->
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+                                       Text="{Binding lblSDB}"
+                                       Classes="label"
+                                       VerticalAlignment="Center"/>
+							<CheckBox Grid.Column="1"
+                                      IsChecked="{Binding ShowSdbWindow}"
                                       VerticalAlignment="Center"/>
 						</Grid>
 					</StackPanel>

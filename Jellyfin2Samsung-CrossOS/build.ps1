@@ -154,3 +154,5 @@ Write-Host (" - {0}" -f [IO.Path]::GetFileName($osxX64Tgz))
 Write-Host (" - {0}" -f [IO.Path]::GetFileName($linuxZip))
 Write-Host ""
 Write-Host "macOS/Linux users: run ./postinstall.sh after extracting." -ForegroundColor Cyan
+
+Invoke-Item $DistDir

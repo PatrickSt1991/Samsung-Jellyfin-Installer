@@ -393,7 +393,7 @@ namespace Jellyfin2Samsung.ViewModels
                 {
                     legacyReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(legacyResponse, settings);
                 }
-                else if (avResponse.TrimStart().StartsWith("{"))
+                else if (legacyResponse.TrimStart().StartsWith("{"))
                 {
                     var single = JsonConvert.DeserializeObject<GitHubRelease>(legacyResponse, settings);
                     legacyReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
