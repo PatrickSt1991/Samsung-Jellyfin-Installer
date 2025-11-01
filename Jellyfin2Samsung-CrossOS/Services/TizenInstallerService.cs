@@ -202,10 +202,12 @@ namespace Jellyfin2Samsung.Services
 
                 progress?.Invoke("diagnoseTv".Localized());
                 bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
+                Debug.WriteLine($"CanDelete: {canDelete}");
                 if (!canDelete)
                 {
                     progress?.Invoke("diagnoseTv".Localized());
                     string appId = await CheckForInstalledApp(tvIpAddress, Path.GetFileNameWithoutExtension(packageUrl));
+                    Debug.WriteLine($"appId: {appId}");
                     if (!string.IsNullOrEmpty(appId))
                     {
                         progress?.Invoke("InstallationFailed".Localized());
@@ -420,22 +422,21 @@ namespace Jellyfin2Samsung.Services
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
 
-            // Take only the base part (before first hyphen)
             var baseSearch = searchTerm.Split('-')[0];
 
-            // Find the entire block that contains the matching app_title or partial match
             var blockRegex = new Regex(
-                $@"(-+app_title\s*=\s*.*{Regex.Escape(baseSearch)}.*?)(?=-+app_title|$)",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline
+                $@"(^-+app_title\s*=\s*{Regex.Escape(baseSearch)}.*?)(?=^-+app_title|$)",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline
             );
 
+
             var blockMatch = blockRegex.Match(output.Output);
+
             if (!blockMatch.Success)
                 return "";
 
             var block = blockMatch.Value;
 
-            // Now extract app_id from the same block
             var appIdRegex = new Regex(@"app_id\s*=\s*([^\s-]+)", RegexOptions.IgnoreCase);
             var appIdMatch = appIdRegex.Match(block);
 

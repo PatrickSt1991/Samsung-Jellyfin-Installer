@@ -32,7 +32,7 @@ namespace Jellyfin2Samsung.Helpers
                 Debug.WriteLine($"Failed to stop SDB server: {ex.Message}");
             }
         }
-        string GetFirstTwoArguments(string arguments)
+        string GetFirstArguments(string arguments)
         {
             if (string.IsNullOrWhiteSpace(arguments))
                 return string.Empty;
@@ -40,7 +40,7 @@ namespace Jellyfin2Samsung.Helpers
             var matches = System.Text.RegularExpressions.Regex.Matches(arguments, @"[\""].+?[\""]|[^ ]+");
 
             var firstTwo = matches.Cast<System.Text.RegularExpressions.Match>()
-                                  .Take(2)
+                                  .Take(1)
                                   .Select(m => m.Value.Trim('"'))
                                   .ToArray();
 
@@ -65,8 +65,8 @@ namespace Jellyfin2Samsung.Helpers
 
             // Build log file path (next to app .exe)
             string exeDir = AppContext.BaseDirectory;
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            string firstTwoArgs = GetFirstTwoArguments(arguments);
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
+            string firstTwoArgs = GetFirstArguments(arguments);
             string sanitizedArguments = new(firstTwoArgs.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-').ToArray());
             if (string.IsNullOrEmpty(sanitizedArguments))
                 sanitizedArguments = "unknown";
