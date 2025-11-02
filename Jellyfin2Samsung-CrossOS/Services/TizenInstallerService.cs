@@ -202,12 +202,12 @@ namespace Jellyfin2Samsung.Services
 
                 progress?.Invoke("diagnoseTv".Localized());
                 bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
-                Debug.WriteLine($"CanDelete: {canDelete}");
+
                 if (!canDelete)
                 {
                     progress?.Invoke("diagnoseTv".Localized());
                     string appId = await CheckForInstalledApp(tvIpAddress, Path.GetFileNameWithoutExtension(packageUrl));
-                    Debug.WriteLine($"appId: {appId}");
+
                     if (!string.IsNullOrEmpty(appId))
                     {
                         progress?.Invoke("InstallationFailed".Localized());
@@ -239,17 +239,6 @@ namespace Jellyfin2Samsung.Services
                 Version certVersion = new("7.0");
                 Version oldVersion = new("4.0");
 
-                if (tizenVersion <= oldVersion && !string.IsNullOrEmpty(tvIpAddress))
-                {
-                    AppSettings.Default.PermitInstall = true;
-                    AppSettings.Default.Save();
-                }
-                else
-                {
-                    AppSettings.Default.PermitInstall = false;
-                    AppSettings.Default.Save();
-                }
-
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
                 string p12Password = string.Empty;
@@ -257,7 +246,7 @@ namespace Jellyfin2Samsung.Services
 
                 bool packageResign = false;
                 
-                if (tizenVersion >= certVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin || AppSettings.Default.PermitInstall)
+                if (tizenVersion >= certVersion || tizenVersion <= oldVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
                 {
                     packageResign = true;
                     string selectedCertificate = _appSettings.Certificate;
@@ -299,7 +288,7 @@ namespace Jellyfin2Samsung.Services
                         PackageCertificate = selectedCertificate;
                     }
 
-                    if (AppSettings.Default.PermitInstall)
+                    if (tizenVersion <= oldVersion)
                         await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"));
                 }
 

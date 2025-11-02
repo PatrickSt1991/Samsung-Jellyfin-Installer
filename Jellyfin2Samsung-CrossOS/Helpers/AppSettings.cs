@@ -50,7 +50,6 @@ namespace Jellyfin2Samsung.Helpers
         public bool RememberAudioSelections { get; set; } = true;
         public bool RememberSubtitleSelections { get; set; } = true;
         public bool PlayDefaultAudioTrack { get; set; } = true;
-        public bool PermitInstall { get; set; } = false;
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
         public string ConfigUpdateMode { get; set; } = "None";
@@ -64,7 +63,7 @@ namespace Jellyfin2Samsung.Helpers
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.4.6";
+        public string AppVersion { get; set; } = "v1.8.4.7";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";

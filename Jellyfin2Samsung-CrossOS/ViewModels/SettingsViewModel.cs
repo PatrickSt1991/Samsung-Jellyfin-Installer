@@ -157,13 +157,6 @@ namespace Jellyfin2Samsung.ViewModels
             mainVM?.DownloadCommand?.NotifyCanExecuteChanged();
         }
 
-
-        partial void OnPermitInstallChanged(bool value)
-        {
-            AppSettings.Default.PermitInstall = value;
-            AppSettings.Default.Save();
-        }
-
         partial void OnRememberCustomIPChanged(bool value)
         {
             AppSettings.Default.RememberCustomIP = value;
@@ -230,7 +223,6 @@ namespace Jellyfin2Samsung.ViewModels
                 ?? AvailableLanguages.FirstOrDefault();
 
             CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
-            PermitInstall = AppSettings.Default.PermitInstall;
             RememberCustomIP = AppSettings.Default.RememberCustomIP;
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
