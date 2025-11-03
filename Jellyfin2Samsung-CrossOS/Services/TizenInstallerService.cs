@@ -445,7 +445,13 @@ namespace Jellyfin2Samsung.Services
         
         private async Task AllowPermitInstall(string tvIpAddress, string deviceXml)
         {
-            await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} {deviceXml}");
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}"); ;
+
+            var match = Regex.Match(output.Output, @"sdk_toolpath:\s*([^\r\n]+)");
+            string sdkToolPath = match.Success ? match.Groups[1].Value.Trim() : "/opt/usr/apps/tmp";
+            sdkToolPath = sdkToolPath.TrimEnd('/');
+
+            await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} {deviceXml} {sdkToolPath}");
             return;
         }
     }
