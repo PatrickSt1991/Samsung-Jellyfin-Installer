@@ -5,7 +5,6 @@ using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -232,6 +231,8 @@ namespace Jellyfin2Samsung.Services
 
                 string tizenOs = await FetchTizenOsAsync(tvIpAddress);
 
+                string sdkToolPath = await FetchSdkPathAsync(tvIpAddress);
+
                 if (string.IsNullOrEmpty(tizenOs))
                     tizenOs = "7.0";
 
@@ -288,8 +289,8 @@ namespace Jellyfin2Samsung.Services
                         PackageCertificate = selectedCertificate;
                     }
 
-                    if (tizenVersion <= oldVersion)
-                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"));
+                    if (tizenVersion <= oldVersion) { }
+                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), sdkToolPath);
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
@@ -330,7 +331,7 @@ namespace Jellyfin2Samsung.Services
                 }
                 
                 progress?.Invoke("InstallingPackage".Localized());
-                var installResults = await InstallPackageAsync(tvIpAddress, packageUrl);
+                var installResults = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                 if (installResults.Output.Contains("download failed[116]"))
                 {
@@ -342,7 +343,7 @@ namespace Jellyfin2Samsung.Services
                 {
                     bool modAppId = await FileHelper.ModifyWgtPackageId(packageUrl);
 
-                    var installResultsRetry = await InstallPackageAsync(tvIpAddress, packageUrl);
+                    var installResultsRetry = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                     progress?.Invoke("InstallationFailed".Localized());
                     return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
@@ -389,6 +390,14 @@ namespace Jellyfin2Samsung.Services
             var match = Regex.Match(output.Output, @"platform_version:\s*([\d.]+)");
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
+
+        private async Task<string> FetchSdkPathAsync(string tvIpAddress)
+        {
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}"); ;
+            var match = Regex.Match(output.Output, @"sdk_toolpath:\s*([^\r\n]+)");
+            return match.Success ? match.Groups[1].Value.Trim() : "/opt/usr/apps/tmp";
+        }
+
         private async Task<string> GetTvDuidAsync(string tvIpAddress)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"duid {tvIpAddress}");
@@ -437,20 +446,14 @@ namespace Jellyfin2Samsung.Services
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"resign \"{packagePath}\" \"{authorP12}\" \"{distributorP12}\" {certPass}");
             return output;
         }
-        private async Task<ProcessResult> InstallPackageAsync(string tvIpAddress, string packagePath)
+        private async Task<ProcessResult> InstallPackageAsync(string tvIpAddress, string packagePath, string sdkToolPath)
         {
-            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"install {tvIpAddress} \"{packagePath}\"");
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"install {tvIpAddress} \"{packagePath}\" {sdkToolPath}");
             return output;
         }
         
-        private async Task AllowPermitInstall(string tvIpAddress, string deviceXml)
+        private async Task AllowPermitInstall(string tvIpAddress, string deviceXml, string sdkToolPath)
         {
-            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}"); ;
-
-            var match = Regex.Match(output.Output, @"sdk_toolpath:\s*([^\r\n]+)");
-            string sdkToolPath = match.Success ? match.Groups[1].Value.Trim() : "/opt/usr/apps/tmp";
-            sdkToolPath = sdkToolPath.TrimEnd('/');
-
             await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} {deviceXml} {sdkToolPath}");
             return;
         }
