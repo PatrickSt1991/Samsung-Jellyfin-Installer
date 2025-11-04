@@ -92,51 +92,82 @@ namespace Jellyfin2Samsung.Helpers
 
             return extensions;
         }
+        public static async Task<string?> ReadWgtPackageId(string wgtPath)
+        {
+            if (!File.Exists(wgtPath))
+                return null;
+
+            using var memoryStream = new MemoryStream();
+            using (var originalStream = File.OpenRead(wgtPath))
+                await originalStream.CopyToAsync(memoryStream);
+
+            memoryStream.Position = 0;
+
+            using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read, true);
+            var configEntry = archive.GetEntry("config.xml");
+            if (configEntry == null)
+                return null;
+
+            string configContent;
+            using (var reader = new StreamReader(configEntry.Open(), Encoding.UTF8))
+                configContent = await reader.ReadToEndAsync();
+
+            // Regex to extract the package prefix before .Jellyfin
+            var regex = new Regex(
+                @"<tizen:application\s+id=""(?<pkg>[A-Za-z0-9]+)\.Jellyfin""\s+package=""\k<pkg>""",
+                RegexOptions.Multiline
+            );
+
+            var match = regex.Match(configContent);
+            return match.Success ? match.Groups["pkg"].Value : null;
+        }
         public static async Task<bool> ModifyWgtPackageId(string wgtPath)
         {
             if (!File.Exists(wgtPath))
                 return false;
 
-            using (var memoryStream = new MemoryStream())
+            var oldPkg = await ReadWgtPackageId(wgtPath);
+            if (string.IsNullOrEmpty(oldPkg))
+                return false;
+
+            var newPkg = GenerateRandomString(oldPkg.Length);
+
+            using var memoryStream = new MemoryStream();
+            using (var originalStream = File.OpenRead(wgtPath))
+                await originalStream.CopyToAsync(memoryStream);
+
+            memoryStream.Position = 0;
+
+            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Update, true))
             {
-                using (var originalStream = File.OpenRead(wgtPath))
-                    originalStream.CopyTo(memoryStream);
+                var configEntry = archive.GetEntry("config.xml");
+                if (configEntry == null)
+                    return false;
 
-                memoryStream.Position = 0;
+                string configContent;
+                using (var reader = new StreamReader(configEntry.Open(), Encoding.UTF8))
+                    configContent = await reader.ReadToEndAsync();
 
-                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Update, true))
-                {
-                    var configEntry = archive.GetEntry("config.xml");
-                    if (configEntry == null)
-                        return false;
+                // Replace old package ID with the new one
+                var regex = new Regex(
+                    $@"<tizen:application\s+id=""{oldPkg}\.Jellyfin""\s+package=""{oldPkg}""",
+                    RegexOptions.Multiline
+                );
 
-                    string configContent;
-                    using (var reader = new StreamReader(configEntry.Open(), Encoding.UTF8))
-                        configContent = reader.ReadToEnd();
+                var newConfig = regex.Replace(configContent, m =>
+                    m.Value.Replace(oldPkg, newPkg)
+                );
 
-                    // Match the tizen:application line
-                    var regex = new Regex(@"<tizen:application\s+id=""(?<pkg>[A-Za-z0-9]+)\.Jellyfin""\s+package=""\k<pkg>""", RegexOptions.Multiline);
-                    var match = regex.Match(configContent);
-                    if (!match.Success)
-                        return false;
+                // Replace entry inside ZIP
+                configEntry.Delete();
+                var newEntry = archive.CreateEntry("config.xml");
 
-                    string oldPkg = match.Groups["pkg"].Value;
-                    string newPkg = GenerateRandomString(oldPkg.Length);
-
-                    string newConfig = regex.Replace(configContent, m =>
-                        m.Value.Replace(oldPkg, newPkg));
-
-                    configEntry.Delete(); // remove old
-                    var newEntry = archive.CreateEntry("config.xml");
-
-                    using (var writer = new StreamWriter(newEntry.Open(), Encoding.UTF8))
-                        writer.Write(newConfig);
-                }
-
-                // Write back to the original file
-                File.WriteAllBytes(wgtPath, memoryStream.ToArray());
-                return true;
+                using (var writer = new StreamWriter(newEntry.Open(), Encoding.UTF8))
+                    await writer.WriteAsync(newConfig);
             }
+
+            await File.WriteAllBytesAsync(wgtPath, memoryStream.ToArray());
+            return true;
         }
         private static string GenerateRandomString(int length)
         {

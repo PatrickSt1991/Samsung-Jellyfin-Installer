@@ -5,9 +5,11 @@ using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -56,6 +58,7 @@ namespace Jellyfin2Samsung.Services
             if (existingFile != null && !ShouldUpdateBinary(existingFile, latestVersion))
             {
                 TizenSdbPath = existingFile;
+                Debug.WriteLine("RATE LIMIT");
                 return TizenSdbPath;
             }
 
@@ -201,19 +204,18 @@ namespace Jellyfin2Samsung.Services
 
                 progress?.Invoke("diagnoseTv".Localized());
                 bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
-
                 if (!canDelete)
                 {
                     progress?.Invoke("diagnoseTv".Localized());
-                    string appId = await CheckForInstalledApp(tvIpAddress, Path.GetFileNameWithoutExtension(packageUrl));
+                    bool alreadyInstalled = await CheckForInstalledApp(tvIpAddress, packageUrl);
 
-                    if (!string.IsNullOrEmpty(appId))
+                    if (alreadyInstalled)
                     {
                         progress?.Invoke("InstallationFailed".Localized());
-                        return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                        return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
                     }
                 }
-                
+
                 progress?.Invoke("ConnectingToDevice".Localized());
                 string tvName = await GetTvNameAsync(tvIpAddress);
                 if (string.IsNullOrEmpty(tvName))
@@ -341,9 +343,8 @@ namespace Jellyfin2Samsung.Services
 
                 if(installResults.Output.Contains("install failed[118, -22]"))
                 {
-                    bool modAppId = await FileHelper.ModifyWgtPackageId(packageUrl);
-
-                    var installResultsRetry = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
+                    await FileHelper.ModifyWgtPackageId(packageUrl);
+                    await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                     progress?.Invoke("InstallationFailed".Localized());
                     return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
@@ -416,29 +417,34 @@ namespace Jellyfin2Samsung.Services
 
             return !match.Success;
         }
-        private async Task<string> CheckForInstalledApp(string tvIpAddress, string searchTerm)
+        private async Task<bool> CheckForInstalledApp(string tvIpAddress, string packageUrl)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
 
-            var baseSearch = searchTerm.Split('-')[0];
+            var baseSearch = Path.GetFileNameWithoutExtension(packageUrl).Split('-')[0];
 
             var blockRegex = new Regex(
-                $@"(^-+app_title\s*=\s*{Regex.Escape(baseSearch)}.*?)(?=^-+app_title|$)",
+                $@"(^\s*-+app_title\s*=\s*{Regex.Escape(baseSearch)}.*?)(?=^\s*-+app_title|\Z)",
                 RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline
             );
-
 
             var blockMatch = blockRegex.Match(output.Output);
 
             if (!blockMatch.Success)
-                return "";
+                return false;
 
             var block = blockMatch.Value;
-
-            var appIdRegex = new Regex(@"app_id\s*=\s*([^\s-]+)", RegexOptions.IgnoreCase);
+            
+            var appIdRegex = new Regex(@"app_package_name\s*=\s*([^\r\n-]+)", RegexOptions.IgnoreCase);
             var appIdMatch = appIdRegex.Match(block);
 
-            return appIdMatch.Success ? appIdMatch.Groups[1].Value.Trim() : "";
+            string TVAppId = appIdMatch.Groups[1].Value.Trim();
+            string PackageAppId = await FileHelper.ReadWgtPackageId(packageUrl);
+
+            if (TVAppId == PackageAppId)
+                return true;
+            else
+                return false;
         }
 
         private async Task<ProcessResult> ResignPackageAsync(string packagePath, string authorP12, string distributorP12, string certPass)
