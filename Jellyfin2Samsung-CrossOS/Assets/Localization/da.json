@@ -144,5 +144,8 @@
   "alreadyInstalled": "Jellyfin kunne ikke installeres, da den allerede er installeret. Fjern den først, og prøv igen.",
   "diagnoseTv": "Diagnosticér tv-funktioner",
   "searchApp": "Søger efter om appen allerede er installeret",
-  "modiyConfigRequired": "Jellyfin-appen har brug for et nyt app-id!"
+  "modiyConfigRequired": "Jellyfin-appen har brug for et nyt app-id!",
+  "deleteExistingVersion": "Sletter en eksisterende version...",
+  "deleteExistingFailed": "Sletning af den eksisterende version mislykkedes. Slet den manuelt...",
+  "deleteExistingSuccess": "Eksisterende version slettet..."
 }

@@ -144,5 +144,8 @@
   "alreadyInstalled": "Jellyfin n'a pas pu être installé car il est déjà installé. Veuillez d'abord le supprimer puis réessayer...",
   "diagnoseTv": "Diagnostiquer les capacités du téléviseur",
   "searchApp": "Vérification si l'application est déjà installée",
-  "modiyConfigRequired": "L'application Jellyfin nécessite un nouvel identifiant d'application !"
+  "modiyConfigRequired": "L'application Jellyfin nécessite un nouvel identifiant d'application !",
+  "deleteExistingVersion": "Suppression d'une version existante...",
+  "deleteExistingFailed": "La suppression de la version existante a échoué. Veuillez la supprimer manuellement...",
+  "deleteExistingSuccess": "Version existante supprimée avec succès..."
 }

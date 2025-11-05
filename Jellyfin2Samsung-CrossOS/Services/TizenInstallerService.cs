@@ -5,6 +5,7 @@ using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -204,16 +205,27 @@ namespace Jellyfin2Samsung.Services
 
                 progress?.Invoke("diagnoseTv".Localized());
                 bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
-                if (!canDelete)
+                var (alreadyInstalled, appId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
+                if (!canDelete && alreadyInstalled)
                 {
-                    progress?.Invoke("diagnoseTv".Localized());
-                    bool alreadyInstalled = await CheckForInstalledApp(tvIpAddress, packageUrl);
+                    progress?.Invoke("InstallationFailed".Localized());
+                    return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
+                }
+                
+                if(canDelete && alreadyInstalled)
+                {
+                    progress?.Invoke("deleteExistingVersion".Localized());
+                    await UninstallPackageAsync(tvIpAddress, appId);
 
-                    if (alreadyInstalled)
+                    var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
+
+                    if (stillInstalled)
                     {
-                        progress?.Invoke("InstallationFailed".Localized());
-                        return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
+                        progress?.Invoke("deleteExistingFailed".Localized());
+                        return InstallResult.FailureResult($"{"deleteExistingFailed".Localized()}");
                     }
+
+                    progress?.Invoke("deleteExistingSuccess".Localized());
                 }
 
                 progress?.Invoke("ConnectingToDevice".Localized());
@@ -356,7 +368,7 @@ namespace Jellyfin2Samsung.Services
                     return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
                 }
 
-                if (installResults.Output.Contains("installing[100]"))
+                if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install conpleted"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
@@ -417,7 +429,7 @@ namespace Jellyfin2Samsung.Services
 
             return !match.Success;
         }
-        private async Task<bool> CheckForInstalledApp(string tvIpAddress, string packageUrl)
+        private async Task<(bool isInstalled, string? Message)> CheckForInstalledApp(string tvIpAddress, string packageUrl)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
 
@@ -431,7 +443,7 @@ namespace Jellyfin2Samsung.Services
             var blockMatch = blockRegex.Match(output.Output);
 
             if (!blockMatch.Success)
-                return false;
+                return (false, string.Empty);
 
             var block = blockMatch.Value;
             
@@ -442,9 +454,9 @@ namespace Jellyfin2Samsung.Services
             string PackageAppId = await FileHelper.ReadWgtPackageId(packageUrl);
 
             if (TVAppId == PackageAppId)
-                return true;
+                return (true, TVAppId);
             else
-                return false;
+                return (false, string.Empty);
         }
 
         private async Task<ProcessResult> ResignPackageAsync(string packagePath, string authorP12, string distributorP12, string certPass)
@@ -455,6 +467,11 @@ namespace Jellyfin2Samsung.Services
         private async Task<ProcessResult> InstallPackageAsync(string tvIpAddress, string packagePath, string sdkToolPath)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"install {tvIpAddress} \"{packagePath}\" {sdkToolPath}");
+            return output;
+        }
+        private async Task<ProcessResult> UninstallPackageAsync(string tvIpAddress, string packageId)
+        {
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"uninstall {tvIpAddress} {packageId}");
             return output;
         }
         
