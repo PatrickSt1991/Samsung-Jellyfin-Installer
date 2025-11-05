@@ -214,18 +214,26 @@ namespace Jellyfin2Samsung.Services
                 
                 if(canDelete && alreadyInstalled)
                 {
-                    progress?.Invoke("deleteExistingVersion".Localized());
-                    await UninstallPackageAsync(tvIpAddress, appId);
-
-                    var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
-
-                    if (stillInstalled)
+                    if (_appSettings.DeletePreviousInstall)
                     {
-                        progress?.Invoke("deleteExistingFailed".Localized());
-                        return InstallResult.FailureResult($"{"deleteExistingFailed".Localized()}");
-                    }
+                        progress?.Invoke("deleteExistingVersion".Localized());
+                        await UninstallPackageAsync(tvIpAddress, appId);
 
-                    progress?.Invoke("deleteExistingSuccess".Localized());
+                        var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
+
+                        if (stillInstalled)
+                        {
+                            progress?.Invoke("deleteExistingFailed".Localized());
+                            return InstallResult.FailureResult($"{"deleteExistingFailed".Localized()}");
+                        }
+
+                        progress?.Invoke("deleteExistingSuccess".Localized());
+                    }
+                    else
+                    {
+                        progress?.Invoke("deleteExistingNotAllowed".Localized());
+                        return InstallResult.FailureResult($"{"deleteExistingNotAllowed".Localized()}");
+                    }
                 }
 
                 progress?.Invoke("ConnectingToDevice".Localized());

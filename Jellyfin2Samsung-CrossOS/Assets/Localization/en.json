@@ -147,5 +147,6 @@
   "modiyConfigRequired": "Jellyfin app needs a new app id!",
   "deleteExistingVersion": "Deleting an existing version...",
   "deleteExistingFailed": "Deleting the existing version failed. Please delete it manually...",
-  "deleteExistingSuccess": "Existing version successfully deleted..."
+  "deleteExistingSuccess": "Existing version successfully deleted...",
+  "deleteExistingNotAllowed": "Deletion not allowed. Enable the setting to allow the tool to remove the existing app..."
 }

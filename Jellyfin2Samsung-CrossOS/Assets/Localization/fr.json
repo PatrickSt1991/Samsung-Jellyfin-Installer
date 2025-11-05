@@ -147,5 +147,6 @@
   "modiyConfigRequired": "L'application Jellyfin nécessite un nouvel identifiant d'application !",
   "deleteExistingVersion": "Suppression d'une version existante...",
   "deleteExistingFailed": "La suppression de la version existante a échoué. Veuillez la supprimer manuellement...",
-  "deleteExistingSuccess": "Version existante supprimée avec succès..."
+  "deleteExistingSuccess": "Version existante supprimée avec succès...",
+  "deleteExistingNotAllowed": "Suppression impossible. Activez l'option pour autoriser l'outil à supprimer l'application existante..."
 }

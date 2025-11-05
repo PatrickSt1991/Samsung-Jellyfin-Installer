@@ -147,5 +147,6 @@
   "modiyConfigRequired": "Jellyfin-appen har brug for et nyt app-id!",
   "deleteExistingVersion": "Sletter en eksisterende version...",
   "deleteExistingFailed": "Sletning af den eksisterende version mislykkedes. Slet den manuelt...",
-  "deleteExistingSuccess": "Eksisterende version slettet..."
+  "deleteExistingSuccess": "Eksisterende version slettet...",
+  "deleteExistingNotAllowed": "Sletning er ikke tilladt. Aktivér indstillingen for at tillade værktøjet at fjerne den eksisterende app..."
 }
