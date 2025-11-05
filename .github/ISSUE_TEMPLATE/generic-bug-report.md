@@ -3,8 +3,7 @@ name: Generic bug report
 about: Create a report to help us improve
 title: "[Bug] "
 labels: bug, keep-alive
-assignees: ''
-
+assignees: PatrickSt1991
 ---
 
 **Have you checked the wiki?**
