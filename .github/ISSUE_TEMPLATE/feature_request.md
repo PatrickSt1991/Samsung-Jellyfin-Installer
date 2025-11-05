@@ -3,8 +3,7 @@ name: Feature Request
 about: Suggest a new feature or improvement for the application
 title: "[Feature] "
 labels: enhancement, keep-alive
-assignees: ''
-
+assignees: PatrickSt1991
 ---
 
 **Feature Description**  
