@@ -376,7 +376,7 @@ namespace Jellyfin2Samsung.Services
                     return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
                 }
 
-                if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install conpleted"))
+                if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install completed"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
