@@ -132,8 +132,7 @@ namespace Jellyfin2Samsung.Helpers
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
                     AppSettings.Default.ConfigUpdateMode.Contains("All"))
                 {
-                    Debug.WriteLine(tempDir);
-                    UpdateMultiServerConfig(tempDir);
+                    await UpdateMultiServerConfig(tempDir);
                 }
 
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||

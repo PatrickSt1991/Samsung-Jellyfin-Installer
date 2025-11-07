@@ -268,8 +268,8 @@ namespace Jellyfin2Samsung.Services
                 string deviceXml = string.Empty;
 
                 bool packageResign = false;
-                
-                if (tizenVersion >= certVersion || tizenVersion <= oldVersion || AppSettings.Default.ConfigUpdateMode != "None" || AppSettings.Default.ForceSamsungLogin)
+
+                if (tizenVersion >= certVersion || tizenVersion <= oldVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
                 {
                     packageResign = true;
                     string selectedCertificate = _appSettings.Certificate;
@@ -312,28 +312,28 @@ namespace Jellyfin2Samsung.Services
                     }
 
                     if (tizenVersion <= oldVersion)
-                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), "/home/developer"); //sdkToolPath
+                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), "/home/developer");
                 }
 
-                if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
+                if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None"))
                 {
                     string[] userIds = [];
 
-                    if (AppSettings.Default.JellyfinUserId == "everyone" && AppSettings.Default.ConfigUpdateMode != "Server Settings")
+                    if (_appSettings.JellyfinUserId == "everyone" && _appSettings.ConfigUpdateMode != "Server Settings")
                         userIds = [.. (await _jellyfinHelper.LoadJellyfinUsersAsync()).Select(u => u.Id)];
                     else
-                        userIds = [AppSettings.Default.JellyfinUserId];
+                        userIds = [_appSettings.JellyfinUserId];
 
-                    if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
-                        AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||
-                        AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                    if (_appSettings.ConfigUpdateMode.Contains("Server") ||
+                        _appSettings.ConfigUpdateMode.Contains("Browser") ||
+                        _appSettings.ConfigUpdateMode.Contains("All"))
                     {
                         await _jellyfinHelper.ApplyJellyfinConfigAsync(packageUrl, userIds);
                     }
 
 
-                    if (AppSettings.Default.ConfigUpdateMode.Contains("User") ||
-                        AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                    if (_appSettings.ConfigUpdateMode.Contains("User") ||
+                        _appSettings.ConfigUpdateMode.Contains("All"))
                     {
                         await _jellyfinHelper.UpdateJellyfinUsersAsync(userIds);
                     }
@@ -351,7 +351,7 @@ namespace Jellyfin2Samsung.Services
                         return InstallResult.FailureResult($"Package resigning failed: {resignResults.Output}");
                     }
                 }
-                
+
                 progress?.Invoke("InstallingPackage".Localized());
                 var installResults = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
