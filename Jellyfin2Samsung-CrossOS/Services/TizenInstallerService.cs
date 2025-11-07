@@ -311,8 +311,8 @@ namespace Jellyfin2Samsung.Services
                         PackageCertificate = selectedCertificate;
                     }
 
-                    if (tizenVersion <= oldVersion) { }
-                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), sdkToolPath);
+                    if (tizenVersion <= oldVersion)
+                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), "/home/developer"); //sdkToolPath
                 }
 
                 if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) && !AppSettings.Default.ConfigUpdateMode.Contains("None"))
@@ -361,7 +361,7 @@ namespace Jellyfin2Samsung.Services
                     return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
                 }
 
-                if(installResults.Output.Contains("install failed[118, -22]"))
+                if(installResults.Output.Contains("install failed[118]"))
                 {
                     await FileHelper.ModifyWgtPackageId(packageUrl);
                     await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
@@ -376,7 +376,7 @@ namespace Jellyfin2Samsung.Services
                     return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
                 }
 
-                if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install conpleted"))
+                if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install completed"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
                     return InstallResult.SuccessResult();
