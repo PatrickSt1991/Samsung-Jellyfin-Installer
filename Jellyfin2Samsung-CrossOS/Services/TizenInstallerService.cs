@@ -260,7 +260,8 @@ namespace Jellyfin2Samsung.Services
 
                 Version tizenVersion = new(tizenOs);
                 Version certVersion = new("7.0");
-                Version oldVersion = new("4.0");
+                Version pushVersion = new("4.0");
+                Version intermediateVersion = new ("3.0");
 
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
@@ -269,7 +270,7 @@ namespace Jellyfin2Samsung.Services
 
                 bool packageResign = false;
 
-                if (tizenVersion >= certVersion || tizenVersion <= oldVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
+                if (tizenVersion >= certVersion || tizenVersion <= pushVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
                 {
                     packageResign = true;
                     string selectedCertificate = _appSettings.Certificate;
@@ -311,8 +312,14 @@ namespace Jellyfin2Samsung.Services
                         PackageCertificate = selectedCertificate;
                     }
 
-                    if (tizenVersion <= oldVersion)
-                        await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), "/home/developer");
+                    if (tizenVersion <= pushVersion)
+                    {
+                        if (tizenVersion < intermediateVersion){
+                            await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), "/home/developer");
+                        } else {
+                            await AllowPermitInstall(tvIpAddress, Path.Combine(Path.GetDirectoryName(authorp12), "device-profile.xml"), sdkToolPath);
+                        }                    
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None"))
