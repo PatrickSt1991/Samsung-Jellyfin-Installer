@@ -215,7 +215,7 @@ namespace Jellyfin2Samsung.Services
                     if (_appSettings.DeletePreviousInstall)
                     {
                         progress?.Invoke("deleteExistingVersion".Localized());
-                        await UninstallPackageAsync(tvIpAddress, appId);
+                        await UninstallPackageAsync(tvIpAddress, appId!);
 
                         var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
 
