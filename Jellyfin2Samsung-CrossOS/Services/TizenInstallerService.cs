@@ -459,13 +459,12 @@ namespace Jellyfin2Samsung.Services
 
             var block = blockMatch.Value;
             
-            var appIdRegex = new Regex(@"app_package_name\s*=\s*([^\r\n-]+)", RegexOptions.IgnoreCase);
+            var appIdRegex = new Regex(@"app_id\s*=\s*([A-Za-z0-9._]+)", RegexOptions.IgnoreCase);
             var appIdMatch = appIdRegex.Match(block);
 
             string TVAppId = appIdMatch.Groups[1].Value.Trim();
             string PackageAppId = await FileHelper.ReadWgtPackageId(packageUrl);
-
-            if (TVAppId == PackageAppId)
+            if (TVAppId == string.Concat(PackageAppId, ".Jellyfin"))
                 return (true, TVAppId);
             else
                 return (false, string.Empty);
