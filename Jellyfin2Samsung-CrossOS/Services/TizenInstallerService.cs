@@ -206,7 +206,7 @@ namespace Jellyfin2Samsung.Services
                 var (alreadyInstalled, appId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
                 if (!canDelete && alreadyInstalled)
                 {
-                    progress?.Invoke("InstallationFailed".Localized());
+                    progress?.Invoke("alreadyInstalled".Localized());
                     return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
                 }
                 
@@ -444,9 +444,7 @@ namespace Jellyfin2Samsung.Services
         private async Task<(bool isInstalled, string? Message)> CheckForInstalledApp(string tvIpAddress, string packageUrl)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
-
             var baseSearch = Path.GetFileNameWithoutExtension(packageUrl).Split('-')[0];
-
             var blockRegex = new Regex(
                 $@"(^\s*-+app_title\s*=\s*{Regex.Escape(baseSearch)}.*?)(?=^\s*-+app_title|\Z)",
                 RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline
@@ -459,11 +457,13 @@ namespace Jellyfin2Samsung.Services
 
             var block = blockMatch.Value;
             
-            var appIdRegex = new Regex(@"app_id\s*=\s*([A-Za-z0-9._]+)", RegexOptions.IgnoreCase);
+            var appIdRegex = new Regex(@"app_tizen_id\s*=\s*([A-Za-z0-9._]+)", RegexOptions.IgnoreCase);
             var appIdMatch = appIdRegex.Match(block);
 
             string TVAppId = appIdMatch.Groups[1].Value.Trim();
+
             string PackageAppId = await FileHelper.ReadWgtPackageId(packageUrl);
+
             if (TVAppId == string.Concat(PackageAppId, ".Jellyfin"))
                 return (true, TVAppId);
             else
