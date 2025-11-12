@@ -38,6 +38,9 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string selectedJellyfinPort = string.Empty;
+        
+        [ObservableProperty]
+        private string selectedJellyfinProtocol = string.Empty;
 
         [ObservableProperty]
         private bool enableBackdrops;
@@ -256,6 +259,11 @@ namespace Jellyfin2Samsung.ViewModels
             UpdateJellyfinAddress();
         }
 
+        partial void OnSelectedJellyfinProtocolChanged(string value)
+        {
+            UpdateJellyfinAddress();
+        }
+
         partial void OnEnableBackdropsChanged(bool value)
         {
             AppSettings.Default.EnableBackdrops = value;
@@ -351,21 +359,19 @@ namespace Jellyfin2Samsung.ViewModels
 
         private async void InitializeAsyncSettings()
         {
-            // Initialize with default values if settings are empty
             var jellyfinIP = AppSettings.Default.JellyfinIP;
-            if (!string.IsNullOrWhiteSpace(jellyfinIP) && jellyfinIP.Contains(':'))
+
+            if (!string.IsNullOrWhiteSpace(jellyfinIP) && Uri.TryCreate(jellyfinIP, UriKind.Absolute, out var uri))
             {
-                var parts = jellyfinIP.Split(':');
-                if (parts.Length >= 2)
-                {
-                    JellyfinServerIp = parts[0];
-                    SelectedJellyfinPort = parts[1];
-                }
+                SelectedJellyfinProtocol = uri.Scheme;
+                JellyfinServerIp = uri.Host;
+                SelectedJellyfinPort = uri.Port.ToString();
             }
             else
             {
+                SelectedJellyfinProtocol = "http";
                 JellyfinServerIp = "";
-                SelectedJellyfinPort = "8096"; // Default port
+                SelectedJellyfinPort = "8096";
             }
 
             SelectedUpdateMode = AppSettings.Default.ConfigUpdateMode ?? "None";
@@ -394,9 +400,12 @@ namespace Jellyfin2Samsung.ViewModels
 
         private void UpdateJellyfinAddress()
         {
-            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) && !string.IsNullOrWhiteSpace(SelectedJellyfinPort))
+            if (!string.IsNullOrWhiteSpace(JellyfinServerIp) &&
+                !string.IsNullOrWhiteSpace(SelectedJellyfinPort) &&
+                !string.IsNullOrWhiteSpace(SelectedJellyfinProtocol))
             {
-                AppSettings.Default.JellyfinIP = $"{JellyfinServerIp}:{SelectedJellyfinPort}";
+                AppSettings.Default.JellyfinIP = $"{SelectedJellyfinProtocol}://{JellyfinServerIp}:{SelectedJellyfinPort}";
+
                 Debug.WriteLine($"Updated Jellyfin IP: {AppSettings.Default.JellyfinIP}");
                 AppSettings.Default.Save();
 
