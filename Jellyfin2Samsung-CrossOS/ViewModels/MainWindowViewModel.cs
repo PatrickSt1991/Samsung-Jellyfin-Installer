@@ -157,6 +157,7 @@ namespace Jellyfin2Samsung.ViewModels
             DownloadCommand.NotifyCanExecuteChanged();
             InstallCommand.NotifyCanExecuteChanged();
             DownloadAndInstallCommand.NotifyCanExecuteChanged();
+            OpenSettingsCommand.NotifyCanExecuteChanged();
         }
 
         public async Task InitializeAsync()
@@ -259,7 +260,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanOpenSettings))]
         private void OpenSettings()
         {
             var settingsWindow = new SettingsView
@@ -293,6 +294,7 @@ namespace Jellyfin2Samsung.ViewModels
 
         private bool CanRefresh() => !IsLoading;
         private bool CanRefreshDevices() => !IsLoadingDevices;
+        private bool CanOpenSettings() => !IsLoadingDevices;
 
         private bool CanDownload()
         {

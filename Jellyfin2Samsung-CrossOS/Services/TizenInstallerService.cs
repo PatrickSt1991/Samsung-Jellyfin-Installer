@@ -57,7 +57,6 @@ namespace Jellyfin2Samsung.Services
             if (existingFile != null && !ShouldUpdateBinary(existingFile, latestVersion))
             {
                 TizenSdbPath = existingFile;
-                Debug.WriteLine("RATE LIMIT");
                 return TizenSdbPath;
             }
 
@@ -200,37 +199,39 @@ namespace Jellyfin2Samsung.Services
 
             try
             {
-
-                progress?.Invoke("diagnoseTv".Localized());
-                bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
-                var (alreadyInstalled, appId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
-                if (!canDelete && alreadyInstalled)
+                if (!_appSettings.TryOverwrite || _appSettings.Certificate == "Jelly2Sams (default)")
                 {
-                    progress?.Invoke("alreadyInstalled".Localized());
-                    return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
-                }
-                
-                if(canDelete && alreadyInstalled)
-                {
-                    if (_appSettings.DeletePreviousInstall)
+                    progress?.Invoke("diagnoseTv".Localized());
+                    bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
+                    var (alreadyInstalled, appId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
+                    if (!canDelete && alreadyInstalled)
                     {
-                        progress?.Invoke("deleteExistingVersion".Localized());
-                        await UninstallPackageAsync(tvIpAddress, appId!);
-
-                        var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
-
-                        if (stillInstalled)
-                        {
-                            progress?.Invoke("deleteExistingFailed".Localized());
-                            return InstallResult.FailureResult($"{"deleteExistingFailed".Localized()}");
-                        }
-
-                        progress?.Invoke("deleteExistingSuccess".Localized());
+                        progress?.Invoke("alreadyInstalled".Localized());
+                        return InstallResult.FailureResult($"{"alreadyInstalled".Localized()}");
                     }
-                    else
+
+                    if (canDelete && alreadyInstalled)
                     {
-                        progress?.Invoke("deleteExistingNotAllowed".Localized());
-                        return InstallResult.FailureResult($"{"deleteExistingNotAllowed".Localized()}");
+                        if (_appSettings.DeletePreviousInstall)
+                        {
+                            progress?.Invoke("deleteExistingVersion".Localized());
+                            await UninstallPackageAsync(tvIpAddress, appId!);
+
+                            var (stillInstalled, newAppId) = await CheckForInstalledApp(tvIpAddress, packageUrl);
+
+                            if (stillInstalled)
+                            {
+                                progress?.Invoke("deleteExistingFailed".Localized());
+                                return InstallResult.FailureResult($"{"deleteExistingFailed".Localized()}");
+                            }
+
+                            progress?.Invoke("deleteExistingSuccess".Localized());
+                        }
+                        else
+                        {
+                            progress?.Invoke("deleteExistingNotAllowed".Localized());
+                            return InstallResult.FailureResult($"{"deleteExistingNotAllowed".Localized()}");
+                        }
                     }
                 }
 
@@ -352,6 +353,7 @@ namespace Jellyfin2Samsung.Services
                     if (resignResults.ExitCode != 0 || resignResults.Output.Contains("Re-sign failed"))
                     {
                         progress?.Invoke("InstallationFailed".Localized());
+                        _appSettings.TryOverwrite = false;
                         return InstallResult.FailureResult($"Package resigning failed: {resignResults.Output}");
                     }
                 }
@@ -362,6 +364,7 @@ namespace Jellyfin2Samsung.Services
                 if (installResults.Output.Contains("download failed[116]"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
+                    _appSettings.TryOverwrite = false;
                     return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
                 }
 
@@ -371,12 +374,14 @@ namespace Jellyfin2Samsung.Services
                     await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                     progress?.Invoke("InstallationFailed".Localized());
+                    _appSettings.TryOverwrite = false;
                     return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
                 }
 
                 if (installResults.Output.Contains("failed"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
+                    _appSettings.TryOverwrite = false;
                     return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
                 }
 
@@ -387,11 +392,13 @@ namespace Jellyfin2Samsung.Services
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
+                _appSettings.TryOverwrite = false;
                 return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
             }
             catch (Exception ex)
             {
                 progress?.Invoke($"Installation error: {ex.Message}");
+                _appSettings.TryOverwrite = false;
                 return InstallResult.FailureResult(ex.Message);
             }
             finally

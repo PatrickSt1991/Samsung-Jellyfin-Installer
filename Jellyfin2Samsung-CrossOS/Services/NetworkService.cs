@@ -248,6 +248,35 @@ namespace Jellyfin2Samsung.Services
             Array.Reverse(parts);
             return string.Join(".", parts);
         }
+        public async Task<string?> GetPrimaryOutboundIPAddressAsync()
+        {
+            return await Task.Run(() =>
+            {
+                foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    var ipProps = ni.GetIPProperties();
+
+                    var gateway = ipProps.GatewayAddresses
+                        .FirstOrDefault(g =>
+                            g.Address.AddressFamily == AddressFamily.InterNetwork &&
+                            !IPAddress.IsLoopback(g.Address));
+
+                    if (gateway != null)
+                    {
+                        var ipv4 = ipProps.UnicastAddresses
+                            .FirstOrDefault(ua =>
+                                ua.Address.AddressFamily == AddressFamily.InterNetwork &&
+                                !IPAddress.IsLoopback(ua.Address));
+
+                        if (ipv4 != null)
+                            return ipv4.Address.ToString();
+                    }
+                }
+
+                return null;
+            });
+        }
+
 
     }
 }

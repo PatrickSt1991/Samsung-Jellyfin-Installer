@@ -84,10 +84,8 @@ namespace Jellyfin2Samsung.Helpers
         public async Task<List<NetworkDevice>> ScanForDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
         {
             var devices = new List<NetworkDevice>();
-
             var networkDevices = await _networkService.GetLocalTizenAddresses(cancellationToken, virtualScan);
 
-            Debug.WriteLine($"NetworkDevices: {networkDevices.Count()}");
             foreach (NetworkDevice device in networkDevices)
             {
                 if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))

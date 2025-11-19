@@ -148,5 +148,7 @@
   "deleteExistingVersion": "Sletter en eksisterende version...",
   "deleteExistingFailed": "Sletning af den eksisterende version mislykkedes. Slet den manuelt...",
   "deleteExistingSuccess": "Eksisterende version slettet...",
-  "deleteExistingNotAllowed": "Sletning er ikke tilladt. Aktivér indstillingen for at tillade værktøjet at fjerne den eksisterende app..."
+  "deleteExistingNotAllowed": "Sletning er ikke tilladt. Aktivér indstillingen for at tillade værktøjet at fjerne den eksisterende app...",
+  "lblLocalIP": "Lokal IP:",
+  "lblTryOverwrite": "Overskriv eksisterende version"
 }
