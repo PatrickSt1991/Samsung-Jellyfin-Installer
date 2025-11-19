@@ -364,25 +364,49 @@ namespace Jellyfin2Samsung.Services
                 if (installResults.Output.Contains("download failed[116]"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
-                    _appSettings.TryOverwrite = false;
-                    return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                    if (_appSettings.TryOverwrite)
+                    {
+                        _appSettings.TryOverwrite = false;
+                        return await InstallPackageAsync(packageUrl, tvIpAddress, progress);
+
+                    }
+                    else
+                    {
+                        _appSettings.TryOverwrite = false;
+                        return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}");
+                    }
                 }
 
                 if(installResults.Output.Contains("install failed[118]"))
                 {
-                    await FileHelper.ModifyWgtPackageId(packageUrl);
-                    await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
-
                     progress?.Invoke("InstallationFailed".Localized());
-                    _appSettings.TryOverwrite = false;
-                    return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
+                    if (_appSettings.TryOverwrite)
+                    {
+                        _appSettings.TryOverwrite = false;
+                        await FileHelper.ModifyWgtPackageId(packageUrl);
+                        return await InstallPackageAsync(packageUrl, tvIpAddress, progress);
+
+                    }
+                    else
+                    {
+                        _appSettings.TryOverwrite = false;
+                        return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}");
+                    }
                 }
 
                 if (installResults.Output.Contains("failed"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
-                    _appSettings.TryOverwrite = false;
-                    return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
+                    if (_appSettings.TryOverwrite)
+                    {
+                        _appSettings.TryOverwrite = false;
+                        return await InstallPackageAsync(packageUrl, tvIpAddress, progress);
+                    }
+                    else
+                    {
+                        _appSettings.TryOverwrite = false;
+                        return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
+                    }
                 }
 
                 if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install completed"))
@@ -392,8 +416,16 @@ namespace Jellyfin2Samsung.Services
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
-                _appSettings.TryOverwrite = false;
-                return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
+                if (_appSettings.TryOverwrite)
+                {
+                    _appSettings.TryOverwrite = false;
+                    return await InstallPackageAsync(packageUrl, tvIpAddress, progress);
+                }
+                else
+                {
+                    _appSettings.TryOverwrite = false;
+                    return InstallResult.FailureResult($"Installation failed: {installResults.Output}");
+                }
             }
             catch (Exception ex)
             {
