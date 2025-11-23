@@ -48,9 +48,7 @@ namespace Jellyfin2Samsung.Services
 
             var existingFile = Directory.GetFiles(tizenSdbPath, GetSearchPattern())
                 .FirstOrDefault();
-
             var latestVersion = await GetLatestTizenSdbVersionAsync();
-
             if (existingFile != null && !ShouldUpdateBinary(existingFile, latestVersion))
             {
                 TizenSdbPath = existingFile;
@@ -58,7 +56,7 @@ namespace Jellyfin2Samsung.Services
             }
 
             string downloadedFile = await DownloadTizenSdbAsync(latestVersion);
-
+            Debug.WriteLine(downloadedFile);
             if (existingFile != null && File.Exists(existingFile))
             {
                 await _processHelper.MakeExecutableAsync(existingFile);
@@ -196,7 +194,7 @@ namespace Jellyfin2Samsung.Services
 
             try
             {
-                if (!_appSettings.TryOverwrite || _appSettings.Certificate == "Jelly2Sams (default)")
+                if (!_appSettings.TryOverwrite)
                 {
                     progress?.Invoke("diagnoseTv".Localized());
                     bool canDelete = await GetTvDiagnoseAsync(tvIpAddress);
@@ -265,18 +263,25 @@ namespace Jellyfin2Samsung.Services
                 string selectedCertificate = string.Empty;
                 
                 bool packageResign = false;
-
                 var certDuid = string.Empty;
 
                 if (tizenVersion >= certVersion || tizenVersion <= pushVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
                 {
                     packageResign = true;
-                     certDuid = _appSettings.ChosenCertificates?.Duid;
+                    certDuid = _appSettings.ChosenCertificates?.Duid;
+                    selectedCertificate = _appSettings.Certificate;
 
-                    if(tizenVersion < certVersion && tizenVersion > pushVersion && selectedCertificate == "Jelly2Sams (default)")
+                    if (tizenVersion < certVersion && tizenVersion > pushVersion && selectedCertificate == "Jelly2Sams (default)")
+                    {
                         selectedCertificate = "Jellyfin";
-                    else
-                        selectedCertificate = _appSettings.Certificate;
+                        _appSettings.Certificate = selectedCertificate;
+                        _appSettings.ChosenCertificates = new ExistingCertificates
+                        {
+                            Name = "Jellyfin",
+                            Duid = tvDuid,
+                            File = Path.Combine(AppSettings.CertificatePath, "Jellyfin", "author.p12")
+                        };
+                    }
 
                     if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid && selectedCertificate != "Jellyfin")
                     {
@@ -348,7 +353,6 @@ namespace Jellyfin2Samsung.Services
 
                 }
 
-                //WE NEED RESIGN WITH TIZEN5 PROFILE
                 if (packageResign)
                 {
                     progress?.Invoke("packageAndSign".Localized());

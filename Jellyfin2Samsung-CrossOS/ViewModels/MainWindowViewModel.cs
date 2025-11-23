@@ -166,7 +166,6 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 SetStatus("CheckingTizenSdb");
 
-
                 string tizenSdb = await _tizenInstaller.EnsureTizenSdbAvailable();
 
                 if (string.IsNullOrEmpty(tizenSdb))
@@ -174,7 +173,7 @@ namespace Jellyfin2Samsung.ViewModels
                     SetStatus("FailedTizenSdb");
                     return;
                 }
-
+                
                 ProcessHelper.KillSdbServers();
 
                 await LoadReleasesAsync();
@@ -346,7 +345,7 @@ namespace Jellyfin2Samsung.ViewModels
                     MissingMemberHandling = MissingMemberHandling.Ignore
                 };
 
-                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
                 var response = await _httpClient.GetStringAsync(AppSettings.Default.ReleasesUrl);
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
