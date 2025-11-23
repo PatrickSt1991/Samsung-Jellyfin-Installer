@@ -22,7 +22,6 @@ namespace Jellyfin2Samsung.Services
         private readonly AppSettings _appSettings;
         private readonly JellyfinHelper _jellyfinHelper;
         private readonly ProcessHelper _processHelper;
-        private readonly FileHelper _fileHelper;
 
         public string? TizenSdbPath { get; private set; }
         public string? PackageCertificate { get; set; }
@@ -32,15 +31,13 @@ namespace Jellyfin2Samsung.Services
             IDialogService dialogService, 
             AppSettings appSettings,
             JellyfinHelper jellyfinHelper,
-            ProcessHelper processHelper,
-            FileHelper fileHelper)
+            ProcessHelper processHelper)
         {
             _httpClient = httpClient;
             _dialogService = dialogService;
             _appSettings = appSettings;
             _jellyfinHelper = jellyfinHelper;
             _processHelper = processHelper;
-            _fileHelper = fileHelper;
 
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
         }
@@ -78,7 +75,7 @@ namespace Jellyfin2Samsung.Services
             return TizenSdbPath;
         }
 
-        private string GetSearchPattern()
+        private static string GetSearchPattern()
         {
             if (OperatingSystem.IsWindows()) return "TizenSdb*.exe";
             if (OperatingSystem.IsLinux()) return "TizenSdb*_linux";
@@ -86,7 +83,7 @@ namespace Jellyfin2Samsung.Services
             throw new PlatformNotSupportedException("Unsupported OS");
         }
 
-        private string GetFinalFileName(string version)
+        private static string GetFinalFileName(string version)
         {
             return OperatingSystem.IsWindows() ? $"TizenSdb_{version}.exe" :
                    OperatingSystem.IsLinux() ? $"TizenSdb_{version}_linux" :
@@ -94,7 +91,7 @@ namespace Jellyfin2Samsung.Services
                    throw new PlatformNotSupportedException("Unsupported OS");
         }
 
-        private bool ShouldUpdateBinary(string existingFilePath, string latestVersion)
+        private static bool ShouldUpdateBinary(string existingFilePath, string latestVersion)
         {
             try
             {
@@ -114,7 +111,7 @@ namespace Jellyfin2Samsung.Services
             }
         }
 
-        private bool IsVersionGreater(string latestVersion, string currentVersion)
+        private static bool IsVersionGreater(string latestVersion, string currentVersion)
         {
             // Remove 'v' prefix if present for comparison
             var latest = Version.TryParse(latestVersion.TrimStart('v'), out var latestVer) ? latestVer : null;
@@ -265,17 +262,23 @@ namespace Jellyfin2Samsung.Services
                 string authorp12 = string.Empty;
                 string distributorp12 = string.Empty;
                 string p12Password = string.Empty;
-                string deviceXml = string.Empty;
-
+                string selectedCertificate = string.Empty;
+                
                 bool packageResign = false;
+
+                var certDuid = string.Empty;
 
                 if (tizenVersion >= certVersion || tizenVersion <= pushVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
                 {
                     packageResign = true;
-                    string selectedCertificate = _appSettings.Certificate;
-                    var certDuid = _appSettings.ChosenCertificates?.Duid;
+                     certDuid = _appSettings.ChosenCertificates?.Duid;
 
-                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid)
+                    if(tizenVersion < certVersion && tizenVersion > pushVersion && selectedCertificate == "Jelly2Sams (default)")
+                        selectedCertificate = "Jellyfin";
+                    else
+                        selectedCertificate = _appSettings.Certificate;
+
+                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid && selectedCertificate != "Jellyfin")
                     {
                         progress?.Invoke("SamsungLogin".Localized());;
                         SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
@@ -345,6 +348,7 @@ namespace Jellyfin2Samsung.Services
 
                 }
 
+                //WE NEED RESIGN WITH TIZEN5 PROFILE
                 if (packageResign)
                 {
                     progress?.Invoke("packageAndSign".Localized());
@@ -524,7 +528,6 @@ namespace Jellyfin2Samsung.Services
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"uninstall {tvIpAddress} {packageId}");
             return output;
         }
-        
         private async Task AllowPermitInstall(string tvIpAddress, string deviceXml, string sdkToolPath)
         {
             await _processHelper.RunCommandAsync(TizenSdbPath!, $"permit-install {tvIpAddress} \"{deviceXml}\" {sdkToolPath}");
