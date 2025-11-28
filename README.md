@@ -41,7 +41,7 @@
 
 ---
 
-## 📦 Community Packages (New!) -> Will be implemented in the tool
+## 📦 Community Packages (New!)
 
 Looking for older builds, custom `.wgt` files, or versions shared by other users?  
 Check out the new **Tizen Community Packages** repository — a curated collection of community-submitted packages.
