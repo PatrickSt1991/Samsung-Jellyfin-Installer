@@ -30,7 +30,7 @@ namespace Jellyfin2Samsung.Helpers
             return !string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) &&
                    !string.IsNullOrEmpty(AppSettings.Default.JellyfinApiKey) &&
                    AppSettings.Default.JellyfinApiKey.Length == 32 &&
-                   IsValidUrl($"http://{AppSettings.Default.JellyfinIP}/Users");
+                   IsValidUrl($"{AppSettings.Default.JellyfinIP}/Users");
         }
 
         public static bool IsValidUrl(string url)
@@ -55,7 +55,7 @@ namespace Jellyfin2Samsung.Helpers
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
 
-                var url = $"http://{AppSettings.Default.JellyfinIP}/Users";
+                var url = $"{AppSettings.Default.JellyfinIP}/Users";
                 Debug.WriteLine($"Attempting to load users from: {url}");
 
                 using var response = await _httpClient.GetAsync(url);
@@ -180,7 +180,7 @@ namespace Jellyfin2Samsung.Helpers
             var config = JsonNode.Parse(jsonText) ?? throw new JsonException("Failed to parse config.json");
             config["multiserver"] = false;
 
-            string serverUrl = $"http://{AppSettings.Default.JellyfinIP}";
+            string serverUrl = AppSettings.Default.JellyfinIP;
             config["servers"] = new JsonArray { JsonValue.Create(serverUrl) };
 
             var options = new JsonSerializerOptions { WriteIndented = true };
@@ -261,7 +261,7 @@ namespace Jellyfin2Samsung.Helpers
                     try
                     {
                         // Fetch user info
-                        var getUserResponse = await _httpClient.GetAsync($"http://{AppSettings.Default.JellyfinIP}/Users/{userId}");
+                        var getUserResponse = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinIP}/Users/{userId}");
                         getUserResponse.EnsureSuccessStatusCode();
                         var userJson = await getUserResponse.Content.ReadAsStringAsync();
 
@@ -277,7 +277,7 @@ namespace Jellyfin2Samsung.Helpers
 
                         using (userContent)
                         {
-                            var userResponse = await _httpClient.PostAsync($"http://{AppSettings.Default.JellyfinIP}/Users?userId={userId}", userContent);
+                            var userResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users?userId={userId}", userContent);
                             userResponse.EnsureSuccessStatusCode();
                         }
 
@@ -295,7 +295,7 @@ namespace Jellyfin2Samsung.Helpers
                         var configJson = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
 
                         using var configContent = new StringContent(configJson, Encoding.UTF8, "application/json");
-                        var configResponse = await _httpClient.PostAsync($"http://{AppSettings.Default.JellyfinIP}/Users/Configuration?userId={userId}", configContent);
+                        var configResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users/Configuration?userId={userId}", configContent);
                         configResponse.EnsureSuccessStatusCode();
                     }
                     catch (Exception userEx)

@@ -157,6 +157,7 @@ namespace Jellyfin2Samsung.ViewModels
             DownloadCommand.NotifyCanExecuteChanged();
             InstallCommand.NotifyCanExecuteChanged();
             DownloadAndInstallCommand.NotifyCanExecuteChanged();
+            OpenSettingsCommand.NotifyCanExecuteChanged();
         }
 
         public async Task InitializeAsync()
@@ -165,7 +166,6 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 SetStatus("CheckingTizenSdb");
 
-
                 string tizenSdb = await _tizenInstaller.EnsureTizenSdbAvailable();
 
                 if (string.IsNullOrEmpty(tizenSdb))
@@ -173,7 +173,7 @@ namespace Jellyfin2Samsung.ViewModels
                     SetStatus("FailedTizenSdb");
                     return;
                 }
-
+                
                 ProcessHelper.KillSdbServers();
 
                 await LoadReleasesAsync();
@@ -259,7 +259,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanOpenSettings))]
         private void OpenSettings()
         {
             var settingsWindow = new SettingsView
@@ -293,6 +293,7 @@ namespace Jellyfin2Samsung.ViewModels
 
         private bool CanRefresh() => !IsLoading;
         private bool CanRefreshDevices() => !IsLoadingDevices;
+        private bool CanOpenSettings() => !IsLoadingDevices;
 
         private bool CanDownload()
         {
@@ -344,12 +345,12 @@ namespace Jellyfin2Samsung.ViewModels
                     MissingMemberHandling = MissingMemberHandling.Ignore
                 };
 
-                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
                 var response = await _httpClient.GetStringAsync(AppSettings.Default.ReleasesUrl);
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
                     .OrderByDescending(r => r.PublishedAt)
-                    .Take(10);
+                    .Take(5);
 
                 if (allReleases != null)
                     foreach (var release in allReleases)
@@ -414,6 +415,36 @@ namespace Jellyfin2Samsung.ViewModels
                         PublishedAt = legacyRelease.PublishedAt,
                         TagName = legacyRelease.TagName,
                         Url = legacyRelease.Url
+                    });
+                }
+
+                var communityResponse = await _httpClient.GetStringAsync(AppSettings.Default.CommunityRelease);
+                List<GitHubRelease> communityReleases;
+                if(communityResponse.TrimStart().StartsWith("["))
+                {
+                    communityReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(communityResponse, settings);
+                }
+                else if (communityResponse.TrimStart().StartsWith("{"))
+                {
+                    var single = JsonConvert.DeserializeObject<GitHubRelease>(communityResponse, settings);
+                    communityReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
+                }
+                else
+                {
+                    communityReleases = new List<GitHubRelease>();
+                }
+
+                communityReleases = communityReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
+
+                foreach (var communityRelease in communityReleases)
+                {
+                    Releases.Add(new GitHubRelease
+                    {
+                        Name = $"Tizen Community",
+                        Assets = communityRelease.Assets,
+                        PublishedAt = communityRelease.PublishedAt,
+                        TagName = communityRelease.TagName,
+                        Url = communityRelease.Url
                     });
                 }
 

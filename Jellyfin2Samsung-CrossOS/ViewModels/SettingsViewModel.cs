@@ -7,6 +7,7 @@ using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly CertificateHelper _certificateHelper;
         private readonly FileHelper _fileHelper;
         private readonly ILocalizationService _localizationService;
+        private readonly INetworkService _networkService;
 
         [ObservableProperty]
         private LanguageOption? selectedLanguage;
@@ -32,10 +34,16 @@ namespace Jellyfin2Samsung.ViewModels
         private string customWgtPath = string.Empty;
 
         [ObservableProperty]
+        private string localIP = string.Empty;
+
+        [ObservableProperty]
         private bool permitInstall;
 
         [ObservableProperty]
         private bool rememberCustomIP;
+
+        [ObservableProperty]
+        private bool tryOverwrite;
 
         [ObservableProperty]
         private bool deletePreviousInstall;
@@ -64,18 +72,21 @@ namespace Jellyfin2Samsung.ViewModels
         public string SelectWGT => _localizationService.GetString("SelectWGT");
         public string lblPermitInstall => _localizationService.GetString("lblPermitInstall");
         public string lblSDB => _localizationService.GetString("lblSDB");
-
+        public string lblLocalIP => _localizationService.GetString("lblLocalIP");
+        public string lblTryOverwrite => _localizationService.GetString("lblTryOverwrite");
 
         public SettingsViewModel(
             ITizenInstallerService tizenService,
             CertificateHelper certificateHelper,
             FileHelper fileHelper,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            INetworkService networkService)
         {
             _tizenService = tizenService;
             _certificateHelper = certificateHelper;
             _fileHelper = fileHelper;
             _localizationService = localizationService;
+            _networkService = networkService;
             
             _localizationService.LanguageChanged += OnLanguageChanged;
 
@@ -93,9 +104,28 @@ namespace Jellyfin2Samsung.ViewModels
             // Initialize settings
             InitializeSettings();
 
+            _ = LoadLocalIpAsync();
             _ = InitializeCertificatesAsync();
         }
 
+        private async Task LoadLocalIpAsync()
+        {
+            try
+            {
+                var ip = await _networkService.GetPrimaryOutboundIPAddressAsync();
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    LocalIP = ip ?? string.Empty;
+                    AppSettings.Default.LocalIp = ip;
+                    AppSettings.Default.Save();
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to get local IP: {ex.Message}");
+            }
+        }
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
             RefreshLocalizedProperties();
@@ -114,6 +144,8 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(lblModifyConfig));
             OnPropertyChanged(nameof(lblOpenConfig));
             OnPropertyChanged(nameof(SelectWGT));
+            OnPropertyChanged(nameof(lblLocalIP));
+            OnPropertyChanged(nameof(lblTryOverwrite));
         }
 
         partial void OnSelectedLanguageChanged(LanguageOption? value)
@@ -156,6 +188,11 @@ namespace Jellyfin2Samsung.ViewModels
             mainVM?.DownloadAndInstallCommand?.NotifyCanExecuteChanged();
             mainVM?.DownloadCommand?.NotifyCanExecuteChanged();
         }
+        partial void OnLocalIPChanged(string value)
+        {
+            AppSettings.Default.LocalIp = value;
+            AppSettings.Default.Save();
+        }
 
         partial void OnRememberCustomIPChanged(bool value)
         {
@@ -163,6 +200,11 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnTryOverwriteChanged(bool value)
+        {
+            AppSettings.Default.TryOverwrite = value;
+            AppSettings.Default.Save();
+        }
         partial void OnDeletePreviousInstallChanged(bool value)
         {
             AppSettings.Default.DeletePreviousInstall = value;
@@ -228,6 +270,8 @@ namespace Jellyfin2Samsung.ViewModels
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
             RtlReading = AppSettings.Default.RTLReading;
             ShowSdbWindow = AppSettings.Default.ShowSdbWindow;
+            LocalIP = AppSettings.Default.LocalIp;
+            TryOverwrite = AppSettings.Default.TryOverwrite;
         }
 
         private static string GetLanguageDisplayName(string code)

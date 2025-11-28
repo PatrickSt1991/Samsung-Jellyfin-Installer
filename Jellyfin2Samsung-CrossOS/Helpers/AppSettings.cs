@@ -23,6 +23,8 @@ namespace Jellyfin2Samsung.Helpers
         public ExistingCertificates? ChosenCertificates { get; set; }
         [JsonIgnore]
         public string CustomWgtPath { get; set; } = "";
+        [JsonIgnore]
+        public string LocalIp { get; set; } = "";
         public static AppSettings Default => _instance ??= Load();
 
         // ----- User-scoped settings -----
@@ -59,15 +61,18 @@ namespace Jellyfin2Samsung.Helpers
         public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
+        public bool TryOverwrite { get; set; } = true;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.5.7";
+        public string AppVersion { get; set; } = "v1.8.6.0";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";
+        public string CommunityRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-community-packages/releases";
         public string ReleaseInfo { get; set; } = "https://raw.githubusercontent.com/jeppevinkel/jellyfin-tizen-builds/refs/heads/master/README.md";
+        public string CommunityInfo { get; set; } = "https://raw.githubusercontent.com/PatrickSt1991/tizen-community-packages/refs/heads/main/README.md";
 
         public AppSettings() { }
 

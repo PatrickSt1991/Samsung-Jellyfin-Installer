@@ -3,66 +3,115 @@
         x:Class="Jellyfin2Samsung.Views.BuildInfoWindow"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         x:DataType="viewModels:BuildInfoViewModel"
-		SizeToContent="WidthAndHeight"
-		MinWidth="580"
-		MinHeight="410"
+        SizeToContent="WidthAndHeight"
+        MinWidth="650"
+        MinHeight="500"
         WindowStartupLocation="CenterOwner"
         Title="Jellyfin Tizen Versions"
         Background="#F5F5F5">
+
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 	</Window.Styles>
+
 	<Border Background="White"
             Padding="16"
             CornerRadius="8"
             Margin="12"
             BorderBrush="#E8E8E8"
             BorderThickness="1">
+
 		<Border.Effect>
-			<DropShadowEffect BlurRadius="15" OffsetX="2" OffsetY="2" Color="#00000020" Opacity="0.15"/>
+			<DropShadowEffect BlurRadius="15"
+                              OffsetX="2"
+                              OffsetY="2"
+                              Color="#00000020"
+                              Opacity="0.15"/>
 		</Border.Effect>
-		<StackPanel Spacing="12">
-			<!-- Header -->
+
+		<StackPanel Spacing="20">
+
 			<Border Background="#2C3E50"
                     Padding="14,10"
                     CornerRadius="6">
 				<TextBlock Text="Jellyfin Tizen Build Versions"
                            Foreground="White"
-                           FontWeight="Medium"
-                           FontSize="16"
+                           FontWeight="SemiBold"
+                           FontSize="18"
                            HorizontalAlignment="Center"/>
 			</Border>
-			<!-- Data grid -->
-			<DataGrid ItemsSource="{Binding Versions}"
-                      AutoGenerateColumns="False"
-                      HeadersVisibility="Column"
-                      GridLinesVisibility="All"
-                      RowHeight="32"
-                      CanUserSortColumns="True"
-                      IsReadOnly="True"
-                      Margin="0,6,0,0">
-				<DataGrid.Columns>
-					<DataGridTextColumn Header="File name" Width="120">
-						<DataGridTextColumn.Binding>
-							<Binding Path="FileName" x:DataType="viewModels:BuildVersion"/>
-						</DataGridTextColumn.Binding>
-					</DataGridTextColumn>
-					<DataGridTextColumn Header="Description" Width="*">
-						<DataGridTextColumn.Binding>
-							<Binding Path="Description" x:DataType="viewModels:BuildVersion"/>
-						</DataGridTextColumn.Binding>
-					</DataGridTextColumn>
-				</DataGrid.Columns>
-			</DataGrid>
-			<!-- Footer -->
+
+
+			<Border Background="#34495E"
+                    Padding="10"
+                    CornerRadius="6">
+				<TextBlock Text="Official Jellyfin Builds"
+                           Foreground="White"
+                           FontWeight="Medium"
+                           FontSize="15"/>
+			</Border>
+
+			<Border BorderBrush="#D0D0D0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Height="200">
+				<DataGrid ItemsSource="{Binding JellyfinVersions}"
+                          AutoGenerateColumns="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="All"
+                          RowHeight="32"
+                          IsReadOnly="True">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="File name" Width="160"
+                                            Binding="{Binding FileName}" />
+						<DataGridTextColumn Header="Description" Width="*"
+                                            Binding="{Binding Description}" />
+					</DataGrid.Columns>
+				</DataGrid>
+			</Border>
+
+
+			<Border Background="#34495E"
+                    Padding="10"
+                    CornerRadius="6"
+                    Margin="0,10,0,0">
+				<TextBlock Text="Community Applications"
+                           Foreground="White"
+                           FontWeight="Medium"
+                           FontSize="15"/>
+			</Border>
+
+			<Border BorderBrush="#D0D0D0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Height="260">
+				<DataGrid ItemsSource="{Binding CommunityApps}"
+                          AutoGenerateColumns="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="All"
+                          RowHeight="32"
+                          IsReadOnly="True">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Application" Width="180"
+                                            Binding="{Binding FileName}" />
+						<DataGridTextColumn Header="Description" Width="*"
+                                            Binding="{Binding Description}" />
+					</DataGrid.Columns>
+				</DataGrid>
+			</Border>
+
+
 			<StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Margin="0,10,0,0">
 				<Button Content="Close"
-                        Width="90"
+                        Width="100"
                         Command="{Binding CloseCommand}"/>
 			</StackPanel>
+
 		</StackPanel>
+
 	</Border>
+
 </Window>
