@@ -350,7 +350,7 @@ namespace Jellyfin2Samsung.ViewModels
 
                 var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
                     .OrderByDescending(r => r.PublishedAt)
-                    .Take(10);
+                    .Take(5);
 
                 if (allReleases != null)
                     foreach (var release in allReleases)
@@ -415,6 +415,36 @@ namespace Jellyfin2Samsung.ViewModels
                         PublishedAt = legacyRelease.PublishedAt,
                         TagName = legacyRelease.TagName,
                         Url = legacyRelease.Url
+                    });
+                }
+
+                var communityResponse = await _httpClient.GetStringAsync(AppSettings.Default.CommunityRelease);
+                List<GitHubRelease> communityReleases;
+                if(communityResponse.TrimStart().StartsWith("["))
+                {
+                    communityReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(communityResponse, settings);
+                }
+                else if (communityResponse.TrimStart().StartsWith("{"))
+                {
+                    var single = JsonConvert.DeserializeObject<GitHubRelease>(communityResponse, settings);
+                    communityReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
+                }
+                else
+                {
+                    communityReleases = new List<GitHubRelease>();
+                }
+
+                communityReleases = communityReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
+
+                foreach (var communityRelease in communityReleases)
+                {
+                    Releases.Add(new GitHubRelease
+                    {
+                        Name = $"Tizen Community",
+                        Assets = communityRelease.Assets,
+                        PublishedAt = communityRelease.PublishedAt,
+                        TagName = communityRelease.TagName,
+                        Url = communityRelease.Url
                     });
                 }
 

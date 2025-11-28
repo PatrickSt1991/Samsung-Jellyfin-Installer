@@ -6,18 +6,14 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Models;
 
 namespace Jellyfin2Samsung.ViewModels
 {
-    public partial class BuildVersion : ObservableObject
-    {
-        [ObservableProperty] private string fileName = string.Empty;
-        [ObservableProperty] private string description = string.Empty;
-    }
-
     public partial class BuildInfoViewModel : ViewModelBase
     {
-        public ObservableCollection<BuildVersion> Versions { get; } = new();
+        public ObservableCollection<BuildVersion> JellyfinVersions { get; } = new();
+        public ObservableCollection<BuildVersion> CommunityApps { get; } = new();
 
         public BuildInfoViewModel()
         {
@@ -29,58 +25,118 @@ namespace Jellyfin2Samsung.ViewModels
             try
             {
                 using var client = new HttpClient();
-                var markdown = await client.GetStringAsync(AppSettings.Default.ReleaseInfo);
 
-                // Extract the "Versions" section
-                var sectionMatch = Regex.Match(markdown,
-                    @"## Versions\s*\n(?<table>(\|[^\n]+\n)+)",
-                    RegexOptions.Multiline);
+                var jellyfinMd = await client.GetStringAsync(AppSettings.Default.ReleaseInfo);
+                var communityMd = await client.GetStringAsync(AppSettings.Default.CommunityInfo);
 
-                if (!sectionMatch.Success)
-                    return;
+                // Parse Jellyfin table
+                ParseVersionsTable(jellyfinMd, JellyfinVersions);
 
-                var table = sectionMatch.Groups["table"].Value;
-
-                // Extract rows (skip header and separator)
-                var rows = Regex.Matches(table, @"^\|([^|]+)\|([^|]+)\|", RegexOptions.Multiline);
-
-                bool isHeaderSkipped = false;
-                foreach (Match row in rows)
-                {
-                    var file = row.Groups[1].Value.Trim();
-                    var desc = row.Groups[2].Value.Trim();
-
-                    // Skip the header
-                    if (!isHeaderSkipped && file.Equals("File name", StringComparison.OrdinalIgnoreCase))
-                    {
-                        isHeaderSkipped = true;
-                        continue;
-                    }
-
-                    // Skip separator
-                    if (file.StartsWith("-"))
-                        continue;
-
-                    Versions.Add(new BuildVersion
-                    {
-                        FileName = file,
-                        Description = desc
-                    });
-                }
-                Versions.Add(new BuildVersion
+                // Static Jellyfin entries
+                JellyfinVersions.Add(new BuildVersion
                 {
                     FileName = "Legacy",
                     Description = "Containing 10.8.z build for older model TVs"
                 });
-                Versions.Add(new BuildVersion
+
+                JellyfinVersions.Add(new BuildVersion
                 {
                     FileName = "AVPlay",
                     Description = "Includes AVPlay video player patches for better Samsung TV compatibility"
                 });
+
+                // Parse community apps
+                ParseApplicationsTable(communityMd, CommunityApps);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to load build info: {ex.Message}");
+            }
+        }
+
+        // Remove markdown formatting like **bold**, emoji, etc.
+        private static string CleanText(string input)
+        {
+            var text = Regex.Replace(input, @"\*\*(.*?)\*\*", "$1");
+            text = Regex.Replace(text, @"[\u2600-\u27BF]", ""); // emoji range
+            return text.Trim();
+        }
+
+        private void ParseVersionsTable(string md, ObservableCollection<BuildVersion> target)
+        {
+            var match = Regex.Match(md,
+                @"## Versions\s*\n(?<table>(\|[^\n]+\n)+)",
+                RegexOptions.Multiline);
+
+            if (!match.Success) return;
+
+            var table = match.Groups["table"].Value;
+
+            var rows = Regex.Matches(table,
+                @"^\|([^|]+)\|([^|]+)\|",
+                RegexOptions.Multiline);
+
+            bool headerSkipped = false;
+
+            foreach (Match row in rows)
+            {
+                var col1 = row.Groups[1].Value.Trim();
+                var col2 = row.Groups[2].Value.Trim();
+
+                if (!headerSkipped &&
+                    col1.Equals("File name", StringComparison.OrdinalIgnoreCase))
+                {
+                    headerSkipped = true;
+                    continue;
+                }
+
+                if (col1.StartsWith("-"))
+                    continue;
+
+                target.Add(new BuildVersion
+                {
+                    FileName = CleanText(col1),
+                    Description = CleanText(col2)
+                });
+            }
+        }
+
+        private void ParseApplicationsTable(string md, ObservableCollection<BuildVersion> target)
+        {
+            var match = Regex.Match(md,
+                @"\|\s*🧩 Application\s*\|\s*📝 Description\s*\|\s*🔗 Repository\s*\|\s*\n(?<table>(\|[^\n]+\n)+)",
+                RegexOptions.Multiline);
+
+            if (!match.Success) return;
+
+            var table = match.Groups["table"].Value;
+
+            var rows = Regex.Matches(table,
+                @"^\|([^|]+)\|([^|]+)\|([^|]+)\|",
+                RegexOptions.Multiline);
+
+            bool headerSkipped = false;
+
+            foreach (Match row in rows)
+            {
+                var col1 = row.Groups[1].Value.Trim();
+                var col2 = row.Groups[2].Value.Trim();
+
+                if (!headerSkipped &&
+                    col1.Contains("Application", StringComparison.OrdinalIgnoreCase))
+                {
+                    headerSkipped = true;
+                    continue;
+                }
+
+                if (col1.StartsWith("-"))
+                    continue;
+
+                target.Add(new BuildVersion
+                {
+                    FileName = CleanText(col1),
+                    Description = CleanText(col2)
+                });
             }
         }
 
