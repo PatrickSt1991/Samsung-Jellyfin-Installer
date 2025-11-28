@@ -39,6 +39,17 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M71JOT9R)
 
+---
+
+## 📦 Community Packages (New!) -> Will be implemented in the tool
+
+Looking for older builds, custom `.wgt` files, or versions shared by other users?  
+Check out the new **Tizen Community Packages** repository — a curated collection of community-submitted packages.
+
+👉 **Browse community packages:**  
+https://github.com/PatrickSt1991/tizen-community-packages
+
+
 ## 🚀 How It Works
 ---
 ### ⚠️ Before Running on Unix-Based Systems
