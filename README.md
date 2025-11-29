@@ -41,6 +41,18 @@
 
 ---
 
+## 🎥 New to Jellyfin 2 Samsung?
+
+Not sure where to start? No worries — we've made it easy.
+
+Before diving in, check out this clear, step-by-step video guide that walks you through the entire installation process:
+
+👉 **Watch the YouTube tutorial:** https://youtu.be/_8mSV5pW-ic
+
+It’s the quickest way to get set up with confidence.
+
+---
+
 ## 📦 Community Packages (New!)
 
 Looking for older builds, custom `.wgt` files, or versions shared by other users?  
