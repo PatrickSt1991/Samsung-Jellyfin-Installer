@@ -47,7 +47,8 @@ Not sure where to start? No worries — we've made it easy.
 
 Before diving in, check out this clear, step-by-step video guide that walks you through the entire installation process:
 
-👉 **Watch the YouTube tutorial:** https://youtu.be/_8mSV5pW-ic
+👉 **Watch the YouTube tutorial:** 
+https://youtu.be/tHFcDCnl2Gk?si=eryM22qL1VS3ttql
 
 It’s the quickest way to get set up with confidence.
 
