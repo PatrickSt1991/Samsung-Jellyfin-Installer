@@ -350,7 +350,6 @@ namespace Jellyfin2Samsung.Services
                     {
                         await _jellyfinHelper.UpdateJellyfinUsersAsync(userIds);
                     }
-
                 }
 
                 if (packageResign)

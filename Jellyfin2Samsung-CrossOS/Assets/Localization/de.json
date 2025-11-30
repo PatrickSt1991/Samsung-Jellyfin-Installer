@@ -150,5 +150,6 @@
   "deleteExistingSuccess": "Existierende Version erfolgreich gelöscht...",
   "deleteExistingNotAllowed": "Löschen nicht erlaubt. Aktivieren Sie die Einstellung, um dem Tool zu erlauben, die existierende App zu entfernen...",
   "lblLocalIP": "Lokale IP:",
-  "lblTryOverwrite": "Vorhandene Version überschreiben"
+  "lblTryOverwrite": "Vorhandene Version überschreiben",
+  "lblUseServerScripts": "Verwenden Sie Server-Skripte"
 }

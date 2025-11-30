@@ -9,20 +9,19 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Jellyfin2Samsung.Helpers
 {
     public class JellyfinHelper
     {
         private readonly HttpClient _httpClient;
-        private readonly ProcessHelper _processHelper;
         public JellyfinHelper(
-            HttpClient httpClient, 
-            ProcessHelper processHelper)
+            HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _processHelper = processHelper;
         }
 
         public static bool IsValidJellyfinConfiguration()
@@ -32,13 +31,11 @@ namespace Jellyfin2Samsung.Helpers
                    AppSettings.Default.JellyfinApiKey.Length == 32 &&
                    IsValidUrl($"{AppSettings.Default.JellyfinIP}/Users");
         }
-
         public static bool IsValidUrl(string url)
         {
             return Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
-
         public async Task<List<JellyfinAuth>> LoadJellyfinUsersAsync()
         {
             var users = new List<JellyfinAuth>();
@@ -112,9 +109,7 @@ namespace Jellyfin2Samsung.Helpers
 
             return users;
         }
-        public async Task<InstallResult> ApplyJellyfinConfigAsync(
-            string packagePath,
-            string[] userIds)
+        public async Task<InstallResult> ApplyJellyfinConfigAsync(string packagePath,string[] userIds)
         {
             string? tempDir = null;
             string? tempPackage = null;
@@ -128,6 +123,12 @@ namespace Jellyfin2Samsung.Helpers
                 Directory.CreateDirectory(tempDir);
 
                 ZipFile.ExtractToDirectory(packagePath, tempDir);
+
+                if (AppSettings.Default.UseServerScripts)
+                {
+                    await AddOrUpdateCspAsync(tempDir, AppSettings.Default.JellyfinIP);
+                    await PatchServerSideIndexHtmlAsync(tempDir, AppSettings.Default.JellyfinIP);
+                }
 
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
                     AppSettings.Default.ConfigUpdateMode.Contains("All"))
@@ -164,7 +165,6 @@ namespace Jellyfin2Samsung.Helpers
                     File.Delete(tempPackage);
             }
         }
-
         public static async Task UpdateMultiServerConfig(string tempDirectory)
         {
             string configPath = Path.Combine(tempDirectory, "www", "config.json");
@@ -309,6 +309,80 @@ namespace Jellyfin2Samsung.Helpers
                 Debug.WriteLine($"General error updating user configurations: {ex.Message}");
             }
         }
+        public async Task<bool> AddOrUpdateCspAsync(string tempDirectory, string serverUrl)
+        {
+            string configPath = Path.Combine(tempDirectory, "config.xml");
+            if (!File.Exists(configPath))
+                return false;
 
+            XDocument doc = XDocument.Load(configPath);
+            XNamespace tizen = "http://tizen.org/ns/widgets";
+
+            string csp =
+                "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+                "connect-src * ws: wss:; " +
+                "img-src * data:; " +
+                "style-src * 'unsafe-inline'; " +
+                "media-src *; child-src *; frame-src *;";
+
+            var cspElement = doc.Root.Elements(tizen + "content-security-policy").FirstOrDefault();
+
+            if (cspElement == null)
+            {
+                doc.Root.Add(new XElement(tizen + "content-security-policy", csp));
+            }
+            else
+            {
+                cspElement.Value = csp;
+            }
+
+            doc.Save(configPath);
+            return true;
+        }
+        public async Task<bool> PatchServerSideIndexHtmlAsync(string tempDirectory, string serverUrl)
+        {
+            string indexPath = Path.Combine(tempDirectory, "www", "index.html");
+            if (!File.Exists(indexPath))
+                return false;
+
+            string html = await File.ReadAllTextAsync(indexPath);
+
+            // Replace all JS bundle references
+            html = Regex.Replace(html,
+                @"src=\""(?:[^""]+)\.bundle\.js[^\\""]*\""",
+                m =>
+                {
+                    string file = Path.GetFileName(m.Value.Split('?')[0]
+                        .Replace("src=\"", "").Replace("\"", ""));
+                    return $"src=\"{serverUrl}/web/{file}\"";
+                },
+                RegexOptions.IgnoreCase);
+
+            // Replace all CSS references
+            html = Regex.Replace(html,
+                @"href=\""(?:[^""]+)\.css[^\\""]*\""",
+                m =>
+                {
+                    string file = Path.GetFileName(m.Value.Split('?')[0]
+                        .Replace("href=\"", "").Replace("\"", ""));
+                    return $"href=\"{serverUrl}/web/{file}\"";
+                },
+                RegexOptions.IgnoreCase);
+
+            // Inject CSP if not present
+            if (!html.Contains("Content-Security-Policy"))
+            {
+                string csp =
+                    "<meta http-equiv=\"Content-Security-Policy\" " +
+                    "content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+                    "connect-src * ws: wss:; img-src * data:; " +
+                    "style-src * 'unsafe-inline'; media-src *; child-src *; frame-src *;\">";
+
+                html = html.Replace("<head>", "<head>\n" + csp + "\n");
+            }
+
+            await File.WriteAllTextAsync(indexPath, html);
+            return true;
+        }
     }
 }

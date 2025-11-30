@@ -150,5 +150,6 @@
   "deleteExistingSuccess": "Bestaande versie succesvol verwijderd...",
   "deleteExistingNotAllowed": "Verwijderen niet toegestaan. Schakel de instelling in zodat de tool de bestaande app kan verwijderen...",
   "lblLocalIP": "Lokaal IP-adres:",
-  "lblTryOverwrite": "Bestaande versie overschrijven"
+  "lblTryOverwrite": "Bestaande versie overschrijven",
+  "lblUseServerScripts": "Gebruik serverscripts"
 }

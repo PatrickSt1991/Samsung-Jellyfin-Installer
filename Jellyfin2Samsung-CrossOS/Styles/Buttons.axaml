@@ -1,5 +1,9 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<Style Selector="ToggleSwitch">
+		<Setter Property="OnContent" Value="" />
+		<Setter Property="OffContent" Value="" />
+	</Style>
 	<Style Selector="Button.primary">
 		<Setter Property="Background" Value="#2C3E50"/>
 		<Setter Property="Foreground" Value="White"/>
