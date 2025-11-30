@@ -347,42 +347,48 @@ namespace Jellyfin2Samsung.Helpers
 
             string html = await File.ReadAllTextAsync(indexPath);
 
-            // Replace all JS bundle references
+            html = Regex.Replace(html,
+                @"<meta[^>]*http-equiv=[""']Content-Security-Policy[""'][^>]*>",
+                "",
+                RegexOptions.IgnoreCase);
+
             html = Regex.Replace(html,
                 @"src=\""(?:[^""]+)\.bundle\.js[^\\""]*\""",
                 m =>
                 {
-                    string file = Path.GetFileName(m.Value.Split('?')[0]
-                        .Replace("src=\"", "").Replace("\"", ""));
+                    string file = Path.GetFileName(
+                        m.Value.Split('?')[0]
+                            .Replace("src=\"", "")
+                            .Replace("\"", "")
+                    );
                     return $"src=\"{serverUrl}/web/{file}\"";
                 },
                 RegexOptions.IgnoreCase);
 
-            // Replace all CSS references
             html = Regex.Replace(html,
                 @"href=\""(?:[^""]+)\.css[^\\""]*\""",
                 m =>
                 {
-                    string file = Path.GetFileName(m.Value.Split('?')[0]
-                        .Replace("href=\"", "").Replace("\"", ""));
+                    string file = Path.GetFileName(
+                        m.Value.Split('?')[0]
+                            .Replace("href=\"", "")
+                            .Replace("\"", "")
+                    );
                     return $"href=\"{serverUrl}/web/{file}\"";
                 },
                 RegexOptions.IgnoreCase);
 
-            // Inject CSP if not present
-            if (!html.Contains("Content-Security-Policy"))
-            {
-                string csp =
-                    "<meta http-equiv=\"Content-Security-Policy\" " +
-                    "content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-                    "connect-src * ws: wss:; img-src * data:; " +
-                    "style-src * 'unsafe-inline'; media-src *; child-src *; frame-src *;\">";
+            string newCsp =
+                "<meta http-equiv=\"Content-Security-Policy\" " +
+                "content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+                "connect-src * ws: wss:; img-src * data:; " +
+                "style-src * 'unsafe-inline'; media-src *; child-src *; frame-src *;\">";
 
-                html = html.Replace("<head>", "<head>\n" + csp + "\n");
-            }
+            html = html.Replace("<head>", "<head>\n" + newCsp + "\n");
 
             await File.WriteAllTextAsync(indexPath, html);
             return true;
         }
+
     }
 }
