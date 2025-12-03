@@ -419,6 +419,13 @@ namespace Jellyfin2Samsung.Services
                 if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install completed"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
+
+                    if (_appSettings.OpenAfterInstall)
+                    {
+                        string tvAppId = await GetInstalledAppId(tvIpAddress, "Jellyfin");
+                        await _processHelper.RunCommandAsync(TizenSdbPath, $"launch {tvIpAddress} {tvAppId}");
+                    }
+                        
                     return InstallResult.SuccessResult();
                 }
 
@@ -461,14 +468,12 @@ namespace Jellyfin2Samsung.Services
             var match = Regex.Match(output.Output, @"platform_version:\s*([\d.]+)");
             return match.Success ? match.Groups[1].Value.Trim() : "";
         }
-
         private async Task<string> FetchSdkPathAsync(string tvIpAddress)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"capability {tvIpAddress}"); ;
             var match = Regex.Match(output.Output, @"sdk_toolpath:\s*([^\r\n]+)");
             return match.Success ? match.Groups[1].Value.Trim() : "/opt/usr/apps/tmp";
         }
-
         private async Task<string> GetTvDuidAsync(string tvIpAddress)
         {
             var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"duid {tvIpAddress}");
@@ -514,6 +519,28 @@ namespace Jellyfin2Samsung.Services
                 return (true, TVAppId);
             else
                 return (false, string.Empty);
+        }
+        private async Task<string> GetInstalledAppId(string tvIpAddress, string appTitle)
+        {
+            var output = await _processHelper.RunCommandAsync(TizenSdbPath!, $"apps {tvIpAddress}");
+            string appsOutput = output.Output ?? string.Empty;
+
+            var blockRegex = new Regex(
+                $@"(^\s*-+app_title\s*=\s*{Regex.Escape(appTitle)}.*?)(?=^\s*-+app_title|\Z)",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline);
+
+            var blockMatch = blockRegex.Match(appsOutput);
+            if (!blockMatch.Success)
+                return string.Empty;
+
+            string block = blockMatch.Value;
+
+            var appIdRegex = new Regex(@"app_tizen_id\s*=\s*([A-Za-z0-9._-]+)", RegexOptions.IgnoreCase);
+            var appIdMatch = appIdRegex.Match(block);
+
+            return appIdMatch.Success
+                ? appIdMatch.Groups[1].Value.Trim()
+                : string.Empty;
         }
 
         private async Task<ProcessResult> ResignPackageAsync(string packagePath, string authorP12, string distributorP12, string certPass)

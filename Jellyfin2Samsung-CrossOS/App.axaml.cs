@@ -11,7 +11,6 @@ using Jellyfin2Samsung.ViewModels;
 using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 
@@ -72,12 +71,15 @@ namespace Jellyfin2Samsung
             services.AddSingleton<CertificateHelper>();
             services.AddSingleton<FileHelper>();
             services.AddSingleton<ProcessHelper>();
+            services.AddSingleton<TvLogService>();
 
             // ViewModels
             services.AddSingleton<MainWindowViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddTransient<InstallationCompleteViewModel>();
             services.AddTransient<InstallingWindowViewModel>();
+            services.AddTransient<TvLogsViewModel>();
+            services.AddTransient<TvLogsWindow>();
 
             // JellyfinConfigViewModel requires JellyfinHelper
             services.AddTransient(provider =>

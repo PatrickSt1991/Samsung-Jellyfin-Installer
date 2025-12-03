@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
+		xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         mc:Ignorable="d"
         x:Class="Jellyfin2Samsung.JellyfinConfigView"
         x:DataType="viewModels:JellyfinConfigViewModel"
@@ -110,6 +111,28 @@
 										   Text="{Binding SelectedJellyfinPort, Mode=TwoWay}"
 										   Classes="clean" />
 
+							</Grid>
+						</Grid>
+
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding LblEnableDevLogs}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+								<Button Grid.Column="0"
+										Classes="secondary"
+										HorizontalAlignment="Stretch"
+										Command="{Binding OpenDebugWindowCommand}"
+										IsEnabled="{Binding CanOpenDebugWindow}">
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<fa:SymbolIcon Symbol="Document" Width="16" Height="16" />
+										<TextBlock Text="{Binding lblOpenDebugWindow}" />
+									</StackPanel>
+								</Button>
+								<ToggleSwitch Grid.Column="1"
+											  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
+											  IsEnabled="{Binding ServerIpSet}"/>
 							</Grid>
 						</Grid>
 

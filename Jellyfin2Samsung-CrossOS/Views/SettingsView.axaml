@@ -9,7 +9,7 @@
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="700"
+        Height="750"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -137,6 +137,15 @@
 										  IsChecked="{Binding TryOverwrite}"
 										  VerticalAlignment="Center"/>
 						</Grid>
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding lblLaunchOnInstall}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding OpenAfterInstall}"
+										  VerticalAlignment="Center"/>
+						</Grid>
 
 						<!-- Remember IP -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -197,24 +206,17 @@
 					<!-- Separator -->
 					<Border Height="1" Background="#E8E8E8" Margin="0,8"/>
 
-					<Grid ColumnDefinitions="170,*" ColumnSpacing="12">
-						<TextBlock Grid.Column="0"
-								   Text="{Binding lblModifyConfig}"
-								   Classes="label"
-								   VerticalAlignment="Center"/>
-
+					<Grid ColumnDefinitions="Auto" ColumnSpacing="12">
 						<Button Grid.Column="1"
 								Classes="primary"
 								Command="{Binding ModifyConfigCommand}"
 								HorizontalAlignment="Right">
 							<StackPanel Orientation="Horizontal" Spacing="6">
 								<fa:SymbolIcon Symbol="Settings" Width="16" Height="16"/>
-								<TextBlock Text="{Binding lblOpenConfig}"/>
+								<TextBlock Text="{Binding lblModifyConfig}"/>
 							</StackPanel>
 						</Button>
 					</Grid>
-
-
 				</StackPanel>
 			</ScrollViewer>
 		</Grid>

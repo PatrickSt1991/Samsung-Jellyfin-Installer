@@ -116,13 +116,15 @@ namespace Jellyfin2Samsung.Helpers
 
             try
             {
-                var baseDir = Path.GetDirectoryName(packagePath)
-                    ?? throw new InvalidOperationException("Invalid package path");
+                var baseDir = Path.GetDirectoryName(packagePath) ?? throw new InvalidOperationException("Invalid package path");
 
                 tempDir = Path.Combine(baseDir, $"JellyTemp_{Guid.NewGuid():N}");
                 Directory.CreateDirectory(tempDir);
 
                 ZipFile.ExtractToDirectory(packagePath, tempDir);
+
+                if (AppSettings.Default.EnableDevLogs)
+                    await InjectDebugLoggerAsync(tempDir, AppSettings.Default.LocalIp, 5001);
 
                 if (AppSettings.Default.UseServerScripts)
                 {
@@ -130,21 +132,15 @@ namespace Jellyfin2Samsung.Helpers
                     await PatchServerSideIndexHtmlAsync(tempDir, AppSettings.Default.JellyfinIP);
                 }
 
-                if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
-                    AppSettings.Default.ConfigUpdateMode.Contains("All"))
-                {
+                if (AppSettings.Default.ConfigUpdateMode.Contains("Server") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
                     await UpdateMultiServerConfig(tempDir);
-                }
 
-                if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||
-                    AppSettings.Default.ConfigUpdateMode.Contains("All"))
-                {
+                if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
                     await InjectUserSettingsScriptAsync(tempDir, userIds);
-                }
 
                 tempPackage = Path.Combine(baseDir, $"{Path.GetFileNameWithoutExtension(packagePath)}_mod.wgt");
                 if (File.Exists(tempPackage)) File.Delete(tempPackage);
-                ZipFile.CreateFromDirectory(tempDir, tempPackage);
+                    ZipFile.CreateFromDirectory(tempDir, tempPackage);
 
                 File.Delete(packagePath);
                 File.Move(tempPackage, packagePath);
@@ -246,6 +242,88 @@ namespace Jellyfin2Samsung.Helpers
             htmlContent = htmlContent.Replace("<head>", "<head>" + scriptBuilder.ToString());
             await File.WriteAllTextAsync(indexPath, htmlContent);
         }
+        public static async Task InjectDebugLoggerAsync(string tempDirectory, string devPcIp, int port)
+        {
+            string indexPath = Path.Combine(tempDirectory, "www", "index.html");
+
+            if (!File.Exists(indexPath))
+                return;
+
+            string html = await File.ReadAllTextAsync(indexPath);
+
+            // Remove previous injection if any
+            html = Regex.Replace(
+                html,
+                @"<!--LOG-INJECT-START-->[\s\S]*?<!--LOG-INJECT-END-->",
+                "",
+                RegexOptions.Multiline);
+
+            // Generate script
+            string script = $@"
+<!--LOG-INJECT-START-->
+<script>
+(function() {{
+    const logServer = ""ws://{devPcIp}:{port}"";
+    let ws = null;
+
+    function connectLogger() {{
+        try {{
+            ws = new WebSocket(logServer);
+
+            ws.onopen = () => {{
+                console.log(""[Logger] Connected"");
+                send(""Logger connected"");
+            }};
+
+            ws.onclose = () => {{
+                console.log(""[Logger] Closed, retrying..."");
+                setTimeout(connectLogger, 5000);
+            }};
+
+            ws.onerror = (e) => {{
+                console.log(""[Logger] Error"", e);
+            }};
+        }} catch(err) {{
+            console.log(""[Logger] Exception"", err);
+        }}
+    }}
+
+    function send(msg) {{
+        if (ws && ws.readyState === WebSocket.OPEN) {{
+            ws.send(JSON.stringify({{
+                time: Date.now(),
+                message: msg
+            }}));
+        }}
+    }}
+
+    const origLog = console.log;
+    console.log = function(...args) {{
+        origLog.apply(console, args);
+        send(args.join("" ""));
+    }};
+
+    const origError = console.error;
+    console.error = function(...args) {{
+        origError.apply(console, args);
+        send(""[ERROR] "" + args.join("" ""));
+    }};
+
+    connectLogger();
+}})();
+</script>
+<!--LOG-INJECT-END-->
+";
+
+
+            // Insert before </body> if exists, otherwise append
+            if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
+                html = html.Replace("</body>", script + "\n</body>");
+            else
+                html += script;
+
+            await File.WriteAllTextAsync(indexPath, html);
+        }
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
         {
             if (userIds == null || userIds.Length == 0)
@@ -318,22 +396,83 @@ namespace Jellyfin2Samsung.Helpers
             XDocument doc = XDocument.Load(configPath);
             XNamespace tizen = "http://tizen.org/ns/widgets";
 
+            // 1. Update CSP
             string csp =
-                "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-                "connect-src * ws: wss:; " +
-                "img-src * data:; " +
-                "style-src * 'unsafe-inline'; " +
-                "media-src *; child-src *; frame-src *;";
+                "default-src * file: data: blob: 'unsafe-inline' 'unsafe-eval'; " +
+                "script-src * file: data: blob: 'unsafe-inline' 'unsafe-eval'; " +
+                "connect-src * file: data: blob: ws: wss: http: https:; " +
+                "img-src * file: data: blob:; " +
+                "style-src * file: data: blob: 'unsafe-inline'; " +
+                "font-src * file: data: blob:; " +
+                "media-src * file: data: blob:; " +
+                "frame-src *; " +
+                "worker-src * blob:; " +
+                "object-src *;";
 
             var cspElement = doc.Root.Elements(tizen + "content-security-policy").FirstOrDefault();
 
             if (cspElement == null)
-            {
                 doc.Root.Add(new XElement(tizen + "content-security-policy", csp));
-            }
             else
-            {
                 cspElement.Value = csp;
+
+            // 2. Add internet privileges
+            var privileges = doc.Root.Elements(tizen + "privilege")
+                .Select(x => x.Attribute("name")?.Value)
+                .ToList();
+
+            var requiredPrivileges = new List<string>
+    {
+        "http://tizen.org/privilege/internet",
+        "http://tizen.org/privilege/network.get",
+        "http://tizen.org/privilege/tv.inputdevice",
+        "http://developer.samsung.com/privilege/productinfo"
+    };
+
+            foreach (var priv in requiredPrivileges)
+            {
+                if (!privileges.Contains(priv))
+                {
+                    doc.Root.Add(new XElement(tizen + "privilege", new XAttribute("name", priv)));
+                }
+            }
+
+            // 3. Update tizen:setting with ALL development-friendly attributes
+            var settingElement = doc.Root.Elements(tizen + "setting").FirstOrDefault();
+
+            if (settingElement == null)
+            {
+                // Create new with all attributes
+                settingElement = new XElement(tizen + "setting");
+                doc.Root.Add(settingElement);
+            }
+
+            // Define all settings we want for development
+            var devSettings = new Dictionary<string, string>
+            {
+                { "screen-orientation", "none" },
+                { "context-menu", "enable" },
+                { "background-support", "enable" },
+                { "encryption", "disable" },
+                { "install-location", "auto" },
+                { "hwkey-event", "enable" },
+                { "allow-untrusted-cert", "enable" },
+                { "external-link-policy", "allow" }, // Allow external links
+                { "boot-time-app", "disable" },
+                { "launch-mode", "single" }
+            };
+
+            foreach (var setting in devSettings)
+            {
+                var attr = settingElement.Attribute(setting.Key);
+                if (attr != null)
+                {
+                    attr.Value = setting.Value;
+                }
+                else
+                {
+                    settingElement.Add(new XAttribute(setting.Key, setting.Value));
+                }
             }
 
             doc.Save(configPath);
@@ -347,48 +486,68 @@ namespace Jellyfin2Samsung.Helpers
 
             string html = await File.ReadAllTextAsync(indexPath);
 
+            // Remove ANY existing CSP meta tag
             html = Regex.Replace(html,
                 @"<meta[^>]*http-equiv=[""']Content-Security-Policy[""'][^>]*>",
                 "",
                 RegexOptions.IgnoreCase);
 
+            // Extract base URL without trailing slash
+            string baseUrl = serverUrl.TrimEnd('/');
+
+            // Replace ALL script/src attributes with your server URL
+            // This handles both local paths and already-http paths
             html = Regex.Replace(html,
-                @"src=\""(?:[^""]+)\.bundle\.js[^\\""]*\""",
-                m =>
-                {
-                    string file = Path.GetFileName(
-                        m.Value.Split('?')[0]
-                            .Replace("src=\"", "")
-                            .Replace("\"", "")
-                    );
-                    return $"src=\"{serverUrl}/web/{file}\"";
-                },
+                @"(src=[""'])(?!http|\/\/|\$WEBAPIS|data:|blob:)([^""']+\.(?:js|bundle\.js)[^""']*)([""'])",
+                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
                 RegexOptions.IgnoreCase);
 
+            // Replace ALL link/href attributes for CSS
             html = Regex.Replace(html,
-                @"href=\""(?:[^""]+)\.css[^\\""]*\""",
-                m =>
-                {
-                    string file = Path.GetFileName(
-                        m.Value.Split('?')[0]
-                            .Replace("href=\"", "")
-                            .Replace("\"", "")
-                    );
-                    return $"href=\"{serverUrl}/web/{file}\"";
-                },
+                @"(href=[""'])(?!http|\/\/|\$WEBAPIS|data:|blob:)([^""']+\.css[^""']*)([""'])",
+                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
                 RegexOptions.IgnoreCase);
 
-            string newCsp =
-                "<meta http-equiv=\"Content-Security-Policy\" " +
-                "content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-                "connect-src * ws: wss:; img-src * data:; " +
-                "style-src * 'unsafe-inline'; media-src *; child-src *; frame-src *;\">";
+            // Also replace manifest, icons, etc. if they're relative
+            html = Regex.Replace(html,
+                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.(?:json|png|ico|svg)[^""']*)([""'])",
+                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
+                RegexOptions.IgnoreCase);
 
-            html = html.Replace("<head>", "<head>\n" + newCsp + "\n");
+            // Add maximally permissive CSP meta tag
+            string newCsp = @"
+<meta http-equiv=""Content-Security-Policy"" 
+      content=""default-src * file: data: blob: 'unsafe-inline' 'unsafe-eval';
+               script-src * file: data: blob: 'unsafe-inline' 'unsafe-eval';
+               connect-src * file: data: blob: ws: wss: http: https:;
+               img-src * file: data: blob:;
+               style-src * file: data: blob: 'unsafe-inline';
+               font-src * file: data: blob:;
+               media-src * file: data: blob:;
+               frame-src *;
+               worker-src * blob:;
+               object-src *;"">
+";
+
+            // Insert after <head>
+            html = html.Replace("<head>", "<head>\n" + newCsp);
+
+            // Remove mobile-specific crap (optional but cleaner)
+            html = Regex.Replace(html,
+                @"<link[^>]*apple-touch-startup-image[^>]*>",
+                "",
+                RegexOptions.IgnoreCase);
+            html = Regex.Replace(html,
+                @"<meta[^>]*apple-mobile-web-app-capable[^>]*>",
+                "",
+                RegexOptions.IgnoreCase);
+            html = Regex.Replace(html,
+                @"<meta[^>]*mobile-web-app-capable[^>]*>",
+                "",
+                RegexOptions.IgnoreCase);
 
             await File.WriteAllTextAsync(indexPath, html);
             return true;
         }
-
     }
 }

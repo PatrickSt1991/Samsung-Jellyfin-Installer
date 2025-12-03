@@ -1,7 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.Services;
+using Jellyfin2Samsung.Views;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -97,6 +101,12 @@ namespace Jellyfin2Samsung.ViewModels
         private bool serverIpSet = false;
 
         [ObservableProperty]
+        private bool enableDevLogs = false;
+        
+        [ObservableProperty]
+        private bool canOpenDebugWindow;
+        
+        [ObservableProperty]
         private ObservableCollection<JellyfinAuth> availableJellyfinUsers = new();
 
         [ObservableProperty]
@@ -164,6 +174,9 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblUserSettings => _localizationService.GetString("lblUserSettings");
         public string LblBrowserSettings => _localizationService.GetString("lblBrowserSettings");
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
+        public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
+        public string lblOpenDebugWindow => _localizationService.GetString("lblOpenDebugWindow");
+        public string TvIp => AppSettings.Default.TvIp;
 
         public JellyfinConfigViewModel(
             JellyfinHelper jellyfinHelper,
@@ -212,6 +225,8 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblUserSettings));
             OnPropertyChanged(nameof(LblBrowserSettings));
             OnPropertyChanged(nameof(LblUseServerScripts));
+            OnPropertyChanged(nameof(LblEnableDevLogs));
+            OnPropertyChanged(nameof(lblOpenDebugWindow));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -362,6 +377,15 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnEnableDevLogsChanged(bool value)
+        {
+            AppSettings.Default.EnableDevLogs = value;
+            AppSettings.Default.Save();
+
+            CanOpenDebugWindow = (!string.IsNullOrWhiteSpace(TvIp)) && value;
+            OpenDebugWindowCommand.NotifyCanExecuteChanged();
+        }
+
         partial void OnSelectedJellyfinUserChanged(JellyfinAuth? value)
         {
             if (value != null)
@@ -370,7 +394,31 @@ namespace Jellyfin2Samsung.ViewModels
                 AppSettings.Default.Save();
             }
         }
+        [RelayCommand(CanExecute = nameof(CanOpenDebugWindow))]
+        private void OpenDebugWindow()
+        {
+            if (string.IsNullOrWhiteSpace(TvIp))
+                return;
 
+            // create VM with IP from settings
+            var logService = App.Services.GetRequiredService<TvLogService>();
+            var vm = new TvLogsViewModel(logService, TvIp, _localizationService);
+
+            var window = new TvLogsWindow
+            {
+                DataContext = vm
+            };
+
+            if (Avalonia.Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                window.Show(desktop.MainWindow);
+            }
+            else
+            {
+                window.Show();
+            }
+        }
         private async void InitializeAsyncSettings()
         {
             var jellyfinIP = AppSettings.Default.JellyfinIP;
@@ -411,6 +459,7 @@ namespace Jellyfin2Samsung.ViewModels
             PlayDefaultAudioTrack = AppSettings.Default.PlayDefaultAudioTrack;
             UserAutoLogin = AppSettings.Default.UserAutoLogin;
             UseServerScripts = AppSettings.Default.UseServerScripts;
+            EnableDevLogs = AppSettings.Default.EnableDevLogs;
         }
 
         private void UpdateJellyfinAddress()
@@ -457,6 +506,13 @@ namespace Jellyfin2Samsung.ViewModels
 
             if (SelectedJellyfinUser == null && AvailableJellyfinUsers.Count == 1)
                 SelectedJellyfinUser = AvailableJellyfinUsers.First();
+        }
+        public void OnTvIpChanged()
+        {
+            OnPropertyChanged(nameof(TvIp));
+
+            CanOpenDebugWindow = (!string.IsNullOrWhiteSpace(TvIp)) && EnableDevLogs;
+            OpenDebugWindowCommand.NotifyCanExecuteChanged();
         }
         public void Dispose()
         {

@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.Services;
+using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
@@ -15,7 +17,6 @@ namespace Jellyfin2Samsung.ViewModels
 {
     public partial class SettingsViewModel : ViewModelBase
     {
-        private readonly ITizenInstallerService _tizenService;
         private readonly CertificateHelper _certificateHelper;
         private readonly FileHelper _fileHelper;
         private readonly ILocalizationService _localizationService;
@@ -57,6 +58,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool showSdbWindow;
 
+        [ObservableProperty]
+        private bool openAfterInstall;
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
 
@@ -74,15 +78,14 @@ namespace Jellyfin2Samsung.ViewModels
         public string lblSDB => _localizationService.GetString("lblSDB");
         public string lblLocalIP => _localizationService.GetString("lblLocalIP");
         public string lblTryOverwrite => _localizationService.GetString("lblTryOverwrite");
+        public string lblLaunchOnInstall => _localizationService.GetString("lblLaunchOnInstall");
 
         public SettingsViewModel(
-            ITizenInstallerService tizenService,
             CertificateHelper certificateHelper,
             FileHelper fileHelper,
             ILocalizationService localizationService,
             INetworkService networkService)
         {
-            _tizenService = tizenService;
             _certificateHelper = certificateHelper;
             _fileHelper = fileHelper;
             _localizationService = localizationService;
@@ -228,6 +231,11 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.ShowSdbWindow = value;
             AppSettings.Default.Save();
         }
+        partial void OnOpenAfterInstallChanged(bool value)
+        {
+            AppSettings.Default.OpenAfterInstall = value;
+            AppSettings.Default.Save();
+        }
 
         [RelayCommand]
         private void ModifyConfig()
@@ -239,6 +247,7 @@ namespace Jellyfin2Samsung.ViewModels
                 configWindow.Show();
             }
         }
+
 
         [RelayCommand]
         private async Task BrowseWgtAsync()
@@ -272,6 +281,7 @@ namespace Jellyfin2Samsung.ViewModels
             ShowSdbWindow = AppSettings.Default.ShowSdbWindow;
             LocalIP = AppSettings.Default.LocalIp;
             TryOverwrite = AppSettings.Default.TryOverwrite;
+            OpenAfterInstall = AppSettings.Default.OpenAfterInstall;
         }
 
         private static string GetLanguageDisplayName(string code)
@@ -318,7 +328,6 @@ namespace Jellyfin2Samsung.ViewModels
 
                 AppSettings.Default.ChosenCertificates = selectedCert;
             });
-
         }
         public void Dispose()
         {

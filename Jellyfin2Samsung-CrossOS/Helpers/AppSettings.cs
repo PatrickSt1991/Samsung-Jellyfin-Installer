@@ -25,6 +25,8 @@ namespace Jellyfin2Samsung.Helpers
         public string CustomWgtPath { get; set; } = "";
         [JsonIgnore]
         public string LocalIp { get; set; } = "";
+        [JsonIgnore]
+        public string TvIp { get; set; } = "";
         public static AppSettings Default => _instance ??= Load();
 
         // ----- User-scoped settings -----
@@ -63,6 +65,8 @@ namespace Jellyfin2Samsung.Helpers
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
         public bool TryOverwrite { get; set; } = true;
         public bool UseServerScripts { get; set; } = false;
+        public bool OpenAfterInstall { get; set; } = false;
+        public bool EnableDevLogs { get; set; } = false;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";

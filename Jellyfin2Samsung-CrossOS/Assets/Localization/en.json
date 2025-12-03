@@ -151,5 +151,11 @@
   "deleteExistingNotAllowed": "Deletion not allowed. Enable the setting to allow the tool to remove the existing app...",
   "lblLocalIP": "Local IP:",
   "lblTryOverwrite": "Overwrite existing version",
-  "lblUseServerScripts": "Use server scripts"
+  "lblUseServerScripts": "Use server scripts",
+  "lblEnableDevLogs": "Enable TV Debug",
+  "lblOpenDebugWindow": "Open TV Log",
+  "lblStartLog": "Start",
+  "lblStopLog": "Stop",
+  "lblSaveLogs": "Save",
+  "lblLaunchOnInstall": "Open after installation"
 }
