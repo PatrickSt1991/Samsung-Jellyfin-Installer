@@ -251,36 +251,51 @@ namespace Jellyfin2Samsung.Helpers
 
             string html = await File.ReadAllTextAsync(indexPath);
 
-            // Remove previous injection if any
+            // Remove previous injection
             html = Regex.Replace(
                 html,
                 @"<!--LOG-INJECT-START-->[\s\S]*?<!--LOG-INJECT-END-->",
                 "",
                 RegexOptions.Multiline);
 
-            // Generate script
             string script = $@"
 <!--LOG-INJECT-START-->
 <script>
 (function() {{
     const logServer = ""ws://{devPcIp}:{port}"";
-    let ws = null;
+    window.ws = null;
+
+    function send(msg) {{
+        try {{
+            if (window.ws && window.ws.readyState === WebSocket.OPEN) {{
+                window.ws.send(JSON.stringify({{
+                    time: Date.now(),
+                    message: msg
+                }}));
+            }}
+        }} catch(e) {{
+            // ignore
+        }}
+    }}
 
     function connectLogger() {{
         try {{
-            ws = new WebSocket(logServer);
+            window.ws = new WebSocket(logServer);
 
-            ws.onopen = () => {{
+            window.ws.onopen = () => {{
                 console.log(""[Logger] Connected"");
                 send(""Logger connected"");
+                send(""==== TV DEBUG START ===="");
+                send(""Location: "" + location.href);
+                send(""BaseURI: "" + document.baseURI);
             }};
 
-            ws.onclose = () => {{
+            window.ws.onclose = () => {{
                 console.log(""[Logger] Closed, retrying..."");
                 setTimeout(connectLogger, 5000);
             }};
 
-            ws.onerror = (e) => {{
+            window.ws.onerror = (e) => {{
                 console.log(""[Logger] Error"", e);
             }};
         }} catch(err) {{
@@ -288,19 +303,11 @@ namespace Jellyfin2Samsung.Helpers
         }}
     }}
 
-    function send(msg) {{
-        if (ws && ws.readyState === WebSocket.OPEN) {{
-            ws.send(JSON.stringify({{
-                time: Date.now(),
-                message: msg
-            }}));
-        }}
-    }}
-
+    // ---- OVERRIDE CONSOLE ----
     const origLog = console.log;
     console.log = function(...args) {{
         origLog.apply(console, args);
-        send(args.join("" ""));
+        send(""[LOG] "" + args.join("" ""));
     }};
 
     const origError = console.error;
@@ -309,14 +316,66 @@ namespace Jellyfin2Samsung.Helpers
         send(""[ERROR] "" + args.join("" ""));
     }};
 
+    // ---- UNCAUGHT ERRORS ----
+    window.onerror = function(msg, src, line, col, err) {{
+        send('[UNCAUGHT] ' + msg + ' @ ' + src + ':' + line);
+    }};
+
+    window.addEventListener(""unhandledrejection"", function(e) {{
+        send(""[PROMISE REJECTION] "" + (e.reason?.message || e.reason));
+    }});
+
+    // ---- RESOURCE LOAD FAILURES ----
+    window.addEventListener(""error"", function(e) {{
+        let t = e.target || {{}};
+        if (t.src || t.href) {{
+            send(""[RESOURCE ERROR] "" + (t.src || t.href));
+        }} else {{
+            send(""[ERROR EVENT] "" + e.message);
+        }}
+    }}, true);
+
+    // ---- FETCH DEBUG ----
+    const origFetch = window.fetch;
+    window.fetch = async function(...args) {{
+        send(""[FETCH] "" + args[0]);
+        try {{
+            const res = await origFetch.apply(this, args);
+            send(""[FETCH RESPONSE] "" + args[0] + "" -> "" + res.status);
+            return res;
+        }} catch(err) {{
+            send(""[FETCH ERROR] "" + args[0] + "" -> "" + err);
+            throw err;
+        }}
+    }};
+
+    // ---- XHR DEBUG ----
+    const origXHROpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url) {{
+        send(""[XHR] "" + method + "" "" + url);
+        return origXHROpen.apply(this, arguments);
+    }};
+
+    // ---- DOM CONTENT LOGGING ----
+    document.addEventListener(""DOMContentLoaded"", () => {{
+        send(""==== DOMContentLoaded ===="");
+
+        document.querySelectorAll('script[src]').forEach(s =>
+            send(""[SCRIPT SRC] "" + s.src)
+        );
+
+        document.querySelectorAll('link[href]').forEach(l =>
+            send(""[LINK HREF] "" + l.href)
+        );
+    }});
+
     connectLogger();
-}})();
+})();
 </script>
 <!--LOG-INJECT-END-->
 ";
 
-
-            // Insert before </body> if exists, otherwise append
+            // Insert just before </body>
             if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
                 html = html.Replace("</body>", script + "\n</body>");
             else
@@ -324,6 +383,7 @@ namespace Jellyfin2Samsung.Helpers
 
             await File.WriteAllTextAsync(indexPath, html);
         }
+
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
         {
             if (userIds == null || userIds.Length == 0)
@@ -510,7 +570,7 @@ namespace Jellyfin2Samsung.Helpers
 
             // Also replace manifest, icons, etc. if they're relative
             html = Regex.Replace(html,
-                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.(?:json|png|ico|svg)[^""']*)([""'])",
+                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.(?:png|ico|svg)[^""']*)([""'])",
                 m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
                 RegexOptions.IgnoreCase);
 
