@@ -258,122 +258,124 @@ namespace Jellyfin2Samsung.Helpers
                 "",
                 RegexOptions.Multiline);
 
-            string script = $@"
+            string scriptTemplate = @"
 <!--LOG-INJECT-START-->
 <script>
-(function() {{
-    const logServer = ""ws://{devPcIp}:{port}"";
+(function() {
+    const logServer = ""ws://{0}:{1}"";
     window.ws = null;
 
-    function send(msg) {{
-        try {{
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {{
-                window.ws.send(JSON.stringify({{
+    function send(msg) {
+        try {
+            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+                window.ws.send(JSON.stringify({
                     time: Date.now(),
                     message: msg
-                }}));
-            }}
-        }} catch(e) {{
+                }));
+            }
+        } catch(e) {
             // ignore
-        }}
-    }}
+        }
+    }
 
-    function connectLogger() {{
-        try {{
+    function connectLogger() {
+        try {
             window.ws = new WebSocket(logServer);
 
-            window.ws.onopen = () => {{
+            window.ws.onopen = () => {
                 console.log(""[Logger] Connected"");
                 send(""Logger connected"");
                 send(""==== TV DEBUG START ===="");
                 send(""Location: "" + location.href);
                 send(""BaseURI: "" + document.baseURI);
-            }};
+            };
 
-            window.ws.onclose = () => {{
+            window.ws.onclose = () => {
                 console.log(""[Logger] Closed, retrying..."");
                 setTimeout(connectLogger, 5000);
-            }};
+            };
 
-            window.ws.onerror = (e) => {{
+            window.ws.onerror = (e) => {
                 console.log(""[Logger] Error"", e);
-            }};
-        }} catch(err) {{
+            };
+        } catch(err) {
             console.log(""[Logger] Exception"", err);
-        }}
-    }}
+        }
+    }
 
     // ---- OVERRIDE CONSOLE ----
     const origLog = console.log;
-    console.log = function(...args) {{
+    console.log = function(...args) {
         origLog.apply(console, args);
         send(""[LOG] "" + args.join("" ""));
-    }};
+    };
 
     const origError = console.error;
-    console.error = function(...args) {{
+    console.error = function(...args) {
         origError.apply(console, args);
         send(""[ERROR] "" + args.join("" ""));
-    }};
+    };
 
     // ---- UNCAUGHT ERRORS ----
-    window.onerror = function(msg, src, line, col, err) {{
+    window.onerror = function(msg, src, line, col, err) {
         send('[UNCAUGHT] ' + msg + ' @ ' + src + ':' + line);
-    }};
+    };
 
-    window.addEventListener(""unhandledrejection"", function(e) {{
-        send(""[PROMISE REJECTION] "" + (e.reason?.message || e.reason));
-    }});
+    window.addEventListener('unhandledrejection', function(e) {
+        send('[PROMISE REJECTION] ' + (e.reason?.message || e.reason));
+    });
 
     // ---- RESOURCE LOAD FAILURES ----
-    window.addEventListener(""error"", function(e) {{
-        let t = e.target || {{}};
-        if (t.src || t.href) {{
-            send(""[RESOURCE ERROR] "" + (t.src || t.href));
-        }} else {{
-            send(""[ERROR EVENT] "" + e.message);
-        }}
-    }}, true);
+    window.addEventListener('error', function(e) {
+        let t = e.target || {};
+        if (t.src || t.href) {
+            send('[RESOURCE ERROR] ' + (t.src || t.href));
+        } else {
+            send('[ERROR EVENT] ' + e.message);
+        }
+    }, true);
 
     // ---- FETCH DEBUG ----
     const origFetch = window.fetch;
-    window.fetch = async function(...args) {{
-        send(""[FETCH] "" + args[0]);
-        try {{
+    window.fetch = async function(...args) {
+        send('[FETCH] ' + args[0]);
+        try {
             const res = await origFetch.apply(this, args);
-            send(""[FETCH RESPONSE] "" + args[0] + "" -> "" + res.status);
+            send('[FETCH RESPONSE] ' + args[0] + ' -> ' + res.status);
             return res;
-        }} catch(err) {{
-            send(""[FETCH ERROR] "" + args[0] + "" -> "" + err);
+        } catch(err) {
+            send('[FETCH ERROR] ' + args[0] + ' -> ' + err);
             throw err;
-        }}
-    }};
+        }
+    };
 
     // ---- XHR DEBUG ----
     const origXHROpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {{
-        send(""[XHR] "" + method + "" "" + url);
+    XMLHttpRequest.prototype.open = function(method, url) {
+        send('[XHR] ' + method + ' ' + url);
         return origXHROpen.apply(this, arguments);
-    }};
+    };
 
     // ---- DOM CONTENT LOGGING ----
-    document.addEventListener(""DOMContentLoaded"", () => {{
-        send(""==== DOMContentLoaded ===="");
+    document.addEventListener('DOMContentLoaded', () => {
+        send('==== DOMContentLoaded ====');
 
         document.querySelectorAll('script[src]').forEach(s =>
-            send(""[SCRIPT SRC] "" + s.src)
+            send('[SCRIPT SRC] ' + s.src)
         );
 
         document.querySelectorAll('link[href]').forEach(l =>
-            send(""[LINK HREF] "" + l.href)
+            send('[LINK HREF] ' + l.href)
         );
-    }});
+    });
 
     connectLogger();
 })();
 </script>
 <!--LOG-INJECT-END-->
 ";
+
+            string script = string.Format(scriptTemplate, devPcIp, port);
 
             // Insert just before </body>
             if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
