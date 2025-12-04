@@ -123,9 +123,6 @@ namespace Jellyfin2Samsung.Helpers
 
                 ZipFile.ExtractToDirectory(packagePath, tempDir);
 
-                if (AppSettings.Default.EnableDevLogs)
-                    await InjectDebugLoggerAsync(tempDir, AppSettings.Default.LocalIp, 5001);
-
                 if (AppSettings.Default.UseServerScripts)
                 {
                     await AddOrUpdateCspAsync(tempDir, AppSettings.Default.JellyfinIP);
@@ -242,150 +239,6 @@ namespace Jellyfin2Samsung.Helpers
             htmlContent = htmlContent.Replace("<head>", "<head>" + scriptBuilder.ToString());
             await File.WriteAllTextAsync(indexPath, htmlContent);
         }
-        public static async Task InjectDebugLoggerAsync(string tempDirectory, string devPcIp, int port)
-        {
-            string indexPath = Path.Combine(tempDirectory, "www", "index.html");
-
-            if (!File.Exists(indexPath))
-                return;
-
-            string html = await File.ReadAllTextAsync(indexPath);
-
-            // Remove previous injection
-            html = Regex.Replace(
-                html,
-                @"<!--LOG-INJECT-START-->[\s\S]*?<!--LOG-INJECT-END-->",
-                "",
-                RegexOptions.Multiline);
-
-            string scriptTemplate = @"
-<!--LOG-INJECT-START-->
-<script>
-(function() {
-    const logServer = ""ws://{0}:{1}"";
-    window.ws = null;
-
-    function send(msg) {
-        try {
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.send(JSON.stringify({
-                    time: Date.now(),
-                    message: msg
-                }));
-            }
-        } catch(e) {
-            // ignore
-        }
-    }
-
-    function connectLogger() {
-        try {
-            window.ws = new WebSocket(logServer);
-
-            window.ws.onopen = () => {
-                console.log(""[Logger] Connected"");
-                send(""Logger connected"");
-                send(""==== TV DEBUG START ===="");
-                send(""Location: "" + location.href);
-                send(""BaseURI: "" + document.baseURI);
-            };
-
-            window.ws.onclose = () => {
-                console.log(""[Logger] Closed, retrying..."");
-                setTimeout(connectLogger, 5000);
-            };
-
-            window.ws.onerror = (e) => {
-                console.log(""[Logger] Error"", e);
-            };
-        } catch(err) {
-            console.log(""[Logger] Exception"", err);
-        }
-    }
-
-    // ---- OVERRIDE CONSOLE ----
-    const origLog = console.log;
-    console.log = function(...args) {
-        origLog.apply(console, args);
-        send(""[LOG] "" + args.join("" ""));
-    };
-
-    const origError = console.error;
-    console.error = function(...args) {
-        origError.apply(console, args);
-        send(""[ERROR] "" + args.join("" ""));
-    };
-
-    // ---- UNCAUGHT ERRORS ----
-    window.onerror = function(msg, src, line, col, err) {
-        send('[UNCAUGHT] ' + msg + ' @ ' + src + ':' + line);
-    };
-
-    window.addEventListener('unhandledrejection', function(e) {
-        send('[PROMISE REJECTION] ' + (e.reason?.message || e.reason));
-    });
-
-    // ---- RESOURCE LOAD FAILURES ----
-    window.addEventListener('error', function(e) {
-        let t = e.target || {};
-        if (t.src || t.href) {
-            send('[RESOURCE ERROR] ' + (t.src || t.href));
-        } else {
-            send('[ERROR EVENT] ' + e.message);
-        }
-    }, true);
-
-    // ---- FETCH DEBUG ----
-    const origFetch = window.fetch;
-    window.fetch = async function(...args) {
-        send('[FETCH] ' + args[0]);
-        try {
-            const res = await origFetch.apply(this, args);
-            send('[FETCH RESPONSE] ' + args[0] + ' -> ' + res.status);
-            return res;
-        } catch(err) {
-            send('[FETCH ERROR] ' + args[0] + ' -> ' + err);
-            throw err;
-        }
-    };
-
-    // ---- XHR DEBUG ----
-    const origXHROpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {
-        send('[XHR] ' + method + ' ' + url);
-        return origXHROpen.apply(this, arguments);
-    };
-
-    // ---- DOM CONTENT LOGGING ----
-    document.addEventListener('DOMContentLoaded', () => {
-        send('==== DOMContentLoaded ====');
-
-        document.querySelectorAll('script[src]').forEach(s =>
-            send('[SCRIPT SRC] ' + s.src)
-        );
-
-        document.querySelectorAll('link[href]').forEach(l =>
-            send('[LINK HREF] ' + l.href)
-        );
-    });
-
-    connectLogger();
-})();
-</script>
-<!--LOG-INJECT-END-->
-";
-
-            string script = string.Format(scriptTemplate, devPcIp, port);
-
-            // Insert just before </body>
-            if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
-                html = html.Replace("</body>", script + "\n</body>");
-            else
-                html += script;
-
-            await File.WriteAllTextAsync(indexPath, html);
-        }
-
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
         {
             if (userIds == null || userIds.Length == 0)
@@ -537,79 +390,242 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
 
+            // Inside AddOrUpdateCspAsync
+            var accessElement = doc.Root.Elements(tizen + "access").FirstOrDefault();
+            if (accessElement == null)
+            {
+                var access = new XElement(tizen + "access");
+                access.Add(new XAttribute("origin", "*"));
+                access.Add(new XAttribute("subdomains", "true"));
+                doc.Root.Add(access);
+            }
+
             doc.Save(configPath);
             return true;
         }
         public async Task<bool> PatchServerSideIndexHtmlAsync(string tempDirectory, string serverUrl)
         {
-            string indexPath = Path.Combine(tempDirectory, "www", "index.html");
-            if (!File.Exists(indexPath))
-                return false;
+            string localIndexPath = Path.Combine(tempDirectory, "www", "index.html");
+            string remoteIndexUrl = serverUrl.TrimEnd('/') + "/web/index.html";
+            string baseUrl = serverUrl.TrimEnd('/') + "/web/";
+            string html = "";
 
-            string html = await File.ReadAllTextAsync(indexPath);
+            // 1. Download fresh index.html from server
+            try
+            {
+                Debug.WriteLine($"Fetching fresh index.html from {remoteIndexUrl}...");
+                html = await _httpClient.GetStringAsync(remoteIndexUrl);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to fetch server index.html: {ex.Message}");
+                if (File.Exists(localIndexPath))
+                    html = await File.ReadAllTextAsync(localIndexPath);
+                else
+                    return false;
+            }
 
-            // Remove ANY existing CSP meta tag
-            html = Regex.Replace(html,
+            // 2. Build a single <head> replacement block:
+            //    - local ../tizen.js
+            //    - early hook that rewrites dynamic script/link URLs
+            var earlyScript = $@"
+<script>
+(function() {{
+    var BASE = '{baseUrl}';
+
+    function rewrite(url) {{
+        try {{
+            if (!url) return url;
+
+            // absolute or special schemes: leave alone
+            if (url.startsWith('http://') ||
+                url.startsWith('https://') ||
+                url.startsWith('file:') ||
+                url.startsWith('//') ||
+                url.startsWith('data:') ||
+                url.startsWith('blob:')) {{
+                return url;
+            }}
+
+            // strip leading slashes so '/web/x.js' -> 'web/x.js'
+            while (url.charAt(0) === '/') {{
+                url = url.substring(1);
+            }}
+
+            return BASE + url;
+        }} catch(e) {{
+            return url;
+        }}
+    }}
+
+    // Log script/link 404s
+    window.addEventListener('error', function(e) {{
+        var t = e.target;
+        if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {{
+            try {{
+                console.error('Resource 404:', t.src || t.href);
+            }} catch (_e) {{}}
+        }}
+    }}, true);
+
+    // Monkeypatch script.src
+    try {{
+        var sDesc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+        if (sDesc && sDesc.set) {{
+            Object.defineProperty(HTMLScriptElement.prototype, 'src', {{
+                get: sDesc.get,
+                set: function(v) {{ sDesc.set.call(this, rewrite(v)); }}
+            }});
+        }}
+    }} catch (_e) {{}}
+
+    // Monkeypatch link.href (for CSS)
+    try {{
+        var lDesc = Object.getOwnPropertyDescriptor(HTMLLinkElement.prototype, 'href');
+        if (lDesc && lDesc.set) {{
+            Object.defineProperty(HTMLLinkElement.prototype, 'href', {{
+                get: lDesc.get,
+                set: function(v) {{ lDesc.set.call(this, rewrite(v)); }}
+            }});
+        }}
+    }} catch (_e) {{}}
+
+    // Monkeypatch setAttribute as a safety net
+    try {{
+        var origSetAttr = Element.prototype.setAttribute;
+        Element.prototype.setAttribute = function(name, value) {{
+            if (name === 'src' && this.tagName === 'SCRIPT') {{
+                return origSetAttr.call(this, name, rewrite(value));
+            }}
+            if (name === 'href' && this.tagName === 'LINK') {{
+                return origSetAttr.call(this, name, rewrite(value));
+            }}
+            return origSetAttr.call(this, name, value);
+        }};
+    }} catch (_e) {{}}
+
+    // Hint for any build that still reads this
+    window.__webpack_public_path__ = BASE;
+}})();
+</script>";
+
+            // If dev logs are enabled, add logger script right after early hook
+            var headBlock = new StringBuilder();
+            headBlock.AppendLine("<head>");
+            headBlock.AppendLine("<script src=\"../tizen.js\"></script>");
+            headBlock.AppendLine(earlyScript);
+
+            if (AppSettings.Default.EnableDevLogs)
+            {
+                headBlock.AppendLine("<script>");
+                headBlock.AppendLine("    (function() {");
+                headBlock.AppendLine($"        var ws = new WebSocket('ws://{AppSettings.Default.LocalIp}:5001');");
+                headBlock.AppendLine("        var send = (t,d) => { try{ ws.send(JSON.stringify({ type:t, data:d })) } catch(e){} };");
+                headBlock.AppendLine("        console.log = (...a) => send('log', a);");
+                headBlock.AppendLine("        console.error = (...a) => send('error', a);");
+                headBlock.AppendLine("        window.onerror = (m,s,l,c,e) => send('error', [m,s,l,c]);");
+                headBlock.AppendLine("    })();");
+                headBlock.AppendLine("</script>");
+            }
+
+            // Single, unified <head> replacement (no double-replace)
+            html = Regex.Replace(
+                html,
+                "<head>",
+                headBlock.ToString(),
+                RegexOptions.IgnoreCase
+            );
+
+            // 3. Rewrite static JS src (but skip tizen.js and already-absolute URLs)
+            html = Regex.Replace(
+                html,
+                @"(src=[""'])([^""']+\.js[^""']*)([""'])",
+                m =>
+                {
+                    var prefix = m.Groups[1].Value;
+                    var file = m.Groups[2].Value;
+                    var suffix = m.Groups[3].Value;
+
+                    // leave tizen.js alone
+                    if (file.EndsWith("tizen.js", StringComparison.OrdinalIgnoreCase))
+                        return m.Value;
+
+                    // leave absolute / protocol URLs alone
+                    if (file.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                        file.StartsWith("file:", StringComparison.OrdinalIgnoreCase) ||
+                        file.StartsWith("//"))
+                        return m.Value;
+
+                    // otherwise, rewrite relative path to server
+                    return $"{prefix}{baseUrl}{file}{suffix}";
+                },
+                RegexOptions.IgnoreCase
+            );
+
+            // 4. Rewrite CSS href
+            html = Regex.Replace(
+                html,
+                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.css[^""']*)([""'])",
+                m => $"{m.Groups[1].Value}{baseUrl}{m.Groups[2].Value}{m.Groups[3].Value}",
+                RegexOptions.IgnoreCase
+            );
+
+            // 5. Rewrite images / manifests
+            html = Regex.Replace(
+                html,
+                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.(?:png|ico|svg|json)[^""']*)([""'])",
+                m => $"{m.Groups[1].Value}{baseUrl}{m.Groups[2].Value}{m.Groups[3].Value}",
+                RegexOptions.IgnoreCase
+            );
+
+            // 6. Remove any existing CSP and add permissive CSP
+            html = Regex.Replace(
+                html,
                 @"<meta[^>]*http-equiv=[""']Content-Security-Policy[""'][^>]*>",
                 "",
-                RegexOptions.IgnoreCase);
+                RegexOptions.IgnoreCase
+            );
 
-            // Extract base URL without trailing slash
-            string baseUrl = serverUrl.TrimEnd('/');
-
-            // Replace ALL script/src attributes with your server URL
-            // This handles both local paths and already-http paths
-            html = Regex.Replace(html,
-                @"(src=[""'])(?!http|\/\/|\$WEBAPIS|data:|blob:)([^""']+\.(?:js|bundle\.js)[^""']*)([""'])",
-                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
-                RegexOptions.IgnoreCase);
-
-            // Replace ALL link/href attributes for CSS
-            html = Regex.Replace(html,
-                @"(href=[""'])(?!http|\/\/|\$WEBAPIS|data:|blob:)([^""']+\.css[^""']*)([""'])",
-                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
-                RegexOptions.IgnoreCase);
-
-            // Also replace manifest, icons, etc. if they're relative
-            html = Regex.Replace(html,
-                @"(href=[""'])(?!http|\/\/|data:|blob:)([^""']+\.(?:png|ico|svg)[^""']*)([""'])",
-                m => $"{m.Groups[1].Value}{baseUrl}/web/{m.Groups[2].Value}{m.Groups[3].Value}",
-                RegexOptions.IgnoreCase);
-
-            // Add maximally permissive CSP meta tag
             string newCsp = @"
 <meta http-equiv=""Content-Security-Policy"" 
-      content=""default-src * file: data: blob: 'unsafe-inline' 'unsafe-eval';
-               script-src * file: data: blob: 'unsafe-inline' 'unsafe-eval';
-               connect-src * file: data: blob: ws: wss: http: https:;
-               img-src * file: data: blob:;
-               style-src * file: data: blob: 'unsafe-inline';
-               font-src * file: data: blob:;
-               media-src * file: data: blob:;
-               frame-src *;
-               worker-src * blob:;
-               object-src *;"">
-";
+      content=""default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;
+               script-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+               style-src * 'unsafe-inline' data: blob:;
+               img-src * data: blob:;
+               connect-src * ws: wss: http: https:;
+               media-src * data: blob:;
+               font-src * data: blob:;"">";
 
-            // Insert after <head>
-            html = html.Replace("<head>", "<head>\n" + newCsp);
+            html = html.Replace("</head>", newCsp + "\n</head>");
 
-            // Remove mobile-specific crap (optional but cleaner)
-            html = Regex.Replace(html,
-                @"<link[^>]*apple-touch-startup-image[^>]*>",
-                "",
-                RegexOptions.IgnoreCase);
-            html = Regex.Replace(html,
-                @"<meta[^>]*apple-mobile-web-app-capable[^>]*>",
-                "",
-                RegexOptions.IgnoreCase);
-            html = Regex.Replace(html,
-                @"<meta[^>]*mobile-web-app-capable[^>]*>",
-                "",
-                RegexOptions.IgnoreCase);
+            // 7. Optional: keep the late Webpack patch as a best-effort extra
+            string latePatch = $@"
+<script>
+try {{
+    const wp = window.__webpack_require__;
+    const newPath = '{baseUrl}';
 
-            await File.WriteAllTextAsync(indexPath, html);
+    if (wp) {{
+        wp.p = newPath;
+        Object.defineProperty(wp, 'p', {{
+            get: () => newPath,
+            set: () => newPath,
+            configurable: false
+        }});
+    }}
+
+    window.__webpack_public_path__ = newPath;
+}} catch(e) {{
+    console.error('Late webpack path patch failed', e);
+}}
+</script>";
+
+            html = Regex.Replace(html, "</body>", latePatch + "\n</body>", RegexOptions.IgnoreCase);
+
+            // 8. Save modified index.html back into www/
+            await File.WriteAllTextAsync(localIndexPath, html);
             return true;
         }
+
     }
 }
