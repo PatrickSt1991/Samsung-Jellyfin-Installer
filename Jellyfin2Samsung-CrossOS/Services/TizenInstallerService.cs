@@ -419,11 +419,17 @@ namespace Jellyfin2Samsung.Services
                 if (installResults.Output.Contains("installing[100]") || installResults.Output.Contains("install completed"))
                 {
                     progress?.Invoke("InstallationSuccessful".Localized());
-
+                    Debug.WriteLine($"OPEN AFTER INSTALL: {_appSettings.OpenAfterInstall}");
                     if (_appSettings.OpenAfterInstall)
                     {
                         string tvAppId = await GetInstalledAppId(tvIpAddress, "Jellyfin");
-                        await _processHelper.RunCommandAsync(TizenSdbPath, $"launch {tvIpAddress} {tvAppId}");
+
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(5000);
+                            await _processHelper.RunCommandAsync(TizenSdbPath, $"launch {tvIpAddress} {tvAppId}");
+                            Debug.WriteLine($"Starting appId {tvAppId} on {tvIpAddress}");
+                        });
                     }
                         
                     return InstallResult.SuccessResult();
