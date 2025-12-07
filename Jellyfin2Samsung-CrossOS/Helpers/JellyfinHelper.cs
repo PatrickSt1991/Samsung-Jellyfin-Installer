@@ -38,11 +38,15 @@ namespace Jellyfin2Samsung.Helpers
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
 
-        // ... LoadJellyfinUsersAsync (No changes needed) ...
         public async Task<List<JellyfinAuth>> LoadJellyfinUsersAsync()
         {
             var users = new List<JellyfinAuth>();
-            if (!IsValidJellyfinConfiguration()) return users;
+
+            if (!IsValidJellyfinConfiguration())
+            {
+                Debug.WriteLine("Invalid Jellyfin configuration - skipping user load");
+                return users;
+            }
 
             try
             {
@@ -52,15 +56,30 @@ namespace Jellyfin2Samsung.Helpers
 
                 var url = $"{AppSettings.Default.JellyfinIP}/Users";
                 using var response = await _httpClient.GetAsync(url);
+
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (jellyfinUsers != null) users.AddRange(jellyfinUsers);
-                    if (users.Count > 1) users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
+                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (jellyfinUsers != null && jellyfinUsers.Any())
+                    {
+                        users.AddRange(jellyfinUsers);
+                        if (users.Count > 1)
+                        {
+                            users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
+                        }
+                    }
                 }
             }
-            catch (Exception ex) { Debug.WriteLine($"Error loading users: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading Jellyfin users: {ex.Message}");
+            }
+
             return users;
         }
 
@@ -75,23 +94,29 @@ namespace Jellyfin2Samsung.Helpers
                 tempDir = Path.Combine(baseDir, $"JellyTemp_{Guid.NewGuid():N}");
                 Directory.CreateDirectory(tempDir);
 
+                // 1. Extract the WGT (which contains the raw web client assets)
                 ZipFile.ExtractToDirectory(packagePath, tempDir);
 
+                // 2. Perform Transformations
                 if (AppSettings.Default.UseServerScripts)
                 {
-                    // This now handles patching + polyfilling
+                    // Fetch index.html from server but patch it to load assets locally
                     await PatchServerSideIndexHtmlAsync(tempDir, AppSettings.Default.JellyfinIP);
                     await AddOrUpdateCspAsync(tempDir, AppSettings.Default.JellyfinIP);
                 }
 
+                // Ensure config.json points to the correct server
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Server") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
                     await UpdateMultiServerConfig(tempDir);
 
+                // Inject specific user settings (Themes, etc.)
                 if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
                     await InjectUserSettingsScriptAsync(tempDir, userIds);
 
+                // 3. Re-package
                 tempPackage = Path.Combine(baseDir, $"{Path.GetFileNameWithoutExtension(packagePath)}_mod.wgt");
                 if (File.Exists(tempPackage)) File.Delete(tempPackage);
+
                 ZipFile.CreateFromDirectory(tempDir, tempPackage);
 
                 File.Delete(packagePath);
@@ -113,6 +138,8 @@ namespace Jellyfin2Samsung.Helpers
         public static async Task UpdateMultiServerConfig(string tempDirectory)
         {
             string configPath = Path.Combine(tempDirectory, "www", "config.json");
+
+            // Create config if missing (robustness)
             if (!File.Exists(configPath))
             {
                 var defaultConfig = new JsonObject { ["servers"] = new JsonArray(), ["multiserver"] = false };
@@ -122,7 +149,10 @@ namespace Jellyfin2Samsung.Helpers
             string jsonText = await File.ReadAllTextAsync(configPath);
             var config = JsonNode.Parse(jsonText) ?? new JsonObject();
 
+            // Force the app to treat this specific server as the "home" server
             config["multiserver"] = false;
+
+            // Ensure the URL is clean (no trailing slash)
             string serverUrl = AppSettings.Default.JellyfinIP.TrimEnd('/');
             config["servers"] = new JsonArray { JsonValue.Create(serverUrl) };
 
@@ -135,51 +165,97 @@ namespace Jellyfin2Samsung.Helpers
             string remoteIndexUrl = serverUrl.TrimEnd('/') + "/web/index.html";
             string htmlContent = "";
 
-            // 1. Fetch server HTML
+            // 1. Try to fetch the Index HTML from the server
+            //    This gets us the server-side injections (dashboardVersion, etc.)
             try
             {
-                Debug.WriteLine($"Fetching index.html from {remoteIndexUrl}...");
-                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                Debug.WriteLine($"Fetching bootloader (index.html) from {remoteIndexUrl}...");
+                // Short timeout so we don't hang if server is down during install
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
                 htmlContent = await _httpClient.GetStringAsync(remoteIndexUrl, cts.Token);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to fetch server index.html: {ex.Message}. Using local fallback.");
+                Debug.WriteLine($"Failed to fetch server index.html: {ex.Message}. Falling back to local stock index.");
                 if (File.Exists(localIndexPath))
+                {
                     htmlContent = await File.ReadAllTextAsync(localIndexPath);
+                }
                 else
+                {
                     return false;
+                }
             }
 
-            // 2. Fix Base URL immediately
+            // 2. "Bootloader" Transformation
+            //    We have the server's HTML structure, but we want to load the JS/CSS chunks
+            //    from the local .wgt file (file://) to keep it fast.
+
+            // A. Fix the <base> tag. Server usually sends <base href="/web/"> which breaks local loading.
+            //    We replace it with "." to ensure relative paths work.
             if (htmlContent.Contains("<base"))
+            {
                 htmlContent = Regex.Replace(htmlContent, @"<base[^>]+>", @"<base href=""."">", RegexOptions.IgnoreCase);
+            }
             else
+            {
+                // If no base tag, ensure head exists and add one (safeguard)
                 htmlContent = htmlContent.Replace("<head>", "<head><base href=\".\">");
+            }
 
-            // 3. Process External Scripts (Download, Transpile, Link Locally)
-            //    This fixes the "SyntaxError: Unexpected token ..."
-            htmlContent = await ProcessExternalScriptsAsync(htmlContent, tempDirectory, serverUrl);
+            // B. Localize Scripts and Styles
+            //    Convert '/web/main.bundle.js' -> 'main.bundle.js'
+            //    Convert 'https://server/web/main.js' -> 'main.js'
 
-            // 4. Localize Assets (Server assets -> Local WGT)
-            htmlContent = LocalizeAssetPaths(htmlContent);
+            string LocalizePath(Match m)
+            {
+                // Group 1: src=" or href="
+                // Group 2: The URL
+                // Group 3: The closing quote
+                string prefix = m.Groups[1].Value;
+                string url = m.Groups[2].Value;
+                string suffix = m.Groups[3].Value;
 
-            // 5. Inject Polyfills & Bootloader
+                if (url.Contains("tizen.js")) return m.Value; // Don't touch tizen.js if it exists
+
+                // If it points to our server's web dir, strip it to be a filename
+                if (url.Contains("/web/"))
+                {
+                    string filename = Path.GetFileName(url);
+                    // Query strings (like ?v=10.8) are fine locally usually, but safer to keep
+                    // If the .wgt matches the server version, the filenames match.
+                    return $"{prefix}{filename}{suffix}";
+                }
+
+                return m.Value;
+            }
+
+            // Rewrite script src
+            htmlContent = Regex.Replace(htmlContent,
+                @"(src=[""'])([^""']+\.js[^""']*)([""'])",
+                LocalizePath, RegexOptions.IgnoreCase);
+
+            // Rewrite css href
+            htmlContent = Regex.Replace(htmlContent,
+                @"(href=[""'])([^""']+\.css[^""']*)([""'])",
+                LocalizePath, RegexOptions.IgnoreCase);
+
+            // C. Inject Tizen Bootloader Logic
+            //    We need tizen.js and we want to enforce the server URL via JS 
+            //    in case config.json is ignored by the server-provided HTML structure.
+
             var bootloaderScript = new StringBuilder();
-
-            // A. Inject Standard Polyfills (Fixes missing functions like Object.assign, Promise)
-            bootloaderScript.AppendLine(GetPolyfillScript());
-
-            // B. Tizen Bootloader
             bootloaderScript.AppendLine("<script src=\"tizen.js\"></script>");
             bootloaderScript.AppendLine("<script>");
+            bootloaderScript.AppendLine("    // SamsungJellyfinInstaller Bootloader Patch");
             bootloaderScript.AppendLine($"   window.tizenServerUrl = '{serverUrl.TrimEnd('/')}';");
-            bootloaderScript.AppendLine($"   window.appConfig = {{ servers: [{{ url: '{serverUrl.TrimEnd('/')}', name: 'Jellyfin Server' }}] }};");
+            bootloaderScript.AppendLine("    window.appConfig = window.appConfig || {};");
+            bootloaderScript.AppendLine($"   window.appConfig.servers = [{{ url: '{serverUrl.TrimEnd('/')}', name: 'Jellyfin Server' }}];");
             bootloaderScript.AppendLine("</script>");
 
-            // C. Dev Logging
             if (AppSettings.Default.EnableDevLogs)
             {
+                // Inject WebSocket logger for debugging on TV
                 bootloaderScript.AppendLine("<script>");
                 bootloaderScript.AppendLine("    (function() {");
                 bootloaderScript.AppendLine($"        var ws = new WebSocket('ws://{AppSettings.Default.LocalIp}:5001');");
@@ -191,10 +267,14 @@ namespace Jellyfin2Samsung.Helpers
                 bootloaderScript.AppendLine("</script>");
             }
 
+            // D. Insert into Head
             htmlContent = Regex.Replace(htmlContent, "<head>", "<head>\n" + bootloaderScript.ToString(), RegexOptions.IgnoreCase);
 
-            // 6. Clean CSP
+            // E. Clean CSP (Content Security Policy)
+            //    Remove existing meta CSP to prevent conflicts, we add our own later via config.xml or here
             htmlContent = Regex.Replace(htmlContent, @"<meta[^>]*http-equiv=[""']Content-Security-Policy[""'][^>]*>", "", RegexOptions.IgnoreCase);
+
+            // Add permissive CSP for Tizen
             string permissiveCsp = @"<meta http-equiv=""Content-Security-Policy"" content=""default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;"">";
             htmlContent = htmlContent.Replace("</head>", permissiveCsp + "\n</head>");
 
@@ -202,155 +282,16 @@ namespace Jellyfin2Samsung.Helpers
             return true;
         }
 
-        private async Task<string> ProcessExternalScriptsAsync(string html, string tempDirectory, string serverUrl)
-        {
-            var jsDir = Path.Combine(tempDirectory, "www", "patched_plugins");
-            Directory.CreateDirectory(jsDir);
-
-            // Regex to find external scripts
-            var regex = new Regex(@"<script[^>]+src=[""']((https?://|//)[^""']+)[""'][^>]*>.*?</script>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            return await ReplaceAsync(html, regex, async (match) =>
-            {
-                string originalUrl = match.Groups[1].Value;
-                if (originalUrl.StartsWith("//")) originalUrl = "http:" + originalUrl;
-
-                try
-                {
-                    Debug.WriteLine($"Downloading and patching external script: {originalUrl}");
-
-                    // Download
-                    string jsContent = await _httpClient.GetStringAsync(originalUrl);
-
-                    // --- TRANSPILATION (The Fix for "Unexpected token ...") ---
-
-                    // 1. Fix Object Spread: { ...x } -> Object.assign({}, x)
-                    // Note: This is a basic regex replacement. It handles simple cases common in plugins.
-                    jsContent = Regex.Replace(jsContent, @"\{\s*\.\.\.([a-zA-Z0-9_]+)\s*\}", "Object.assign({}, $1)");
-                    jsContent = Regex.Replace(jsContent, @"\{\s*\.\.\.([a-zA-Z0-9_]+)\s*,\s*", "Object.assign({}, $1, {");
-
-                    // 2. Fix Arrow Functions: (a) => ... -> function(a) ...
-                    // Converting simple arrow functions is safer than complex ones.
-                    jsContent = Regex.Replace(jsContent, @"=\s*\(\)\s*=>", "= function() ");
-                    jsContent = Regex.Replace(jsContent, @"=\s*([a-zA-Z0-9_]+)\s*=>", "= function($1) ");
-
-                    // 3. Const/Let -> Var (Tizen 3.0 has partial support, mostly fine, but older ones fail)
-                    jsContent = Regex.Replace(jsContent, @"\bconst\s+", "var ");
-                    jsContent = Regex.Replace(jsContent, @"\blet\s+", "var ");
-
-                    // -----------------------------------------------------------
-
-                    string fileName = $"plugin_{Guid.NewGuid():N}.js";
-                    string localPath = Path.Combine(jsDir, fileName);
-                    await File.WriteAllTextAsync(localPath, jsContent);
-
-                    // Return the new script tag pointing to our local, patched file
-                    return $"<script src=\"patched_plugins/{fileName}\"></script>";
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Failed to patch script {originalUrl}: {ex.Message}");
-                    // If we fail to download/patch, strip it to prevent the crash
-                    return $"";
-                }
-            });
-        }
-
-        // Helper to handle async regex replacement
-        private async Task<string> ReplaceAsync(string input, Regex regex, Func<Match, Task<string>> replacementFn)
-        {
-            var sb = new StringBuilder();
-            var lastIndex = 0;
-            foreach (Match match in regex.Matches(input))
-            {
-                sb.Append(input, lastIndex, match.Index - lastIndex);
-                sb.Append(await replacementFn(match));
-                lastIndex = match.Index + match.Length;
-            }
-            sb.Append(input, lastIndex, input.Length - lastIndex);
-            return sb.ToString();
-        }
-
-        private string LocalizeAssetPaths(string htmlContent)
-        {
-            string Localize(Match m)
-            {
-                string prefix = m.Groups[1].Value;
-                string url = m.Groups[2].Value;
-                string suffix = m.Groups[3].Value;
-
-                if (url.Contains("tizen.js")) return m.Value;
-
-                if (url.Contains("/web/") || !url.Contains("://"))
-                {
-                    string filename = Path.GetFileName(url);
-                    if (filename.Contains("?")) filename = filename.Substring(0, filename.IndexOf("?"));
-                    return $"{prefix}{filename}{suffix}";
-                }
-                return m.Value;
-            }
-
-            htmlContent = Regex.Replace(htmlContent, @"(src=[""'])([^""']+\.js[^""']*)([""'])", Localize, RegexOptions.IgnoreCase);
-            htmlContent = Regex.Replace(htmlContent, @"(href=[""'])([^""']+\.css[^""']*)([""'])", Localize, RegexOptions.IgnoreCase);
-            return htmlContent;
-        }
-
-        private string GetPolyfillScript()
-        {
-            // A minimal, inline polyfill set for Tizen
-            return @"
-<script>
-    // Minimal Polyfills for Tizen
-    if (!Object.assign) {
-        Object.assign = function(target) {
-            for (var i = 1; i < arguments.length; i++) {
-                var source = arguments[i];
-                for (var key in source) {
-                    if (Object.prototype.hasOwnProperty.call(source, key)) {
-                        target[key] = source[key];
-                    }
-                }
-            }
-            return target;
-        };
-    }
-    if (!String.prototype.includes) {
-        String.prototype.includes = function(search, start) {
-            if (typeof start !== 'number') start = 0;
-            if (start + search.length > this.length) return false;
-            return this.indexOf(search, start) !== -1;
-        };
-    }
-    if (!Array.prototype.includes) {
-        Object.defineProperty(Array.prototype, 'includes', {
-            value: function(searchElement, fromIndex) {
-                if (this == null) throw new TypeError('""this"" is null or not defined');
-                var o = Object(this);
-                var len = o.length >>> 0;
-                if (len === 0) return false;
-                var n = fromIndex | 0;
-                var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-                while (k < len) {
-                    if (o[k] === searchElement) return true;
-                    k++;
-                }
-                return false;
-            }
-        });
-    }
-    // Note: 'Promise' and 'fetch' are usually present in Tizen 3+, 
-    // but if needed, a larger library like Bluebird or whatwg-fetch would be needed here.
-    // This script ensures basic ES6 method compatibility.
-</script>";
-        }
-
-        // ... InjectUserSettingsScriptAsync & AddOrUpdateCspAsync (Keep existing logic) ...
         public static async Task InjectUserSettingsScriptAsync(string tempDirectory, string[] userIds)
         {
             if (userIds == null || userIds.Length == 0) return;
+
             string indexPath = Path.Combine(tempDirectory, "www", "index.html");
             if (!File.Exists(indexPath)) return;
+
             string htmlContent = await File.ReadAllTextAsync(indexPath);
+
+            // Simple helper for bools
             string BoolToJs(bool val) => val.ToString().ToLower();
 
             var sb = new StringBuilder();
@@ -360,10 +301,12 @@ namespace Jellyfin2Samsung.Helpers
             sb.AppendLine("    try {");
             foreach (var userId in userIds.Where(u => !string.IsNullOrWhiteSpace(u)))
             {
+                // We use localStorage injection so when the app loads, it finds these preferences already set
                 sb.AppendLine($"        var u = '{userId}';");
                 sb.AppendLine($"        if (!localStorage.getItem('injected-' + u)) {{");
                 sb.AppendLine($"            localStorage.setItem(u + '-appTheme', '{AppSettings.Default.SelectedTheme ?? "dark"}');");
                 sb.AppendLine($"            localStorage.setItem(u + '-enableBackdrops', '{BoolToJs(AppSettings.Default.EnableBackdrops)}');");
+                sb.AppendLine($"            localStorage.setItem(u + '-enableThemeSongs', '{BoolToJs(AppSettings.Default.EnableThemeSongs)}');");
                 sb.AppendLine($"            localStorage.setItem('injected-' + u, 'true');");
                 sb.AppendLine("        }");
             }
@@ -385,30 +328,47 @@ namespace Jellyfin2Samsung.Helpers
                 XDocument doc = XDocument.Load(configPath);
                 XNamespace tizen = "http://tizen.org/ns/widgets";
 
+                // Update Access Origin to allow everything
                 var access = doc.Root.Elements(tizen + "access").FirstOrDefault();
                 if (access == null)
-                    doc.Root.Add(new XElement(tizen + "access", new XAttribute("origin", "*"), new XAttribute("subdomains", "true")));
+                {
+                    doc.Root.Add(new XElement(tizen + "access",
+                        new XAttribute("origin", "*"),
+                        new XAttribute("subdomains", "true")));
+                }
                 else
                 {
                     access.SetAttributeValue("origin", "*");
                     access.SetAttributeValue("subdomains", "true");
                 }
 
-                var requiredPrivileges = new[] {
+                // Update Privileges
+                var requiredPrivileges = new[]
+                {
                     "http://tizen.org/privilege/internet",
                     "http://tizen.org/privilege/network.get",
-                    "http://tizen.org/privilege/filesystem.read",
+                    "http://tizen.org/privilege/tv.inputdevice",
+                    "http://developer.samsung.com/privilege/productinfo",
+                    "http://tizen.org/privilege/filesystem.read", // Sometimes needed for local chunks
                     "http://tizen.org/privilege/content.read"
                 };
+
                 foreach (var priv in requiredPrivileges)
                 {
                     if (!doc.Root.Elements(tizen + "privilege").Any(x => x.Attribute("name")?.Value == priv))
+                    {
                         doc.Root.Add(new XElement(tizen + "privilege", new XAttribute("name", priv)));
+                    }
                 }
+
                 doc.Save(configPath);
                 return true;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating config.xml: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
