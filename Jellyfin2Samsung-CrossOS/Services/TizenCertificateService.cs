@@ -94,10 +94,13 @@ namespace Jellyfin2Samsung.Services
             var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, null, keyPair.Private);
 
             using var ms = new MemoryStream();
-            using var sw = new StreamWriter(ms);
-            new PemWriter(sw).WriteObject(csr);
+            using var sw = new StreamWriter(ms, System.Text.Encoding.ASCII, leaveOpen: true);
+            var pemWriter = new PemWriter(sw);
+            pemWriter.WriteObject(csr);
             sw.Flush();
+            ms.Position = 0;
             return ms.ToArray();
+
         }
 
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid, string userEmail)
@@ -118,10 +121,13 @@ namespace Jellyfin2Samsung.Services
             var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, new DerSet(attribute), keyPair.Private);
 
             using var ms = new MemoryStream();
-            using var sw = new StreamWriter(ms);
-            new PemWriter(sw).WriteObject(csr);
+            using var sw = new StreamWriter(ms, System.Text.Encoding.ASCII, leaveOpen: true);
+            var pemWriter = new PemWriter(sw);
+            pemWriter.WriteObject(csr);
             sw.Flush();
+            ms.Position = 0;
             return ms.ToArray();
+
         }
 
         private async Task CheckCertificateExistenceAsync(string caPath)

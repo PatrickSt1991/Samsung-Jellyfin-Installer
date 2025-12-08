@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -73,39 +74,66 @@ namespace Jellyfin2Samsung.Services
                     {
                         if (context.Request.Path == "/signin/callback" && context.Request.Method == "POST")
                         {
-                            var form = await context.Request.ReadFormAsync();
-                            var state = form["state"];
-                            var codeJson = form["code"];
+                            // Read full body
+                            string body = await new StreamReader(context.Request.Body).ReadToEndAsync();
 
-                            if (!string.IsNullOrEmpty(codeJson))
+                            // Parse "state=" and "code=" manually (Linux sends text/plain form style)
+                            string state = null;
+                            string codeEncoded = null;
+
+                            // Body looks like: state=...&code=....urlencoded....
+                            var parts = body.Split('&', StringSplitOptions.RemoveEmptyEntries);
+
+                            foreach (var part in parts)
                             {
-                                try
+                                var kv = part.Split('=', 2);
+                                if (kv.Length != 2) continue;
+
+                                if (kv[0] == "state")
+                                    state = WebUtility.UrlDecode(kv[1]);
+
+                                if (kv[0] == "code")
+                                    codeEncoded = WebUtility.UrlDecode(kv[1]); // <-- decode JSON
+                            }
+
+                            if (string.IsNullOrWhiteSpace(codeEncoded))
+                            {
+                                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                                await context.Response.WriteAsync("Invalid login response (missing code).");
+                                return;
+                            }
+
+                            try
+                            {
+                                var auth = JsonConvert.DeserializeObject<SamsungAuth>(codeEncoded);
+                                if (auth != null)
                                 {
-                                    var auth = JsonConvert.DeserializeObject<SamsungAuth>(codeJson);
-                                    if (auth != null)
-                                    {
-                                        auth.state = state; // Inject state manually
-                                        CallbackReceived?.Invoke(auth);
-                                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                        await context.Response.WriteAsync("Login successful. You can close this window.");
-                                        return;
-                                    }
+                                    auth.state = state;
+                                    CallbackReceived?.Invoke(auth);
+
+                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                    await context.Response.WriteAsync("Login successful. You can close this window.");
+                                    return;
                                 }
-                                catch (Exception ex)
-                                {
-                                    await context.Response.WriteAsync($"[CallbackServer] JSON parse error: {ex.Message}");
-                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                                await context.Response.WriteAsync(
+                                    $"[CallbackServer] JSON parse error: {ex.Message}\n\nDecoded JSON:\n{codeEncoded}");
+                                return;
                             }
 
                             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                             await context.Response.WriteAsync("Invalid login response.");
+                            return;
                         }
-                        else
-                        {
-                            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                            await context.Response.WriteAsync("Not Found");
-                        }
+
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        await context.Response.WriteAsync("Not Found");
                     });
+
+
                 })
                 .Build();
 

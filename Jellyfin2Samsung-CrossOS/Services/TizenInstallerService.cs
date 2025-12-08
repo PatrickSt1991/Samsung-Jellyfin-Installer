@@ -283,7 +283,7 @@ namespace Jellyfin2Samsung.Services
                         };
                     }
 
-                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid && selectedCertificate != "Jellyfin")
+                    if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid && selectedCertificate != "Jellyfin" || _appSettings.ForceSamsungLogin)
                     {
                         progress?.Invoke("SamsungLogin".Localized());;
                         SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
@@ -366,6 +366,7 @@ namespace Jellyfin2Samsung.Services
                 }
 
                 progress?.Invoke("InstallingPackage".Localized());
+                //return InstallResult.FailureResult($"DEV STOP");
                 var installResults = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                 if (installResults.Output.Contains("download failed[116]"))

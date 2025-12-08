@@ -270,7 +270,6 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSelectedUpdateModeChanged(string value)
         {
             ApiKeyEnabled = !string.IsNullOrEmpty(value) &&
-                           !value.Contains("Server") &&
                            !value.Contains("None");
 
             AppSettings.Default.ConfigUpdateMode = value;

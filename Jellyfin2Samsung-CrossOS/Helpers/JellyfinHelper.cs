@@ -40,7 +40,7 @@ namespace Jellyfin2Samsung.Helpers
 
         public async Task<List<JellyfinAuth>> LoadJellyfinUsersAsync()
         {
-            // (Standard user loading logic - omitted for brevity)
+            // (Standard user loading logic)
             var users = new List<JellyfinAuth>();
             if (!IsValidJellyfinConfiguration()) return users;
             try
@@ -118,6 +118,64 @@ namespace Jellyfin2Samsung.Helpers
             string serverUrl = AppSettings.Default.JellyfinIP.TrimEnd('/');
             config["servers"] = new JsonArray { JsonValue.Create(serverUrl) };
             await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        // ---------------------------------------------------------------
+        // Plugin API helpers (for Jellyfin Enhanced + KefinTweaks)
+        // ---------------------------------------------------------------
+
+        private class JellyfinPluginInfo
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public string Version { get; set; }
+        }
+
+        private async Task<List<JellyfinPluginInfo>> GetInstalledPluginsAsync(string serverUrl)
+        {
+            var list = new List<JellyfinPluginInfo>();
+            try
+            {
+                string url = serverUrl.TrimEnd('/') + "/Plugins";
+                Debug.WriteLine("▶ Fetching installed plugins from: " + url);
+                var json = await _httpClient.GetStringAsync(url);
+                var parsed = JsonSerializer.Deserialize<List<JellyfinPluginInfo>>(json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (parsed != null) list.AddRange(parsed);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("⚠ Failed to fetch /Plugins: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private async Task<List<string>> ResolvePluginScriptUrlsAsync(JellyfinPluginInfo plugin, string serverUrl)
+        {
+            var urls = new List<string>();
+            string id = (plugin.Id ?? "").ToLowerInvariant();
+            string name = (plugin.Name ?? "").ToLowerInvariant();
+
+            // 1) Jellyfin Enhanced
+            if (id.Contains("jellyfinenhanced") || name.Contains("jellyfin enhanced") || name.Equals("jellyfin enhanced"))
+            {
+                urls.Add(serverUrl.TrimEnd('/') + "/JellyfinEnhanced/script");
+            }
+
+            // 2) Custom Tabs (strict known path)
+            if (name.Contains("custom tabs"))
+            {
+                urls.Add(serverUrl.TrimEnd('/') + "/web/Plugins/CustomTabs/customtabs.js");
+            }
+
+            // 3) KefinTweaks (CDN)
+            if (name.Contains("kefin") || id.Contains("kefin"))
+            {
+                urls.Add("https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks@latest/kefinTweaks-plugin.js");
+            }
+
+            return urls;
         }
 
         public async Task<bool> PatchServerSideIndexHtmlAsync(string tempDirectory, string serverUrl)
@@ -200,8 +258,6 @@ namespace Jellyfin2Samsung.Helpers
                 if (string.IsNullOrWhiteSpace(href))
                     continue;
 
-                var lower = href.ToLowerInvariant();
-
                 // Only care about plugin-related CSS
                 if (!IsKnownPluginAsset(href))
                     continue;
@@ -271,8 +327,16 @@ namespace Jellyfin2Samsung.Helpers
 
                 bool isPlugin = IsKnownPluginAsset(jsUrl);
 
+                // IMPORTANT: skip JavaScriptInjector here to avoid duplicate public.js,
+                //            we'll let the first pass handle it and NOT Babel-wrap it.
+                if (lower.Contains("javascriptinjector"))
+                {
+                    // It will already be handled as /web/ plugin JS below (once).
+                    // We do NOT want to wrap/copy it multiple times.
+                }
+
                 // -----------------------------
-                // CASE 1: Plugin JS under /web/...
+                // CASE 1: Plugin JS under /web/ or relative
                 // -----------------------------
                 if ((lower.Contains("/web/") || !jsUrl.Contains("://")) && isPlugin)
                 {
@@ -303,6 +367,7 @@ namespace Jellyfin2Samsung.Helpers
                         var bytes = await _httpClient.GetByteArrayAsync(uri);
                         await File.WriteAllBytesAsync(localPath, bytes);
 
+                        // IMPORTANT: local plugin JS (including public.js) is NOT Babel-wrapped.
                         jsBuilder.AppendLine($"<script src=\"plugin_cache/{fileName}\"></script>");
                     }
                     catch (Exception ex)
@@ -321,7 +386,7 @@ namespace Jellyfin2Samsung.Helpers
                     jsUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
                     jsUrl.StartsWith("//"))
                 {
-                    // Only bother if it’s plugin-y (MediaBar, etc.) or a known CDN lib
+                    // Only bother if it’s plugin-y (MediaBar, Enhanced, etc.) or a known CDN lib
                     if (!isPlugin &&
                         !lower.Contains("cdn.jsdelivr") &&
                         !lower.Contains("unpkg.com"))
@@ -359,6 +424,59 @@ namespace Jellyfin2Samsung.Helpers
                         Debug.WriteLine("⚠ Plugin JS (external) failed: " + ex.Message);
                     }
                 }
+            }
+
+            //------------------------------------------------------------
+            // 1c) Plugin API integration: Jellyfin Enhanced + KefinTweaks
+            //------------------------------------------------------------
+            var apiPlugins = await GetInstalledPluginsAsync(serverUrl);
+            var apiJsBuilder = new StringBuilder();
+
+            Debug.WriteLine("▶ Resolving client-side plugins via API…");
+
+            foreach (var plugin in apiPlugins)
+            {
+                Debug.WriteLine($"▶ Plugin detected: {plugin.Name}");
+
+                var urls = await ResolvePluginScriptUrlsAsync(plugin, serverUrl);
+                foreach (var url in urls)
+                {
+                    string normalized = url;
+                    if (normalized.StartsWith("//"))
+                        normalized = "http:" + normalized;
+
+                    Debug.WriteLine($"   → Script: {normalized}");
+
+                    try
+                    {
+                        string jsContent = await _httpClient.GetStringAsync(normalized);
+
+                        var wrapped = new StringBuilder();
+                        wrapped.AppendLine("if(typeof define!=='function'){var define=function(){};define.amd=true;}");
+                        wrapped.AppendLine("window.WaitForApiClient(function(){");
+                        wrapped.AppendLine("   try {");
+                        wrapped.AppendLine(jsContent);
+                        wrapped.AppendLine("   } catch(e) { console.error('Plugin Error:', e); }");
+                        wrapped.AppendLine("});");
+
+                        string fileName = $"plugin_{Guid.NewGuid():N}.js";
+                        string localPath = Path.Combine(pluginCacheDir, fileName);
+                        await File.WriteAllTextAsync(localPath, wrapped.ToString());
+
+                        // These are always modern JS → Babel.
+                        apiJsBuilder.AppendLine(
+                            $@"<script type=""text/babel"" data-presets=""env"" src=""plugin_cache/{fileName}""></script>");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("⚠ Plugin API script failed: " + ex.Message);
+                    }
+                }
+            }
+
+            if (apiJsBuilder.Length > 0)
+            {
+                jsBuilder.AppendLine(apiJsBuilder.ToString());
             }
 
             //------------------------------------------------------------
@@ -486,7 +604,7 @@ namespace Jellyfin2Samsung.Helpers
 
                     return $"<script type=\"text/babel\" data-presets=\"env\" src=\"patched_plugins/{fileName}\"></script>";
                 }
-                catch { return $""; }
+                catch { return ""; }
             });
         }
 
@@ -545,12 +663,13 @@ namespace Jellyfin2Samsung.Helpers
                 if (access == null) doc.Root.Add(new XElement(tizen + "access", new XAttribute("origin", "*"), new XAttribute("subdomains", "true")));
                 else { access.SetAttributeValue("origin", "*"); access.SetAttributeValue("subdomains", "true"); }
 
-                var requiredPrivileges = new[] {
-                     "http://tizen.org/privilege/internet",
-                     "http://tizen.org/privilege/network.get",
-                     "http://tizen.org/privilege/filesystem.read",
-                     "http://tizen.org/privilege/content.read"
-                 };
+                var requiredPrivileges = new[]
+                {
+                    "http://tizen.org/privilege/internet",
+                    "http://tizen.org/privilege/network.get",
+                    "http://tizen.org/privilege/filesystem.read",
+                    "http://tizen.org/privilege/content.read"
+                };
                 foreach (var priv in requiredPrivileges)
                 {
                     if (!doc.Root.Elements(tizen + "privilege").Any(x => x.Attribute("name")?.Value == priv))

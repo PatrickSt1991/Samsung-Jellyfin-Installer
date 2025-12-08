@@ -115,38 +115,6 @@
 						</Grid>
 
 						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0"
-									   Text="{Binding LblEnableDevLogs}"
-									   Classes="label"
-									   VerticalAlignment="Center"/>
-							<Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-								<Button Grid.Column="0"
-										Classes="secondary"
-										HorizontalAlignment="Stretch"
-										Command="{Binding OpenDebugWindowCommand}"
-										IsEnabled="{Binding CanOpenDebugWindow}">
-									<StackPanel Orientation="Horizontal" Spacing="6">
-										<fa:SymbolIcon Symbol="Document" Width="16" Height="16" />
-										<TextBlock Text="{Binding lblOpenDebugWindow}" />
-									</StackPanel>
-								</Button>
-								<ToggleSwitch Grid.Column="1"
-											  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
-											  IsEnabled="{Binding ServerIpSet}"/>
-							</Grid>
-						</Grid>
-
-						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-							<TextBlock Grid.Column="0"
-									   Text="{Binding LblUseServerScripts}"
-									   Classes="label"
-									   VerticalAlignment="Center"/>
-							<ToggleSwitch Grid.Column="1"
-										  IsChecked="{Binding UseServerScripts}"
-										  IsEnabled="{Binding ServerIpSet}"/>
-						</Grid>
-
-						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblJellyfinServerApi}" Classes="label" VerticalAlignment="Center"/>
 							<TextBox Grid.Column="1"
 									 Text="{Binding JellyfinApiKey}"
@@ -169,6 +137,37 @@
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
 							</ComboBox>
+						</Grid>
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding LblEnableDevLogs}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+								<Button Grid.Column="0"
+										Classes="secondary"
+										HorizontalAlignment="Stretch"
+										Command="{Binding OpenDebugWindowCommand}"
+										IsEnabled="{Binding CanOpenDebugWindow}">
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<fa:SymbolIcon Symbol="Document" Width="16" Height="16" />
+										<TextBlock Text="{Binding lblOpenDebugWindow}" />
+									</StackPanel>
+								</Button>
+								<ToggleSwitch Grid.Column="1"
+											  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
+											  IsEnabled="{Binding ApiKeySet}"/>
+							</Grid>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding LblUseServerScripts}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding UseServerScripts}"
+										  IsEnabled="{Binding ApiKeySet}"/>
 						</Grid>
 					</StackPanel>
 
