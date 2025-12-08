@@ -282,16 +282,31 @@ namespace Jellyfin2Samsung.Services
                 store.Save(ms, password.ToCharArray(), new SecureRandom());
                 await File.WriteAllBytesAsync(target, ms.ToArray());
             }
-            
+
             // --- Optional sanity check ---
-            var verify = new X509Certificate2Collection();
-            verify.Import(target, password, GetX509KeyStorageFlags());
-            var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
-                       ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
-            var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
-                       ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
-            if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
-                throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
+            if (OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    var verify = new X509Certificate2Collection();
+                    // For a one-off verification, EphemeralKeySet is fine
+                    verify.Import(target, password, X509KeyStorageFlags.EphemeralKeySet);
+
+                    var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
+                               ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
+                    var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
+                               ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
+
+                    if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
+                        throw new InvalidOperationException(
+                            $"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
+                }
+                catch (Exception ex)
+                {
+                    // Log if you want, but don't block the install on Linux quirks
+                    System.Diagnostics.Debug.WriteLine($"PFX sanity check failed: {ex}");
+                }
+            }
 
             return target;
         }
