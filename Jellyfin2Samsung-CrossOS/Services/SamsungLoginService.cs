@@ -93,7 +93,8 @@ namespace Jellyfin2Samsung.Services
                                     state = WebUtility.UrlDecode(kv[1]);
 
                                 if (kv[0] == "code")
-                                    codeEncoded = WebUtility.UrlDecode(kv[1]); // <-- decode JSON
+                                    codeEncoded = Uri.UnescapeDataString(kv[1]);
+
                             }
 
                             if (string.IsNullOrWhiteSpace(codeEncoded))
