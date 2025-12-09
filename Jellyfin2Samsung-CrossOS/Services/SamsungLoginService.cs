@@ -17,12 +17,10 @@ namespace Jellyfin2Samsung.Services
     public class SamsungLoginService
     {
         private IWebHost _callbackServer;
-        private const string LoopbackIp = "127.0.0.1";
-        private const string StateValue = "accountcheckdogeneratedstatetext";
-        private int _boundPort;
-        private string _boundCallbackUrl => _boundPort > 0
-            ? $"http://{LoopbackIp}:{_boundPort}/signin/callback"
-            : throw new InvalidOperationException("Callback server not started.");
+        private const string LoopbackHost = "localhost";
+        private const int FixedPort = 4794;
+
+        private string _callbackUrl => $"http://{LoopbackHost}:{FixedPort}/signin/callback";
 
         public Action<SamsungAuth> CallbackReceived;
 
@@ -38,10 +36,15 @@ namespace Jellyfin2Samsung.Services
 
             await service.StartCallbackServer();
 
+            // Always use fixed localhost:4794
             string loginUrl =
-                $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate?locale=&clientId=v285zxnl3h&redirect_uri={HttpUtility.UrlEncode(service._boundCallbackUrl)}&state={StateValue}&tokenType=TOKEN";
+                $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
+                $"?locale=&clientId=v285zxnl3h" +
+                $"&redirect_uri={HttpUtility.UrlEncode(service._callbackUrl)}" +
+                $"&state=accountcheckdogeneratedstatetext" +
+                $"&tokenType=TOKEN";
 
-            // Open the system browser
+            // Open system browser
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -62,26 +65,22 @@ namespace Jellyfin2Samsung.Services
             return authResult;
         }
 
-
         public async Task StartCallbackServer()
         {
             _callbackServer = new WebHostBuilder()
                 .UseKestrel()
-                .UseUrls($"http://{LoopbackIp}:0")
+                .UseUrls($"http://{LoopbackHost}:{FixedPort}")
                 .Configure(app =>
                 {
                     app.Run(async context =>
                     {
                         if (context.Request.Path == "/signin/callback" && context.Request.Method == "POST")
                         {
-                            // Read full body
                             string body = await new StreamReader(context.Request.Body).ReadToEndAsync();
 
-                            // Parse "state=" and "code=" manually (Linux sends text/plain form style)
                             string state = null;
                             string codeEncoded = null;
 
-                            // Body looks like: state=...&code=....urlencoded....
                             var parts = body.Split('&', StringSplitOptions.RemoveEmptyEntries);
 
                             foreach (var part in parts)
@@ -94,7 +93,6 @@ namespace Jellyfin2Samsung.Services
 
                                 if (kv[0] == "code")
                                     codeEncoded = Uri.UnescapeDataString(kv[1]);
-
                             }
 
                             if (string.IsNullOrWhiteSpace(codeEncoded))
@@ -133,27 +131,13 @@ namespace Jellyfin2Samsung.Services
                         context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                         await context.Response.WriteAsync("Not Found");
                     });
-
-
                 })
                 .Build();
 
             await _callbackServer.StartAsync();
 
-            var addressFeature = _callbackServer.ServerFeatures.Get<IServerAddressesFeature>();
-            var address = addressFeature?.Addresses.FirstOrDefault();
-
-            if (!string.IsNullOrEmpty(address))
-            {
-                var uri = new Uri(address);
-                _boundPort = uri.Port;
-                System.Diagnostics.Debug.WriteLine($"[SamsungLoginService] Bound successfully to IP {LoopbackIp} on port {_boundPort}");
-            }
-            else
-            {
-                await StopCallbackServer();
-                throw new InvalidOperationException("Failed to determine bound port after Kestrel start.");
-            }
+            System.Diagnostics.Debug.WriteLine(
+                $"[SamsungLoginService] Bound to http://{LoopbackHost}:{FixedPort}");
         }
 
         public async Task StopCallbackServer()
@@ -164,8 +148,6 @@ namespace Jellyfin2Samsung.Services
                 _callbackServer.Dispose();
                 _callbackServer = null;
             }
-
-            _boundPort = 0;
         }
     }
 }

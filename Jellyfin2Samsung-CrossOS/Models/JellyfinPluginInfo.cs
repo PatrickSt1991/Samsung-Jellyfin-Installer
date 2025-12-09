@@ -17,10 +17,14 @@ namespace Jellyfin2Samsung.Models
 
     public class PluginMatrixEntry
     {
-        public string Name { get; set; }               // display name from /Plugins
-        public string IdContains { get; set; }         // optional substring in Id
-        public string ServerPath { get; set; }         // relative path on server, e.g. "/web/Plugins/CustomTabs/customtabs.js"
+        public string Name { get; set; }               // Display name from /Plugins
+        public string IdContains { get; set; }         // Lowercase substring of plugin Id
+        public string ServerPath { get; set; }         // e.g. "/JellyfinEnhanced/script"
         public List<string> FallbackUrls { get; set; } // CDN / GitHub raw URLs
-        public bool UseBabel { get; set; }             // whether to wrap in Babel + WaitForApiClient
+        public bool UseBabel { get; set; }             // Wrap with Babel + WaitForApiClient
+        public bool RequiresModuleBundle { get; set; }
+        public string ModuleRepoApiRoot { get; set; }      // GitHub API "contents" root for js tree
+        public string ModuleBundleFileName { get; set; }   // e.g. "enhanced.modules.bundle.js"
+
     }
 }
