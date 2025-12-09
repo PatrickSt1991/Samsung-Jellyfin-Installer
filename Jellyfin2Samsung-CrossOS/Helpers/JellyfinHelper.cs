@@ -934,47 +934,48 @@ namespace Jellyfin2Samsung.Helpers
             boot.AppendLine("window.appConfig = window.appConfig || {};");
             boot.AppendLine($"window.appConfig.servers = [{{ url: '{serverUrl.TrimEnd('/')}', name: 'Jellyfin Server' }}];");
 
-            // WaitForApiClient helper
+            // --- Enhanced URL rewriter + patch ---
+            boot.AppendLine("window.__EnhancedRewrite = function(path) {");
+            boot.AppendLine("    try {");
+            boot.AppendLine("        if (typeof path === 'string' && path.startsWith('/JellyfinEnhanced/js/')) {");
+            boot.AppendLine("            var fname = path.split('/').pop();");
+            boot.AppendLine("            return 'plugin_cache/' + fname;");
+            boot.AppendLine("        }");
+            boot.AppendLine("    } catch(e) { console.error('Enhanced rewrite failed', e); }");
+            boot.AppendLine("    return path;");
+            boot.AppendLine("};");
+
+            boot.AppendLine("window.__patchEnhancedLoader = function(){");
+            boot.AppendLine("    try {");
+            boot.AppendLine("        if (!window.ApiClient || window.__EnhancedLoaderPatched) return;");
+            boot.AppendLine("        window.__EnhancedLoaderPatched = true;");
+            boot.AppendLine("        var origGetUrl = window.ApiClient.getUrl && window.ApiClient.getUrl.bind(window.ApiClient);");
+            boot.AppendLine("        if (!origGetUrl) return;");
+            boot.AppendLine("        window.ApiClient.getUrl = function(path){");
+            boot.AppendLine("            try {");
+            boot.AppendLine("                path = window.__EnhancedRewrite(path);");
+            boot.AppendLine("            } catch (e) { console.error('Enhanced getUrl rewrite error', e); }");
+            boot.AppendLine("            return origGetUrl(path);");
+            boot.AppendLine("        };");
+            boot.AppendLine("        console.log('🪼 Enhanced: ApiClient.getUrl patched for plugin_cache modules');");
+            boot.AppendLine("    } catch (e) { console.error('Failed to patch ApiClient.getUrl for Enhanced', e); }");
+            boot.AppendLine("};");
+
+            // WaitForApiClient helper (now also ensures Enhanced patch is applied *before* callback)
             boot.AppendLine("window.WaitForApiClient = function(cb){");
             boot.AppendLine("  let t = setInterval(()=>{");
             boot.AppendLine("    if (window.ApiClient || (window.appRouter && window.appRouter.isReady)) {");
             boot.AppendLine("      clearInterval(t);");
+            boot.AppendLine("      try {");
+            boot.AppendLine("        if (window.__patchEnhancedLoader) window.__patchEnhancedLoader();");
+            boot.AppendLine("      } catch(e) { console.error('Error running __patchEnhancedLoader', e); }");
             boot.AppendLine("      cb();");
             boot.AppendLine("    }");
             boot.AppendLine("  }, 250);");
             boot.AppendLine("};");
 
-            // Patch ApiClient.getUrl so Enhanced can't dynamically load /JellyfinEnhanced/js/** from the server
-            boot.AppendLine("window.__patchEnhancedLoader = function(){");
-            boot.AppendLine("  // Rewrite Enhanced module URLs to local plugin_cache");
-            boot.AppendLine("  window.__EnhancedRewrite = function(path) {");
-            boot.AppendLine("    try {");
-            boot.AppendLine("      if (typeof path === 'string' && path.startsWith('/JellyfinEnhanced/js/')) {");
-            boot.AppendLine("        var fname = path.split('/').pop();");
-            boot.AppendLine("        return 'plugin_cache/' + fname;");
-            boot.AppendLine("      }");
-            boot.AppendLine("    } catch(e) { console.error('Enhanced rewrite failed', e); }");
-            boot.AppendLine("    return path;");
-            boot.AppendLine("  };");
-
-            boot.AppendLine("  try {");
-            boot.AppendLine("    if (!window.ApiClient || window.__EnhancedLoaderPatched) return;");
-            boot.AppendLine("    window.__EnhancedLoaderPatched = true;");
-
-            boot.AppendLine("    var origGetUrl = window.ApiClient.getUrl && window.ApiClient.getUrl.bind(window.ApiClient);");
-            boot.AppendLine("    if (!origGetUrl) return;");
-
-            boot.AppendLine("    window.ApiClient.getUrl = function(path){");
-            boot.AppendLine("      try {");
-            boot.AppendLine("        path = window.__EnhancedRewrite(path);");   // ⭐ THIS IS THE ACTUAL FIX
-            boot.AppendLine("      } catch (e) { console.error('Enhanced getUrl rewrite error', e); }");
-            boot.AppendLine("      return origGetUrl(path);");
-            boot.AppendLine("    };");
-
-            boot.AppendLine("  } catch (e) { console.error('Failed to patch ApiClient.getUrl for Enhanced', e); }");
-            boot.AppendLine("};");
-            boot.AppendLine("setInterval(window.__patchEnhancedLoader, 500);");
             boot.AppendLine("</script>");
+
 
 
             if (AppSettings.Default.EnableDevLogs)
