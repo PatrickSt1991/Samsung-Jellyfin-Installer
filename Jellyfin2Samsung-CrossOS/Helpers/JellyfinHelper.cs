@@ -40,24 +40,34 @@ namespace Jellyfin2Samsung.Helpers
 
         public async Task<List<JellyfinAuth>> LoadJellyfinUsersAsync()
         {
-            // (Standard user loading logic)
             var users = new List<JellyfinAuth>();
             if (!IsValidJellyfinConfiguration()) return users;
+
             try
             {
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
+
                 using var response = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinIP}/Users");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (jellyfinUsers != null) users.AddRange(jellyfinUsers);
-                    if (users.Count > 1) users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
+                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (jellyfinUsers != null)
+                        users.AddRange(jellyfinUsers);
+
+                    if (users.Count > 1)
+                        users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
                 }
             }
-            catch (Exception ex) { Debug.WriteLine($"Error loading users: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading users: {ex.Message}");
+            }
+
             return users;
         }
 
@@ -65,9 +75,12 @@ namespace Jellyfin2Samsung.Helpers
         {
             string? tempDir = null;
             string? tempPackage = null;
+
             try
             {
-                var baseDir = Path.GetDirectoryName(packagePath) ?? throw new InvalidOperationException("Invalid package path");
+                var baseDir = Path.GetDirectoryName(packagePath)
+                             ?? throw new InvalidOperationException("Invalid package path");
+
                 tempDir = Path.Combine(baseDir, $"JellyTemp_{Guid.NewGuid():N}");
                 Directory.CreateDirectory(tempDir);
                 ZipFile.ExtractToDirectory(packagePath, tempDir);
@@ -78,11 +91,17 @@ namespace Jellyfin2Samsung.Helpers
                     await AddOrUpdateCspAsync(tempDir, AppSettings.Default.JellyfinIP);
                 }
 
-                if (AppSettings.Default.ConfigUpdateMode.Contains("Server") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
+                    AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                {
                     await UpdateMultiServerConfig(tempDir);
+                }
 
-                if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") || AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||
+                    AppSettings.Default.ConfigUpdateMode.Contains("All"))
+                {
                     await InjectUserSettingsScriptAsync(tempDir, userIds);
+                }
 
                 tempPackage = Path.Combine(baseDir, $"{Path.GetFileNameWithoutExtension(packagePath)}_mod.wgt");
                 if (File.Exists(tempPackage)) File.Delete(tempPackage);
@@ -90,6 +109,7 @@ namespace Jellyfin2Samsung.Helpers
 
                 File.Delete(packagePath);
                 File.Move(tempPackage, packagePath);
+
                 return InstallResult.SuccessResult();
             }
             catch (Exception ex)
@@ -98,38 +118,103 @@ namespace Jellyfin2Samsung.Helpers
             }
             finally
             {
-                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-                if (tempPackage != null && File.Exists(tempPackage)) File.Delete(tempPackage);
+                try
+                {
+                    if (Directory.Exists(tempDir))
+                        Directory.Delete(tempDir, true);
+                    if (tempPackage != null && File.Exists(tempPackage))
+                        File.Delete(tempPackage);
+                }
+                catch { }
             }
         }
 
         public static async Task UpdateMultiServerConfig(string tempDirectory)
         {
             string configPath = Path.Combine(tempDirectory, "www", "config.json");
+
             if (!File.Exists(configPath))
             {
-                var defaultConfig = new JsonObject { ["servers"] = new JsonArray(), ["multiserver"] = false };
+                var defaultConfig = new JsonObject
+                {
+                    ["servers"] = new JsonArray(),
+                    ["multiserver"] = false
+                };
                 await File.WriteAllTextAsync(configPath, defaultConfig.ToJsonString());
             }
 
             string jsonText = await File.ReadAllTextAsync(configPath);
             var config = JsonNode.Parse(jsonText) ?? new JsonObject();
+
             config["multiserver"] = false;
             string serverUrl = AppSettings.Default.JellyfinIP.TrimEnd('/');
             config["servers"] = new JsonArray { JsonValue.Create(serverUrl) };
-            await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+            await File.WriteAllTextAsync(configPath,
+                config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
 
-        // ---------------------------------------------------------------
-        // Plugin API helpers (for Jellyfin Enhanced + KefinTweaks)
-        // ---------------------------------------------------------------
+        // --------------------------------------------------------------------
+        //  PLUGIN MATRIX + HELPERS
+        // --------------------------------------------------------------------
 
-        private class JellyfinPluginInfo
+        private static readonly List<PluginMatrixEntry> PluginMatrix = new()
         {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public string Version { get; set; }
-        }
+            // Jellyfin Enhanced
+            new PluginMatrixEntry
+            {
+                Name = "Jellyfin Enhanced",
+                IdContains = "jellyfinenhanced",
+                ServerPath = "/JellyfinEnhanced/script",
+                FallbackUrls = new List<string>
+                {
+                    "https://raw.githubusercontent.com/n00bcodr/Jellyfin-Enhanced/main/src/plugin.js"
+                },
+                UseBabel = true
+            },
+
+            // Custom Tabs
+            new PluginMatrixEntry
+            {
+                Name = "Custom Tabs",
+                IdContains = "custom",
+                ServerPath = "/web/Plugins/CustomTabs/customtabs.js",
+                FallbackUrls = new List<string>
+                {
+                    "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-custom-tabs@main/dashboard-ui/customtabs.js",
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-custom-tabs/main/dashboard-ui/customtabs.js"
+                },
+                UseBabel = true
+            },
+
+            // Media Bar
+            new PluginMatrixEntry
+            {
+                Name = "Media Bar",
+                IdContains = "mediabar",
+                ServerPath = null, // not exposed via /web
+                FallbackUrls = new List<string>
+                {
+                    "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.js",
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-media-bar/main/slideshowpure.js"
+                },
+                UseBabel = true
+            },
+
+            // KefinTweaks
+            new PluginMatrixEntry
+            {
+                Name = "KefinTweaks",
+                IdContains = "kefin",
+                ServerPath = null,
+                FallbackUrls = new List<string>
+                {
+                    "https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks@latest/kefinTweaks-plugin.js",
+                    "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/main/kefinTweaks-plugin.js"
+                },
+                UseBabel = true
+            }
+        };
 
         private async Task<List<JellyfinPluginInfo>> GetInstalledPluginsAsync(string serverUrl)
         {
@@ -141,7 +226,9 @@ namespace Jellyfin2Samsung.Helpers
                 var json = await _httpClient.GetStringAsync(url);
                 var parsed = JsonSerializer.Deserialize<List<JellyfinPluginInfo>>(json,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (parsed != null) list.AddRange(parsed);
+
+                if (parsed != null)
+                    list.AddRange(parsed);
             }
             catch (Exception ex)
             {
@@ -151,31 +238,45 @@ namespace Jellyfin2Samsung.Helpers
             return list;
         }
 
-        private async Task<List<string>> ResolvePluginScriptUrlsAsync(JellyfinPluginInfo plugin, string serverUrl)
+        private PluginMatrixEntry FindPluginMatrixEntry(JellyfinPluginInfo plugin)
         {
-            var urls = new List<string>();
-            string id = (plugin.Id ?? "").ToLowerInvariant();
             string name = (plugin.Name ?? "").ToLowerInvariant();
+            string id = (plugin.Id ?? "").ToLowerInvariant();
 
-            // 1) Jellyfin Enhanced
-            if (id.Contains("jellyfinenhanced") || name.Contains("jellyfin enhanced") || name.Equals("jellyfin enhanced"))
+            return PluginMatrix.FirstOrDefault(entry =>
             {
-                urls.Add(serverUrl.TrimEnd('/') + "/JellyfinEnhanced/script");
+                bool nameMatch = !string.IsNullOrEmpty(entry.Name) &&
+                                 name.Contains(entry.Name.ToLowerInvariant());
+
+                bool idMatch = !string.IsNullOrEmpty(entry.IdContains) &&
+                               id.Contains(entry.IdContains.ToLowerInvariant());
+
+                return nameMatch || idMatch;
+            });
+        }
+
+        /// <summary>
+        /// Try a list of URLs in order. Return first that works, or null.
+        /// </summary>
+        private async Task<(string Content, string Url)?> TryDownloadFirstWorkingUrl(IEnumerable<string> urls)
+        {
+            foreach (var url in urls)
+            {
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(url)) continue;
+
+                    Debug.WriteLine($"   → Trying plugin URL: {url}");
+                    var content = await _httpClient.GetStringAsync(url);
+                    return (content, url);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"   ⚠ Plugin URL failed: {url} → {ex.Message}");
+                }
             }
 
-            // 2) Custom Tabs (strict known path)
-            if (name.Contains("custom tabs"))
-            {
-                urls.Add(serverUrl.TrimEnd('/') + "/web/Plugins/CustomTabs/customtabs.js");
-            }
-
-            // 3) KefinTweaks (CDN)
-            if (name.Contains("kefin") || id.Contains("kefin"))
-            {
-                urls.Add("https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks@latest/kefinTweaks-plugin.js");
-            }
-
-            return urls;
+            return null;
         }
 
         public async Task<bool> PatchServerSideIndexHtmlAsync(string tempDirectory, string serverUrl)
@@ -202,18 +303,13 @@ namespace Jellyfin2Samsung.Helpers
                 serverHtml = "";
             }
 
-            //------------------------------------------------------------
             // Helper: detect plugin-ish URLs by name/path
-            //------------------------------------------------------------
             bool IsKnownPluginAsset(string url)
             {
                 var lower = url.ToLowerInvariant();
                 return lower.Contains("/plugins/") ||
                        lower.Contains("javascriptinjector") ||
                        lower.Contains("jellyfin-javascript-injector") ||
-                       lower.Contains("filetransformation") ||
-                       lower.Contains("file-transformation") ||
-                       lower.Contains("jellyfin-plugin-file-transformation") ||
                        lower.Contains("customtabs") ||
                        lower.Contains("custom-tabs") ||
                        lower.Contains("jellyfin-plugin-custom-tabs") ||
@@ -221,27 +317,25 @@ namespace Jellyfin2Samsung.Helpers
                        lower.Contains("jellyfin-enhanced") ||
                        lower.Contains("mediabar") ||
                        lower.Contains("media-bar") ||
-                       lower.Contains("jellyfin-plugin-media-bar");
+                       lower.Contains("jellyfin-plugin-media-bar") ||
+                       lower.Contains("kefintweaks") ||
+                       lower.Contains("kefin");
             }
 
-            // Where we’ll cache plugin JS/CSS locally
+            // local plugin_cache dir
             string pluginCacheDir = Path.Combine(tempDirectory, "www", "plugin_cache");
             Directory.CreateDirectory(pluginCacheDir);
 
             var cssBuilder = new StringBuilder();
             var jsBuilder = new StringBuilder();
 
-            //------------------------------------------------------------
-            // 1) Extract plugin CSS + JS tags from SERVER index.html
-            //------------------------------------------------------------
+            // 1) Extract plugin CSS + JS from SERVER HTML
 
-            // <link ... href="...">
             var cssMatches = Regex.Matches(
                 serverHtml,
                 @"<link[^>]+href=[""']([^""']+)[""'][^>]*>",
                 RegexOptions.IgnoreCase);
 
-            // <script ... src="..."></script>
             var jsMatches = Regex.Matches(
                 serverHtml,
                 @"<script[^>]+src=[""']([^""']+)[""'][^>]*></script>",
@@ -249,22 +343,18 @@ namespace Jellyfin2Samsung.Helpers
 
             Debug.WriteLine("▶ Extracting plugin assets from server index…");
 
-            //------------------------------------------------------------
-            // 1a) Plugin CSS → download once to plugin_cache, reference locally
-            //------------------------------------------------------------
+            // 1a) Plugin CSS
             foreach (Match m in cssMatches)
             {
                 string href = m.Groups[1].Value;
                 if (string.IsNullOrWhiteSpace(href))
                     continue;
 
-                // Only care about plugin-related CSS
                 if (!IsKnownPluginAsset(href))
                     continue;
 
                 try
                 {
-                    // Build absolute URL if needed
                     Uri uri;
                     if (href.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                         href.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -273,14 +363,14 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     else
                     {
-                        // /web/... or relative -> base off serverUrl
                         var baseUri = new Uri(serverUrl.TrimEnd('/') + "/");
                         var relative = href.TrimStart('/');
                         uri = new Uri(baseUri, relative);
                     }
 
                     string fileName = Path.GetFileName(uri.AbsolutePath);
-                    if (string.IsNullOrEmpty(fileName) || !fileName.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrEmpty(fileName) ||
+                        !fileName.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     string localPath = Path.Combine(pluginCacheDir, fileName);
@@ -297,13 +387,7 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
 
-            //------------------------------------------------------------
-            // 1b) Plugin JS → either:
-            //     - /web/ plugin JS -> cache raw in plugin_cache
-            //     - external CDN (MediaBar) -> Babel-wrapped + cache
-            //------------------------------------------------------------
-
-            // Ensure Babel exists for any Babel-wrapped plugins
+            // 1b) Plugin JS from server HTML
             await DownloadBabelAsync(tempDirectory);
 
             foreach (Match m in jsMatches)
@@ -313,8 +397,9 @@ namespace Jellyfin2Samsung.Helpers
                     continue;
 
                 var lower = jsUrl.ToLowerInvariant();
+                bool isPlugin = IsKnownPluginAsset(jsUrl);
 
-                // Skip obvious Jellyfin core bundles – let Tizen’s local ES5 bundles handle that.
+                // Skip known core bundles (handled by local Tizen build)
                 if (lower.Contains("main.") ||
                     lower.Contains("runtime") ||
                     lower.Contains("jellyfin-apiclient") ||
@@ -325,40 +410,28 @@ namespace Jellyfin2Samsung.Helpers
                     continue;
                 }
 
-                bool isPlugin = IsKnownPluginAsset(jsUrl);
-
-                // IMPORTANT: skip JavaScriptInjector here to avoid duplicate public.js,
-                //            we'll let the first pass handle it and NOT Babel-wrap it.
-                if (lower.Contains("javascriptinjector"))
+                // Skip if not plugin-related and not a CDN
+                if (!isPlugin &&
+                    !lower.Contains("cdn.jsdelivr") &&
+                    !lower.Contains("unpkg.com"))
                 {
-                    // It will already be handled as /web/ plugin JS below (once).
-                    // We do NOT want to wrap/copy it multiple times.
+                    continue;
                 }
 
-                // -----------------------------
-                // CASE 1: Plugin JS under /web/ or relative
-                // -----------------------------
-                if ((lower.Contains("/web/") || !jsUrl.Contains("://")) && isPlugin)
+                // CASE 1: local/server JS (e.g. JavaScriptInjector/public.js)
+                if (!jsUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                    !jsUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) &&
+                    !jsUrl.StartsWith("//"))
                 {
                     try
                     {
-                        // Build absolute URL
-                        Uri uri;
-                        if (jsUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                            jsUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                        {
-                            uri = new Uri(jsUrl);
-                        }
-                        else
-                        {
-                            // /web/... or relative
-                            var baseUri = new Uri(serverUrl.TrimEnd('/') + "/");
-                            var rel = jsUrl.TrimStart('/');
-                            uri = new Uri(baseUri, rel);
-                        }
+                        var baseUri = new Uri(serverUrl.TrimEnd('/') + "/");
+                        var rel = jsUrl.TrimStart('/');
+                        var uri = new Uri(baseUri, rel);
 
                         string fileName = Path.GetFileName(uri.AbsolutePath);
-                        if (string.IsNullOrEmpty(fileName) || !fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+                        if (string.IsNullOrEmpty(fileName) ||
+                            !fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         string localPath = Path.Combine(pluginCacheDir, fileName);
@@ -367,7 +440,7 @@ namespace Jellyfin2Samsung.Helpers
                         var bytes = await _httpClient.GetByteArrayAsync(uri);
                         await File.WriteAllBytesAsync(localPath, bytes);
 
-                        // IMPORTANT: local plugin JS (including public.js) is NOT Babel-wrapped.
+                        // Local plugin (including JavaScriptInjector/public.js) → no Babel
                         jsBuilder.AppendLine($"<script src=\"plugin_cache/{fileName}\"></script>");
                     }
                     catch (Exception ex)
@@ -378,22 +451,12 @@ namespace Jellyfin2Samsung.Helpers
                     continue;
                 }
 
-                // -----------------------------
-                // CASE 2: External plugin JS (CDN, e.g. MediaBar)
-                //         → Babel-wrap + cache in plugin_cache
-                // -----------------------------
+                // CASE 2: external JS from CDN (e.g. MediaBar, etc.)
+                // NOTE: we still allow external ones if plugin-related or CDN.
                 if (jsUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                     jsUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
                     jsUrl.StartsWith("//"))
                 {
-                    // Only bother if it’s plugin-y (MediaBar, Enhanced, etc.) or a known CDN lib
-                    if (!isPlugin &&
-                        !lower.Contains("cdn.jsdelivr") &&
-                        !lower.Contains("unpkg.com"))
-                    {
-                        continue;
-                    }
-
                     string normalized = jsUrl;
                     if (normalized.StartsWith("//"))
                         normalized = "http:" + normalized;
@@ -426,51 +489,82 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
 
-            //------------------------------------------------------------
-            // 1c) Plugin API integration: Jellyfin Enhanced + KefinTweaks
-            //------------------------------------------------------------
+            // 1c) Plugin API + MATRIX (Enhanced, CustomTabs, MediaBar, KefinTweaks)
             var apiPlugins = await GetInstalledPluginsAsync(serverUrl);
             var apiJsBuilder = new StringBuilder();
 
-            Debug.WriteLine("▶ Resolving client-side plugins via API…");
+            Debug.WriteLine("▶ Resolving client-side plugins via API + matrix…");
 
             foreach (var plugin in apiPlugins)
             {
                 Debug.WriteLine($"▶ Plugin detected: {plugin.Name}");
 
-                var urls = await ResolvePluginScriptUrlsAsync(plugin, serverUrl);
-                foreach (var url in urls)
+                var entry = FindPluginMatrixEntry(plugin);
+                if (entry == null)
                 {
-                    string normalized = url;
-                    if (normalized.StartsWith("//"))
-                        normalized = "http:" + normalized;
+                    // Not in matrix → ignore (AudioDB, TMDb, etc.)
+                    continue;
+                }
 
-                    Debug.WriteLine($"   → Script: {normalized}");
+                var urls = new List<string>();
 
-                    try
-                    {
-                        string jsContent = await _httpClient.GetStringAsync(normalized);
+                // 1) Server path if defined
+                if (!string.IsNullOrEmpty(entry.ServerPath))
+                {
+                    var absolute = serverUrl.TrimEnd('/') + entry.ServerPath;
+                    urls.Add(absolute);
+                }
 
-                        var wrapped = new StringBuilder();
-                        wrapped.AppendLine("if(typeof define!=='function'){var define=function(){};define.amd=true;}");
-                        wrapped.AppendLine("window.WaitForApiClient(function(){");
-                        wrapped.AppendLine("   try {");
-                        wrapped.AppendLine(jsContent);
-                        wrapped.AppendLine("   } catch(e) { console.error('Plugin Error:', e); }");
-                        wrapped.AppendLine("});");
+                // 2) Fallback URLs (CDN + GitHub raw)
+                urls.AddRange(entry.FallbackUrls);
 
-                        string fileName = $"plugin_{Guid.NewGuid():N}.js";
-                        string localPath = Path.Combine(pluginCacheDir, fileName);
-                        await File.WriteAllTextAsync(localPath, wrapped.ToString());
+                var result = await TryDownloadFirstWorkingUrl(urls);
+                if (result == null)
+                {
+                    Debug.WriteLine($"❌ No working URL for plugin {plugin.Name}");
+                    continue;
+                }
 
-                        // These are always modern JS → Babel.
-                        apiJsBuilder.AppendLine(
-                            $@"<script type=""text/babel"" data-presets=""env"" src=""plugin_cache/{fileName}""></script>");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("⚠ Plugin API script failed: " + ex.Message);
-                    }
+                string jsBody = result.Value.Content;
+
+                string outFileName;
+                string chosenUrl = result.Value.Url;
+                try
+                {
+                    var uri = new Uri(chosenUrl);
+                    var name = Path.GetFileName(uri.LocalPath);
+                    if (string.IsNullOrWhiteSpace(name))
+                        name = $"plugin_{Guid.NewGuid():N}.js";
+                    outFileName = name;
+                }
+                catch
+                {
+                    outFileName = $"plugin_{Guid.NewGuid():N}.js";
+                }
+
+                string outPath = Path.Combine(pluginCacheDir, outFileName);
+
+                if (entry.UseBabel)
+                {
+                    var wrapped = new StringBuilder();
+                    wrapped.AppendLine("if(typeof define!=='function'){var define=function(){};define.amd=true;}");
+                    wrapped.AppendLine("window.WaitForApiClient(function(){");
+                    wrapped.AppendLine("   try {");
+                    wrapped.AppendLine(jsBody);
+                    wrapped.AppendLine("   } catch(e) { console.error('Plugin Error:', e); }");
+                    wrapped.AppendLine("});");
+                    await File.WriteAllTextAsync(outPath, wrapped.ToString());
+
+                    apiJsBuilder.AppendLine(
+                        $@"<script type=""text/babel"" data-presets=""env"" src=""plugin_cache/{outFileName}""></script>");
+                }
+                else
+                {
+                    // (We currently have no matrix entries with UseBabel=false,
+                    // but this is here for future plugins.)
+                    await File.WriteAllTextAsync(outPath, jsBody);
+                    apiJsBuilder.AppendLine(
+                        $@"<script src=""plugin_cache/{outFileName}""></script>");
                 }
             }
 
@@ -479,9 +573,7 @@ namespace Jellyfin2Samsung.Helpers
                 jsBuilder.AppendLine(apiJsBuilder.ToString());
             }
 
-            //------------------------------------------------------------
-            // 2) Inject plugin CSS + JS into LOCAL index.html
-            //------------------------------------------------------------
+            // 2) Inject plugin CSS/JS into local index.html
 
             if (cssBuilder.Length > 0)
             {
@@ -494,12 +586,10 @@ namespace Jellyfin2Samsung.Helpers
 
             if (jsBuilder.Length > 0)
             {
-                localHtml = localHtml.Replace("</body>", jsBuilder.ToString() + "\n</body>");
+                localHtml = localHtml.Replace("</body>", jsBuilder + "\n</body>");
             }
 
-            //------------------------------------------------------------
-            // 3) Inject bootloader / logger / WaitForApiClient
-            //------------------------------------------------------------
+            // 3) Bootloader / WaitForApiClient / Dev logger
 
             var boot = new StringBuilder();
             boot.AppendLine("<script src=\"libs/babel.min.js\"></script>");
@@ -533,12 +623,10 @@ namespace Jellyfin2Samsung.Helpers
             localHtml = Regex.Replace(
                 localHtml,
                 "<head>",
-                "<head>\n" + boot.ToString(),
+                "<head>\n" + boot,
                 RegexOptions.IgnoreCase);
 
-            //------------------------------------------------------------
-            // 4) Replace CSP
-            //------------------------------------------------------------
+            // 4) CSP
 
             localHtml = Regex.Replace(localHtml,
                 @"<meta[^>]*Content-Security-Policy[^>]*>",
@@ -549,9 +637,7 @@ namespace Jellyfin2Samsung.Helpers
                 "</head>",
                 "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;\">\n</head>");
 
-            //------------------------------------------------------------
-            // 5) SAVE
-            //------------------------------------------------------------
+            // 5) Save
 
             await File.WriteAllTextAsync(localIndexPath, localHtml);
             return true;
@@ -570,70 +656,27 @@ namespace Jellyfin2Samsung.Helpers
                     await File.WriteAllTextAsync(babelPath, babelJs);
                 }
             }
-            catch (Exception ex) { Debug.WriteLine($"Failed to download Babel: {ex.Message}"); }
-        }
-
-        private async Task<string> ProcessExternalScriptsAsync(string html, string tempDirectory, string serverUrl)
-        {
-            var jsDir = Path.Combine(tempDirectory, "www", "patched_plugins");
-            Directory.CreateDirectory(jsDir);
-            var regex = new Regex(@"<script[^>]+src=[""']((https?://|//)[^""']+)[""'][^>]*>.*?</script>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            return await ReplaceAsync(html, regex, async (match) =>
+            catch (Exception ex)
             {
-                string originalUrl = match.Groups[1].Value;
-                if (originalUrl.Contains("babel")) return match.Value;
-                if (originalUrl.StartsWith("//")) originalUrl = "http:" + originalUrl;
-
-                try
-                {
-                    Debug.WriteLine($"Processing plugin: {originalUrl}");
-                    string jsContent = await _httpClient.GetStringAsync(originalUrl);
-
-                    var wrappedContent = new StringBuilder();
-                    wrappedContent.AppendLine("if(typeof define !== 'function') { var define = function(){}; define.amd = true; }");
-                    wrappedContent.AppendLine("window.WaitForApiClient(function(){");
-                    wrappedContent.AppendLine("   try {");
-                    wrappedContent.AppendLine(jsContent);
-                    wrappedContent.AppendLine("   } catch(e) { console.error('Plugin Error:', e); }");
-                    wrappedContent.AppendLine("});");
-
-                    string fileName = $"plugin_{Guid.NewGuid():N}.js";
-                    string localPath = Path.Combine(jsDir, fileName);
-                    await File.WriteAllTextAsync(localPath, wrappedContent.ToString());
-
-                    return $"<script type=\"text/babel\" data-presets=\"env\" src=\"patched_plugins/{fileName}\"></script>";
-                }
-                catch { return ""; }
-            });
-        }
-
-        private async Task<string> ReplaceAsync(string input, Regex regex, Func<Match, Task<string>> replacementFn)
-        {
-            var sb = new StringBuilder();
-            var lastIndex = 0;
-            foreach (Match match in regex.Matches(input))
-            {
-                sb.Append(input, lastIndex, match.Index - lastIndex);
-                sb.Append(await replacementFn(match));
-                lastIndex = match.Index + match.Length;
+                Debug.WriteLine($"Failed to download Babel: {ex.Message}");
             }
-            sb.Append(input, lastIndex, input.Length - lastIndex);
-            return sb.ToString();
         }
 
         public static async Task InjectUserSettingsScriptAsync(string tempDirectory, string[] userIds)
         {
             if (userIds == null || userIds.Length == 0) return;
+
             string indexPath = Path.Combine(tempDirectory, "www", "index.html");
             if (!File.Exists(indexPath)) return;
+
             string htmlContent = await File.ReadAllTextAsync(indexPath);
             string BoolToJs(bool val) => val.ToString().ToLower();
 
             var sb = new StringBuilder();
-            sb.AppendLine("");
+            sb.AppendLine();
             sb.AppendLine("<script>");
             sb.AppendLine("(function() {");
+
             foreach (var userId in userIds.Where(u => !string.IsNullOrWhiteSpace(u)))
             {
                 sb.AppendLine($"    var u = '{userId}';");
@@ -643,10 +686,11 @@ namespace Jellyfin2Samsung.Helpers
                 sb.AppendLine($"        localStorage.setItem('injected-' + u, 'true');");
                 sb.AppendLine("    }");
             }
+
             sb.AppendLine("})();");
             sb.AppendLine("</script>");
 
-            htmlContent = htmlContent.Replace("</body>", sb.ToString() + "\n</body>");
+            htmlContent = htmlContent.Replace("</body>", sb + "\n</body>");
             await File.WriteAllTextAsync(indexPath, htmlContent);
         }
 
@@ -654,14 +698,24 @@ namespace Jellyfin2Samsung.Helpers
         {
             string configPath = Path.Combine(tempDirectory, "config.xml");
             if (!File.Exists(configPath)) return false;
+
             try
             {
                 XDocument doc = XDocument.Load(configPath);
                 XNamespace tizen = "http://tizen.org/ns/widgets";
 
                 var access = doc.Root.Elements(tizen + "access").FirstOrDefault();
-                if (access == null) doc.Root.Add(new XElement(tizen + "access", new XAttribute("origin", "*"), new XAttribute("subdomains", "true")));
-                else { access.SetAttributeValue("origin", "*"); access.SetAttributeValue("subdomains", "true"); }
+                if (access == null)
+                {
+                    doc.Root.Add(new XElement(tizen + "access",
+                        new XAttribute("origin", "*"),
+                        new XAttribute("subdomains", "true")));
+                }
+                else
+                {
+                    access.SetAttributeValue("origin", "*");
+                    access.SetAttributeValue("subdomains", "true");
+                }
 
                 var requiredPrivileges = new[]
                 {
@@ -670,15 +724,24 @@ namespace Jellyfin2Samsung.Helpers
                     "http://tizen.org/privilege/filesystem.read",
                     "http://tizen.org/privilege/content.read"
                 };
+
                 foreach (var priv in requiredPrivileges)
                 {
-                    if (!doc.Root.Elements(tizen + "privilege").Any(x => x.Attribute("name")?.Value == priv))
-                        doc.Root.Add(new XElement(tizen + "privilege", new XAttribute("name", priv)));
+                    if (!doc.Root.Elements(tizen + "privilege")
+                        .Any(x => x.Attribute("name")?.Value == priv))
+                    {
+                        doc.Root.Add(new XElement(tizen + "privilege",
+                            new XAttribute("name", priv)));
+                    }
                 }
+
                 doc.Save(configPath);
                 return true;
             }
-            catch { return false; }
+            catch
+            {
+                return false;
+            }
         }
 
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
@@ -689,20 +752,21 @@ namespace Jellyfin2Samsung.Helpers
             try
             {
                 _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
+                _httpClient.DefaultRequestHeaders.Add("Authorization",
+                    $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
 
                 foreach (string userId in userIds.Where(u => !string.IsNullOrWhiteSpace(u)))
                 {
                     try
                     {
-                        // Fetch user info
-                        var getUserResponse = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinIP}/Users/{userId}");
+                        var getUserResponse = await _httpClient.GetAsync(
+                            $"{AppSettings.Default.JellyfinIP}/Users/{userId}");
                         getUserResponse.EnsureSuccessStatusCode();
                         var userJson = await getUserResponse.Content.ReadAsStringAsync();
 
-                        var userNode = JsonNode.Parse(userJson) ?? throw new JsonException("Failed to parse user JSON");
+                        var userNode = JsonNode.Parse(userJson)
+                                       ?? throw new JsonException("Failed to parse user JSON");
 
-                        // Update auto-login setting
                         userNode["EnableAutoLogin"] = AppSettings.Default.UserAutoLogin;
 
                         var userContent = new StringContent(
@@ -712,11 +776,12 @@ namespace Jellyfin2Samsung.Helpers
 
                         using (userContent)
                         {
-                            var userResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users?userId={userId}", userContent);
+                            var userResponse = await _httpClient.PostAsync(
+                                $"{AppSettings.Default.JellyfinIP}/Users?userId={userId}",
+                                userContent);
                             userResponse.EnsureSuccessStatusCode();
                         }
 
-                        // Update additional user configurations
                         var userConfig = new
                         {
                             AppSettings.Default.PlayDefaultAudioTrack,
@@ -727,10 +792,13 @@ namespace Jellyfin2Samsung.Helpers
                             EnableNextEpisodeAutoPlay = AppSettings.Default.AutoPlayNextEpisode,
                         };
 
-                        var configJson = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
+                        var configJson = JsonSerializer.Serialize(userConfig,
+                            new JsonSerializerOptions { WriteIndented = true });
 
                         using var configContent = new StringContent(configJson, Encoding.UTF8, "application/json");
-                        var configResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users/Configuration?userId={userId}", configContent);
+                        var configResponse = await _httpClient.PostAsync(
+                            $"{AppSettings.Default.JellyfinIP}/Users/Configuration?userId={userId}",
+                            configContent);
                         configResponse.EnsureSuccessStatusCode();
                     }
                     catch (Exception userEx)
