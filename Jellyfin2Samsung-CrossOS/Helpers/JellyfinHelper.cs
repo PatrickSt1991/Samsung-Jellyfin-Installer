@@ -379,32 +379,6 @@ namespace Jellyfin2Samsung.Helpers
                 return nameMatch || idMatch;
             });
         }
-
-        private async Task<(string Content, string Url)?> TryDownloadFirstWorkingUrl(IEnumerable<string> urls)
-        {
-            foreach (var url in urls)
-            {
-                try
-                {
-                    if (string.IsNullOrWhiteSpace(url)) continue;
-
-                    Debug.WriteLine($"   → Trying plugin URL: {url}");
-                    var content = await _httpClient.GetStringAsync(url);
-                    return (content, url);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"   ⚠ Plugin URL failed: {url} → {ex.Message}");
-                }
-            }
-
-            return null;
-        }
-
-        // ====================================================================
-        // DOWNLOAD + TRANSPILE EXPLICIT ENHANCED FILES (es2015 via esbuild)
-        // ====================================================================
-
         private async Task DownloadExplicitPluginFilesAsync(
                     string serverUrl,
                     string pluginCacheDir,
@@ -444,6 +418,12 @@ namespace Jellyfin2Samsung.Helpers
 
                     string logPath = outPath.Replace(pluginCacheDir + Path.DirectorySeparatorChar, "plugin_cache/");
                     Debug.WriteLine($"      ✓ Saved {logPath}");
+                    if (rel.Equals("/JellyfinEnhanced/script", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Debug.WriteLine("      🔧 Patching Enhanced main script (script.js)...");
+                        await PatchEnhancedMainScript(outPath);
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -451,11 +431,6 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
-
-        // --------------------------------------------------------------------
-        //  DOM EXTRACTION ENGINE (server → local)
-        // --------------------------------------------------------------------
-
         private class ExtractedDomBlocks
         {
             public List<string> HeadInjectBlocks { get; set; } = new();
@@ -598,11 +573,6 @@ namespace Jellyfin2Samsung.Helpers
 
             return html;
         }
-
-        // --------------------------------------------------------------------
-        //  PLUGIN ASSET HEURISTICS
-        // --------------------------------------------------------------------
-
         private bool IsLikelyPluginAsset(string url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
@@ -625,11 +595,6 @@ namespace Jellyfin2Samsung.Helpers
                    || lower.Contains("kefin")
                    || lower.Contains("kefintweaks");
         }
-
-        // --------------------------------------------------------------------
-        //  MAIN PATCHER — SERVER DOM + LOCAL CHUNKS + PLUGIN MATRIX
-        // --------------------------------------------------------------------
-
         public async Task<bool> PatchServerSideIndexHtmlAsync(string tempDirectory, string serverUrl)
         {
             string localIndexPath = Path.Combine(tempDirectory, "www", "index.html");
@@ -947,20 +912,48 @@ namespace Jellyfin2Samsung.Helpers
             boot.AppendLine("window.appConfig = window.appConfig || {};");
             boot.AppendLine($"window.appConfig.servers = [{{ url: '{serverUrl.TrimEnd('/')}', name: 'Jellyfin Server' }}];");
 
-            // Enhanced URL rewriter + patch
+            // ------------------------------------------------------
+            // 1) Enhanced URL Rewrite Logic
+            // ------------------------------------------------------
             boot.AppendLine("window.__EnhancedRewrite = function(path) {");
             boot.AppendLine("    try {");
-            boot.AppendLine("        if (typeof path === 'string' && path.startsWith('/JellyfinEnhanced/js/')) {");
-            boot.AppendLine("            var subPath = path.substring('/JellyfinEnhanced/js/'.length);");
-            boot.AppendLine("            return 'plugin_cache/JellyfinEnhanced/js/' + subPath;");
-            boot.AppendLine("        }");
-            boot.AppendLine("        if (path === '/JellyfinEnhanced/script') {");
+            boot.AppendLine("        if (typeof path !== 'string') return path;");
+
+            // Rewrite main script
+            boot.AppendLine("        if (path === '/JellyfinEnhanced/script')");
             boot.AppendLine("            return 'plugin_cache/JellyfinEnhanced/script.js';");
+
+            // Rewrite JS modules
+            boot.AppendLine("        if (path.startsWith('/JellyfinEnhanced/js/')) {");
+            boot.AppendLine("            return 'plugin_cache/JellyfinEnhanced/js/' + path.substring('/JellyfinEnhanced/js/'.length);");
             boot.AppendLine("        }");
+
+            // Rewrite EVERYTHING except locale JSON files
+            boot.AppendLine("        if (path.startsWith('/JellyfinEnhanced/') && !path.includes('/locales/')) {");
+            boot.AppendLine("            return 'plugin_cache/JellyfinEnhanced/' + path.substring('/JellyfinEnhanced/'.length);");
+            boot.AppendLine("        }");
+
             boot.AppendLine("    } catch(e) { console.error('Enhanced rewrite failed', e); }");
             boot.AppendLine("    return path;");
             boot.AppendLine("};");
 
+            // ------------------------------------------------------
+            // 2) Patch fetch() so Enhanced cannot bypass getUrl()
+            // ------------------------------------------------------
+            boot.AppendLine("(function(){");
+            boot.AppendLine("  const _fetch = window.fetch;");
+            boot.AppendLine("  window.fetch = function(resource, init) {");
+            boot.AppendLine("    try {");
+            boot.AppendLine("      if (typeof resource === 'string')");
+            boot.AppendLine("          resource = window.__EnhancedRewrite(resource);");
+            boot.AppendLine("    } catch(e) { console.error('Enhanced fetch rewrite failed', e); }");
+            boot.AppendLine("    return _fetch(resource, init);");
+            boot.AppendLine("  };");
+            boot.AppendLine("})();");
+
+            // ------------------------------------------------------
+            // 3) Patch ApiClient.getUrl()
+            // ------------------------------------------------------
             boot.AppendLine("window.__patchEnhancedLoader = function(){");
             boot.AppendLine("    try {");
             boot.AppendLine("        if (!window.ApiClient || window.__EnhancedLoaderPatched) return;");
@@ -968,23 +961,23 @@ namespace Jellyfin2Samsung.Helpers
             boot.AppendLine("        var origGetUrl = window.ApiClient.getUrl && window.ApiClient.getUrl.bind(window.ApiClient);");
             boot.AppendLine("        if (!origGetUrl) return;");
             boot.AppendLine("        window.ApiClient.getUrl = function(path){");
-            boot.AppendLine("            try {");
-            boot.AppendLine("                path = window.__EnhancedRewrite(path);");
-            boot.AppendLine("            } catch (e) { console.error('Enhanced getUrl rewrite error', e); }");
+            boot.AppendLine("            try { path = window.__EnhancedRewrite(path); }");
+            boot.AppendLine("            catch (e) { console.error('Enhanced getUrl rewrite error', e); }");
             boot.AppendLine("            return origGetUrl(path);");
             boot.AppendLine("        };");
-            boot.AppendLine("        console.log('🪼 Enhanced: ApiClient.getUrl patched for plugin_cache modules');");
-            boot.AppendLine("    } catch (e) { console.error('Failed to patch ApiClient.getUrl for Enhanced', e); }");
+            boot.AppendLine("        console.log('🪼 Enhanced: ApiClient.getUrl patched');");
+            boot.AppendLine("    } catch (e) { console.error('Failed to patch ApiClient.getUrl', e); }");
             boot.AppendLine("};");
 
-            // WaitForApiClient helper
+            // ------------------------------------------------------
+            // 4) Wait for ApiClient to exist, then patch it
+            // ------------------------------------------------------
             boot.AppendLine("window.WaitForApiClient = function(cb){");
             boot.AppendLine("  let t = setInterval(()=>{");
             boot.AppendLine("    if (window.ApiClient || (window.appRouter && window.appRouter.isReady)) {");
             boot.AppendLine("      clearInterval(t);");
-            boot.AppendLine("      try {");
-            boot.AppendLine("        if (window.__patchEnhancedLoader) window.__patchEnhancedLoader();");
-            boot.AppendLine("      } catch(e) { console.error('Error running __patchEnhancedLoader', e); }");
+            boot.AppendLine("      try { if (window.__patchEnhancedLoader) window.__patchEnhancedLoader(); }");
+            boot.AppendLine("      catch(e) { console.error('Error running __patchEnhancedLoader', e); }");
             boot.AppendLine("      cb();");
             boot.AppendLine("    }");
             boot.AppendLine("  }, 250);");
@@ -992,6 +985,9 @@ namespace Jellyfin2Samsung.Helpers
 
             boot.AppendLine("</script>");
 
+            // ------------------------------------------------------
+            // Developer WebSocket Logging
+            // ------------------------------------------------------
             if (AppSettings.Default.EnableDevLogs)
             {
                 boot.AppendLine("<script>");
@@ -1004,6 +1000,7 @@ namespace Jellyfin2Samsung.Helpers
                 boot.AppendLine("})();");
                 boot.AppendLine("</script>");
             }
+
 
             localHtml = Regex.Replace(
                 localHtml,
@@ -1064,10 +1061,103 @@ namespace Jellyfin2Samsung.Helpers
             await File.WriteAllTextAsync(localIndexPath, localHtml);
             return true;
         }
+        private async Task PatchEnhancedMainScript(string scriptPath)
+        {
+            if (!File.Exists(scriptPath))
+                return;
 
-        // --------------------------------------------------------------------
-        //  CSP + USER SETTINGS HELPERS
-        // --------------------------------------------------------------------
+            string original = await File.ReadAllTextAsync(scriptPath);
+
+            string patch = @"
+// ---- J2S SCRIPT PATCH: FORCE LOCAL ENHANCED MODULE LOADING ----
+(function () {
+
+    // Rewrite only Enhanced JS URLs (absolute or relative) to plugin_cache
+    function rewriteEnhancedUrl(url) {
+        try {
+            if (typeof url !== 'string') return url;
+
+            // Strip ?v=timestamp etc
+            var base = url.split('?')[0];
+
+            // ---- ONLY REWRITE .js FILES ----
+            if (
+                base.endsWith('.js') &&
+                base.indexOf('/JellyfinEnhanced/') !== -1
+            ) {
+                // Handle both absolute and relative URLs
+                var idx = base.indexOf('/JellyfinEnhanced/');
+                var sub = base.substring(idx + '/JellyfinEnhanced/'.length);
+                return 'plugin_cache/JellyfinEnhanced/' + sub;
+            }
+
+            // ---- DO NOT REWRITE JSON OR CONFIG ----
+            return url;
+        }
+        catch (e) {
+            console.error('J2S rewriteEnhancedUrl failed', e);
+            return url;
+        }
+    }
+
+    // Patch document.createElement so any script.src is rewritten ONLY for JS modules
+    var _createElement = document.createElement;
+    document.createElement = function (tag) {
+        var el = _createElement.call(document, tag);
+
+        if (tag && tag.toLowerCase() === 'script') {
+
+            var _setAttribute = el.setAttribute;
+
+            // Intercept setAttribute('src', ...)
+            el.setAttribute = function (name, value) {
+                if (name === 'src') {
+                    value = rewriteEnhancedUrl(value);
+                }
+                return _setAttribute.call(el, name, value);
+            };
+
+            // Intercept direct assignment: script.src = '...'
+            Object.defineProperty(el, 'src', {
+                configurable: true,
+                get: function () {
+                    return el.getAttribute('src');
+                },
+                set: function (value) {
+                    value = rewriteEnhancedUrl(value);
+                    _setAttribute.call(el, 'src', value);
+                }
+            });
+        }
+
+        return el;
+    };
+
+    // Optional: rewrite fetch() requests ONLY for JS Enhanced modules
+    if (typeof window.fetch === 'function') {
+        var _fetch = window.fetch;
+        window.fetch = function (resource, init) {
+            try {
+                if (typeof resource === 'string') {
+                    resource = rewriteEnhancedUrl(resource);
+                }
+            }
+            catch (e) {
+                console.error('FETCH rewrite failed', e);
+            }
+            return _fetch.call(this, resource, init);
+        };
+    }
+
+    console.log('🪼 J2S: script.js loader patched to use plugin_cache for Enhanced JS modules');
+})();
+";
+
+
+            string combined = patch + "\n\n" + original;
+
+            await File.WriteAllTextAsync(scriptPath, combined);
+        }
 
         public async Task AddOrUpdateCspAsync(string tempDirectory, string serverUrl)
         {
@@ -1091,7 +1181,6 @@ namespace Jellyfin2Samsung.Helpers
 
             await File.WriteAllTextAsync(indexPath, html);
         }
-
         private async Task InjectUserSettingsScriptAsync(string tempDirectory, string[] userIds)
         {
             try
@@ -1126,11 +1215,6 @@ namespace Jellyfin2Samsung.Helpers
                 Debug.WriteLine("⚠ Failed injecting user settings script: " + ex.Message);
             }
         }
-
-        // --------------------------------------------------------------------
-        //  DEBUG HELPERS
-        // --------------------------------------------------------------------
-
         public async Task UpdateJellyfinUsersAsync(string[] userIds)
         {
             if (userIds == null || userIds.Length == 0)
