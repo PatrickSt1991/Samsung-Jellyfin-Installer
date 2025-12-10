@@ -14,6 +14,7 @@ namespace Jellyfin2Samsung.Helpers
         public static readonly string TizenSdbPath = Path.Combine(FolderPath, "Assets", "TizenSDB");
         public static readonly string CertificatePath = Path.Combine(FolderPath, "Assets", "Certificate");
         public static readonly string ProfilePath = Path.Combine(FolderPath, "Assets", "TizenProfile");
+        public static readonly string EsbuildPath = Path.Combine(FolderPath, "Assets", "esbuild");
         public static readonly string DownloadPath = Path.Combine(FolderPath, "Downloads");
 
         private static AppSettings? _instance;

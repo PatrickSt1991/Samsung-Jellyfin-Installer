@@ -366,7 +366,7 @@ namespace Jellyfin2Samsung.Services
                 }
 
                 progress?.Invoke("InstallingPackage".Localized());
-                //return InstallResult.FailureResult($"DEV STOP");
+                return InstallResult.FailureResult($"DEV STOP");
                 var installResults = await InstallPackageAsync(tvIpAddress, packageUrl, sdkToolPath);
 
                 if (installResults.Output.Contains("download failed[116]"))

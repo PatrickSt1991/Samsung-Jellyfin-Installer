@@ -5,6 +5,7 @@
         x:DataType="viewModels:BuildInfoViewModel"
         SizeToContent="WidthAndHeight"
         MinWidth="650"
+        MaxWidth="900"
         MinHeight="500"
         WindowStartupLocation="CenterOwner"
         Title="Jellyfin Tizen Versions"
@@ -60,13 +61,21 @@
                           AutoGenerateColumns="False"
                           HeadersVisibility="Column"
                           GridLinesVisibility="All"
-                          RowHeight="32"
-                          IsReadOnly="True">
+                          IsReadOnly="True"
+                          ColumnWidth="*">
 					<DataGrid.Columns>
-						<DataGridTextColumn Header="File name" Width="160"
+						<DataGridTextColumn Header="File name" Width="180"
                                             Binding="{Binding FileName}" />
-						<DataGridTextColumn Header="Description" Width="*"
-                                            Binding="{Binding Description}" />
+						<DataGridTemplateColumn Header="Description" Width="*">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Description}"
+                                               TextWrapping="Wrap"
+                                               Padding="4"
+                                               VerticalAlignment="Center"/>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
 					</DataGrid.Columns>
 				</DataGrid>
 			</Border>
@@ -91,7 +100,8 @@
                           HeadersVisibility="Column"
                           GridLinesVisibility="All"
                           RowHeight="32"
-                          IsReadOnly="True">
+                          IsReadOnly="True"
+                          ColumnWidth="*">
 					<DataGrid.Columns>
 						<DataGridTextColumn Header="Application" Width="180"
                                             Binding="{Binding FileName}" />
