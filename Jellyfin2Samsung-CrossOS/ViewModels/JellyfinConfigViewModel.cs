@@ -16,7 +16,7 @@ namespace Jellyfin2Samsung.ViewModels
 {
     public partial class JellyfinConfigViewModel : ViewModelBase
     {
-        private readonly JellyfinHelper _jellyfinHelper;
+        private readonly JellyfinApiClient _jellyfinApiClient;
         private readonly ILocalizationService _localizationService;
 
         [ObservableProperty]
@@ -179,10 +179,10 @@ namespace Jellyfin2Samsung.ViewModels
         public string TvIp => AppSettings.Default.TvIp;
 
         public JellyfinConfigViewModel(
-            JellyfinHelper jellyfinHelper,
+            JellyfinApiClient jellyfinApiClient,
             ILocalizationService localizationService)
         {
-            _jellyfinHelper = jellyfinHelper;
+            _jellyfinApiClient = jellyfinApiClient;
             _localizationService = localizationService;
             _localizationService.LanguageChanged += OnLanguageChanged;
             InitializeAsyncSettings();
@@ -494,7 +494,7 @@ namespace Jellyfin2Samsung.ViewModels
             // Clear existing users first
             AvailableJellyfinUsers.Clear();
 
-            var users = await _jellyfinHelper.LoadJellyfinUsersAsync();
+            var users = await _jellyfinApiClient.LoadUsersAsync();
 
             foreach (var user in users)
                 AvailableJellyfinUsers.Add(user);

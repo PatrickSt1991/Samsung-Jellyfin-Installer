@@ -20,7 +20,6 @@ namespace Jellyfin2Samsung
     {
         private IServiceProvider _serviceProvider;
 
-        // Static property to access services from anywhere
         public static IServiceProvider Services { get; private set; }
 
         public override void Initialize()
@@ -64,10 +63,13 @@ namespace Jellyfin2Samsung
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
             services.AddSingleton<SamsungLoginService>();
             services.AddSingleton<HttpClient>();
+            services.AddSingleton<JellyfinApiClient>();
+            services.AddSingleton<PluginManager>();
+            services.AddSingleton<JellyfinWebBuilder>();
 
+            // Other Helpers
             services.AddSingleton<DeviceHelper>();
             services.AddSingleton<PackageHelper>();
-            services.AddSingleton<JellyfinHelper>();
             services.AddSingleton<CertificateHelper>();
             services.AddSingleton<FileHelper>();
             services.AddSingleton<ProcessHelper>();
@@ -80,14 +82,7 @@ namespace Jellyfin2Samsung
             services.AddTransient<InstallingWindowViewModel>();
             services.AddTransient<TvLogsViewModel>();
             services.AddTransient<TvLogsWindow>();
-
-            // JellyfinConfigViewModel requires JellyfinHelper
-            services.AddTransient(provider =>
-            {
-                var helper = provider.GetRequiredService<JellyfinHelper>();
-                var localization = provider.GetRequiredService<ILocalizationService>();
-                return new JellyfinConfigViewModel(helper, localization);
-            });
+            services.AddTransient<JellyfinConfigViewModel>();
 
             // Views
             services.AddSingleton(provider =>
