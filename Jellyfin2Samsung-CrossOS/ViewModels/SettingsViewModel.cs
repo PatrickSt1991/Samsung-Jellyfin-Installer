@@ -56,9 +56,6 @@ namespace Jellyfin2Samsung.ViewModels
         private bool rtlReading;
 
         [ObservableProperty]
-        private bool showSdbWindow;
-
-        [ObservableProperty]
         private bool openAfterInstall;
 
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
@@ -226,11 +223,6 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
-        partial void OnShowSdbWindowChanged(bool value)
-        {
-            AppSettings.Default.ShowSdbWindow = value;
-            AppSettings.Default.Save();
-        }
         partial void OnOpenAfterInstallChanged(bool value)
         {
             AppSettings.Default.OpenAfterInstall = value;
@@ -278,7 +270,6 @@ namespace Jellyfin2Samsung.ViewModels
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
             RtlReading = AppSettings.Default.RTLReading;
-            ShowSdbWindow = AppSettings.Default.ShowSdbWindow;
             LocalIP = AppSettings.Default.LocalIp;
             TryOverwrite = AppSettings.Default.TryOverwrite;
             OpenAfterInstall = AppSettings.Default.OpenAfterInstall;

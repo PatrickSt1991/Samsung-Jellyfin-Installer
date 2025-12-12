@@ -190,17 +190,6 @@
 										  IsChecked="{Binding RtlReading}"
 										  VerticalAlignment="Center"/>
 						</Grid>
-
-						<!-- SDB Window -->
-						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-							<TextBlock Grid.Column="0"
-									   Text="{Binding lblSDB}"
-									   Classes="label"
-									   VerticalAlignment="Center"/>
-							<ToggleSwitch Grid.Column="1"
-										  IsChecked="{Binding ShowSdbWindow}"
-										  VerticalAlignment="Center"/>
-						</Grid>
 					</StackPanel>
 
 					<!-- Separator -->

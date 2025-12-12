@@ -38,7 +38,6 @@ namespace Jellyfin2Samsung.Helpers
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
         public bool RTLReading { get; set; } = false;
-        public bool ShowSdbWindow { get; set; } = false;
         public string JellyfinIP { get; set; } = "";
         public string AudioLanguagePreference { get; set; } = "";
         public string SubtitleLanguagePreference { get; set; } = "";

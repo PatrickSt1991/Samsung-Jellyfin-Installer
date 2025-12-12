@@ -148,7 +148,7 @@ namespace Jellyfin2Samsung.Helpers
             }
 
             // Handle API Plugins (Enhanced, Kefin, etc.)
-            await ProcessApiPluginsAsync(serverUrl, pluginCacheDir, pluginJsBuilder);
+            await ProcessApiPluginsAsync(serverUrl, pluginCacheDir, pluginJsBuilder, pluginCssBuilder);
 
             // Inject Cached CSS + JS into local HTML
             if (pluginCssBuilder.Length > 0)
@@ -177,7 +177,7 @@ namespace Jellyfin2Samsung.Helpers
 
             // Strip server-side plugin JS tags (keep only plugin_cache & core)
             localHtml = StripServerPluginTags(localHtml);
-
+            localHtml = EnsurePublicJsIsLast(localHtml);
             await File.WriteAllTextAsync(localIndexPath, localHtml);
             return true;
         }
@@ -233,6 +233,24 @@ namespace Jellyfin2Samsung.Helpers
                         string localPath = Path.Combine(pluginCacheDir, fileName);
                         string jsContent = await _httpClient.GetStringAsync(uri);
                         jsContent = await EsbuildHelper.TranspileAsync(jsContent, uri.ToString());
+                        // DEBUG PATCH: improve injector error logging (non-functional change)
+                        if (fileName.Equals("injector.js", StringComparison.OrdinalIgnoreCase))
+                        {
+                            jsContent = jsContent.Replace(
+                                "console.error(\"[KefinTweaks Injector] Error during initialization:\", error);",
+                                "console.error(\"[KefinTweaks Injector] Error during initialization:\", error instanceof Error ? error.stack : JSON.stringify(error));"
+                            );
+                        }
+                        // TV FIX: skinManager uses `throw {}` as an abort guard — neutralize it on TV
+                        if (fileName.Equals("skinManager.js", StringComparison.OrdinalIgnoreCase))
+                        {
+                            jsContent = jsContent.Replace(
+                                "throw {};",
+                                "return;"
+                            );
+                        }
+
+
                         await File.WriteAllTextAsync(localPath, jsContent);
 
                         // Patch JS Injector public.js if needed
@@ -270,7 +288,7 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
-        private async Task ProcessApiPluginsAsync(string serverUrl, string pluginCacheDir, StringBuilder jsBuilder)
+        private async Task ProcessApiPluginsAsync(string serverUrl, string pluginCacheDir, StringBuilder jsBuilder, StringBuilder cssBuilder)
         {
             var apiPlugins = await _apiClient.GetInstalledPluginsAsync(serverUrl);
             var apiJsBuilder = new StringBuilder();
@@ -281,6 +299,9 @@ namespace Jellyfin2Samsung.Helpers
                 var entry = _pluginManager.FindPluginEntry(plugin);
                 if (entry == null) continue;
 
+                // ---------------------------------------------------------
+                // A. Handle Explicit Server Files (e.g., Jellyfin Enhanced)
+                // ---------------------------------------------------------
                 if (entry.ExplicitServerFiles != null && entry.ExplicitServerFiles.Any())
                 {
                     enhancedMainScript = entry.ExplicitServerFiles.FirstOrDefault(rel => rel.EndsWith("/script", StringComparison.OrdinalIgnoreCase));
@@ -288,22 +309,89 @@ namespace Jellyfin2Samsung.Helpers
                     continue;
                 }
 
-                // Handle KefinTweaks Direct Injection
-                if (entry.IdContains.Equals("kefin", StringComparison.OrdinalIgnoreCase) && entry.FallbackUrls.Any())
+                // ---------------------------------------------------------
+                // B. Handle Fallback URLs (Kefin, MediaBar, etc.)
+                // ---------------------------------------------------------
+                if (entry.FallbackUrls != null && entry.FallbackUrls.Any())
                 {
-                    string? path = await _pluginManager.DownloadAndTranspileAsync(
-                        entry.FallbackUrls.First(),
-                        pluginCacheDir,
-                        Path.Combine("kefinTweaks", "kefinTweaks-plugin.js")
-                    );
+                    bool isKefin = entry.IdContains.Contains("kefin", StringComparison.OrdinalIgnoreCase);
+                    bool isMediaBar = entry.IdContains.Contains("mediabar", StringComparison.OrdinalIgnoreCase);
 
-                    if (path != null)
+                    // 1. KEFIN TWEAKS (Specific Injector Logic)
+                    if (isKefin)
                     {
-                        apiJsBuilder.AppendLine($"<script src=\"plugin_cache/kefinTweaks/kefinTweaks-plugin.js\"></script>");
+                        string? path = await _pluginManager.DownloadAndTranspileAsync(
+                            entry.FallbackUrls.First(),
+                            pluginCacheDir,
+                            Path.Combine("kefinTweaks", "kefinTweaks-plugin.js")
+                        );
+
+                        if (path != null)
+                        {
+                            apiJsBuilder.AppendLine($"<script src=\"plugin_cache/kefinTweaks/kefinTweaks-plugin.js\"></script>");
+                        }
+                    }
+                    // 2. GENERIC PLUGINS (e.g. Media Bar JS)
+                    else
+                    {
+                        // Try URLs in order until one works
+                        foreach (string url in entry.FallbackUrls)
+                        {
+                            try
+                            {
+                                // Organize files in a subfolder based on ID (e.g. "plugin_cache/mediabar/slideshowpure.js")
+                                string cleanId = Regex.Replace(entry.IdContains ?? "misc", "[^a-zA-Z0-9]", "");
+                                string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
+                                string relPath = Path.Combine(cleanId, fileName);
+
+                                string? path = await _pluginManager.DownloadAndTranspileAsync(url, pluginCacheDir, relPath);
+
+                                if (path != null)
+                                {
+                                    string webPath = $"plugin_cache/{cleanId}/{fileName}";
+                                    apiJsBuilder.AppendLine($"<script src=\"{webPath}\"></script>");
+                                    Debug.WriteLine($"      ✓ Injected Generic Plugin JS: {entry.Name} -> {webPath}");
+                                    break; // Stop after first successful mirror
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"⚠ Failed to process fallback URL for {entry.Name}: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    // ---------------------------------------------------------
+                    // C. MEDIA BAR SPECIFIC CSS PATCH
+                    // ---------------------------------------------------------
+                    if (isMediaBar)
+                    {
+                        try
+                        {
+                            // Media Bar requires this CSS which isn't in the generic manifest
+                            string cssUrl = "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.css";
+                            string fileName = "slideshowpure.css";
+                            string cleanId = "mediabar"; // matching the JS folder above
+                            string localPath = Path.Combine(pluginCacheDir, cleanId, fileName);
+
+                            Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
+
+                            // Download CSS directly (no transpile needed)
+                            var cssBytes = await _httpClient.GetByteArrayAsync(cssUrl);
+                            await File.WriteAllBytesAsync(localPath, cssBytes);
+
+                            cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"plugin_cache/{cleanId}/{fileName}\" />");
+                            Debug.WriteLine($"      ✓ Injected Media Bar CSS");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"⚠ Failed to fetch Media Bar CSS: {ex.Message}");
+                        }
                     }
                 }
             }
 
+            // Inject Enhanced Main Script if found (always last preferred)
             if (!string.IsNullOrEmpty(enhancedMainScript))
             {
                 string relPath = enhancedMainScript.TrimStart('/');
@@ -316,11 +404,6 @@ namespace Jellyfin2Samsung.Helpers
                 jsBuilder.AppendLine(apiJsBuilder.ToString());
             }
         }
-
-        // ====================================================================
-        //  HELPER METHODS & UTILS
-        // ====================================================================
-
         public static async Task UpdateMultiServerConfig(string tempDirectory)
         {
             string configPath = Path.Combine(tempDirectory, "www", "config.json");
@@ -553,11 +636,23 @@ namespace Jellyfin2Samsung.Helpers
                    lower.Contains("jellyfin-apiclient") || lower.Contains("react") ||
                    lower.Contains("mui") || lower.Contains("tanstack");
         }
-
-        private class ExtractedDomBlocks
+        private string EnsurePublicJsIsLast(string html)
         {
-            public List<string> HeadInjectBlocks { get; set; } = new();
-            public List<string> BodyInjectBlocks { get; set; } = new();
+            const string publicJs = "<script src=\"plugin_cache/public.js\"></script>";
+
+            int publicIndex = html.IndexOf(publicJs, StringComparison.OrdinalIgnoreCase);
+            if (publicIndex == -1)
+                return html; // public.js not present, nothing to do
+
+            // Remove public.js from wherever it currently is
+            html = html.Remove(publicIndex, publicJs.Length);
+
+            // Insert it just before </body>
+            int bodyClose = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+            if (bodyClose == -1)
+                return html + publicJs; // fallback
+
+            return html.Insert(bodyClose, publicJs + "\n");
         }
     }
 }
