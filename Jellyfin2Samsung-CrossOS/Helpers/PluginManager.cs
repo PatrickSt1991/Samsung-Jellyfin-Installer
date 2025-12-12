@@ -34,7 +34,7 @@ namespace Jellyfin2Samsung.Helpers
         }
 
         // ====================================================================
-        //  PLUGIN MATRIX (UNMODIFIED)
+        //  PLUGIN MATRIX
         // ====================================================================
         private static readonly List<PluginMatrixEntry> PluginMatrix = new()
         {
@@ -82,6 +82,7 @@ namespace Jellyfin2Samsung.Helpers
                     "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.js",
                     "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-media-bar/main/slideshowpure.js"
                 },
+                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
                 UseBabel = true
             },
             new PluginMatrixEntry
@@ -114,8 +115,6 @@ namespace Jellyfin2Samsung.Helpers
                 return nameMatch || idMatch;
             });
         }
-
-        // ... [DownloadExplicitFilesAsync and DownloadAndTranspileAsync remain unchanged] ...
 
         public async Task DownloadExplicitFilesAsync(
                     string serverUrl,
@@ -251,13 +250,14 @@ namespace Jellyfin2Samsung.Helpers
                 }
                 else
                 {
-                    // 4. Download + transpile **all dependent modules** declared in injector.js
-                    // Pass the reliable Raw Root for fetching modules
+                    // 4. Download + transpile **all dependent JS modules** declared in injector.js
                     await ProcessKefinTweaksModulesAsync(pluginCacheDir, KefinTweaksRawRoot);
+
+                    // 5. Download **all dependent CSS files**
+                    await ProcessKefinTweaksCssAsync(pluginCacheDir, KefinTweaksRawRoot);
                 }
 
-                // 5. Rewrite **all** usages of the original CDN root inside public.js
-                //    This fixes: KefinTweaksConfig.kefinTweaksRoot, script.src assignments
+                // 6. Rewrite **all** usages of the original CDN root inside public.js
                 js = js.Replace(cdnRoot, localRoot);
 
                 await File.WriteAllTextAsync(publicJsPath, js, Encoding.UTF8);
@@ -269,11 +269,6 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
-        /// <summary>
-        /// Reads kefinTweaks/injector.js, finds all SCRIPT_DEFINITIONS entries,
-        /// and downloads + transpiles each module into plugin_cache/kefinTweaks/.
-        /// Uses the reliable download root and applies 'scripts/' prefix by default.
-        /// </summary>
         private async Task ProcessKefinTweaksModulesAsync(string pluginCacheDir, string downloadRoot)
         {
             try
@@ -290,6 +285,8 @@ namespace Jellyfin2Samsung.Helpers
                 // Grab all `script: "something.js"` entries from SCRIPT_DEFINITIONS
                 var scriptRegex = new Regex(@"script\s*:\s*""([^""]+)""", RegexOptions.IgnoreCase);
                 var matches = scriptRegex.Matches(injectorSource);
+
+                // ... (rest of ProcessKefinTweaksModulesAsync remains unchanged) ...
 
                 if (matches.Count == 0)
                 {
@@ -360,6 +357,55 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
+        /// <summary>
+        /// Downloads all CSS files for KefinTweaks and places them in the cache.
+        /// </summary>
+        private async Task ProcessKefinTweaksCssAsync(string pluginCacheDir, string downloadRoot)
+        {
+            // List of CSS files found in the KefinTweaks 'skins' directory
+            var cssFiles = new List<string>
+            {
+                "chromic-kefin.css",
+                "elegant-kefin.css",
+                "fin-kefin-10.11.css",
+                "flow-kefin.css",
+                "glassfin-kefin.css",
+                "jamfin-kefin-10.css",
+                "jamfin-kefin.css",
+                "neutralfin-kefin.css",
+                "scyfin-kefin.css",
+                "optional/ElegantFin/elegantFin.css"
+            };
+
+            Debug.WriteLine("▶ KefinTweaks: Pre-fetching CSS skins...");
+
+            foreach (var fileName in cssFiles)
+            {
+                try
+                {
+                    // The CSS files are in the 'skins/' directory of the repo
+                    string repoPath = $"skins/{fileName}";
+                    string url = downloadRoot + repoPath;
+
+                    // The local path must preserve the 'optional/ElegantFin/' structure
+                    string localRelPath = Path.Combine("kefinTweaks", repoPath.Replace('/', Path.DirectorySeparatorChar));
+                    string localFullPath = Path.Combine(pluginCacheDir, localRelPath);
+
+                    // Ensure directory exists
+                    Directory.CreateDirectory(Path.GetDirectoryName(localFullPath)!);
+
+                    // Download CSS directly (no transpile needed)
+                    var cssBytes = await _httpClient.GetByteArrayAsync(url);
+                    await File.WriteAllBytesAsync(localFullPath, cssBytes);
+
+                    Debug.WriteLine($"      ✓ Downloaded CSS skin: {fileName}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"      ⚠ Failed to fetch KefinTweaks CSS '{fileName}': {ex.Message}");
+                }
+            }
+        }
 
         private async Task PatchEnhancedMainScript(string scriptPath)
         {

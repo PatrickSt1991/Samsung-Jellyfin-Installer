@@ -148,7 +148,7 @@ namespace Jellyfin2Samsung.Helpers
             }
 
             // Handle API Plugins (Enhanced, Kefin, etc.)
-            await ProcessApiPluginsAsync(serverUrl, pluginCacheDir, pluginJsBuilder, pluginCssBuilder);
+            await ProcessApiPluginsAsync(serverUrl, pluginCacheDir, pluginJsBuilder, pluginCssBuilder); // NOW PASSES CSS BUILDER
 
             // Inject Cached CSS + JS into local HTML
             if (pluginCssBuilder.Length > 0)
@@ -288,6 +288,7 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
+        // UPDATED SIGNATURE TO INCLUDE CSS BUILDER
         private async Task ProcessApiPluginsAsync(string serverUrl, string pluginCacheDir, StringBuilder jsBuilder, StringBuilder cssBuilder)
         {
             var apiPlugins = await _apiClient.GetInstalledPluginsAsync(serverUrl);
@@ -299,8 +300,11 @@ namespace Jellyfin2Samsung.Helpers
                 var entry = _pluginManager.FindPluginEntry(plugin);
                 if (entry == null) continue;
 
+                bool isKefin = entry.IdContains.Equals("kefin", StringComparison.OrdinalIgnoreCase);
+                bool isMediaBar = entry.IdContains.Equals("mediabar", StringComparison.OrdinalIgnoreCase);
+
                 // ---------------------------------------------------------
-                // A. Handle Explicit Server Files (e.g., Jellyfin Enhanced)
+                // 1. Explicit Server Files (Jellyfin Enhanced)
                 // ---------------------------------------------------------
                 if (entry.ExplicitServerFiles != null && entry.ExplicitServerFiles.Any())
                 {
@@ -310,16 +314,14 @@ namespace Jellyfin2Samsung.Helpers
                 }
 
                 // ---------------------------------------------------------
-                // B. Handle Fallback URLs (Kefin, MediaBar, etc.)
+                // 2. Fallback URLs (JS Injection)
                 // ---------------------------------------------------------
-                if (entry.FallbackUrls != null && entry.FallbackUrls.Any())
+                if (entry.FallbackUrls.Any())
                 {
-                    bool isKefin = entry.IdContains.Contains("kefin", StringComparison.OrdinalIgnoreCase);
-                    bool isMediaBar = entry.IdContains.Contains("mediabar", StringComparison.OrdinalIgnoreCase);
-
-                    // 1. KEFIN TWEAKS (Specific Injector Logic)
                     if (isKefin)
                     {
+                        // Kefin JS is already handled by PatchJavaScriptInjectorPublicJsAsync, 
+                        // but we inject the main kefinTweaks-plugin.js if it was downloaded here
                         string? path = await _pluginManager.DownloadAndTranspileAsync(
                             entry.FallbackUrls.First(),
                             pluginCacheDir,
@@ -331,16 +333,14 @@ namespace Jellyfin2Samsung.Helpers
                             apiJsBuilder.AppendLine($"<script src=\"plugin_cache/kefinTweaks/kefinTweaks-plugin.js\"></script>");
                         }
                     }
-                    // 2. GENERIC PLUGINS (e.g. Media Bar JS)
-                    else
+                    // Generic Handler for other matrix plugins (e.g., Media Bar JS)
+                    else if (isMediaBar)
                     {
-                        // Try URLs in order until one works
                         foreach (string url in entry.FallbackUrls)
                         {
                             try
                             {
-                                // Organize files in a subfolder based on ID (e.g. "plugin_cache/mediabar/slideshowpure.js")
-                                string cleanId = Regex.Replace(entry.IdContains ?? "misc", "[^a-zA-Z0-9]", "");
+                                string cleanId = Regex.Replace(entry.IdContains, "[^a-zA-Z0-9]", "");
                                 string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
                                 string relPath = Path.Combine(cleanId, fileName);
 
@@ -351,47 +351,68 @@ namespace Jellyfin2Samsung.Helpers
                                     string webPath = $"plugin_cache/{cleanId}/{fileName}";
                                     apiJsBuilder.AppendLine($"<script src=\"{webPath}\"></script>");
                                     Debug.WriteLine($"      ✓ Injected Generic Plugin JS: {entry.Name} -> {webPath}");
-                                    break; // Stop after first successful mirror
+                                    break;
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Debug.WriteLine($"⚠ Failed to process fallback URL for {entry.Name}: {ex.Message}");
+                                Debug.WriteLine($"⚠ Failed to process fallback JS URL for {entry.Name}: {ex.Message}");
                             }
                         }
                     }
+                }
 
-                    // ---------------------------------------------------------
-                    // C. MEDIA BAR SPECIFIC CSS PATCH
-                    // ---------------------------------------------------------
-                    if (isMediaBar)
+                // ---------------------------------------------------------
+                // 3. CSS Injection Logic (Kefin & Media Bar)
+                // ---------------------------------------------------------
+
+                // KefinTweaks CSS: Scan the pre-downloaded skins directory
+                if (isKefin)
+                {
+                    string kefinCssDir = Path.Combine(pluginCacheDir, "kefinTweaks", "skins");
+                    if (Directory.Exists(kefinCssDir))
                     {
-                        try
+                        // Get all CSS files in the skins directory and its subdirectories
+                        var cssFiles = Directory.GetFiles(kefinCssDir, "*.css", SearchOption.AllDirectories);
+
+                        foreach (var cssPath in cssFiles)
                         {
-                            // Media Bar requires this CSS which isn't in the generic manifest
-                            string cssUrl = "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.css";
-                            string fileName = "slideshowpure.css";
-                            string cleanId = "mediabar"; // matching the JS folder above
-                            string localPath = Path.Combine(pluginCacheDir, cleanId, fileName);
-
-                            Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
-
-                            // Download CSS directly (no transpile needed)
-                            var cssBytes = await _httpClient.GetByteArrayAsync(cssUrl);
-                            await File.WriteAllBytesAsync(localPath, cssBytes);
-
-                            cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"plugin_cache/{cleanId}/{fileName}\" />");
-                            Debug.WriteLine($"      ✓ Injected Media Bar CSS");
+                            // Calculate the relative path from the plugin_cache directory
+                            string relPath = cssPath.Replace(pluginCacheDir + Path.DirectorySeparatorChar, "plugin_cache/");
+                            cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"{relPath}\" />");
                         }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"⚠ Failed to fetch Media Bar CSS: {ex.Message}");
-                        }
+                        Debug.WriteLine($"      ✓ Injected {cssFiles.Length} KefinTweaks CSS skins.");
+                    }
+                }
+
+                // Media Bar CSS: Explicitly download and inject its CSS
+                if (isMediaBar)
+                {
+                    try
+                    {
+                        string cssUrl = "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.css";
+                        string fileName = "slideshowpure.css";
+                        string cleanId = "mediabar"; // matching the JS folder above
+                        string localPath = Path.Combine(pluginCacheDir, cleanId, fileName);
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
+
+                        // Download CSS directly (no transpile needed)
+                        Debug.WriteLine("      → Fetching Media Bar CSS...");
+                        var cssBytes = await _httpClient.GetByteArrayAsync(cssUrl);
+                        await File.WriteAllBytesAsync(localPath, cssBytes);
+
+                        cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"plugin_cache/{cleanId}/{fileName}\" />");
+                        Debug.WriteLine($"      ✓ Injected Media Bar CSS");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"⚠ Failed to fetch Media Bar CSS: {ex.Message}");
                     }
                 }
             }
 
-            // Inject Enhanced Main Script if found (always last preferred)
+            // Enhanced script injection (always last preferred)
             if (!string.IsNullOrEmpty(enhancedMainScript))
             {
                 string relPath = enhancedMainScript.TrimStart('/');
@@ -399,11 +420,17 @@ namespace Jellyfin2Samsung.Helpers
                 jsBuilder.AppendLine($"<script src=\"plugin_cache/{relPath}\"></script>");
             }
 
+            // Append all other accumulated plugin scripts
             if (apiJsBuilder.Length > 0)
             {
                 jsBuilder.AppendLine(apiJsBuilder.ToString());
             }
         }
+
+        // ====================================================================
+        //  HELPER METHODS & UTILS
+        // ====================================================================
+
         public static async Task UpdateMultiServerConfig(string tempDirectory)
         {
             string configPath = Path.Combine(tempDirectory, "www", "config.json");
