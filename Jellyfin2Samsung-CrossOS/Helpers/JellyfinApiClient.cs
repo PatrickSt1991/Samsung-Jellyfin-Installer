@@ -85,6 +85,27 @@ namespace Jellyfin2Samsung.Helpers
 
             return list;
         }
+        public async Task<JellyfinPublicSystemInfo?> GetPublicSystemInfoAsync(string serverUrl)
+        {
+            try
+            {
+                string url = serverUrl.TrimEnd('/') + "/System/Info/Public";
+                Debug.WriteLine("▶ Fetching Jellyfin public system info from: " + url);
+
+                var json = await _httpClient.GetStringAsync(url);
+
+                var info = JsonSerializer.Deserialize<JellyfinPublicSystemInfo>(
+                    json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return info;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("⚠ Failed to fetch /System/Info/Public: " + ex.Message);
+                return null;
+            }
+        }
 
         public async Task UpdateUserConfigurationsAsync(string[] userIds)
         {

@@ -14,28 +14,21 @@ namespace Jellyfin2Samsung.Helpers
     public class PluginManager
     {
         private readonly HttpClient _httpClient;
+        private readonly JellyfinApiClient _apiClient;
 
-        // ====================================================================
-        //  RAW GITHUB ROOT - USING STABLE TAG v0.4.5
-        // ====================================================================
+        public PluginManager(HttpClient httpClient, JellyfinApiClient apiClient)
+        {
+            _httpClient = httpClient;
+            _apiClient = apiClient;
+        }
+
         private const string KefinTweaksRawRoot = "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/v0.4.5/";
 
-        // ====================================================================
-        //  REGEX DEFINITIONS
-        // ====================================================================
         private static readonly Regex cdnRegex = new Regex(
             @"(https?:\/\/.+?\/KefinTweaks@latest\/)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled
         );
 
-        public PluginManager(HttpClient httpClient)
-        {
-            _httpClient = httpClient;
-        }
-
-        // ====================================================================
-        //  PLUGIN MATRIX
-        // ====================================================================
         private static readonly List<PluginMatrixEntry> PluginMatrix = new()
         {
             new PluginMatrixEntry
@@ -193,7 +186,7 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
-        public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir)
+        public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir, string serverUrl)
         {
             try
             {
@@ -206,7 +199,7 @@ namespace Jellyfin2Samsung.Helpers
 
                 string js = await File.ReadAllTextAsync(publicJsPath, Encoding.UTF8);
 
-                // 1. Detect the original CDN root from public.js (needed for replacement)
+                // 1. Detect the original CDN root
                 var match = cdnRegex.Match(js);
                 if (!match.Success)
                 {
@@ -214,58 +207,99 @@ namespace Jellyfin2Samsung.Helpers
                     return;
                 }
 
-                string cdnRoot = match.Value; // includes trailing slash
-                Debug.WriteLine($"▶ JavaScript Injector: CDN root detected: {cdnRoot}");
-
-                // Our local base directory inside the WGT
+                string cdnRoot = match.Value;
                 string localRoot = "plugin_cache/kefinTweaks/";
 
-                // Make sure kefinTweaks folder exists
+                // Ensure kefinTweaks folder exists
                 Directory.CreateDirectory(Path.Combine(pluginCacheDir, "kefinTweaks"));
 
-                // 2. Download + transpile the main KefinTweaks plugin (using reliable Raw Root)
+                // 2. Download KefinTweaks main files
                 string kefinTweaksPluginUrl = KefinTweaksRawRoot + "kefinTweaks-plugin.js";
-                string kefinTweaksPluginRelPath = Path.Combine("kefinTweaks", "kefinTweaks-plugin.js");
-                string? localKefinPath = await DownloadAndTranspileAsync(
+                await DownloadAndTranspileAsync(
                     kefinTweaksPluginUrl,
                     pluginCacheDir,
-                    kefinTweaksPluginRelPath);
+                    Path.Combine("kefinTweaks", "kefinTweaks-plugin.js"));
 
-                if (localKefinPath == null)
-                {
-                    Debug.WriteLine("⚠ JavaScript Injector: Failed to download/transpile kefinTweaks-plugin.js");
-                }
-
-                // 3. Download + transpile injector.js itself (using reliable Raw Root)
                 string injectorUrl = KefinTweaksRawRoot + "injector.js";
-                string injectorRelPath = Path.Combine("kefinTweaks", "injector.js");
-                string? localInjectorPath = await DownloadAndTranspileAsync(
+                string? injectorPath = await DownloadAndTranspileAsync(
                     injectorUrl,
                     pluginCacheDir,
-                    injectorRelPath);
+                    Path.Combine("kefinTweaks", "injector.js"));
 
-                if (localInjectorPath == null)
+                if (injectorPath != null)
                 {
-                    Debug.WriteLine("⚠ JavaScript Injector: Failed to download/transpile injector.js");
-                }
-                else
-                {
-                    // 4. Download + transpile **all dependent JS modules** declared in injector.js
                     await ProcessKefinTweaksModulesAsync(pluginCacheDir, KefinTweaksRawRoot);
-
-                    // 5. Download **all dependent CSS files**
                     await ProcessKefinTweaksCssAsync(pluginCacheDir, KefinTweaksRawRoot);
+
+                    // 3. Resolve selected skin
+                    var skin = GetKefinDefaultSkin(pluginCacheDir);
+                    Debug.WriteLine($"⚙ KefinTweaks: detected default skin: {skin ?? "null"}");
+
+                    if (!string.IsNullOrWhiteSpace(skin))
+                    {
+                        var info = await _apiClient.GetPublicSystemInfoAsync(serverUrl);
+                        var version = info?.Version ?? "0.0.0";
+                        var majorMinor = string.Join(".", version.Split('.').Take(2));
+
+                        string skinLower = skin.ToLowerInvariant();
+                        string skinsDir = Path.Combine(pluginCacheDir, "kefinTweaks", "skins", "css");
+                        Directory.CreateDirectory(skinsDir);
+
+                        string localTheme = Path.Combine(skinsDir, $"{skinLower}-kefin.css");
+                        string localFixes = Path.Combine(skinsDir, $"{skinLower}-kefin-{majorMinor}.css");
+
+                        string themeHref =
+                            $"plugin_cache/kefinTweaks/skins/css/{skinLower}-kefin.css";
+                        string fixesHref =
+                            $"plugin_cache/kefinTweaks/skins/css/{skinLower}-kefin-{majorMinor}.css";
+
+                        // Theme.css
+                        if (!File.Exists(localTheme))
+                        {
+                            var url = $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/theme.css";
+                            Debug.WriteLine($"▶ KefinTweaks: downloading theme CSS: {url}");
+                            var css = await _httpClient.GetStringAsync(url);
+                            await File.WriteAllTextAsync(localTheme, css);
+                        }
+
+                        js = EnsureCssLinked(js, themeHref);
+
+                        // Version fixes
+                        if (!File.Exists(localFixes))
+                        {
+                            try
+                            {
+                                var fixesUrl =
+                                    $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/{majorMinor}_fixes.css";
+                                Debug.WriteLine($"▶ KefinTweaks: downloading fixes CSS: {fixesUrl}");
+                                var css = await _httpClient.GetStringAsync(fixesUrl);
+                                await File.WriteAllTextAsync(localFixes, css);
+                            }
+                            catch
+                            {
+                                Debug.WriteLine("ℹ KefinTweaks: no version-specific fixes found");
+                            }
+                        }
+
+                        if (File.Exists(localFixes))
+                        {
+                            js = EnsureCssLinked(js, fixesHref);
+                        }
+
+                        Debug.WriteLine($"✓ KefinTweaks skin cached & injected: {skin} ({majorMinor})");
+                    }
                 }
 
-                // 6. Rewrite **all** usages of the original CDN root inside public.js
+                // 4. Rewrite CDN → local
                 js = js.Replace(cdnRoot, localRoot);
 
+                // 5. Write ONCE
                 await File.WriteAllTextAsync(publicJsPath, js, Encoding.UTF8);
-                Debug.WriteLine("      ✓ JavaScript Injector: patched public.js to use plugin_cache/kefinTweaks/");
+                Debug.WriteLine("✓ JavaScript Injector: public.js patched successfully");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ JavaScript Injector: error while patching public.js: {ex.Message}");
+                Debug.WriteLine($"⚠ JavaScript Injector error: {ex.Message}");
             }
         }
 
@@ -356,10 +390,33 @@ namespace Jellyfin2Samsung.Helpers
                 Debug.WriteLine($"⚠ KefinTweaks: error while processing modules: {ex.Message}");
             }
         }
+        private static string EnsureCssLinked(string js, string href)
+        {
+            if (js.Contains(href, StringComparison.OrdinalIgnoreCase))
+                return js;
 
-        /// <summary>
-        /// Downloads all CSS files for KefinTweaks and places them in the cache.
-        /// </summary>
+            return js + $@"
+
+(function () {{
+    try {{
+        var href = '{href}';
+
+        if (document.querySelector('link[href=""' + href + '""]'))
+            return;
+
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+
+        document.head.appendChild(link);
+        console.log('🪼 KefinTweaks CSS injected:', href);
+    }} catch (e) {{
+        console.error('Failed to inject KefinTweaks CSS', e);
+    }}
+}})();
+";
+        }
+
         private async Task ProcessKefinTweaksCssAsync(string pluginCacheDir, string downloadRoot)
         {
             // List of CSS files found in the KefinTweaks 'skins' directory
@@ -374,7 +431,11 @@ namespace Jellyfin2Samsung.Helpers
                 "jamfin-kefin.css",
                 "neutralfin-kefin.css",
                 "scyfin-kefin.css",
-                "optional/ElegantFin/elegantFin.css"
+                "optional/ElegantFin/solidAppBar.css",
+                "optional/ElegantFin/libraryLabelVisibility.css",
+                "optional/ElegantFin/extraOverlayButtons.css",
+                "optional/ElegantFin/centerPlayButton.css",
+                "optional/ElegantFin/cardHoverEffect.css",
             };
 
             Debug.WriteLine("▶ KefinTweaks: Pre-fetching CSS skins...");
@@ -388,7 +449,7 @@ namespace Jellyfin2Samsung.Helpers
                     string url = downloadRoot + repoPath;
 
                     // The local path must preserve the 'optional/ElegantFin/' structure
-                    string localRelPath = Path.Combine("kefinTweaks", repoPath.Replace('/', Path.DirectorySeparatorChar));
+                    string localRelPath = Path.Combine("kefinTweaks","skins","css",fileName);
                     string localFullPath = Path.Combine(pluginCacheDir, localRelPath);
 
                     // Ensure directory exists
@@ -500,6 +561,25 @@ namespace Jellyfin2Samsung.Helpers
 ";
             string combined = patch + "\n\n" + original;
             await File.WriteAllTextAsync(scriptPath, combined);
+        }
+        private static string? GetKefinDefaultSkin(string pluginCacheDir)
+        {
+            var publicJs = Path.Combine(pluginCacheDir, "public.js");
+            Debug.WriteLine($"SEARCHRING FOR {publicJs}");
+            if (!File.Exists(publicJs))
+                return null;
+
+            var text = File.ReadAllText(publicJs);
+
+            Debug.WriteLine(publicJs);
+
+            var match = Regex.Match(
+                text,
+                @"""defaultSkin""\s*:\s*""([^""]+)""",
+                RegexOptions.IgnoreCase
+            );
+
+            return match.Success ? match.Groups[1].Value : null;
         }
     }
 }

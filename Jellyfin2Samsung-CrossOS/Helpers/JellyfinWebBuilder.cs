@@ -24,7 +24,7 @@ namespace Jellyfin2Samsung.Helpers
         {
             _httpClient = httpClient;
             _apiClient = new JellyfinApiClient(httpClient);
-            _pluginManager = new PluginManager(httpClient);
+            _pluginManager = new PluginManager(httpClient, _apiClient);
         }
 
         public async Task<InstallResult> ApplyJellyfinConfigAsync(string packagePath, string[] userIds)
@@ -256,7 +256,7 @@ namespace Jellyfin2Samsung.Helpers
                         // Patch JS Injector public.js if needed
                         if (fileName.Equals("public.js", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.Contains("javascriptinjector", StringComparison.OrdinalIgnoreCase))
                         {
-                            await _pluginManager.PatchJavaScriptInjectorPublicJsAsync(pluginCacheDir);
+                            await _pluginManager.PatchJavaScriptInjectorPublicJsAsync(pluginCacheDir, serverUrl);
                         }
 
                         jsBuilder.AppendLine($"<script src=\"plugin_cache/{fileName}\"></script>");
@@ -288,7 +288,6 @@ namespace Jellyfin2Samsung.Helpers
             }
         }
 
-        // UPDATED SIGNATURE TO INCLUDE CSS BUILDER
         private async Task ProcessApiPluginsAsync(string serverUrl, string pluginCacheDir, StringBuilder jsBuilder, StringBuilder cssBuilder)
         {
             var apiPlugins = await _apiClient.GetInstalledPluginsAsync(serverUrl);
@@ -297,10 +296,12 @@ namespace Jellyfin2Samsung.Helpers
 
             foreach (var plugin in apiPlugins)
             {
+                Debug.WriteLine($"⚙ Processing plugin: {plugin.Name} ({plugin.Id})");
                 var entry = _pluginManager.FindPluginEntry(plugin);
                 if (entry == null) continue;
 
                 bool isKefin = entry.IdContains.Equals("kefin", StringComparison.OrdinalIgnoreCase);
+                Debug.WriteLine($"DEBUG KEFIN {isKefin} - {entry.Name} - {entry.IdContains}");
                 bool isMediaBar = entry.IdContains.Equals("mediabar", StringComparison.OrdinalIgnoreCase);
 
                 // ---------------------------------------------------------
@@ -366,24 +367,6 @@ namespace Jellyfin2Samsung.Helpers
                 // 3. CSS Injection Logic (Kefin & Media Bar)
                 // ---------------------------------------------------------
 
-                // KefinTweaks CSS: Scan the pre-downloaded skins directory
-                if (isKefin)
-                {
-                    string kefinCssDir = Path.Combine(pluginCacheDir, "kefinTweaks", "skins");
-                    if (Directory.Exists(kefinCssDir))
-                    {
-                        // Get all CSS files in the skins directory and its subdirectories
-                        var cssFiles = Directory.GetFiles(kefinCssDir, "*.css", SearchOption.AllDirectories);
-
-                        foreach (var cssPath in cssFiles)
-                        {
-                            // Calculate the relative path from the plugin_cache directory
-                            string relPath = cssPath.Replace(pluginCacheDir + Path.DirectorySeparatorChar, "plugin_cache/");
-                            cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"{relPath}\" />");
-                        }
-                        Debug.WriteLine($"      ✓ Injected {cssFiles.Length} KefinTweaks CSS skins.");
-                    }
-                }
 
                 // Media Bar CSS: Explicitly download and inject its CSS
                 if (isMediaBar)
