@@ -10,6 +10,8 @@
   <img src="https://img.shields.io/badge/✅_Supports_all_Tizen_versions-blue?style=for-the-badge" /> 
   <img src="https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge" />
   <a href="https://discord.gg/7mga3zh8Cv"><img src="https://img.shields.io/badge/Ask%20it%20on%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white" /></a>
+  <img src="https://img.shields.io/badge/Samsung_TV-Jellyfin_Plugins_Supported-7E57C2?style=for-the-badge&logo=samsung&logoColor=white" />
+  <img src="https://img.shields.io/badge/Made_the_Impossible-Jellyfin_Plugins_on_Samsung_TV-black?style=for-the-badge&logo=jellyfin&logoColor=white" />
 
   ![OS Support](https://img.shields.io/badge/Windows-Stable-brightgreen?style=for-the-badge)
   ![OS Support](https://img.shields.io/badge/Linux-Stable-brightgreen?style=for-the-badge)
@@ -77,75 +79,84 @@ chmod +x Jellyfin2Samsung
 
 ---
 ### 1. Launch the Tool  
-<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/a5413292-b6cf-4d6d-bcb5-4fe242f2f4ae" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/235ea81e-2567-402b-8631-9b65ee27ef62" />
+
 
 The tool automatically scans your local network for compatible Samsung Smart TVs.
 
 ---
 
 ### 2. Select a Release  
-<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/22870ab8-92e1-40d3-b094-ecbebe312cd6" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/b91d0537-dbcf-489f-83ae-f2ff2c6b4b11" />
 
 Choose the desired Jellyfin release.
 
 ---
 
 ### 3. Pick a Version  
-<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/bba53f99-e45b-45ac-896c-d19edfa6fad8" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/c6c74098-c0e9-4ccb-ad23-3b9ca1836e6e" />
 
 Select the specific Jellyfin version you’d like to install.
 
 ---
 
 ### 4. Select Your TV  
-<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/c2ff42bb-1ba3-46a7-9009-2853666ed96b" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/b028b8ef-e309-4967-bce2-8557cb5533f0" />
 
 The tool lists all detected Samsung TVs. You can also manually enter an IP if your TV isn’t found.
 
-<img width="422" height="252" alt="image" src="https://github.com/user-attachments/assets/c38f9fc5-2bd3-4139-bcb3-acbf108b02bd" />
+<img width="422" height="252" alt="image" src="https://github.com/user-attachments/assets/88a975b9-e590-4c46-93ac-838f728bdb72" />
 
 ---
 
 ### 5. Sit Back and Watch the Magic ✨  
-<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/12e69906-59e5-44f8-a44e-dcb2de46c14f" />
+<img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/65443580-7ec1-481e-bc3f-63218f97d30d" />
 
 Once started, the installer takes care of everything else automatically.
 
 ---
 
-### ⚠️ Special Notes for Tizen 7+
+### ⚠️ Certificate Required
 
 <img src="https://github.com/user-attachments/assets/b32a5873-a9d5-4f1e-9266-69f33961917f" alt="Tizen Email" width="400">
 <img src="https://github.com/user-attachments/assets/9ad45a0a-f091-4eb6-94e8-eb0f381816d2" alt="Tizen Password" width="400">
 
-Tizen 7+ requires a **Samsung account login** during the install. This step is necessary for generating and exchanging the security certificates used for app installation.
+A **Samsung account is required only when a new Samsung security certificate must be created or regenerated**. This usually occurs if the app package is modified, such as enabling plugins, changing permissions, or adjusting install requirements.
+
+If your **Jellyfin app—or any other app—requires a new certificate**, you must **log in with a Samsung account** to generate the required security certificates before the app can be installed or updated.
 
 ---
 
 ## ⚙️ Settings
 
 ### Language
-<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/f7c03582-965a-4218-b2ff-40a7a0b30f44" />
+<img width="612" height="782" alt="image" src="https://github.com/user-attachments/assets/0e3da411-cb2e-4da3-9c0d-46c51b715973" />
 
 Select your preferred language.
 
-### Certificate
-<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/b34fc1ad-6bd0-44c3-a0c7-6cdd256ffa0e" />
+### Certificates
+<img width="612" height="782" alt="image" src="https://github.com/user-attachments/assets/1215fdef-8a1f-4dfa-92e4-9074c5aebbac" />
+
 
 Choose an existing certificate or let the tool generate a new one automatically.
 
 ### Advanced Options
-<img width="612" height="612" alt="image" src="https://github.com/user-attachments/assets/b3deb013-ee16-47c9-ad47-07182c53f4d1" />
+<img width="612" height="782" alt="image" src="https://github.com/user-attachments/assets/89decada-4f7e-4b82-a5d8-09e32e239f90" />   
 
-- **Custom WGT:** Upload your own `.wgt` file(s) (randomizes the package name to allow side-by-side installs).  
-- **Remember IPs:** Save a manually entered IP when your device isn’t found via scan (one IP at a time).  
-- **Remove Old Jellyfin:** Attempts to uninstall previous versions before installation (not supported on all TVs).  
-- **Force Samsung Login:** Force the tool to login in order to forcefully create a new certificate.  
-- **Right-to-left Reading:** Languages that are right-to-left need to have the IP inverted in order for Tizen Studio to work (192.168.1.2 -> 2.1.168.192).  
-- **Jellyfin Config:** Lets you set your Jellyfin App configuration in advance, so once the app is installed, you won’t need to configure it on the TV.  
+- **Custom WGT:** Upload your own `.wgt` file(s). The package name is randomized to allow side-by-side installs.
+- **Local IP:** Your device’s local network IP address, entered as the **Host IP** in Samsung Developer Mode.
+- **Overwrite Existing Version:** Attempts to overwrite an existing Jellyfin installation.
+- **Open After Installation:** Automatically launches Jellyfin after installation.
+- **Remember IPs:** Saves a manually entered IP address when the device is not found via scanning (one IP at a time).
+- **Remove Old Jellyfin:** Attempts to uninstall previous Jellyfin versions before installing (not supported on all TVs).
+- **Force Samsung Login:** Forces a Samsung account login to generate a new security certificate.
+- **Right-to-Left Reading:** For right-to-left languages, the IP address must be inverted for Tizen Studio to work (e.g. `192.168.1.2` → `2.1.168.192`).
+- **Jellyfin Config:** Preconfigure the Jellyfin app so no setup is required on the TV after installation.
+ 
 
 ## 📝 Jellyfin Config
-<img width="602" height="343" alt="image" src="https://github.com/user-attachments/assets/21c5bc54-95b3-4e26-a07a-ccfd61394088" />
+<img width="690" height="932" alt="image" src="https://github.com/user-attachments/assets/c3561f78-c6d3-4027-b130-f56457b70941" />
+
 
 Update Mode consists of:  
 
@@ -161,32 +172,53 @@ Update Mode consists of:
 | All Settings | Server IP and port, API Key and Jellyfin user selection |
 
 ### Server Settings
-<img width="602" height="222" alt="image" src="https://github.com/user-attachments/assets/d385d90c-3fe2-4594-b275-4457d7d60786" />
 
-This lets you set the Jellyfin server IP address in the config file, so the app doesn't have to search for the server.  
-- Fill in the Address information; Server IP and Port.
+| Setting | Description |
+|--------|-------------|
+| **Server IP** | Pre-fills the Jellyfin server address in the app configuration, so you don’t need to enter it on the TV. |
+| **API Key** | Required for Jellyfin-specific actions, such as loading and applying user settings. |
+| **Jellyfin User(s)** | Select a specific user or all users to apply browser or user-level settings. |
+| **Enable TV Debug** | Establishes a WebSocket connection between the Jellyfin app and the device running this tool to assist with debugging when the app fails to start or behaves unexpectedly. |
+| **Jellyfin Plugins** | Retrieves installed plugins from the Jellyfin server and modifies them for compatibility with Samsung TVs. |
 
 ### Browser Settings
-<img width="602" height="626" alt="image" src="https://github.com/user-attachments/assets/33730755-9b19-42dd-90c7-bd6461f8ea61" />
 
-**Requirements: API Key and Jellyfin User selection**  
-This lets you set the browser-specific information for the chosen user(s) like Theme selection, Skip Intro etc. Jellyfin saves this information in your browser.
+| Setting | Description |
+|--------|-------------|
+| **Enable Backdrops** | Displays background images behind library and item views. |
+| **Enable Theme Songs** | Plays theme music when browsing libraries or items. |
+| **Enable Theme Videos** | Plays theme videos in supported views. |
+| **Backdrop Screensaver** | Uses backdrops as a screensaver when the app is idle. |
+| **Details Banner** | Shows a banner image on item detail pages. |
+| **Cinema Mode** | Automatically plays trailers before starting media playback. |
+| **Next Up Enabled** | Displays the *Next Up* section for continued watching. |
+| **Enable External Video Players** | Allows playback using external video players when supported. |
+| **Skip Intros** | Enables automatic skipping of episode intros when available. |
+| **Audio Language Preference** | Sets the preferred default audio language for playback. |
+| **Subtitle Language Preference** | Sets the preferred default subtitle language. |
+| **Theme** | Selects the app’s visual theme (e.g. Light or Dark). |
+| **Subtitle Mode** | Controls how subtitles are displayed by default. |
 
 ### User Settings
-<img width="602" height="275" alt="image" src="https://github.com/user-attachments/assets/29891c48-c620-4bc3-a141-16d28ef38d9d" />
 
-**Requirements: API Key and Jellyfin User selection**  
-This lets you set all the Jellyfin user specifics for the chosen user(s) like Auto Login, Subtitle Mode etc. Jellyfin saves this on its server.
+| Setting | Description |
+|--------|-------------|
+| **Auto Play Next Episode** | Automatically plays the next episode in a series when the current one ends. |
+| **Remember Audio Selections** | Remembers the selected audio track for future playback. |
+| **Remember Subtitle Selections** | Remembers the selected subtitle track for future playback. |
+| **Play Default Audio Track** | Always plays the default audio track when starting playback. |
+| **Enable Auto Login** | Automatically signs in to the selected user when the app starts. |
 
 ---
 
 ## ✅ Requirements
 
-Before getting started, ensure you have the following:
+Before getting started, make sure you have:
 
-- A **Samsung Tizen Smart TV** with **Developer Mode enabled**  
-- A **Default webbrowser**  
-- A valid **[Samsung Account](https://account.samsung.com/iam/signup)** (required for Tizen 7+)  
+- An active **internet connection** (required for generating or exchanging security certificates)
+- A **Samsung Tizen Smart TV** with **Developer Mode enabled**
+- A **default web browser** installed on your device
+- A valid **[Samsung account](https://account.samsung.com/iam/signup)** (required only when a new Samsung certificate must be created)
 
 ---
 
@@ -201,3 +233,4 @@ Got an idea for improvement?
 or [submit a feature request](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/issues)  
 
 We welcome all contributions and feedback to improve the experience for everyone!
+
