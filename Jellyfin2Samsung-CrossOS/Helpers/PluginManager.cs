@@ -80,6 +80,42 @@ namespace Jellyfin2Samsung.Helpers
             },
             new PluginMatrixEntry
             {
+                Name = "EditorsChoice",
+                IdContains = "editorschoice",
+                ServerPath = null,
+                FallbackUrls = new List<string>
+                {
+                    "https://raw.githubusercontent.com/lachlandcp/jellyfin-editors-choice-plugin/main/EditorsChoicePlugin/Api/client.js"
+                },
+                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
+                UseBabel = true
+            },
+            new PluginMatrixEntry
+            {
+                Name = "Home Screen Sections",
+                IdContains = "Home Screen Sections",
+                ServerPath = null,
+                FallbackUrls = new List<string>
+                {
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/refs/heads/main/src/Jellyfin.Plugin.HomeScreenSections/Inject/HomeScreenSections.js"
+                },
+                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
+                UseBabel = true
+            },
+            new PluginMatrixEntry
+            {
+                Name = "Plugin Pages",
+                IdContains = "Plugin Pages",
+                ServerPath = null,
+                FallbackUrls = new List<string>
+                {
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-pages/refs/heads/main/src/Jellyfin.Plugin.PluginPages/Controller/inject.js"
+                },
+                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
+                UseBabel = true
+            },
+            new PluginMatrixEntry
+            {
                 Name = "KefinTweaks",
                 IdContains = "kefin",
                 ServerPath = null,

@@ -303,7 +303,7 @@ namespace Jellyfin2Samsung.Helpers
                 bool isKefin = entry.IdContains.Equals("kefin", StringComparison.OrdinalIgnoreCase);
                 Debug.WriteLine($"DEBUG KEFIN {isKefin} - {entry.Name} - {entry.IdContains}");
                 bool isMediaBar = entry.IdContains.Equals("mediabar", StringComparison.OrdinalIgnoreCase);
-
+                bool isHomeScreenSections = entry.IdContains.Equals("homescreensection", StringComparison.OrdinalIgnoreCase);
                 // ---------------------------------------------------------
                 // 1. Explicit Server Files (Jellyfin Enhanced)
                 // ---------------------------------------------------------
@@ -391,6 +391,30 @@ namespace Jellyfin2Samsung.Helpers
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"⚠ Failed to fetch Media Bar CSS: {ex.Message}");
+                    }
+                }
+                if (isHomeScreenSections)
+                {
+                    try
+                    {
+                        string cssUrl = "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/refs/heads/main/src/Jellyfin.Plugin.HomeScreenSections/Inject/HomeScreenSections.css";
+                        string fileName = "HomeScreenSections.css";
+                        string cleanId = "homescreensections"; // matching the JS folder above
+                        string localPath = Path.Combine(pluginCacheDir, cleanId, fileName);
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
+
+                        // Download CSS directly (no transpile needed)
+                        Debug.WriteLine("      → Fetching Home Screen Sections CSS...");
+                        var cssBytes = await _httpClient.GetByteArrayAsync(cssUrl);
+                        await File.WriteAllBytesAsync(localPath, cssBytes);
+
+                        cssBuilder.AppendLine($"<link rel=\"stylesheet\" href=\"plugin_cache/{cleanId}/{fileName}\" />");
+                        Debug.WriteLine($"      ✓ Injected Home Screen Sections CSS");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"⚠ Failed to fetch Home Screen Sectiosn CSS: {ex.Message}");
                     }
                 }
             }
