@@ -300,10 +300,12 @@ namespace Jellyfin2Samsung.Helpers
                 var entry = _pluginManager.FindPluginEntry(plugin);
                 if (entry == null) continue;
 
-                bool isKefin = entry.IdContains.Equals("kefin", StringComparison.OrdinalIgnoreCase);
-                Debug.WriteLine($"DEBUG KEFIN {isKefin} - {entry.Name} - {entry.IdContains}");
-                bool isMediaBar = entry.IdContains.Equals("mediabar", StringComparison.OrdinalIgnoreCase);
-                bool isHomeScreenSections = entry.IdContains.Equals("homescreensection", StringComparison.OrdinalIgnoreCase);
+                string name = entry.Name.ToLowerInvariant();
+
+                bool isKefin = name.Contains("kefin");
+                bool isMediaBar = name.Contains("media bar");
+                bool isHomeScreenSections = name.Contains("home screen");
+
                 // ---------------------------------------------------------
                 // 1. Explicit Server Files (Jellyfin Enhanced)
                 // ---------------------------------------------------------
@@ -319,10 +321,9 @@ namespace Jellyfin2Samsung.Helpers
                 // ---------------------------------------------------------
                 if (entry.FallbackUrls.Any())
                 {
+                    // Kefin (special)
                     if (isKefin)
                     {
-                        // Kefin JS is already handled by PatchJavaScriptInjectorPublicJsAsync, 
-                        // but we inject the main kefinTweaks-plugin.js if it was downloaded here
                         string? path = await _pluginManager.DownloadAndTranspileAsync(
                             entry.FallbackUrls.First(),
                             pluginCacheDir,
@@ -331,37 +332,72 @@ namespace Jellyfin2Samsung.Helpers
 
                         if (path != null)
                         {
-                            apiJsBuilder.AppendLine($"<script src=\"plugin_cache/kefinTweaks/kefinTweaks-plugin.js\"></script>");
+                            apiJsBuilder.AppendLine(
+                                "<script src=\"plugin_cache/kefinTweaks/kefinTweaks-plugin.js\"></script>"
+                            );
                         }
                     }
-                    // Generic Handler for other matrix plugins (e.g., Media Bar JS)
+                    // Media Bar (special)
                     else if (isMediaBar)
                     {
                         foreach (string url in entry.FallbackUrls)
                         {
-                            try
+                            string cleanName = "mediabar";
+                            string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
+                            string relPath = Path.Combine(cleanName, fileName);
+
+                            string? path = await _pluginManager.DownloadAndTranspileAsync(
+                                url,
+                                pluginCacheDir,
+                                relPath
+                            );
+
+                            if (path != null)
                             {
-                                string cleanId = Regex.Replace(entry.IdContains, "[^a-zA-Z0-9]", "");
-                                string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
-                                string relPath = Path.Combine(cleanId, fileName);
-
-                                string? path = await _pluginManager.DownloadAndTranspileAsync(url, pluginCacheDir, relPath);
-
-                                if (path != null)
-                                {
-                                    string webPath = $"plugin_cache/{cleanId}/{fileName}";
-                                    apiJsBuilder.AppendLine($"<script src=\"{webPath}\"></script>");
-                                    Debug.WriteLine($"      ✓ Injected Generic Plugin JS: {entry.Name} -> {webPath}");
-                                    break;
-                                }
+                                apiJsBuilder.AppendLine(
+                                    $"<script src=\"plugin_cache/{cleanName}/{fileName}\"></script>"
+                                );
+                                break;
                             }
-                            catch (Exception ex)
+                        }
+                    }
+                    // ✅ GENERIC INJECTOR PLUGINS (EditorsChoice, Home Screen Sections, Plugin Pages)
+                    else
+                    {
+                        foreach (string url in entry.FallbackUrls)
+                        {
+                            string cleanName = Regex.Replace(
+                                entry.Name.ToLowerInvariant(),
+                                "[^a-z0-9]",
+                                ""
+                            );
+
+                            string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
+                            string relPath = Path.Combine(cleanName, fileName);
+
+                            string? path = await _pluginManager.DownloadAndTranspileAsync(
+                                url,
+                                pluginCacheDir,
+                                relPath
+                            );
+
+                            if (path != null)
                             {
-                                Debug.WriteLine($"⚠ Failed to process fallback JS URL for {entry.Name}: {ex.Message}");
+                                // 🔑 THIS is where GenerateInjectorLoader is used
+                                apiJsBuilder.AppendLine(
+                                    _pluginManager.GenerateInjectorLoader(
+                                        entry.Name,
+                                        $"plugin_cache/{cleanName}/{fileName}"
+                                    )
+                                );
+
+                                Debug.WriteLine($"✓ Injector-loaded plugin: {entry.Name}");
+                                break;
                             }
                         }
                     }
                 }
+
 
                 // ---------------------------------------------------------
                 // 3. CSS Injection Logic (Kefin & Media Bar)
@@ -651,9 +687,16 @@ namespace Jellyfin2Samsung.Helpers
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
             var lower = url.ToLowerInvariant();
-            return lower.Contains("/plugins/") || lower.Contains("javascriptinjector") ||
-                   lower.Contains("filetransformation") || lower.Contains("jellyfinenhanced") ||
-                   lower.Contains("mediabar") || lower.Contains("customtabs") || lower.Contains("kefin");
+            return lower.Contains("/plugins/") 
+                || lower.Contains("javascriptinjector") 
+                || lower.Contains("filetransformation") 
+                || lower.Contains("jellyfinenhanced") 
+                || lower.Contains("mediabar") 
+                || lower.Contains("customtabs") 
+                || lower.Contains("kefin") 
+                || lower.Contains("editorschoice")
+                || lower.Contains("homescreensections")
+                || lower.Contains("pluginpages");
         }
 
         private bool IsPluginIdentifier(string id)

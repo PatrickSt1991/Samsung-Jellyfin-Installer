@@ -34,8 +34,7 @@ namespace Jellyfin2Samsung.Helpers
             new PluginMatrixEntry
             {
                 Name = "Jellyfin Enhanced",
-                IdContains = "jellyfinenhanced",
-                ServerPath = null,
+                FallbackUrls = new(),
                 ExplicitServerFiles = new List<string>
                 {
                     "/JellyfinEnhanced/script",
@@ -46,82 +45,50 @@ namespace Jellyfin2Samsung.Helpers
                     "/JellyfinEnhanced/js/enhanced/ui.js",
                     "/JellyfinEnhanced/js/enhanced/playback.js",
                     "/JellyfinEnhanced/js/enhanced/features.js",
-                    "/JellyfinEnhanced/js/enhanced/events.js",
-                    "/JellyfinEnhanced/js/migrate.js",
-                    "/JellyfinEnhanced/js/elsewhere.js",
-                    "/JellyfinEnhanced/js/pausescreen.js",
-                    "/JellyfinEnhanced/js/reviews.js",
-                    "/JellyfinEnhanced/js/qualitytags.js",
-                    "/JellyfinEnhanced/js/genretags.js",
-                    "/JellyfinEnhanced/js/languagetags.js",
-                    "/JellyfinEnhanced/js/jellyseerr/api.js",
-                    "/JellyfinEnhanced/js/jellyseerr/modal.js",
-                    "/JellyfinEnhanced/js/jellyseerr/ui.js",
-                    "/JellyfinEnhanced/js/jellyseerr/jellyseerr.js",
-                    "/JellyfinEnhanced/js/arr-links.js",
-                    "/JellyfinEnhanced/js/arr-tag-links.js",
-                    "/JellyfinEnhanced/js/letterboxd-links.js"
-                },
-                FallbackUrls = new List<string>(),
-                RequiresModuleBundle = false,
+                    "/JellyfinEnhanced/js/enhanced/events.js"
+                }
             },
             new PluginMatrixEntry
             {
                 Name = "Media Bar",
-                IdContains = "mediabar",
-                ServerPath = null,
                 FallbackUrls = new List<string>
                 {
-                    "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.js",
-                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-media-bar/main/slideshowpure.js"
+                    "https://cdn.jsdelivr.net/gh/IAmParadox27/jellyfin-plugin-media-bar@main/slideshowpure.js"
                 },
-                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
                 UseBabel = true
             },
             new PluginMatrixEntry
             {
                 Name = "EditorsChoice",
-                IdContains = "editorschoice",
-                ServerPath = null,
                 FallbackUrls = new List<string>
                 {
                     "https://raw.githubusercontent.com/lachlandcp/jellyfin-editors-choice-plugin/main/EditorsChoicePlugin/Api/client.js"
                 },
-                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
                 UseBabel = true
             },
             new PluginMatrixEntry
             {
                 Name = "Home Screen Sections",
-                IdContains = "Home Screen Sections",
-                ServerPath = null,
                 FallbackUrls = new List<string>
                 {
-                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/refs/heads/main/src/Jellyfin.Plugin.HomeScreenSections/Inject/HomeScreenSections.js"
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/main/src/Jellyfin.Plugin.HomeScreenSections/Inject/HomeScreenSections.js"
                 },
-                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
                 UseBabel = true
             },
             new PluginMatrixEntry
             {
                 Name = "Plugin Pages",
-                IdContains = "Plugin Pages",
-                ServerPath = null,
                 FallbackUrls = new List<string>
                 {
-                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-pages/refs/heads/main/src/Jellyfin.Plugin.PluginPages/Controller/inject.js"
+                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-pages/main/src/Jellyfin.Plugin.PluginPages/Controller/inject.js"
                 },
-                // Assuming CSS is handled via FallbackUrls for now, but in JellyfinWebBuilder we'll use a specific URL for Media Bar CSS
                 UseBabel = true
             },
             new PluginMatrixEntry
             {
                 Name = "KefinTweaks",
-                IdContains = "kefin",
-                ServerPath = null,
                 FallbackUrls = new List<string>
                 {
-                    "https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks@latest/kefinTweaks-plugin.js",
                     "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/main/kefinTweaks-plugin.js"
                 },
                 UseBabel = true
@@ -130,19 +97,13 @@ namespace Jellyfin2Samsung.Helpers
 
         public PluginMatrixEntry? FindPluginEntry(JellyfinPluginInfo plugin)
         {
-            string name = (plugin.Name ?? "").ToLowerInvariant();
-            string id = (plugin.Id ?? "").ToLowerInvariant();
+            if (plugin?.Name == null)
+                return null;
+
+            string pluginName = plugin.Name.ToLowerInvariant();
 
             return PluginMatrix.FirstOrDefault(entry =>
-            {
-                bool nameMatch = !string.IsNullOrEmpty(entry.Name) &&
-                                 name.Contains(entry.Name.ToLowerInvariant());
-
-                bool idMatch = !string.IsNullOrEmpty(entry.IdContains) &&
-                               id.Contains(entry.IdContains.ToLowerInvariant());
-
-                return nameMatch || idMatch;
-            });
+                pluginName.Contains(entry.Name.ToLowerInvariant()));
         }
 
         public async Task DownloadExplicitFilesAsync(
@@ -202,26 +163,40 @@ namespace Jellyfin2Samsung.Helpers
         {
             try
             {
-                Debug.WriteLine($"  → Downloading: {url}");
+                Debug.WriteLine($"▶ Downloading plugin JS: {url}");
+
                 string js = await _httpClient.GetStringAsync(url);
                 js = await EsbuildHelper.TranspileAsync(js, relPath);
 
                 string localPath = Path.Combine(cacheDir, relPath);
-                string? dir = Path.GetDirectoryName(localPath);
-                if (dir != null) Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
 
                 await File.WriteAllTextAsync(localPath, js, Encoding.UTF8);
-                Debug.WriteLine($"      ✓ Saved {relPath} → {localPath}");
-
                 return localPath;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ Failed download for {relPath}: {ex.Message}");
+                Debug.WriteLine($"⚠ Plugin download failed: {ex.Message}");
                 return null;
             }
         }
-
+        public string GenerateInjectorLoader(string name, string relativeJsPath)
+        {
+            return $@"
+<script>
+window.WaitForApiClient(function() {{
+    try {{
+        var s = document.createElement('script');
+        s.src = '{relativeJsPath}';
+        s.defer = true;
+        document.head.appendChild(s);
+        console.log('🧩 Loaded plugin: {name}');
+    }} catch (e) {{
+        console.error('Plugin failed: {name}', e);
+    }}
+}});
+</script>";
+        }
         public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir, string serverUrl)
         {
             try
