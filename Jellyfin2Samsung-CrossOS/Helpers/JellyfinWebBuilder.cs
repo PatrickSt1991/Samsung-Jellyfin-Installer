@@ -287,6 +287,19 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
+        private async Task EnsureJQueryAsync(string pluginCacheDir)
+        {
+            string jqueryPath = Path.Combine(pluginCacheDir, "jquery.min.js");
+
+            if (!File.Exists(jqueryPath))
+            {
+                Debug.WriteLine("▶ Downloading jQuery for legacy plugins…");
+                var jquery = await _httpClient.GetStringAsync(
+                    "https://code.jquery.com/jquery-3.6.4.min.js"
+                );
+                await File.WriteAllTextAsync(jqueryPath, jquery, Encoding.UTF8);
+            }
+        }
 
         private async Task ProcessApiPluginsAsync(string serverUrl, string pluginCacheDir, StringBuilder jsBuilder, StringBuilder cssBuilder)
         {
@@ -305,6 +318,8 @@ namespace Jellyfin2Samsung.Helpers
                 bool isKefin = name.Contains("kefin");
                 bool isMediaBar = name.Contains("media bar");
                 bool isHomeScreenSections = name.Contains("home screen");
+                bool isPluginPages = name.Contains("plugin pages");
+
 
                 // ---------------------------------------------------------
                 // 1. Explicit Server Files (Jellyfin Enhanced)
@@ -361,6 +376,29 @@ namespace Jellyfin2Samsung.Helpers
                             }
                         }
                     }
+                    // 🧩 Plugin Pages (requires jQuery)
+                    else if (isPluginPages)
+                    {
+
+                                // Ensure jQuery exists (download once)
+                                await EnsureJQueryAsync(pluginCacheDir);
+
+                                apiJsBuilder.AppendLine($@"
+<script>
+window.WaitForApiClient(function () {{
+    if (!window.$) {{
+        var jq = document.createElement('script');
+        jq.src = 'plugin_cache/jquery.min.js';
+        document.head.appendChild(jq);
+    }} else {{
+        loadPluginPages();
+    }}
+}});
+</script>");
+
+                                Debug.WriteLine("✓ Injector-loaded Plugin Pages (with jQuery)");
+                                
+                    }
                     // ✅ GENERIC INJECTOR PLUGINS (EditorsChoice, Home Screen Sections, Plugin Pages)
                     else
                     {
@@ -383,7 +421,7 @@ namespace Jellyfin2Samsung.Helpers
 
                             if (path != null)
                             {
-                                // 🔑 THIS is where GenerateInjectorLoader is used
+                                
                                 apiJsBuilder.AppendLine(
                                     _pluginManager.GenerateInjectorLoader(
                                         entry.Name,

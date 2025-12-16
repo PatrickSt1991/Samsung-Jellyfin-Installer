@@ -24,10 +24,11 @@ namespace Jellyfin2Samsung.Helpers
 
         private const string KefinTweaksRawRoot = "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/v0.4.5/";
 
-        private static readonly Regex cdnRegex = new Regex(
-            @"(https?:\/\/.+?\/KefinTweaks@latest\/)",
+        private static readonly Regex kefinScriptRegex = new Regex(
+            @"script\.src\s*=\s*([`""])[^`""']*kefinTweaks-plugin\.js\1",
             RegexOptions.IgnoreCase | RegexOptions.Compiled
         );
+
 
         private static readonly List<PluginMatrixEntry> PluginMatrix = new()
         {
@@ -39,13 +40,29 @@ namespace Jellyfin2Samsung.Helpers
                 {
                     "/JellyfinEnhanced/script",
                     "/JellyfinEnhanced/js/splashscreen.js",
+                    "/JellyfinEnhanced/js/reviews.js",
+                    "/JellyfinEnhanced/js/qualitytags.js",
+                    "/JellyfinEnhanced/js/plugin.js",
+                    "/JellyfinEnhanced/js/pausescreen.js",
+                    "/JellyfinEnhanced/js/migrate.js",
+                    "/JellyfinEnhanced/js/letterboxd-links.js",
+                    "/JellyfinEnhanced/js/languagetags.js",
+                    "/JellyfinEnhanced/js/genretags.js",
+                    "/JellyfinEnhanced/js/elsewhere.js",
+                    "/JellyfinEnhanced/js/arr-tag-links.js",
+                    "/JellyfinEnhanced/js/arr-links.js",
                     "/JellyfinEnhanced/js/enhanced/config.js",
-                    "/JellyfinEnhanced/js/enhanced/themer.js",
-                    "/JellyfinEnhanced/js/enhanced/subtitles.js",
-                    "/JellyfinEnhanced/js/enhanced/ui.js",
-                    "/JellyfinEnhanced/js/enhanced/playback.js",
+                    "/JellyfinEnhanced/js/enhanced/events.js",
                     "/JellyfinEnhanced/js/enhanced/features.js",
-                    "/JellyfinEnhanced/js/enhanced/events.js"
+                    "/JellyfinEnhanced/js/enhanced/helpers.js",
+                    "/JellyfinEnhanced/js/enhanced/playback.js",
+                    "/JellyfinEnhanced/js/enhanced/subtitles.js",
+                    "/JellyfinEnhanced/js/enhanced/themer.js",
+                    "/JellyfinEnhanced/js/enhanced/ui.js",
+                    "/JellyfinEnhanced/js/jellyseerr/api.js",
+                    "/JellyfinEnhanced/js/jellyseerr/jellyseerr.js",
+                    "/JellyfinEnhanced/js/jellyseerr/modal.js",
+                    "/JellyfinEnhanced/js/jellyseerr/ui.js"
                 }
             },
             new PluginMatrixEntry
@@ -60,10 +77,7 @@ namespace Jellyfin2Samsung.Helpers
             new PluginMatrixEntry
             {
                 Name = "EditorsChoice",
-                FallbackUrls = new List<string>
-                {
-                    "https://raw.githubusercontent.com/lachlandcp/jellyfin-editors-choice-plugin/main/EditorsChoicePlugin/Api/client.js"
-                },
+                FallbackUrls = new(),
                 UseBabel = true
             },
             new PluginMatrixEntry
@@ -78,10 +92,7 @@ namespace Jellyfin2Samsung.Helpers
             new PluginMatrixEntry
             {
                 Name = "Plugin Pages",
-                FallbackUrls = new List<string>
-                {
-                    "https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-pages/main/src/Jellyfin.Plugin.PluginPages/Controller/inject.js"
-                },
+                FallbackUrls = new(),   
                 UseBabel = true
             },
             new PluginMatrixEntry
@@ -89,7 +100,7 @@ namespace Jellyfin2Samsung.Helpers
                 Name = "KefinTweaks",
                 FallbackUrls = new List<string>
                 {
-                    "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/main/kefinTweaks-plugin.js"
+                    "https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks@latest/kefinTweaks-plugin.js"
                 },
                 UseBabel = true
             }
@@ -211,15 +222,12 @@ window.WaitForApiClient(function() {{
                 string js = await File.ReadAllTextAsync(publicJsPath, Encoding.UTF8);
 
                 // 1. Detect the original CDN root
-                var match = cdnRegex.Match(js);
-                if (!match.Success)
+                if (!kefinScriptRegex.IsMatch(js))
                 {
-                    Debug.WriteLine("▶ JavaScript Injector: No KefinTweaks CDN root found in public.js, skipping patch.");
+                    Debug.WriteLine("▶ JavaScript Injector: No KefinTweaks script loader found in public.js, skipping patch.");
                     return;
                 }
 
-                string cdnRoot = match.Value;
-                string localRoot = "plugin_cache/kefinTweaks/";
 
                 // Ensure kefinTweaks folder exists
                 Directory.CreateDirectory(Path.Combine(pluginCacheDir, "kefinTweaks"));
@@ -230,6 +238,20 @@ window.WaitForApiClient(function() {{
                     kefinTweaksPluginUrl,
                     pluginCacheDir,
                     Path.Combine("kefinTweaks", "kefinTweaks-plugin.js"));
+
+                var pluginJsPath = Path.Combine(pluginCacheDir, "kefinTweaks", "kefinTweaks-plugin.js");
+                if (File.Exists(pluginJsPath))
+                {
+                    var pluginJs = await File.ReadAllTextAsync(pluginJsPath, Encoding.UTF8);
+
+                    pluginJs = pluginJs.Replace(
+                        "https://cdn.jsdelivr.net/gh/ranaldsgift/KefinTweaks",
+                        "plugin_cache/kefinTweaks"
+                    );
+
+                    await File.WriteAllTextAsync(pluginJsPath, pluginJs, Encoding.UTF8);
+                }
+
 
                 string injectorUrl = KefinTweaksRawRoot + "injector.js";
                 string? injectorPath = await DownloadAndTranspileAsync(
@@ -267,15 +289,22 @@ window.WaitForApiClient(function() {{
                         // Theme.css
                         if (!File.Exists(localTheme))
                         {
-                            var url = $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/theme.css";
-                            Debug.WriteLine($"▶ KefinTweaks: downloading theme CSS: {url}");
-                            var css = await _httpClient.GetStringAsync(url);
-                            await File.WriteAllTextAsync(localTheme, css);
+                            try
+                            {
+                                var url = $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/theme.css";
+                                Debug.WriteLine($"▶ KefinTweaks: downloading theme CSS: {url}");
+
+                                var css = await _httpClient.GetStringAsync(url);
+                                await File.WriteAllTextAsync(localTheme, css);
+
+                                js = EnsureCssLinked(js, themeHref);
+                            }
+                            catch (Exception ex) when (ex is System.Net.Http.HttpRequestException || ex is System.IO.IOException)
+                            {
+                                Debug.WriteLine($"⚠ KefinTweaks: Failed to download theme CSS: {ex.Message}");
+                            }
                         }
 
-                        js = EnsureCssLinked(js, themeHref);
-
-                        // Version fixes
                         if (!File.Exists(localFixes))
                         {
                             try
@@ -302,7 +331,19 @@ window.WaitForApiClient(function() {{
                 }
 
                 // 4. Rewrite CDN → local
-                js = js.Replace(cdnRoot, localRoot);
+                js = kefinScriptRegex.Replace(
+                    js,
+                    "script.src = 'plugin_cache/kefinTweaks/kefinTweaks-plugin.js';"
+                );
+
+                // Rewrite KefinTweaks config root → local cache
+                js = Regex.Replace(
+                    js,
+                    @"""kefinTweaksRoot""\s*:\s*""https:\/\/cdn\.jsdelivr\.net\/gh\/ranaldsgift\/KefinTweaks@latest\/""",
+                    @"""kefinTweaksRoot"": ""plugin_cache/kefinTweaks/""",
+                    RegexOptions.IgnoreCase
+                );
+
 
                 // 5. Write ONCE
                 await File.WriteAllTextAsync(publicJsPath, js, Encoding.UTF8);
