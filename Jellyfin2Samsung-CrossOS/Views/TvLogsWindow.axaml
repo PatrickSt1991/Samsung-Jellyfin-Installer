@@ -5,7 +5,7 @@
         x:Class="Jellyfin2Samsung.Views.TvLogsWindow"
         x:DataType="viewModels:TvLogsViewModel"
         Width="900"
-        Height="600"
+        Height="650"
         Title="Samsung TV Logs"
         Background="#F5F5F5"
         WindowStartupLocation="CenterOwner">
