@@ -2,11 +2,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.Services;
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.ViewModels;
@@ -15,94 +14,97 @@ public partial class TvLogsViewModel : ObservableObject
 {
     private readonly ILocalizationService _localizationService;
     private readonly TvLogService _logService;
-    private CancellationTokenSource? _cts;
 
     [ObservableProperty]
     private string logs = string.Empty;
+
+    [ObservableProperty]
+    private TvLogConnectionStatus connectionStatus = TvLogConnectionStatus.Stopped;
+
+    public string StatusText => ConnectionStatus switch
+    {
+        TvLogConnectionStatus.Stopped => "Stopped",
+        TvLogConnectionStatus.Listening => "Listening",
+        TvLogConnectionStatus.Connected => "Connected",
+        TvLogConnectionStatus.NoConnections => "No connection",
+        _ => ""
+    };
+
+    public bool CanStart => ConnectionStatus == TvLogConnectionStatus.Stopped;
+    public bool CanStop => ConnectionStatus != TvLogConnectionStatus.Stopped;
+    public bool IsListening => ConnectionStatus == TvLogConnectionStatus.Listening;
+    public string EndpointText => $"{IpAddress}:5001";
 
     public string IpAddress { get; }
     public string StartLog => _localizationService.GetString("lblStartLog");
     public string StopLog => _localizationService.GetString("lblStopLog");
     public string SaveLogFile => _localizationService.GetString("lblSaveLogs");
     public string Close => _localizationService.GetString("btn_Close");
+
     public TvLogsViewModel(
         TvLogService logService,
         string ipAddress,
         ILocalizationService localizationService)
     {
-        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _logService = logService ?? throw new ArgumentNullException(nameof(logService));
-        IpAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
-        _localizationService.LanguageChanged += OnLanguageChanged;
+        _localizationService = localizationService;
+        _logService = logService;
+        IpAddress = ipAddress;
+
+        _localizationService.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(StartLog));
+            OnPropertyChanged(nameof(StopLog));
+            OnPropertyChanged(nameof(SaveLogFile));
+            OnPropertyChanged(nameof(Close));
+        };
     }
 
-    private void OnLanguageChanged(object? sender, EventArgs e)
+    partial void OnConnectionStatusChanged(TvLogConnectionStatus value)
     {
-        RefreshLocalizedProperties();
-    }
-
-    private void RefreshLocalizedProperties()
-    {
-        OnPropertyChanged(nameof(StartLog));
-        OnPropertyChanged(nameof(StopLog));
-        OnPropertyChanged(nameof(SaveLogFile));
-        OnPropertyChanged(nameof(Close));
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(CanStart));
+        OnPropertyChanged(nameof(CanStop));
+        OnPropertyChanged(nameof(IsListening));
     }
 
     [RelayCommand]
     private void Start()
     {
         Logs = "Waiting for TV connection...\n";
+        ConnectionStatus = TvLogConnectionStatus.Listening;
 
-        _logService.StartLogServer(5001, line =>
-        {
-            Dispatcher.UIThread.Post(() => Logs += line);
-        });
+        _logService.StartLogServer(
+            5001,
+            line => Dispatcher.UIThread.Post(() => Logs += line),
+            status => Dispatcher.UIThread.Post(() => ConnectionStatus = status));
+    }
+
+    [RelayCommand]
+    private void Stop()
+    {
+        _logService.Stop();
+        ConnectionStatus = TvLogConnectionStatus.Stopped;
+        Logs += "\n--- Log stream stopped ---\n";
     }
 
     [RelayCommand]
     private async Task SaveLogs()
     {
-        try
+        var dialog = new Avalonia.Controls.SaveFileDialog
         {
-            var dialog = new Avalonia.Controls.SaveFileDialog
-            {
-                Title = "Save TV Logs",
-                Filters =
-            {
-                new Avalonia.Controls.FileDialogFilter
-                {
-                    Name = "Text Files",
-                    Extensions = { "txt" }
-                }
-            },
-                DefaultExtension = "txt",
-                InitialFileName = $"tv_logs_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
-            };
+            InitialFileName = $"tv_logs_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
+        };
 
-            var window = Avalonia.Application.Current?.ApplicationLifetime is
-                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow
-                : null;
+        var window = Avalonia.Application.Current?
+            .ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
 
-            if (window == null)
-                return;
+        if (window == null)
+            return;
 
-            var result = await dialog.ShowAsync(window);
-            if (string.IsNullOrWhiteSpace(result))
-                return;
-
-            await File.WriteAllTextAsync(result, Logs ?? string.Empty);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to save logs: {ex.Message}");
-        }
-    }
-    [RelayCommand]
-    private void Stop()
-    {
-        _cts?.Cancel();
-        Logs += "\n--- Log stream stopped ---\n";
+        var result = await dialog.ShowAsync(window);
+        if (!string.IsNullOrWhiteSpace(result))
+            await File.WriteAllTextAsync(result, Logs);
     }
 }

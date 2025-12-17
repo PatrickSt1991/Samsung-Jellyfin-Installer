@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
+        xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers"
         x:Class="Jellyfin2Samsung.Views.TvLogsWindow"
         x:DataType="viewModels:TvLogsViewModel"
         Width="900"
@@ -8,14 +9,45 @@
         Title="Samsung TV Logs"
         Background="#F5F5F5"
         WindowStartupLocation="CenterOwner">
+
+	<!-- ========================= -->
+	<!-- Resources -->
+	<!-- ========================= -->
+	<Window.Resources>
+		<helpers:StatusToColorConverter x:Key="StatusToColorConverter"/>
+	</Window.Resources>
+
+	<!-- ========================= -->
+	<!-- Styles -->
+	<!-- ========================= -->
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/Buttons.axaml"/>
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/TextBlocks.axaml"/>
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
+
+		<!-- Pulsing animation while listening -->
+		<Style Selector="Border.listening">
+			<Style.Animations>
+				<Animation Duration="0:0:1"
+						   IterationCount="Infinite"
+						   PlaybackDirection="Alternate">
+					<KeyFrame Cue="0%">
+						<Setter Property="Opacity" Value="1"/>
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="Opacity" Value="0.7"/>
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
+		</Style>
+
 	</Window.Styles>
 
+	<!-- ========================= -->
+	<!-- Layout -->
+	<!-- ========================= -->
 	<Border Background="White"
             Padding="16"
             CornerRadius="8"
@@ -25,11 +57,36 @@
 
 		<StackPanel Spacing="16">
 
+			<!-- Header -->
 			<TextBlock Text="TV Log Output"
                        FontSize="20"
                        FontWeight="SemiBold"
                        Foreground="#2C3E50"/>
 
+			<!-- Status + Endpoint -->
+			<StackPanel Orientation="Horizontal"
+                        Spacing="12"
+                        VerticalAlignment="Center">
+
+				<!-- Status badge -->
+				<Border CornerRadius="10"
+                        Padding="8,4"
+                        Classes.listening="{Binding IsListening}"
+                        Background="{Binding ConnectionStatus,
+                                     Converter={StaticResource StatusToColorConverter}}">
+					<TextBlock Text="{Binding StatusText}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+				</Border>
+
+				<!-- IP:Port -->
+				<TextBlock Text="{Binding EndpointText}"
+                           FontSize="12"
+                           Foreground="#555"/>
+			</StackPanel>
+
+			<!-- Log output -->
 			<Border BorderBrush="#CCCCCC"
                     BorderThickness="1"
                     Background="#1E1E1E"
@@ -37,7 +94,8 @@
                     Padding="6"
                     Height="450">
 
-				<ScrollViewer VerticalScrollBarVisibility="Auto">
+				<ScrollViewer x:Name="LogScrollViewer"
+                              VerticalScrollBarVisibility="Auto">
 					<TextBlock Text="{Binding Logs}"
                                FontFamily="Consolas"
                                FontSize="13"
@@ -47,32 +105,34 @@
 
 			</Border>
 
+			<!-- Buttons -->
 			<StackPanel Orientation="Horizontal"
-						HorizontalAlignment="Right"
-						Spacing="10">
+                        HorizontalAlignment="Right"
+                        Spacing="10">
 
 				<Button Content="{Binding StartLog}"
-						Width="100"
-						Classes="primary"
-						Command="{Binding StartCommand}" />
+                        Width="100"
+                        Classes="primary"
+                        IsEnabled="{Binding CanStart}"
+                        Command="{Binding StartCommand}" />
 
 				<Button Content="{Binding StopLog}"
-						Width="100"
-						Classes="primary"
-						Command="{Binding StopCommand}" />
+                        Width="100"
+                        Classes="primary"
+                        IsEnabled="{Binding CanStop}"
+                        Command="{Binding StopCommand}" />
 
 				<Button Content="{Binding SaveLogFile}"
-						Width="120"
-						Classes="primary"
-						Command="{Binding SaveLogsCommand}" />
+                        Width="120"
+                        Classes="primary"
+                        Command="{Binding SaveLogsCommand}" />
 
 				<Button Content="{Binding Close}"
-						Width="100"
-						Classes="primary"
-						Click="OnCloseClick" />
+                        Width="100"
+                        Classes="primary"
+                        Click="OnCloseClick" />
 
 			</StackPanel>
-
 
 		</StackPanel>
 	</Border>
