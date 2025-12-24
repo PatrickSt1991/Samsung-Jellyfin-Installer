@@ -9,7 +9,7 @@
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="700"
+        Height="750"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -130,85 +130,82 @@
 						<!-- Override Existing App -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblTryOverwrite}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding TryOverwrite}"
-                                      VerticalAlignment="Center"/>
+									   Text="{Binding lblTryOverwrite}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding TryOverwrite}"
+										  VerticalAlignment="Center"/>
 						</Grid>
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding lblLaunchOnInstall}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding OpenAfterInstall}"
+										  VerticalAlignment="Center"/>
+						</Grid>
+
 						<!-- Remember IP -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblRememberIp}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding RememberCustomIP}"
-                                      VerticalAlignment="Center"/>
+									   Text="{Binding lblRememberIp}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding RememberCustomIP}"
+										  VerticalAlignment="Center"/>
 						</Grid>
 
 						<!-- Delete Previous -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblDeletePrevious}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding DeletePreviousInstall}"
-                                      VerticalAlignment="Center"/>
+									   Text="{Binding lblDeletePrevious}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding DeletePreviousInstall}"
+										  VerticalAlignment="Center"/>
 						</Grid>
 
 						<!-- Force Login -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblForceLogin}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding ForceSamsungLogin}"
-                                      VerticalAlignment="Center"/>
+									   Text="{Binding lblForceLogin}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding ForceSamsungLogin}"
+										  VerticalAlignment="Center"/>
 						</Grid>
 
 						<!-- RTL Reading -->
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblRTL}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding RtlReading}"
-                                      VerticalAlignment="Center"/>
-						</Grid>
-
-						<!-- SDB Window -->
-						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-							<TextBlock Grid.Column="0"
-                                       Text="{Binding lblSDB}"
-                                       Classes="label"
-                                       VerticalAlignment="Center"/>
-							<CheckBox Grid.Column="1"
-                                      IsChecked="{Binding ShowSdbWindow}"
-                                      VerticalAlignment="Center"/>
+									   Text="{Binding lblRTL}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding RtlReading}"
+										  VerticalAlignment="Center"/>
 						</Grid>
 					</StackPanel>
 
 					<!-- Separator -->
 					<Border Height="1" Background="#E8E8E8" Margin="0,8"/>
 
-					<!-- Configuration Section -->
-					<Grid ColumnDefinitions="170,*" ColumnSpacing="12">
-						<TextBlock Grid.Column="0"
-                                   Text="{Binding lblModifyConfig}"
-                                   Classes="label"
-                                   VerticalAlignment="Center"/>
+					<Grid ColumnDefinitions="Auto" ColumnSpacing="12">
 						<Button Grid.Column="1"
-                                Classes="primary"
-                                Content="{Binding lblOpenConfig}"
-                                Command="{Binding ModifyConfigCommand}"
-                                HorizontalAlignment="Left"/>
+								Classes="primary"
+								Command="{Binding ModifyConfigCommand}"
+								HorizontalAlignment="Right">
+							<StackPanel Orientation="Horizontal" Spacing="6">
+								<fa:SymbolIcon Symbol="Settings" Width="16" Height="16"/>
+								<TextBlock Text="{Binding lblModifyConfig}"/>
+							</StackPanel>
+						</Button>
 					</Grid>
-
 				</StackPanel>
 			</ScrollViewer>
 		</Grid>

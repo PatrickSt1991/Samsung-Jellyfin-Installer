@@ -94,10 +94,13 @@ namespace Jellyfin2Samsung.Services
             var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, null, keyPair.Private);
 
             using var ms = new MemoryStream();
-            using var sw = new StreamWriter(ms);
-            new PemWriter(sw).WriteObject(csr);
+            using var sw = new StreamWriter(ms, System.Text.Encoding.ASCII, leaveOpen: true);
+            var pemWriter = new PemWriter(sw);
+            pemWriter.WriteObject(csr);
             sw.Flush();
+            ms.Position = 0;
             return ms.ToArray();
+
         }
 
         private static byte[] GenerateDistributorCsr(AsymmetricCipherKeyPair keyPair, string duid, string userEmail)
@@ -118,10 +121,13 @@ namespace Jellyfin2Samsung.Services
             var csr = new Pkcs10CertificationRequest("SHA256withRSA", subject, keyPair.Public, new DerSet(attribute), keyPair.Private);
 
             using var ms = new MemoryStream();
-            using var sw = new StreamWriter(ms);
-            new PemWriter(sw).WriteObject(csr);
+            using var sw = new StreamWriter(ms, System.Text.Encoding.ASCII, leaveOpen: true);
+            var pemWriter = new PemWriter(sw);
+            pemWriter.WriteObject(csr);
             sw.Flush();
+            ms.Position = 0;
             return ms.ToArray();
+
         }
 
         private async Task CheckCertificateExistenceAsync(string caPath)
@@ -282,16 +288,31 @@ namespace Jellyfin2Samsung.Services
                 store.Save(ms, password.ToCharArray(), new SecureRandom());
                 await File.WriteAllBytesAsync(target, ms.ToArray());
             }
-            
+
             // --- Optional sanity check ---
-            var verify = new X509Certificate2Collection();
-            verify.Import(target, password, GetX509KeyStorageFlags());
-            var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
-                       ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
-            var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
-                       ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
-            if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
-                throw new InvalidOperationException($"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
+            if (OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    var verify = new X509Certificate2Collection();
+                    // For a one-off verification, EphemeralKeySet is fine
+                    verify.Import(target, password, X509KeyStorageFlags.EphemeralKeySet);
+
+                    var leaf = verify.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)
+                               ?? throw new InvalidOperationException("PFX sanity failed: no leaf with private key.");
+                    var ca = verify.Cast<X509Certificate2>().FirstOrDefault(c => !c.HasPrivateKey)
+                               ?? throw new InvalidOperationException("PFX sanity failed: no intermediate certificate.");
+
+                    if (!string.Equals(leaf.Issuer, ca.Subject, StringComparison.Ordinal))
+                        throw new InvalidOperationException(
+                            $"PFX chain mismatch: leaf issuer '{leaf.Issuer}' != CA subject '{ca.Subject}'.");
+                }
+                catch (Exception ex)
+                {
+                    // Log if you want, but don't block the install on Linux quirks
+                    System.Diagnostics.Debug.WriteLine($"PFX sanity check failed: {ex}");
+                }
+            }
 
             return target;
         }

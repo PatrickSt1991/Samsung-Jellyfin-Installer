@@ -11,7 +11,6 @@ using Jellyfin2Samsung.ViewModels;
 using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 
@@ -21,7 +20,6 @@ namespace Jellyfin2Samsung
     {
         private IServiceProvider _serviceProvider;
 
-        // Static property to access services from anywhere
         public static IServiceProvider Services { get; private set; }
 
         public override void Initialize()
@@ -65,27 +63,26 @@ namespace Jellyfin2Samsung
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
             services.AddSingleton<SamsungLoginService>();
             services.AddSingleton<HttpClient>();
+            services.AddSingleton<JellyfinApiClient>();
+            services.AddSingleton<PluginManager>();
+            services.AddSingleton<JellyfinWebBuilder>();
 
+            // Other Helpers
             services.AddSingleton<DeviceHelper>();
             services.AddSingleton<PackageHelper>();
-            services.AddSingleton<JellyfinHelper>();
             services.AddSingleton<CertificateHelper>();
             services.AddSingleton<FileHelper>();
             services.AddSingleton<ProcessHelper>();
+            services.AddSingleton<TvLogService>();
 
             // ViewModels
             services.AddSingleton<MainWindowViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddTransient<InstallationCompleteViewModel>();
             services.AddTransient<InstallingWindowViewModel>();
-
-            // JellyfinConfigViewModel requires JellyfinHelper
-            services.AddTransient(provider =>
-            {
-                var helper = provider.GetRequiredService<JellyfinHelper>();
-                var localization = provider.GetRequiredService<ILocalizationService>();
-                return new JellyfinConfigViewModel(helper, localization);
-            });
+            services.AddTransient<TvLogsViewModel>();
+            services.AddTransient<TvLogsWindow>();
+            services.AddTransient<JellyfinConfigViewModel>();
 
             // Views
             services.AddSingleton(provider =>

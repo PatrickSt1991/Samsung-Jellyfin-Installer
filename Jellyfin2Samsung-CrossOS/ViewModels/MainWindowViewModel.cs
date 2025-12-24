@@ -137,6 +137,8 @@ namespace Jellyfin2Samsung.ViewModels
                 _ = PromptForManualIpAsync();
 
             RefreshCanExecuteChanged();
+            AppSettings.Default.TvIp = value?.IpAddress ?? string.Empty;
+            AppSettings.Default.Save();
         }
 
         partial void OnIsLoadingChanged(bool value)

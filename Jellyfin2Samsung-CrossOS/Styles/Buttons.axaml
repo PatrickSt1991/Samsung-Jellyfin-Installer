@@ -1,5 +1,9 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<Style Selector="ToggleSwitch">
+		<Setter Property="OnContent" Value="" />
+		<Setter Property="OffContent" Value="" />
+	</Style>
 	<Style Selector="Button.primary">
 		<Setter Property="Background" Value="#2C3E50"/>
 		<Setter Property="Foreground" Value="White"/>
@@ -11,6 +15,19 @@
 		<Setter Property="Cursor" Value="Hand"/>
 	</Style>
 	<Style Selector="Button.primary:pointerover">
+		<Setter Property="Background" Value="#34495E"/>
+	</Style>
+	<Style Selector="Button.secondary">
+		<Setter Property="Background" Value="#2C3E50"/>
+		<Setter Property="Foreground" Value="White"/>
+		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="CornerRadius" Value="6"/>
+		<Setter Property="Padding" Value="8,4"/>
+		<Setter Property="FontWeight" Value="SemiBold"/>
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="Cursor" Value="Hand"/>
+	</Style>
+	<Style Selector="Button.secondary:pointerover">
 		<Setter Property="Background" Value="#34495E"/>
 	</Style>
 	<Style Selector="Button.icon">

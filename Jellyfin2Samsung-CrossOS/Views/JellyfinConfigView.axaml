@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
+		xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         mc:Ignorable="d"
         x:Class="Jellyfin2Samsung.JellyfinConfigView"
         x:DataType="viewModels:JellyfinConfigViewModel"
@@ -60,7 +61,7 @@
 								   FontWeight="SemiBold"
 								   Foreground="#2C3E50"/>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding UpdateMode}" Classes="label" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1"
 									  ItemsSource="{Binding AvailableUpdateModes}"
@@ -69,7 +70,7 @@
 									  HorizontalAlignment="Stretch"/>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0"
 									   Text="{Binding ServerIP}"
 									   Classes="label"
@@ -113,7 +114,7 @@
 							</Grid>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblJellyfinServerApi}" Classes="label" VerticalAlignment="Center"/>
 							<TextBox Grid.Column="1"
 									 Text="{Binding JellyfinApiKey}"
@@ -122,7 +123,7 @@
 									 HorizontalAlignment="Stretch"/>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblJellyfinUser}" Classes="label" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1"
 									  ItemsSource="{Binding AvailableJellyfinUsers}"
@@ -137,6 +138,37 @@
 								</ComboBox.ItemTemplate>
 							</ComboBox>
 						</Grid>
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding LblEnableDevLogs}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+								<Button Grid.Column="0"
+										Classes="secondary"
+										HorizontalAlignment="Stretch"
+										Command="{Binding OpenDebugWindowCommand}"
+										IsEnabled="{Binding CanOpenDebugWindow}">
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<fa:SymbolIcon Symbol="Document" Width="16" Height="16" />
+										<TextBlock Text="{Binding lblOpenDebugWindow}" />
+									</StackPanel>
+								</Button>
+								<ToggleSwitch Grid.Column="1"
+											  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
+											  IsEnabled="{Binding ApiKeySet}"/>
+							</Grid>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding LblUseServerScripts}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding UseServerScripts}"
+										  IsEnabled="{Binding ApiKeySet}"/>
+						</Grid>
 					</StackPanel>
 
 					<Border Height="1" Background="#E8E8E8"/>
@@ -148,27 +180,62 @@
 								   FontWeight="SemiBold"
 								   Foreground="#2C3E50"/>
 
-						<CheckBox Content="{Binding LblEnableBackdrops}" IsChecked="{Binding EnableBackdrops}"/>
-						<CheckBox Content="{Binding LblEnableThemeSongs}" IsChecked="{Binding EnableThemeSongs}"/>
-						<CheckBox Content="{Binding LblEnableThemeVideos}" IsChecked="{Binding EnableThemeVideos}"/>
-						<CheckBox Content="{Binding LblBackdropScreensaver}" IsChecked="{Binding BackdropScreensaver}"/>
-						<CheckBox Content="{Binding LblDetailsBanner}" IsChecked="{Binding DetailsBanner}"/>
-						<CheckBox Content="{Binding LblCinemaMode}" IsChecked="{Binding CinemaMode}"/>
-						<CheckBox Content="{Binding LblNextUpEnabled}" IsChecked="{Binding NextUpEnabled}"/>
-						<CheckBox Content="{Binding LblEnableExternalVideoPlayers}" IsChecked="{Binding EnableExternalVideoPlayers}"/>
-						<CheckBox Content="{Binding LblSkipIntros}" IsChecked="{Binding SkipIntros}"/>
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblEnableBackdrops}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding EnableBackdrops}"/>
+						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblEnableThemeSongs}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding EnableThemeSongs}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblEnableThemeVideos}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding EnableThemeVideos}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblBackdropScreensaver}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding BackdropScreensaver}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblDetailsBanner}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding DetailsBanner}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblCinemaMode}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding CinemaMode}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblNextUpEnabled}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding NextUpEnabled}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblEnableExternalVideoPlayers}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding EnableExternalVideoPlayers}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblSkipIntros}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipIntros}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblAudioLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
 							<TextBox Grid.Column="1" Text="{Binding AudioLanguagePreference}" Classes="clean"/>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblSubtitleLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
 							<TextBox Grid.Column="1" Text="{Binding SubtitleLanguagePreference}" Classes="clean"/>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding Theme}" Classes="label" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1"
 									  ItemsSource="{Binding AvailableThemes}"
@@ -176,7 +243,7 @@
 									  Classes="clean"/>
 						</Grid>
 
-						<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+						<Grid ColumnDefinitions="200,*" ColumnSpacing="12">
 							<TextBlock Grid.Column="0" Text="{Binding LblSubtitleMode}" Classes="label" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1"
 									  ItemsSource="{Binding AvailableSubtitleModes}"
@@ -194,11 +261,31 @@
 								   FontWeight="SemiBold"
 								   Foreground="#2C3E50"/>
 
-						<CheckBox Content="{Binding LblAutoPlayNextEpisode}" IsChecked="{Binding AutoPlayNextEpisode}"/>
-						<CheckBox Content="{Binding LblRememberAudioSelections}" IsChecked="{Binding RememberAudioSelections}"/>
-						<CheckBox Content="{Binding LblRememberSubtitleSelections}" IsChecked="{Binding RememberSubtitleSelections}"/>
-						<CheckBox Content="{Binding LblPlayDefaultAudioTrack}" IsChecked="{Binding PlayDefaultAudioTrack}"/>
-						<CheckBox Content="{Binding LbluserAutoLogin}" IsChecked="{Binding UserAutoLogin}"/>
+						<!-- Toggle Switches -->
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblAutoPlayNextEpisode}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoPlayNextEpisode}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblRememberAudioSelections}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberAudioSelections}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblRememberSubtitleSelections}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberSubtitleSelections}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LblPlayDefaultAudioTrack}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding PlayDefaultAudioTrack}"/>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0" Text="{Binding LbluserAutoLogin}" Classes="label" VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1" IsChecked="{Binding UserAutoLogin}"/>
+						</Grid>
 					</StackPanel>
 
 				</StackPanel>

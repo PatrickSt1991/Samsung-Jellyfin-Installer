@@ -150,5 +150,12 @@
   "deleteExistingSuccess": "Eksisterende version slettet...",
   "deleteExistingNotAllowed": "Sletning er ikke tilladt. Aktivér indstillingen for at tillade værktøjet at fjerne den eksisterende app...",
   "lblLocalIP": "Lokal IP:",
-  "lblTryOverwrite": "Overskriv eksisterende version"
+  "lblTryOverwrite": "Overskriv eksisterende version",
+  "lblUseServerScripts": "Jellyfin-plugins",
+  "lblEnableDevLogs": "Aktivér tv-fejlfinding",
+  "lblOpenDebugWindow": "Åbn TV-log",
+  "lblStartLog": "Starte",
+  "lblStopLog": "Stop",
+  "lblSaveLogs": "Spare",
+  "lblLaunchOnInstall": "Åbn efter installation"
 }

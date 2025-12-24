@@ -14,6 +14,7 @@ namespace Jellyfin2Samsung.Helpers
         public static readonly string TizenSdbPath = Path.Combine(FolderPath, "Assets", "TizenSDB");
         public static readonly string CertificatePath = Path.Combine(FolderPath, "Assets", "Certificate");
         public static readonly string ProfilePath = Path.Combine(FolderPath, "Assets", "TizenProfile");
+        public static readonly string EsbuildPath = Path.Combine(FolderPath, "Assets", "esbuild");
         public static readonly string DownloadPath = Path.Combine(FolderPath, "Downloads");
 
         private static AppSettings? _instance;
@@ -25,6 +26,8 @@ namespace Jellyfin2Samsung.Helpers
         public string CustomWgtPath { get; set; } = "";
         [JsonIgnore]
         public string LocalIp { get; set; } = "";
+        [JsonIgnore]
+        public string TvIp { get; set; } = "";
         public static AppSettings Default => _instance ??= Load();
 
         // ----- User-scoped settings -----
@@ -35,7 +38,6 @@ namespace Jellyfin2Samsung.Helpers
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
         public bool RTLReading { get; set; } = false;
-        public bool ShowSdbWindow { get; set; } = false;
         public string JellyfinIP { get; set; } = "";
         public string AudioLanguagePreference { get; set; } = "";
         public string SubtitleLanguagePreference { get; set; } = "";
@@ -62,11 +64,14 @@ namespace Jellyfin2Samsung.Helpers
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
         public bool TryOverwrite { get; set; } = true;
+        public bool UseServerScripts { get; set; } = false;
+        public bool OpenAfterInstall { get; set; } = false;
+        public bool EnableDevLogs { get; set; } = false;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.6.0";
+        public string AppVersion { get; set; } = "v1.8.6.7-beta";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";
