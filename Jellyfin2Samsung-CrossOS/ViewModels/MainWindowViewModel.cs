@@ -358,6 +358,33 @@ namespace Jellyfin2Samsung.ViewModels
                     foreach (var release in allReleases)
                         Releases.Add(release);
 
+                var moonfinResponse = await _httpClient.GetStringAsync(AppSettings.Default.MoonfinRelease);
+                List<GitHubRelease> moonfinReleases;
+                if (moonfinResponse.TrimStart().StartsWith("["))
+                {
+                    moonfinReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(moonfinResponse, settings);
+                }
+                else if (moonfinResponse.TrimStart().StartsWith("{"))
+                {
+                    var single = JsonConvert.DeserializeObject<GitHubRelease>(moonfinResponse, settings);
+                    moonfinReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
+                }
+                else
+                {
+                    moonfinReleases = new List<GitHubRelease>();
+                }
+
+                moonfinReleases = moonfinReleases.OrderByDescending(r => r.PublishedAt).Take(10).ToList();
+                foreach (var moonfinRelease in moonfinReleases)
+                    Releases.Add(new GitHubRelease
+                    {
+                        Name = $"Moonfin",
+                        Assets = moonfinRelease.Assets,
+                        PublishedAt = moonfinRelease.PublishedAt,
+                        TagName = moonfinRelease.TagName,
+                        Url = moonfinRelease.Url
+                    });
+
                 /* av release */
                 var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
 

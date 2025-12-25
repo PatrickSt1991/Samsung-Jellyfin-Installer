@@ -32,6 +32,12 @@ namespace Jellyfin2Samsung.ViewModels
                 // Parse Jellyfin table
                 ParseVersionsTable(jellyfinMd, JellyfinVersions);
 
+                JellyfinVersions.Add(new BuildVersion
+                {
+                    FileName = "Moonfin",
+                    Description = "Moonfin is optimized for the viewing experience on Samsung Smart TVs."
+                });
+
                 // Static Jellyfin entries
                 JellyfinVersions.Add(new BuildVersion
                 {
