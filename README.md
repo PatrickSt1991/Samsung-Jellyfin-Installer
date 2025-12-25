@@ -21,7 +21,8 @@
   <br/>
   🇩🇰 🇳🇱 🇬🇧 🇫🇷 🇩🇪
   <br/><br/>
-  Huge thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> for providing the Jellyfin Tizen <code>.wgt</code> builds — super helpful and much appreciated!
+  Massive thanks to <a href="https://github.com/jeppevinkel/jellyfin-tizen-builds">jeppevinkel</a> for providing the Jellyfin Tizen <code>.wgt</code> builds — an absolute lifesaver and hugely appreciated! 🙌
+  And a huge shout-out to <a href="https://github.com/Moonfin-Client/Tizen">Hungry__Alpaca</a> for creating the awesome Moonfin fork — truly fantastic work! 🚀💙
 </div>
 
 ---
