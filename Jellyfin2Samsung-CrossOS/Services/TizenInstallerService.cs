@@ -139,9 +139,15 @@ namespace Jellyfin2Samsung.Services
                 string p12Password = string.Empty;
                 string selectedCertificate = string.Empty;
                 bool packageResign = false;
+                bool manualResign = false;
                 var certDuid = string.Empty;
 
-                if (tizenVersion >= certVersion || tizenVersion <= pushVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin)
+                var fileName = Path.GetFileName(packageUrl);
+
+                if (!fileName.Contains("jellyfin", StringComparison.OrdinalIgnoreCase))
+                    manualResign = true;
+
+                if (tizenVersion >= certVersion || tizenVersion <= pushVersion || _appSettings.ConfigUpdateMode != "None" || _appSettings.ForceSamsungLogin || manualResign)
                 {
                     packageResign = true;
                     certDuid = _appSettings.ChosenCertificates?.Duid;
