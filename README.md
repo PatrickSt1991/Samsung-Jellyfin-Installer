@@ -57,6 +57,13 @@ It’s the quickest way to get set up with confidence.
 
 ---
 
+> 📺 **Older Samsung TVs**  
+> Samsung TVs running **Orsay OS (the predecessor of Tizen)** are not supported by this installer.  
+> For those devices, use the **Jellyfin Orsay Installer** instead:  
+> 👉 https://github.com/PatrickSt1991/Jellyfin-Orsay-Installer
+
+---
+
 ## 📦 Community Packages (New!)
 
 Looking for older builds, custom `.wgt` files, or versions shared by other users?  
