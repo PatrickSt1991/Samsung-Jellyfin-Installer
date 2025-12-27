@@ -33,7 +33,7 @@
 
 | Channel    | Version                                                             | Notes                        |
 |------------|---------------------------------------------------------------------|------------------------------|
-| **Stable** | [v1.8.6.8](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.8.6.8)                                        | Recommended for most users   |
+| **Stable** | [v1.8.6.9](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer/releases/tag/v1.8.6.9)                                        | Recommended for most users   |
 | **Beta**   | [N/A](#)                                            | Includes new features        |
 
 <!-- versions:end -->
@@ -54,6 +54,13 @@ Before diving in, check out this clear, step-by-step video guide that walks you 
 https://www.youtube.com/watch?v=_8mSV5pW-ic
 
 It’s the quickest way to get set up with confidence.
+
+---
+
+> 📺 **Older Samsung TVs**  
+> Samsung TVs running **Orsay OS (the predecessor of Tizen)** are not supported by this installer.  
+> For those devices, use the **Jellyfin Orsay Installer** instead:  
+> 👉 https://github.com/PatrickSt1991/Jellyfin-Orsay-Installer
 
 ---
 
