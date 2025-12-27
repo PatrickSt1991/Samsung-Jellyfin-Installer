@@ -157,5 +157,6 @@
   "lblStartLog": "Starte",
   "lblStopLog": "Stop",
   "lblSaveLogs": "Spare",
-  "lblLaunchOnInstall": "Åbn efter installation"
+  "lblLaunchOnInstall": "Åbn efter installation",
+  "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen..."
 }

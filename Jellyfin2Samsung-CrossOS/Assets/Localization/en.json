@@ -157,5 +157,6 @@
   "lblStartLog": "Start",
   "lblStopLog": "Stop",
   "lblSaveLogs": "Save",
-  "lblLaunchOnInstall": "Open after installation"
+  "lblLaunchOnInstall": "Open after installation",
+  "insufficientSpace": "Your device has insufficient space, please remove some apps and try again..."
 }

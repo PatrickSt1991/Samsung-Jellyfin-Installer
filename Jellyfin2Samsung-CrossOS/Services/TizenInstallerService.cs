@@ -44,8 +44,6 @@ namespace Jellyfin2Samsung.Services
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
         }
 
-        // ... [No changes to TizenSdb ensure/download logic] ...
-
         public async Task<string> EnsureTizenSdbAvailable()
         {
             // (Same as original code)
@@ -70,9 +68,6 @@ namespace Jellyfin2Samsung.Services
             return TizenSdbPath;
         }
 
-        // ... [Helper methods like GetSearchPattern, GetFinalFileName, ShouldUpdateBinary, IsVersionGreater, GetLatestTizenSdbVersionAsync, DownloadTizenSdbAsync, DownloadPackageAsync remain exactly the same] ...
-
-        // (For brevity, I'm omitting the static helper methods here as they didn't change at all. Paste them back if you are copy-pasting the whole file.)
         private static string GetSearchPattern() { if (OperatingSystem.IsWindows()) return "TizenSdb*.exe"; if (OperatingSystem.IsLinux()) return "TizenSdb*_linux"; if (OperatingSystem.IsMacOS()) return "TizenSdb*_macos"; throw new PlatformNotSupportedException("Unsupported OS"); }
         private static string GetFinalFileName(string version) { return OperatingSystem.IsWindows() ? $"TizenSdb_{version}.exe" : OperatingSystem.IsLinux() ? $"TizenSdb_{version}_linux" : OperatingSystem.IsMacOS() ? $"TizenSdb_{version}_macos" : throw new PlatformNotSupportedException("Unsupported OS"); }
         private static bool ShouldUpdateBinary(string existingFilePath, string latestVersion) { try { var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(existingFilePath); var match = System.Text.RegularExpressions.Regex.Match(fileNameWithoutExtension, @"_([v]?\d+\.\d+\.\d+)"); if (!match.Success) return true; string currentVersion = match.Groups[1].Value; return IsVersionGreater(latestVersion, currentVersion); } catch { return true; } }
@@ -234,7 +229,7 @@ namespace Jellyfin2Samsung.Services
                 {
                     progress?.Invoke("InstallationFailed".Localized());
                     if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, progress); }
-                    else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"alreadyInstalled".Localized()}"); }
+                    else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"insufficientSpace".Localized()}"); }
                 }
 
                 if (installResults.Output.Contains("install failed[118]"))

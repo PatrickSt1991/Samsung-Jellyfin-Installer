@@ -157,5 +157,6 @@
   "lblStartLog": "Start",
   "lblStopLog": "Stoppen",
   "lblSaveLogs": "Speichern",
-  "lblLaunchOnInstall": "Nach der Installation öffnen"
+  "lblLaunchOnInstall": "Nach der Installation öffnen",
+  "insufficientSpace": "Auf Ihrem Gerät ist nicht genügend Speicherplatz vorhanden. Bitte entfernen Sie einige Apps und versuchen Sie es erneut ..."
 }

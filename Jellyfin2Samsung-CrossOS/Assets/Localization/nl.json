@@ -157,5 +157,6 @@
   "lblStartLog": "Start",
   "lblStopLog": "Stop",
   "lblSaveLogs": "Opslaan",
-  "lblLaunchOnInstall": "Openen na installeren"
+  "lblLaunchOnInstall": "Openen na installeren",
+  "insufficientSpace": "Er is onvoldoende ruimte op uw apparaat. Verwijder enkele apps en probeer het opnieuw..."
 }
