@@ -63,7 +63,7 @@ namespace Jellyfin2Samsung.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ValidateManualTizenAddress] Error validating IP '{ip}': {ex.Message}");
+                Trace.WriteLine($"[ValidateManualTizenAddress] Error validating IP '{ip}': {ex}");
                 return null;
             }
         }
@@ -111,7 +111,7 @@ namespace Jellyfin2Samsung.Services
                         catch { /* Ignore scan failures */ }
                     })));
 
-            Debug.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
+            Trace.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
             return foundDevices;
         }
         public IEnumerable<IPAddress> GetRelevantLocalIPs(bool virtualScan = false)

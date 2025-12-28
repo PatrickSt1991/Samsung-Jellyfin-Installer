@@ -310,7 +310,7 @@ namespace Jellyfin2Samsung.Services
                 catch (Exception ex)
                 {
                     // Log if you want, but don't block the install on Linux quirks
-                    System.Diagnostics.Debug.WriteLine($"PFX sanity check failed: {ex}");
+                    System.Diagnostics.Trace.WriteLine($"PFX sanity check failed: {ex}");
                 }
             }
 

@@ -62,7 +62,7 @@ namespace Jellyfin2Samsung.Services
             catch (Exception ex)
             {
                 onStatusChanged(TvLogConnectionStatus.Stopped);
-                onMessage($"[Failed to start server: {ex.Message}]\n");
+                onMessage($"[Failed to start server: {ex}]\n");
             }
         }
 

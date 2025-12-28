@@ -105,7 +105,7 @@ namespace Jellyfin2Samsung.Helpers
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to load certificate '{p12Path}': {ex.Message}");
+                    Trace.WriteLine($"Failed to load certificate '{p12Path}': {ex}");
                 }
             }
 

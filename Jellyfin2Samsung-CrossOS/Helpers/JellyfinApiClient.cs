@@ -58,7 +58,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading users: {ex.Message}");
+                Trace.WriteLine($"Error loading users: {ex}");
             }
 
             return users;
@@ -70,7 +70,7 @@ namespace Jellyfin2Samsung.Helpers
             try
             {
                 string url = serverUrl.TrimEnd('/') + "/Plugins";
-                Debug.WriteLine("▶ Fetching installed plugins from: " + url);
+                Trace.WriteLine("▶ Fetching installed plugins from: " + url);
                 var json = await _httpClient.GetStringAsync(url);
                 var parsed = JsonSerializer.Deserialize<List<JellyfinPluginInfo>>(json,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -80,7 +80,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("⚠ Failed to fetch /Plugins: " + ex.Message);
+                Trace.WriteLine("⚠ Failed to fetch /Plugins: " + ex);
             }
 
             return list;
@@ -90,7 +90,7 @@ namespace Jellyfin2Samsung.Helpers
             try
             {
                 string url = serverUrl.TrimEnd('/') + "/System/Info/Public";
-                Debug.WriteLine("▶ Fetching Jellyfin public system info from: " + url);
+                Trace.WriteLine("▶ Fetching Jellyfin public system info from: " + url);
 
                 var json = await _httpClient.GetStringAsync(url);
 
@@ -102,7 +102,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("⚠ Failed to fetch /System/Info/Public: " + ex.Message);
+                Trace.WriteLine("⚠ Failed to fetch /System/Info/Public: " + ex);
                 return null;
             }
         }
@@ -160,13 +160,13 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     catch (Exception userEx)
                     {
-                        Debug.WriteLine($"Failed to update configuration for user {userId}: {userEx.Message}");
+                        Trace.WriteLine($"Failed to update configuration for user {userId}: {userEx}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"General error updating user configurations: {ex.Message}");
+                Trace.WriteLine($"General error updating user configurations: {ex}");
             }
         }
 

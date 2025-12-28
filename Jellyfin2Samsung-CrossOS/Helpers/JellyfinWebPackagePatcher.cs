@@ -35,14 +35,14 @@ namespace Jellyfin2Samsung.Helpers
             if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||
                 AppSettings.Default.ConfigUpdateMode.Contains("All"))
             {
-                Debug.WriteLine("Injecting user settings into browser index.html...");
+                Trace.WriteLine("Injecting user settings into browser index.html...");
                 await _html.InjectUserSettingsAsync(ws, userIds);
             }
 
             // 🔥 FIX: dev logs independent of server scripts
             if (AppSettings.Default.EnableDevLogs)
             {
-                Debug.WriteLine("Injecting dev logs...");   
+                Trace.WriteLine("Injecting dev logs...");   
                 await _boot.InjectDevLogsAsync(ws);
             }
 

@@ -46,7 +46,7 @@ namespace Jellyfin2Samsung.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load language {lang}: {ex.Message}");
+                    System.Diagnostics.Trace.WriteLine($"Failed to load language {lang}: {ex}");
                 }
             }
 

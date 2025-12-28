@@ -53,7 +53,7 @@ namespace Jellyfin2Samsung.Helpers
                 string? esbuildPath = GetEsbuildPath();
                 if (string.IsNullOrEmpty(esbuildPath))
                 {
-                    Debug.WriteLine($"⚠ esbuild binary not found, skipping transpile for {relPathForLog ?? "unknown"}");
+                    Trace.WriteLine($"⚠ esbuild binary not found, skipping transpile for {relPathForLog ?? "unknown"}");
                     return js;
                 }
 
@@ -85,7 +85,7 @@ namespace Jellyfin2Samsung.Helpers
 
                 if (proc.ExitCode != 0 || !File.Exists(outputPath))
                 {
-                    Debug.WriteLine($"⚠ esbuild failed for {relPathForLog ?? "unknown"} (exit {proc.ExitCode}): {stderr}");
+                    Trace.WriteLine($"⚠ esbuild failed for {relPathForLog ?? "unknown"} (exit {proc.ExitCode}): {stderr}");
                     return js;
                 }
 
@@ -101,12 +101,12 @@ namespace Jellyfin2Samsung.Helpers
                     // ignore cleanup errors
                 }
 
-                Debug.WriteLine($"      ✓ Transpiled {relPathForLog ?? "unknown"} via esbuild");
+                Trace.WriteLine($"      ✓ Transpiled {relPathForLog ?? "unknown"} via esbuild");
                 return transpiled;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ esbuild transpile error for {relPathForLog ?? "unknown"}: {ex.Message}");
+                Trace.WriteLine($"⚠ esbuild transpile error for {relPathForLog ?? "unknown"}: {ex}");
                 return js;
             }
         }

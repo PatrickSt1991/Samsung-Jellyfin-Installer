@@ -39,7 +39,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to open URL: {ex.Message}");
+                Trace.WriteLine($"Failed to open URL: {ex}");
             }
             CloseWindow();
         }

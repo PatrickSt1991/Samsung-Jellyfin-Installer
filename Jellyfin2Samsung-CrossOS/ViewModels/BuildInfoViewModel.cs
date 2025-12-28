@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -56,7 +57,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to load build info: {ex.Message}");
+                Trace.WriteLine($"Failed to load build info: {ex}");
             }
         }
 

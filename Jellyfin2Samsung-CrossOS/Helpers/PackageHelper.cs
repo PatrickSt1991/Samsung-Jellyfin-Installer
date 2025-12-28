@@ -31,7 +31,7 @@ namespace Jellyfin2Samsung.Helpers
             catch (Exception ex)
             {
                 progress?.Invoke("DownloadFailed".Localized());
-                await _dialogService.ShowErrorAsync($"{"DownloadFailed".Localized()} {ex.Message}");
+                await _dialogService.ShowErrorAsync($"{"DownloadFailed".Localized()} {ex}");
                 return null;
             }
         }
@@ -109,7 +109,7 @@ namespace Jellyfin2Samsung.Helpers
             catch (Exception ex)
             {
                 progress?.Invoke("InstallationFailed".Localized());
-                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex.Message}");
+                await _dialogService.ShowErrorAsync($"{"InstallationFailed".Localized()}: {ex}");
                 return false;
             }
         }

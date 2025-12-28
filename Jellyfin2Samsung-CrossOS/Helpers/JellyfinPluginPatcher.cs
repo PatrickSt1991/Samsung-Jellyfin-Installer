@@ -63,14 +63,14 @@ namespace Jellyfin2Samsung.Helpers
             try
             {
                 var url = serverUrl.TrimEnd('/') + "/web/index.html";
-                Debug.WriteLine($"▶ Fetching server index.html: {url}");
+                Trace.WriteLine($"▶ Fetching server index.html: {url}");
 
                 using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(8));
                 return await _httpClient.GetStringAsync(url, cts.Token);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ Failed to fetch server index.html: {ex.Message}");
+                Trace.WriteLine($"⚠ Failed to fetch server index.html: {ex}");
                 return string.Empty;
             }
         }
@@ -82,7 +82,7 @@ namespace Jellyfin2Samsung.Helpers
             StringBuilder cssBuilder,
             StringBuilder jsBuilder)
         {
-            Debug.WriteLine("▶ Extracting plugin assets from server index…");
+            Trace.WriteLine("▶ Extracting plugin assets from server index…");
 
             // --- CSS ---
             var cssMatches = Regex.Matches(
@@ -113,7 +113,7 @@ namespace Jellyfin2Samsung.Helpers
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"⚠ Failed to cache plugin CSS '{href}': {ex.Message}");
+                    Trace.WriteLine($"⚠ Failed to cache plugin CSS '{href}': {ex}");
                 }
             }
 
@@ -160,7 +160,7 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"⚠ Failed to cache plugin JS '{jsUrl}': {ex.Message}");
+                        Trace.WriteLine($"⚠ Failed to cache plugin JS '{jsUrl}': {ex}");
                     }
                 }
 
@@ -186,7 +186,7 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"⚠ Plugin JS (external) failed: {ex.Message}");
+                        Trace.WriteLine($"⚠ Plugin JS (external) failed: {ex}");
                     }
                 }
             }
@@ -204,7 +204,7 @@ namespace Jellyfin2Samsung.Helpers
 
             foreach (var plugin in apiPlugins)
             {
-                Debug.WriteLine($"⚙ Processing plugin: {plugin.Name} ({plugin.Id})");
+                Trace.WriteLine($"⚙ Processing plugin: {plugin.Name} ({plugin.Id})");
                 var entry = _pluginManager.FindPluginEntry(plugin);
                 if (entry == null) continue;
 
@@ -273,7 +273,7 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"⚠ MediaBar CSS failed: {ex.Message}");
+                        Trace.WriteLine($"⚠ MediaBar CSS failed: {ex}");
                     }
                 }
 
@@ -296,7 +296,7 @@ namespace Jellyfin2Samsung.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"⚠ HomeScreenSections CSS failed: {ex.Message}");
+                        Trace.WriteLine($"⚠ HomeScreenSections CSS failed: {ex}");
                     }
                 }
             }
@@ -367,7 +367,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             else
             {
-                Debug.WriteLine($"ℹ Script already injected, skipping: {src}");
+                Trace.WriteLine($"ℹ Script already injected, skipping: {src}");
             }
         }
 
@@ -379,7 +379,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             else
             {
-                Debug.WriteLine($"ℹ CSS already injected, skipping: {href}");
+                Trace.WriteLine($"ℹ CSS already injected, skipping: {href}");
             }
         }
     }

@@ -1,18 +1,31 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
+using Jellyfin2Samsung.Extensions;
+using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace Jellyfin2Samsung
 {
     internal sealed class Program
     {
-        // Initialization code. Don't use any Avalonia, third-party APIs or any
-        // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-        // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args)
+        {
+            // Register trace listener BEFORE Avalonia starts
+            var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
+            Directory.CreateDirectory(logDir);
 
-        // Avalonia configuration, don't remove; also used by visual designer.
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var logFile = Path.Combine(logDir, $"debug_{timestamp}.log");
+
+            Trace.Listeners.Add(new FileTraceListener(logFile));
+            Trace.AutoFlush = true;
+
+
+            BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime(args);
+        }
+
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()

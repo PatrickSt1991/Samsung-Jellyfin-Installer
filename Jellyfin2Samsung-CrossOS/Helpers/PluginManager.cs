@@ -125,14 +125,14 @@ namespace Jellyfin2Samsung.Helpers
             if (entry?.ExplicitServerFiles == null || entry.ExplicitServerFiles.Count == 0)
                 return;
 
-            Debug.WriteLine("▶ Downloading explicit Enhanced JS modules...");
+            Trace.WriteLine("▶ Downloading explicit Enhanced JS modules...");
 
             foreach (var rel in entry.ExplicitServerFiles)
             {
                 try
                 {
                     string url = serverUrl.TrimEnd('/') + rel;
-                    Debug.WriteLine($"   → Fetch Enhanced JS: {url}");
+                    Trace.WriteLine($"   → Fetch Enhanced JS: {url}");
 
                     string js = await _httpClient.GetStringAsync(url);
 
@@ -155,17 +155,17 @@ namespace Jellyfin2Samsung.Helpers
                     await File.WriteAllTextAsync(outPath, js);
 
                     string logPath = outPath.Replace(pluginCacheDir + Path.DirectorySeparatorChar, "plugin_cache/");
-                    Debug.WriteLine($"      ✓ Saved {logPath}");
+                    Trace.WriteLine($"      ✓ Saved {logPath}");
                     if (rel.Equals("/JellyfinEnhanced/script", StringComparison.OrdinalIgnoreCase))
                     {
-                        Debug.WriteLine("      🔧 Patching Enhanced main script (script.js)...");
+                        Trace.WriteLine("      🔧 Patching Enhanced main script (script.js)...");
                         await PatchEnhancedMainScript(outPath);
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"      ⚠ Failed Enhanced JS '{rel}': {ex.Message}");
+                    Trace.WriteLine($"      ⚠ Failed Enhanced JS '{rel}': {ex}");
                 }
             }
         }
@@ -174,7 +174,7 @@ namespace Jellyfin2Samsung.Helpers
         {
             try
             {
-                Debug.WriteLine($"▶ Downloading plugin JS: {url}");
+                Trace.WriteLine($"▶ Downloading plugin JS: {url}");
 
                 string js = await _httpClient.GetStringAsync(url);
                 js = await EsbuildHelper.TranspileAsync(js, relPath);
@@ -187,7 +187,7 @@ namespace Jellyfin2Samsung.Helpers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ Plugin download failed: {ex.Message}");
+                Trace.WriteLine($"⚠ Plugin download failed: {ex}");
                 return null;
             }
         }
@@ -215,7 +215,7 @@ window.WaitForApiClient(function() {{
                 string publicJsPath = Path.Combine(pluginCacheDir, "public.js");
                 if (!File.Exists(publicJsPath))
                 {
-                    Debug.WriteLine("▶ JavaScript Injector: public.js not found, skipping patch.");
+                    Trace.WriteLine("▶ JavaScript Injector: public.js not found, skipping patch.");
                     return;
                 }
 
@@ -224,7 +224,7 @@ window.WaitForApiClient(function() {{
                 // 1. Detect the original CDN root
                 if (!kefinScriptRegex.IsMatch(js))
                 {
-                    Debug.WriteLine("▶ JavaScript Injector: No KefinTweaks script loader found in public.js, skipping patch.");
+                    Trace.WriteLine("▶ JavaScript Injector: No KefinTweaks script loader found in public.js, skipping patch.");
                     return;
                 }
 
@@ -266,7 +266,7 @@ window.WaitForApiClient(function() {{
 
                     // 3. Resolve selected skin
                     var skin = GetKefinDefaultSkin(pluginCacheDir);
-                    Debug.WriteLine($"⚙ KefinTweaks: detected default skin: {skin ?? "null"}");
+                    Trace.WriteLine($"⚙ KefinTweaks: detected default skin: {skin ?? "null"}");
 
                     if (!string.IsNullOrWhiteSpace(skin))
                     {
@@ -292,7 +292,7 @@ window.WaitForApiClient(function() {{
                             try
                             {
                                 var url = $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/theme.css";
-                                Debug.WriteLine($"▶ KefinTweaks: downloading theme CSS: {url}");
+                                Trace.WriteLine($"▶ KefinTweaks: downloading theme CSS: {url}");
 
                                 var css = await _httpClient.GetStringAsync(url);
                                 await File.WriteAllTextAsync(localTheme, css);
@@ -301,7 +301,7 @@ window.WaitForApiClient(function() {{
                             }
                             catch (Exception ex) when (ex is System.Net.Http.HttpRequestException || ex is System.IO.IOException)
                             {
-                                Debug.WriteLine($"⚠ KefinTweaks: Failed to download theme CSS: {ex.Message}");
+                                Trace.WriteLine($"⚠ KefinTweaks: Failed to download theme CSS: {ex}");
                             }
                         }
 
@@ -311,13 +311,13 @@ window.WaitForApiClient(function() {{
                             {
                                 var fixesUrl =
                                     $"https://cdn.jsdelivr.net/gh/n00bcodr/{skinLower}@main/{majorMinor}_fixes.css";
-                                Debug.WriteLine($"▶ KefinTweaks: downloading fixes CSS: {fixesUrl}");
+                                Trace.WriteLine($"▶ KefinTweaks: downloading fixes CSS: {fixesUrl}");
                                 var css = await _httpClient.GetStringAsync(fixesUrl);
                                 await File.WriteAllTextAsync(localFixes, css);
                             }
                             catch
                             {
-                                Debug.WriteLine("ℹ KefinTweaks: no version-specific fixes found");
+                                Trace.WriteLine("ℹ KefinTweaks: no version-specific fixes found");
                             }
                         }
 
@@ -326,7 +326,7 @@ window.WaitForApiClient(function() {{
                             js = EnsureCssLinked(js, fixesHref);
                         }
 
-                        Debug.WriteLine($"✓ KefinTweaks skin cached & injected: {skin} ({majorMinor})");
+                        Trace.WriteLine($"✓ KefinTweaks skin cached & injected: {skin} ({majorMinor})");
                     }
                 }
 
@@ -347,11 +347,11 @@ window.WaitForApiClient(function() {{
 
                 // 5. Write ONCE
                 await File.WriteAllTextAsync(publicJsPath, js, Encoding.UTF8);
-                Debug.WriteLine("✓ JavaScript Injector: public.js patched successfully");
+                Trace.WriteLine("✓ JavaScript Injector: public.js patched successfully");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ JavaScript Injector error: {ex.Message}");
+                Trace.WriteLine($"⚠ JavaScript Injector error: {ex}");
             }
         }
 
@@ -362,7 +362,7 @@ window.WaitForApiClient(function() {{
                 string injectorPath = Path.Combine(pluginCacheDir, "kefinTweaks", "injector.js");
                 if (!File.Exists(injectorPath))
                 {
-                    Debug.WriteLine("▶ KefinTweaks: injector.js not found in plugin_cache, skipping module prefetch.");
+                    Trace.WriteLine("▶ KefinTweaks: injector.js not found in plugin_cache, skipping module prefetch.");
                     return;
                 }
 
@@ -376,7 +376,7 @@ window.WaitForApiClient(function() {{
 
                 if (matches.Count == 0)
                 {
-                    Debug.WriteLine("▶ KefinTweaks: no SCRIPT_DEFINITIONS scripts found in injector.js, nothing to prefetch.");
+                    Trace.WriteLine("▶ KefinTweaks: no SCRIPT_DEFINITIONS scripts found in injector.js, nothing to prefetch.");
                     return;
                 }
 
@@ -393,7 +393,7 @@ window.WaitForApiClient(function() {{
                     // 2. NEW FIX: Only process files that end with a .js extension to avoid malformed entries.
                     if (!scriptName.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
                     {
-                        Debug.WriteLine($"      ⚠ KefinTweaks: Skipping non-JS module or malformed entry: {scriptName}");
+                        Trace.WriteLine($"      ⚠ KefinTweaks: Skipping non-JS module or malformed entry: {scriptName}");
                         continue;
                     }
 
@@ -435,11 +435,11 @@ window.WaitForApiClient(function() {{
                     await DownloadAndTranspileAsync(url, pluginCacheDir, relPath);
                 }
 
-                Debug.WriteLine("      ✓ KefinTweaks: module scripts downloaded & transpiled into plugin_cache/kefinTweaks/");
+                Trace.WriteLine("      ✓ KefinTweaks: module scripts downloaded & transpiled into plugin_cache/kefinTweaks/");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"⚠ KefinTweaks: error while processing modules: {ex.Message}");
+                Trace.WriteLine($"⚠ KefinTweaks: error while processing modules: {ex}");
             }
         }
         private static string EnsureCssLinked(string js, string href)
@@ -490,7 +490,7 @@ window.WaitForApiClient(function() {{
                 "optional/ElegantFin/cardHoverEffect.css",
             };
 
-            Debug.WriteLine("▶ KefinTweaks: Pre-fetching CSS skins...");
+            Trace.WriteLine("▶ KefinTweaks: Pre-fetching CSS skins...");
 
             foreach (var fileName in cssFiles)
             {
@@ -511,11 +511,11 @@ window.WaitForApiClient(function() {{
                     var cssBytes = await _httpClient.GetByteArrayAsync(url);
                     await File.WriteAllBytesAsync(localFullPath, cssBytes);
 
-                    Debug.WriteLine($"      ✓ Downloaded CSS skin: {fileName}");
+                    Trace.WriteLine($"      ✓ Downloaded CSS skin: {fileName}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"      ⚠ Failed to fetch KefinTweaks CSS '{fileName}': {ex.Message}");
+                    Trace.WriteLine($"      ⚠ Failed to fetch KefinTweaks CSS '{fileName}': {ex}");
                 }
             }
         }
@@ -617,13 +617,13 @@ window.WaitForApiClient(function() {{
         private static string? GetKefinDefaultSkin(string pluginCacheDir)
         {
             var publicJs = Path.Combine(pluginCacheDir, "public.js");
-            Debug.WriteLine($"SEARCHRING FOR {publicJs}");
+            Trace.WriteLine($"SEARCHRING FOR {publicJs}");
             if (!File.Exists(publicJs))
                 return null;
 
             var text = File.ReadAllText(publicJs);
 
-            Debug.WriteLine(publicJs);
+            Trace.WriteLine(publicJs);
 
             var match = Regex.Match(
                 text,

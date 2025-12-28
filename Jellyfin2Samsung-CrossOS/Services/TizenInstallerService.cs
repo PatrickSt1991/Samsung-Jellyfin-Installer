@@ -264,7 +264,7 @@ namespace Jellyfin2Samsung.Services
             }
             catch (Exception ex)
             {
-                progress?.Invoke($"Installation error: {ex.Message}");
+                progress?.Invoke($"Installation error: {ex}");
                 _appSettings.TryOverwrite = false;
                 return InstallResult.FailureResult(ex.Message);
             }

@@ -469,7 +469,7 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 AppSettings.Default.JellyfinIP = $"{SelectedJellyfinProtocol}://{JellyfinServerIp}:{SelectedJellyfinPort}";
 
-                Debug.WriteLine($"Updated Jellyfin IP: {AppSettings.Default.JellyfinIP}");
+                Trace.WriteLine($"Updated Jellyfin IP: {AppSettings.Default.JellyfinIP}");
                 AppSettings.Default.Save();
                 UpdateServerIpStatus();
                 UpdateApiKeyStatus();

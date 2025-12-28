@@ -123,7 +123,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to get local IP: {ex.Message}");
+                Trace.WriteLine($"Failed to get local IP: {ex}");
             }
         }
         private void OnLanguageChanged(object? sender, EventArgs e)

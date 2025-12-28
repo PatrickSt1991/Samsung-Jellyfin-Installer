@@ -185,7 +185,7 @@ namespace Jellyfin2Samsung.ViewModels
             catch (Exception ex)
             {
                 SetStatus("InitializationFailed");
-                await _dialogService.ShowErrorAsync($"{L("InitializationFailed")} {ex.Message}");
+                await _dialogService.ShowErrorAsync($"{L("InitializationFailed")} {ex}");
             }
         }
 
@@ -289,7 +289,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex.Message}");
+                await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex}");
             }
         }
 
@@ -481,8 +481,8 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
-                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex.Message}");
+                Trace.WriteLine(ex);
+                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex}");
             }
             finally
             {
@@ -546,7 +546,7 @@ namespace Jellyfin2Samsung.ViewModels
             }
             catch (Exception ex)
             {
-                await _dialogService.ShowErrorAsync($"Failed to load devices: {ex.Message}");
+                await _dialogService.ShowErrorAsync($"Failed to load devices: {ex}");
             }
             finally
             {

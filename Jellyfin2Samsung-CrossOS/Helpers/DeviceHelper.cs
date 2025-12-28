@@ -58,17 +58,17 @@ namespace Jellyfin2Samsung.Helpers
             catch (HttpRequestException ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Error connecting to Samsung TV at {device.IpAddress}: {ex.Message}");
+                    $"Error connecting to Samsung TV at {device.IpAddress}: {ex}");
             }
             catch (JsonException ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Error parsing JSON response: {ex.Message}");
+                    $"Error parsing JSON response: {ex}");
             }
             catch (Exception ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Unexpected error: {ex.Message}");
+                    $"Unexpected error: {ex}");
             }
 
             return new NetworkDevice

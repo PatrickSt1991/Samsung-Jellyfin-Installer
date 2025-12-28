@@ -24,12 +24,12 @@ namespace Jellyfin2Samsung.Helpers
                 {
                     proc.Kill();
                     proc.WaitForExit();
-                    Debug.WriteLine($"Killed SDB {proc.Id} - {proc.ProcessName}");
+                    Trace.WriteLine($"Killed SDB {proc.Id} - {proc.ProcessName}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to stop SDB server: {ex.Message}");
+                Trace.WriteLine($"Failed to stop SDB server: {ex}");
             }
         }
         string GetFirstArguments(string arguments)
@@ -108,13 +108,13 @@ namespace Jellyfin2Samsung.Helpers
                 }
                 catch (Exception ex)
                 {
-                    result.Output += $"\n[Log write failed: {ex.Message}]";
+                    result.Output += $"\n[Log write failed: {ex}]";
                 }
             }
             catch (Exception ex)
             {
                 result.ExitCode = -1;
-                result.Output = $"[Process start failed: {ex.Message}]";
+                result.Output = $"[Process start failed: {ex}]";
             }
 
             return result;
@@ -128,11 +128,11 @@ namespace Jellyfin2Samsung.Helpers
                 {
                     // Use chmod to make the file executable
                     var output = await RunCommandAsync("chmod", $"+x \"{filePath}\"");
-                    Debug.WriteLine($"Set executable permissions on {filePath}");
+                    Trace.WriteLine($"Set executable permissions on {filePath}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Error setting executable permissions: {ex.Message}");
+                    Trace.WriteLine($"Error setting executable permissions: {ex}");
                     throw;
                 }
             }

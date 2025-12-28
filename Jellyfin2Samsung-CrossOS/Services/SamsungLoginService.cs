@@ -119,7 +119,7 @@ namespace Jellyfin2Samsung.Services
                             {
                                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                                 await context.Response.WriteAsync(
-                                    $"[CallbackServer] JSON parse error: {ex.Message}\n\nDecoded JSON:\n{codeEncoded}");
+                                    $"[CallbackServer] JSON parse error: {ex}\n\nDecoded JSON:\n{codeEncoded}");
                                 return;
                             }
 
@@ -136,7 +136,7 @@ namespace Jellyfin2Samsung.Services
 
             await _callbackServer.StartAsync();
 
-            System.Diagnostics.Debug.WriteLine(
+            System.Diagnostics.Trace.WriteLine(
                 $"[SamsungLoginService] Bound to http://{LoopbackHost}:{FixedPort}");
         }
 
