@@ -12,11 +12,10 @@ namespace Jellyfin2Samsung
         public static void Main(string[] args)
         {
             // Register trace listener BEFORE Avalonia starts
-            var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
-            Directory.CreateDirectory(logDir);
+            var logDir = AppContext.BaseDirectory;
 
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var logFile = Path.Combine(logDir, $"debug_{timestamp}.log");
+            var dtg = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
+            var logFile = Path.Combine(logDir, $"debug_{dtg}.log");
 
             Trace.Listeners.Add(new FileTraceListener(logFile));
             Trace.AutoFlush = true;
