@@ -9,21 +9,14 @@ using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Helpers
 {
-    public class PackageHelper
+    public class PackageHelper(
+        ITizenInstallerService tizenInstaller,
+        IDialogService dialogService,
+        INetworkService networkService)
     {
-        private readonly ITizenInstallerService _tizenInstaller;
-        private readonly IDialogService _dialogService;
-        private readonly INetworkService _networkService;
-
-        public PackageHelper(
-            ITizenInstallerService tizenInstaller,
-            IDialogService dialogService,
-            INetworkService networkService)
-        {
-            _tizenInstaller = tizenInstaller;
-            _dialogService = dialogService;
-            _networkService = networkService;
-        }
+        private readonly ITizenInstallerService _tizenInstaller = tizenInstaller;
+        private readonly IDialogService _dialogService = dialogService;
+        private readonly INetworkService _networkService = networkService;
 
         public async Task<string?> DownloadReleaseAsync(GitHubRelease release, Asset selectedAsset, ProgressCallback? progress = null)
         {
@@ -42,7 +35,6 @@ namespace Jellyfin2Samsung.Helpers
                 return null;
             }
         }
-
         public async Task<bool> InstallPackageAsync(string packagePath, NetworkDevice selectedDevice, ProgressCallback? progress = null)
         {
             var localIps = _networkService.GetRelevantLocalIPs()
@@ -121,10 +113,7 @@ namespace Jellyfin2Samsung.Helpers
                 return false;
             }
         }
-        public async Task<bool> InstallCustomPackagesAsync(
-            string[] packagePaths,
-            NetworkDevice device,
-            Action<string> onProgress)
+        public async Task<bool> InstallCustomPackagesAsync(string[] packagePaths, NetworkDevice device, Action<string> onProgress)
         {
             onProgress("UsingCustomWGT".Localized());
 

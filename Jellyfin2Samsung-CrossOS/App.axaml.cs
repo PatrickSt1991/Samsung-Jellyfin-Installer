@@ -65,7 +65,7 @@ namespace Jellyfin2Samsung
             services.AddSingleton<HttpClient>();
             services.AddSingleton<JellyfinApiClient>();
             services.AddSingleton<PluginManager>();
-            services.AddSingleton<JellyfinWebBuilder>();
+            services.AddSingleton<JellyfinWebPackagePatcher>();
 
             // Other Helpers
             services.AddSingleton<DeviceHelper>();

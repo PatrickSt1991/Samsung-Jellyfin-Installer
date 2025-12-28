@@ -360,6 +360,7 @@ namespace Jellyfin2Samsung.ViewModels
 
                 var moonfinResponse = await _httpClient.GetStringAsync(AppSettings.Default.MoonfinRelease);
                 List<GitHubRelease> moonfinReleases;
+
                 if (moonfinResponse.TrimStart().StartsWith("["))
                 {
                     moonfinReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(moonfinResponse, settings);
@@ -374,7 +375,7 @@ namespace Jellyfin2Samsung.ViewModels
                     moonfinReleases = new List<GitHubRelease>();
                 }
 
-                moonfinReleases = moonfinReleases.OrderByDescending(r => r.PublishedAt).Take(10).ToList();
+                moonfinReleases = moonfinReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
                 foreach (var moonfinRelease in moonfinReleases)
                     Releases.Add(new GitHubRelease
                     {

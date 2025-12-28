@@ -19,7 +19,7 @@ namespace Jellyfin2Samsung.Services
         private readonly HttpClient _httpClient;
         private readonly IDialogService _dialogService;
         private readonly AppSettings _appSettings;
-        private readonly JellyfinWebBuilder _jellyfinWebBuilder;
+        private readonly JellyfinWebPackagePatcher _jellyfinWebPackagePatcher;
         private readonly JellyfinApiClient _jellyfinApiClient;
         private readonly ProcessHelper _processHelper;
 
@@ -30,14 +30,14 @@ namespace Jellyfin2Samsung.Services
             HttpClient httpClient,
             IDialogService dialogService,
             AppSettings appSettings,
-            JellyfinWebBuilder jellyfinWebBuilder,
+            JellyfinWebPackagePatcher jellyfinWebPackagePatcher,
             JellyfinApiClient jellyfinApiClient,
             ProcessHelper processHelper)
         {
             _httpClient = httpClient;
             _dialogService = dialogService;
             _appSettings = appSettings;
-            _jellyfinWebBuilder = jellyfinWebBuilder;
+            _jellyfinWebPackagePatcher = jellyfinWebPackagePatcher;
             _jellyfinApiClient = jellyfinApiClient;
             _processHelper = processHelper;
 
@@ -200,7 +200,7 @@ namespace Jellyfin2Samsung.Services
                     }
 
                     if (_appSettings.ConfigUpdateMode.Contains("Server") || _appSettings.ConfigUpdateMode.Contains("Browser") || _appSettings.ConfigUpdateMode.Contains("All"))
-                        await _jellyfinWebBuilder.ApplyJellyfinConfigAsync(packageUrl, userIds);
+                        await _jellyfinWebPackagePatcher.ApplyJellyfinConfigAsync(packageUrl, userIds);
 
 
                     if (_appSettings.ConfigUpdateMode.Contains("User") || _appSettings.ConfigUpdateMode.Contains("All"))
