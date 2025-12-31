@@ -48,6 +48,13 @@ namespace Jellyfin2Samsung.Services
         {
             // (Same as original code)
             string tizenSdbPath = AppSettings.TizenSdbPath;
+if (!Directory.Exists(tizenSdbPath))
+{
+    throw new InvalidOperationException(
+        $"Required component missing.\n\nExpected directory:\n{tizenSdbPath}\n\n" +
+        "Please redownload the application."
+    );
+}
             var existingFile = Directory.GetFiles(tizenSdbPath, GetSearchPattern()).FirstOrDefault();
             var latestVersion = await GetLatestTizenSdbVersionAsync();
             if (existingFile != null && !ShouldUpdateBinary(existingFile, latestVersion))
