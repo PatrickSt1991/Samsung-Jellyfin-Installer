@@ -9,7 +9,7 @@ namespace Jellyfin2Samsung.Helpers
     public class AppSettings
     {
         private const string FileName = "settings.json";
-        public static readonly string FolderPath = Environment.CurrentDirectory;
+        public static readonly string FolderPath = AppContext.BaseDirectory;
         public static readonly string FilePath = Path.Combine(FolderPath, FileName);
         public static readonly string TizenSdbPath = Path.Combine(FolderPath, "Assets", "TizenSDB");
         public static readonly string CertificatePath = Path.Combine(FolderPath, "Assets", "Certificate");
