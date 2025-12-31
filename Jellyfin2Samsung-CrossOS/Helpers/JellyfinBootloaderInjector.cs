@@ -16,7 +16,7 @@ namespace Jellyfin2Samsung.Helpers
             var script = new StringBuilder();
             script.AppendLine("<script>");
             script.AppendLine("(function(){");
-            script.AppendLine($"var ws=new WebSocket('ws://{AppSettings.Default.LocalIp}:5001');");
+            script.AppendLine($"var ws=new WebSocket('ws://{AppSettings.Default.LocalIp}:54321');");
             script.AppendLine("var s=(t,d)=>{try{ws.send(JSON.stringify({type:t,data:d}))}catch{}};");
             script.AppendLine("console.log=(...a)=>s('log',a); console.error=(...a)=>s('error',a);");
             script.AppendLine("window.onerror=(m,sr,l,c)=>s('error',[m,sr,l,c]);");
