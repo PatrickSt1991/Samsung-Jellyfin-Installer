@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -24,19 +25,30 @@ namespace Jellyfin2Samsung.Services
 
         public Action<SamsungAuth> CallbackReceived;
 
-        public static async Task<SamsungAuth> PerformSamsungLoginAsync()
+        public static Task<SamsungAuth> PerformSamsungLoginAsync()
+        {
+            return PerformSamsungLoginAsync(CancellationToken.None);
+        }
+
+        public static async Task<SamsungAuth> PerformSamsungLoginAsync(CancellationToken cancellationToken)
         {
             var service = new SamsungLoginService();
-            var tcs = new TaskCompletionSource<SamsungAuth>();
+
+            var tcs = new TaskCompletionSource<SamsungAuth>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
 
             service.CallbackReceived += auth =>
             {
                 tcs.TrySetResult(auth);
             };
 
+            cancellationToken.Register(() =>
+            {
+                tcs.TrySetCanceled(cancellationToken);
+            });
+
             await service.StartCallbackServer();
 
-            // Always use fixed localhost:4794
             string loginUrl =
                 $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
                 $"?locale=&clientId=v285zxnl3h" +
@@ -44,7 +56,6 @@ namespace Jellyfin2Samsung.Services
                 $"&state=accountcheckdogeneratedstatetext" +
                 $"&tokenType=TOKEN";
 
-            // Open system browser
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -59,10 +70,14 @@ namespace Jellyfin2Samsung.Services
                 throw new InvalidOperationException("Failed to open system browser.", ex);
             }
 
-            var authResult = await tcs.Task;
-
-            await service.StopCallbackServer();
-            return authResult;
+            try
+            {
+                return await tcs.Task;
+            }
+            finally
+            {
+                await service.StopCallbackServer();
+            }
         }
 
         public async Task StartCallbackServer()

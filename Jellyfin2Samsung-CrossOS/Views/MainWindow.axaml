@@ -137,6 +137,13 @@
 				<Button Classes="icon" Command="{Binding OpenSettingsCommand}">
 					<fa:SymbolIcon Symbol="Settings"  Width="20" Height="20"/>
 				</Button>
+				<Button Classes="icon"
+						IsVisible="{Binding IsSamsungLoginActive}"
+						Command="{Binding CancelSamsungLoginCommand}">
+					<fa:SymbolIcon Symbol="Cancel"
+								   Width="20"
+								   Height="20"/>
+				</Button>
 			</StackPanel>
 
 			<!-- Clean footer -->

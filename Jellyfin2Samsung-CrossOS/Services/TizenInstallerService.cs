@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Services
@@ -83,7 +84,7 @@ if (!Directory.Exists(tizenSdbPath))
         public async Task<string> DownloadTizenSdbAsync(string version = null) { var json = await _httpClient.GetStringAsync(AppSettings.Default.TizenSdb); var releases = JsonConvert.DeserializeObject<List<GitHubRelease>>(json); var firstRelease = releases.FirstOrDefault(); if (firstRelease == null) throw new InvalidOperationException("No releases found"); string nameMatch = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exe" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "linux" : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "macos" : throw new PlatformNotSupportedException(); var matchedAsset = firstRelease.Assets.FirstOrDefault(a => !string.IsNullOrEmpty(a.FileName) && a.FileName.Contains(nameMatch, StringComparison.OrdinalIgnoreCase)); if (matchedAsset == null) throw new InvalidOperationException($"No matching asset found for {nameMatch}"); return await DownloadPackageAsync(matchedAsset.DownloadUrl); }
         public async Task<string> DownloadPackageAsync(string downloadUrl) { var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath); var localPath = Path.Combine(AppSettings.DownloadPath, fileName); if (File.Exists(localPath)) return localPath; Directory.CreateDirectory(AppSettings.DownloadPath); using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead); response.EnsureSuccessStatusCode(); await using var contentStream = await response.Content.ReadAsStreamAsync(); await using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None); await contentStream.CopyToAsync(fileStream); return localPath; }
 
-        public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, ProgressCallback? progress = null)
+        public async Task<InstallResult> InstallPackageAsync(string packageUrl, string tvIpAddress, CancellationToken cancellationToken, ProgressCallback? progress = null, Action? onSamsungLoginStarted = null)
         {
             if (TizenSdbPath is null)
             {
@@ -99,7 +100,6 @@ if (!Directory.Exists(tizenSdbPath))
 
             try
             {
-                // ... [Same logic for overwrite checking and TV diagnostics] ... 
                 if (!_appSettings.TryOverwrite)
                 {
                     progress?.Invoke("diagnoseTv".Localized());
@@ -165,7 +165,9 @@ if (!Directory.Exists(tizenSdbPath))
                     if (string.IsNullOrEmpty(selectedCertificate) || selectedCertificate == "Jelly2Sams (default)" || tvDuid != certDuid && selectedCertificate != "Jellyfin" || _appSettings.ForceSamsungLogin)
                     {
                         progress?.Invoke("SamsungLogin".Localized());
-                        SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync();
+                        onSamsungLoginStarted?.Invoke();
+                        SamsungAuth auth = await SamsungLoginService.PerformSamsungLoginAsync(cancellationToken);
+
                         if (!string.IsNullOrEmpty(auth.access_token))
                         {
                             progress?.Invoke("CreatingCertificateProfile".Localized());
@@ -175,7 +177,10 @@ if (!Directory.Exists(tizenSdbPath))
                             _appSettings.Certificate = PackageCertificate;
                             _appSettings.Save();
                         }
-                        else { await _dialogService.ShowErrorAsync("Failed to authenticate with Samsung account."); return InstallResult.FailureResult("Auth failed."); }
+                        else 
+                        {
+                            await _dialogService.ShowErrorAsync("Failed to authenticate with Samsung account."); return InstallResult.FailureResult("Auth failed."); 
+                        }
                     }
                     else
                     {
@@ -235,21 +240,21 @@ if (!Directory.Exists(tizenSdbPath))
                 if (installResults.Output.Contains("download failed[116]"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
-                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, progress); }
+                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress); }
                     else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"insufficientSpace".Localized()}"); }
                 }
 
                 if (installResults.Output.Contains("install failed[118]"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
-                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; await FileHelper.ModifyWgtPackageId(packageUrl); return await InstallPackageAsync(packageUrl, tvIpAddress, progress); }
+                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; await FileHelper.ModifyWgtPackageId(packageUrl); return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress); }
                     else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"modiyConfigRequired".Localized()}"); }
                 }
 
                 if (installResults.Output.Contains("failed"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());
-                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, progress); }
+                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress); }
                     else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {installResults.Output}"); }
                 }
 
@@ -266,7 +271,7 @@ if (!Directory.Exists(tizenSdbPath))
                 }
 
                 progress?.Invoke("InstallationFailed".Localized());
-                if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, progress); }
+                if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress); }
                 else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {installResults.Output}"); }
             }
             catch (Exception ex)

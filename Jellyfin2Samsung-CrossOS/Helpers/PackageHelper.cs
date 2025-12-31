@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Helpers
@@ -35,7 +36,7 @@ namespace Jellyfin2Samsung.Helpers
                 return null;
             }
         }
-        public async Task<bool> InstallPackageAsync(string packagePath, NetworkDevice selectedDevice, ProgressCallback? progress = null)
+        public async Task<bool> InstallPackageAsync(string packagePath, NetworkDevice selectedDevice, CancellationToken cancellationToken, ProgressCallback? progress = null, Action? onSamsungLoginStarted = null)
         {
             var localIps = _networkService.GetRelevantLocalIPs()
                               .Select(ip => ip.ToString())
@@ -86,7 +87,9 @@ namespace Jellyfin2Samsung.Helpers
                 var result = await _tizenInstaller.InstallPackageAsync(
                     packagePath,
                     selectedDevice.IpAddress,
-                    progress);
+                    cancellationToken,
+                    progress,
+                    onSamsungLoginStarted);
 
                 if (result.Success)
                 {
@@ -113,7 +116,7 @@ namespace Jellyfin2Samsung.Helpers
                 return false;
             }
         }
-        public async Task<bool> InstallCustomPackagesAsync(string[] packagePaths, NetworkDevice device, Action<string> onProgress)
+        public async Task<bool> InstallCustomPackagesAsync(string[] packagePaths, NetworkDevice device, CancellationToken cancellationToken, Action<string> onProgress, Action? onSamsungLoginStarted = null)
         {
             onProgress("UsingCustomWGT".Localized());
 
@@ -129,7 +132,7 @@ namespace Jellyfin2Samsung.Helpers
                     break;
                 }
 
-                var success = await InstallPackageAsync(filePath, device);
+                var success = await InstallPackageAsync(filePath, device, cancellationToken);
                 if (!success)
                 {
                     allSuccessful = false;

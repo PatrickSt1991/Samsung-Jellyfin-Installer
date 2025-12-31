@@ -67,11 +67,12 @@ namespace Jellyfin2Samsung.Helpers
         public bool UseServerScripts { get; set; } = false;
         public bool OpenAfterInstall { get; set; } = false;
         public bool EnableDevLogs { get; set; } = false;
+        public bool KeepWGTFile { get; set; } = false;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.7.0";
+        public string AppVersion { get; set; } = "v1.8.7.1";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";

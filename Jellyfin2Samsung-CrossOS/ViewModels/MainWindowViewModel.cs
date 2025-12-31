@@ -30,6 +30,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly PackageHelper _packageHelper;
         private readonly ILocalizationService _localizationService;
         private readonly SettingsViewModel _settingsViewModel;
+        private CancellationTokenSource? _samsungLoginCts;
 
         [ObservableProperty]
         private ObservableCollection<GitHubRelease> releases = new ObservableCollection<GitHubRelease>();
@@ -57,6 +58,9 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string statusBar = string.Empty;
+
+        [ObservableProperty]
+        private bool isSamsungLoginActive;
 
         private string _currentStatusKey = string.Empty;
 
@@ -160,6 +164,7 @@ namespace Jellyfin2Samsung.ViewModels
             InstallCommand.NotifyCanExecuteChanged();
             DownloadAndInstallCommand.NotifyCanExecuteChanged();
             OpenSettingsCommand.NotifyCanExecuteChanged();
+            CancelSamsungLoginCommand.NotifyCanExecuteChanged();
         }
 
         public async Task InitializeAsync()
@@ -215,17 +220,21 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand(CanExecute = nameof(CanInstall))]
         private async Task InstallAsync()
         {
+            _samsungLoginCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
             if (SelectedDevice != null)
             {
                 await _packageHelper.InstallPackageAsync(
                     _downloadedPackagePath,
-                    SelectedDevice);
+                    SelectedDevice,
+                    _samsungLoginCts.Token);
             }
         }
 
         [RelayCommand(CanExecute = nameof(CanDownload))]
         private async Task DownloadAndInstallAsync()
         {
+            _samsungLoginCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+
             if ((SelectedRelease != null && SelectedDevice != null) || (!string.IsNullOrEmpty(AppSettings.Default.CustomWgtPath)))
             {
                 var customPaths = AppSettings.Default.CustomWgtPath?.Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -235,7 +244,9 @@ namespace Jellyfin2Samsung.ViewModels
                     await _packageHelper.InstallCustomPackagesAsync(
                         customPaths,
                         SelectedDevice,
-                        progress => Dispatcher.UIThread.Post(() => StatusBar = progress));
+                        _samsungLoginCts.Token,
+                        progress => Dispatcher.UIThread.Post(() => StatusBar = progress),
+                        onSamsungLoginStarted: OnSamsungLoginStarted);
 
                     AppSettings.Default.CustomWgtPath = null;
                     AppSettings.Default.Save();
@@ -250,12 +261,24 @@ namespace Jellyfin2Samsung.ViewModels
 
                     if (!string.IsNullOrEmpty(downloadPath))
                     {
-                        await _packageHelper.InstallPackageAsync(
-                            downloadPath,
-                            SelectedDevice,
-                            message => Dispatcher.UIThread.Post(() => StatusBar = message));
+                        try
+                        {
+                            await _packageHelper.InstallPackageAsync(
+                                downloadPath,
+                                SelectedDevice,
+                                _samsungLoginCts.Token,
+                                message => Dispatcher.UIThread.Post(() => StatusBar = message),
+                                onSamsungLoginStarted: OnSamsungLoginStarted);
+                        }
+                        finally
+                        {
+                            IsSamsungLoginActive = false;
+                            _samsungLoginCts.Dispose();
+                            _samsungLoginCts = null;
+                        }
 
-                        _packageHelper.CleanupDownloadedPackage(downloadPath);
+                        if(!AppSettings.Default.KeepWGTFile)
+                            _packageHelper.CleanupDownloadedPackage(downloadPath);
                     }
                 }
             }
@@ -291,6 +314,11 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex}");
             }
+        }
+        [RelayCommand(CanExecute = nameof(IsSamsungLoginActive))]
+        private void CancelSamsungLogin()
+        {
+            _samsungLoginCts?.Cancel();
         }
 
         private bool CanRefresh() => !IsLoading;
@@ -609,5 +637,17 @@ namespace Jellyfin2Samsung.ViewModels
         {
             _localizationService.LanguageChanged -= OnLanguageChanged;
         }
+        partial void OnIsSamsungLoginActiveChanged(bool value)
+        {
+            CancelSamsungLoginCommand.NotifyCanExecuteChanged();
+        }
+        private void OnSamsungLoginStarted()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsSamsungLoginActive = true;
+            });
+        }
+
     }
 }
