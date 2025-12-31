@@ -26,8 +26,11 @@ namespace Jellyfin2Samsung.Helpers
             if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
                 AppSettings.Default.ConfigUpdateMode.Contains("All"))
             {
-                if(AppSettings.Default.UseServerScripts)
+                if (AppSettings.Default.UseServerScripts)
+                {
                     await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinIP);
+                    await _html.EnsureTizenCorsAsync(ws);
+                }
 
                 await _html.UpdateMultiServerConfigAsync(ws);
             }
