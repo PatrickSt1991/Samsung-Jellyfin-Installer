@@ -1,7 +1,7 @@
 {
   "DownloadAndInstall": "Télécharger et installer",
   "InstallationFailed": "Échec de l'installation",
-  "InstallationSuccessfulOn": "Jellyfin a été installé avec succès !",
+  "InstallationSuccessfulOn": "{0} a été installé avec succès !",
   "DownloadFailed": "Échec du téléchargement :",
   "FailedLoadingReleases": "Échec du chargement des versions :",
   "InstallTizenSdb": "Le Tizen SDB est requis mais introuvable. Nouvelle tentative de téléchargement.",
@@ -158,5 +158,6 @@
   "lblStopLog": "Arrêt",
   "lblSaveLogs": "Sauvegarder",
   "lblLaunchOnInstall": "Ouvrir après l'installation",
-  "insufficientSpace": "Votre appareil ne dispose pas d'espace suffisant, veuillez supprimer certaines applications et réessayer..."
+  "insufficientSpace": "Votre appareil ne dispose pas d'espace suffisant, veuillez supprimer certaines applications et réessayer...",
+  "lblKeepWGTFile": "Ne supprimez pas le fichier WGT"
 }

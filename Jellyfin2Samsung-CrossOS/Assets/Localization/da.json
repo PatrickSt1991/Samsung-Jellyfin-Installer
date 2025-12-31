@@ -1,7 +1,7 @@
 {
   "DownloadAndInstall": "Download & Installer",
   "InstallationFailed": "Installation mislykkedes",
-  "InstallationSuccessfulOn": "Jellyfin er blevet installeret!",
+  "InstallationSuccessfulOn": "{0} er blevet installeret!",
   "DownloadFailed": "Download mislykkedes:",
   "FailedLoadingReleases": "Kunne ikke indlæse udgivelser:",
   "InstallTizenSdb": "Tizen SDB er påkrævet, men ikke fundet. Prøv at downloade igen.",
@@ -158,5 +158,6 @@
   "lblStopLog": "Stop",
   "lblSaveLogs": "Spare",
   "lblLaunchOnInstall": "Åbn efter installation",
-  "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen..."
+  "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen...",
+  "lblKeepWGTFile": "Slet ikke WGT-filen"
 }

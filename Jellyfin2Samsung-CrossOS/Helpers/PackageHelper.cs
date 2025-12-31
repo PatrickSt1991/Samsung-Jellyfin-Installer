@@ -1,6 +1,8 @@
-﻿using Jellyfin2Samsung.Extensions;
+﻿using Avalonia.Controls.ApplicationLifetimes;
+using Jellyfin2Samsung.Extensions;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
@@ -95,11 +97,19 @@ namespace Jellyfin2Samsung.Helpers
                 {
                     var win = App.Services.GetRequiredService<InstallationCompleteWindow>();
 
-                    if (Avalonia.Application.Current?.ApplicationLifetime is
-                        Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                    var prettyName = GetPrettyPackageName(packagePath);
+
+                    if (win.DataContext is InstallationCompleteViewModel vm)
                     {
-                        win.ShowDialog(desktop.MainWindow);
+                        vm.InstalledPackageName = prettyName;
                     }
+
+                    if (Avalonia.Application.Current?.ApplicationLifetime is
+                        IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        await win.ShowDialog(desktop.MainWindow);
+                    }
+
                     return true;
                 }
                 else
@@ -153,5 +163,15 @@ namespace Jellyfin2Samsung.Helpers
             }
             catch { /* Ignore cleanup errors */ }
         }
+        private static string GetPrettyPackageName(string packagePath)
+        {
+            var name = Path.GetFileNameWithoutExtension(packagePath);
+
+            if (string.IsNullOrEmpty(name))
+                return string.Empty;
+
+            return char.ToUpper(name[0]) + name.Substring(1);
+        }
+
     }
 }

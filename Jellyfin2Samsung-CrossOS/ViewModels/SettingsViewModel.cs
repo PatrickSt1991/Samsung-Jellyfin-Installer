@@ -58,6 +58,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool openAfterInstall;
 
+        [ObservableProperty]
+        private bool keepWGTFile;
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
 
@@ -68,6 +71,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string lblDeletePrevious => _localizationService.GetString("lblDeletePrevious");
         public string lblForceLogin => _localizationService.GetString("lblForceLogin");
         public string lblRTL => _localizationService.GetString("lblRTL");
+        public string lblKeepWGTFile => _localizationService.GetString("lblKeepWGTFile");
         public string lblModifyConfig => _localizationService.GetString("lblModifyConfig");
         public string lblOpenConfig => _localizationService.GetString("lblOpenConfig");
         public string SelectWGT => _localizationService.GetString("SelectWGT");
@@ -229,6 +233,12 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnKeepWGTFileChanged(bool value)
+        {
+            AppSettings.Default.KeepWGTFile = value;
+            AppSettings.Default.Save();
+        }
+
         [RelayCommand]
         private void ModifyConfig()
         {
@@ -273,6 +283,7 @@ namespace Jellyfin2Samsung.ViewModels
             LocalIP = AppSettings.Default.LocalIp;
             TryOverwrite = AppSettings.Default.TryOverwrite;
             OpenAfterInstall = AppSettings.Default.OpenAfterInstall;
+            KeepWGTFile = AppSettings.Default.KeepWGTFile;
         }
 
         private static string GetLanguageDisplayName(string code)

@@ -12,14 +12,19 @@ namespace Jellyfin2Samsung.ViewModels
     public partial class InstallationCompleteViewModel : ObservableObject
     {
         private readonly ILocalizationService _localization;
-        
+
+        [ObservableProperty]
+        private string installedPackageName = string.Empty;
+
         public InstallationCompleteViewModel(ILocalizationService localization)
         {
             _localization = localization;
         }
 
         public string Title => _localization.GetString("InstallationSuccessful");
-        public string SuccessMessage => _localization.GetString("InstallationSuccessfulOn");
+        //public string SuccessMessage => _localization.GetString("InstallationSuccessfulOn");
+        public string SuccessMessage => string.Format(_localization.GetString("InstallationSuccessfulOn"), InstalledPackageName);
+
         public string EasyRight => _localization.GetString("lbleasyRight");
         public string Validation => _localization.GetString("lblValidation");
         public string Close => _localization.GetString("btn_Close");

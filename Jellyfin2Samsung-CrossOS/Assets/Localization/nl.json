@@ -1,7 +1,7 @@
 {
   "DownloadAndInstall": "Downloaden & Installeren",
   "InstallationFailed": "Installatie mislukt",
-  "InstallationSuccessfulOn": "Jellyfin is succesvol geïnstalleerd!",
+  "InstallationSuccessfulOn": "{0} is succesvol geïnstalleerd!",
   "DownloadFailed": "Download mislukt:",
   "FailedLoadingReleases": "Laden van releases mislukt:",
   "InstallTizenSdb": "Tizen SDB is vereist maar niet gevonden. opnieuw proberen te downloaden.",
@@ -158,5 +158,6 @@
   "lblStopLog": "Stop",
   "lblSaveLogs": "Opslaan",
   "lblLaunchOnInstall": "Openen na installeren",
-  "insufficientSpace": "Er is onvoldoende ruimte op uw apparaat. Verwijder enkele apps en probeer het opnieuw..."
+  "insufficientSpace": "Er is onvoldoende ruimte op uw apparaat. Verwijder enkele apps en probeer het opnieuw...",
+  "lblKeepWGTFile": "Verwijder het WGT-bestand niet."
 }
