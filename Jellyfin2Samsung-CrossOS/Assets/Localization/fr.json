@@ -159,5 +159,5 @@
   "lblSaveLogs": "Sauvegarder",
   "lblLaunchOnInstall": "Ouvrir après l'installation",
   "insufficientSpace": "Votre appareil ne dispose pas d'espace suffisant, veuillez supprimer certaines applications et réessayer...",
-  "lblKeepWGTFile": "Ne supprimez pas le fichier WGT"
+  "lblKeepWGTFile": "Conserver le fichier WGT"
 }
