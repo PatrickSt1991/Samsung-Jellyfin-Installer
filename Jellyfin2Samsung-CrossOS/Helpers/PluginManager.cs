@@ -195,19 +195,21 @@ namespace Jellyfin2Samsung.Helpers
         {
             return $@"
 <script>
-window.WaitForApiClient(function() {{
-    try {{
-        var s = document.createElement('script');
-        s.src = '{relativeJsPath}';
-        s.defer = true;
-        document.head.appendChild(s);
-        console.log('🧩 Loaded plugin: {name}');
-    }} catch (e) {{
-        console.error('Plugin failed: {name}', e);
-    }}
+window.addEventListener('load', function () {{
+    window.WaitForApiClient(function () {{
+        try {{
+            var s = document.createElement('script');
+            s.src = '{relativeJsPath}';
+            document.head.appendChild(s);
+            console.log('🧩 Loaded plugin: {name}');
+        }} catch (e) {{
+            console.error('Plugin failed: {name}', e);
+        }}
+    }});
 }});
 </script>";
         }
+
         public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir, string serverUrl)
         {
             try

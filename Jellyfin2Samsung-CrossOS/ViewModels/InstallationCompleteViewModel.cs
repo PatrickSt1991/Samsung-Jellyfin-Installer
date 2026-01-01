@@ -14,10 +14,11 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly ILocalizationService _localization;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(SuccessMessage))]
         private string installedPackageName = string.Empty;
-
         public InstallationCompleteViewModel(ILocalizationService localization)
         {
+            Trace.WriteLine(installedPackageName);
             _localization = localization;
         }
 

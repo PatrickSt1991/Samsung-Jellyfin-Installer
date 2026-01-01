@@ -159,5 +159,6 @@
   "lblSaveLogs": "Speichern",
   "lblLaunchOnInstall": "Nach der Installation öffnen",
   "insufficientSpace": "Auf Ihrem Gerät ist nicht genügend Speicherplatz vorhanden. Bitte entfernen Sie einige Apps und versuchen Sie es erneut ...",
-  "lblKeepWGTFile": "WGT-Datei beibehalten"
+  "lblKeepWGTFile": "WGT-Datei beibehalten",
+  "AuthorMismatch": "Das Autorenzertifikat stimmt nicht überein. Bitte signieren Sie das Paket erneut mit dem richtigen Zertifikat."
 }

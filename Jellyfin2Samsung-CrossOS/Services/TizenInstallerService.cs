@@ -356,6 +356,13 @@ namespace Jellyfin2Samsung.Services
                     else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"insufficientSpace".Localized()}"); }
                 }
 
+                if (installResults.Output.Contains("install failed[118012]") || installResults.Output.Contains("install failed[118, -12]"))
+                {
+                    progress?.Invoke("InstallationFailed".Localized());
+                    if (_appSettings.TryOverwrite) { _appSettings.TryOverwrite = false; _appSettings.ForceSamsungLogin = true; return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress); }
+                    else { _appSettings.TryOverwrite = false; return InstallResult.FailureResult($"Installation failed: {"AuthorMismatch".Localized()}"); }
+                }
+
                 if (installResults.Output.Contains("install failed[118]"))
                 {
                     progress?.Invoke("InstallationFailed".Localized());

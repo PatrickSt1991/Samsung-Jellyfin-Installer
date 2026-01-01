@@ -159,5 +159,6 @@
   "lblSaveLogs": "Spare",
   "lblLaunchOnInstall": "Åbn efter installation",
   "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen...",
-  "lblKeepWGTFile": "Bevar WGT-fil"
+  "lblKeepWGTFile": "Bevar WGT-fil",
+  "AuthorMismatch": "Forfattercertifikat stemmer ikke overens. Underskriv venligst pakken igen med det korrekte certifikat."
 }

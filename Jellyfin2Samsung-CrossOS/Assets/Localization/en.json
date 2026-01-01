@@ -159,5 +159,6 @@
   "lblSaveLogs": "Save",
   "lblLaunchOnInstall": "Open after installation",
   "insufficientSpace": "Your device has insufficient space, please remove some apps and try again...",
-  "lblKeepWGTFile": "Preserve WGT file"
+  "lblKeepWGTFile": "Preserve WGT file",
+  "AuthorMismatch": "Author Certificate mismatch, please re-sign the package with correct certificate."
 }

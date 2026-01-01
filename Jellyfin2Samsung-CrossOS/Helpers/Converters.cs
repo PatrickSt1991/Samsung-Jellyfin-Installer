@@ -41,10 +41,11 @@ namespace Jellyfin2Samsung.Helpers
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is not GitHubRelease release)
-                return false;
+                return true;
 
             return release.Name != parameter?.ToString();
         }
+
 
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

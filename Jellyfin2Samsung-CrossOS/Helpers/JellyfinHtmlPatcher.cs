@@ -1,5 +1,6 @@
 ﻿using Jellyfin2Samsung.Models;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -103,81 +104,111 @@ namespace Jellyfin2Samsung.Helpers
             html = html.Replace("</body>", sb + "\n</body>");
             await File.WriteAllTextAsync(index, html);
         }
-
         public async Task EnsureTizenCorsAsync(PackageWorkspace ws)
+        {
+            string path = Path.Combine(ws.Root, "config.xml");
+            Trace.WriteLine($"[EnsureTizenCors] config.xml path = {path}");
+
+            if (!File.Exists(path))
             {
-                string path = Path.Combine(ws.Root, "config.xml");
+                Trace.WriteLine("[EnsureTizenCors] ERROR: config.xml not found");
+                throw new FileNotFoundException("config.xml not found", path);
+            }
 
-                if (!File.Exists(path))
-                    throw new FileNotFoundException("config.xml not found", path);
+            XDocument doc;
+            await using (var stream = File.OpenRead(path))
+            {
+                doc = await XDocument.LoadAsync(stream, LoadOptions.PreserveWhitespace, default);
+            }
 
-                XDocument doc;
-                await using (var stream = File.OpenRead(path))
+            Trace.WriteLine("[EnsureTizenCors] config.xml loaded");
+
+            var widget = doc.Root;
+            if (widget == null || widget.Name.LocalName != "widget")
+            {
+                Trace.WriteLine("[EnsureTizenCors] ERROR: Invalid root element");
+                throw new InvalidOperationException("Invalid Tizen config.xml");
+            }
+
+            XNamespace widgetNs = widget.Name.Namespace;
+            XNamespace tizenNs =
+                widget.GetNamespaceOfPrefix("tizen")
+                ?? "http://tizen.org/ns/widgets";
+
+            Trace.WriteLine($"[EnsureTizenCors] widget namespace = {widgetNs}");
+            Trace.WriteLine($"[EnsureTizenCors] tizen namespace  = {tizenNs}");
+
+            // --------------------------------
+            // Ensure <access origin="*" />
+            // --------------------------------
+            var accessElements = widget.Elements(widgetNs + "access").ToList();
+            Trace.WriteLine($"[EnsureTizenCors] access elements found = {accessElements.Count}");
+
+            bool hasAccess = accessElements
+                .Any(e => (string?)e.Attribute("origin") == "*");
+
+            Trace.WriteLine($"[EnsureTizenCors] has access origin=\"*\" = {hasAccess}");
+
+            if (!hasAccess)
+            {
+                widget.AddFirst(
+                    new XElement(widgetNs + "access",
+                        new XAttribute("origin", "*"),
+                        new XAttribute("subdomains", "true")));
+
+                Trace.WriteLine("[EnsureTizenCors] Added <access origin=\"*\" subdomains=\"true\" />");
+            }
+
+            // --------------------------------
+            // Ensure internet privilege
+            // --------------------------------
+            var privilegeElements = widget.Elements(tizenNs + "privilege").ToList();
+            Trace.WriteLine($"[EnsureTizenCors] privilege elements found = {privilegeElements.Count}");
+
+            bool hasInternetPrivilege = privilegeElements.Any(e =>
+                (string?)e.Attribute("name") ==
+                "http://tizen.org/privilege/internet");
+
+            Trace.WriteLine($"[EnsureTizenCors] has internet privilege = {hasInternetPrivilege}");
+
+            if (!hasInternetPrivilege)
+            {
+                var inputDevicePrivilege = privilegeElements.FirstOrDefault(e =>
+                    (string?)e.Attribute("name") ==
+                    "http://tizen.org/privilege/tv.inputdevice");
+
+                var internetPrivilege = new XElement(
+                    tizenNs + "privilege",
+                    new XAttribute("name", "http://tizen.org/privilege/internet"));
+
+                if (inputDevicePrivilege != null)
                 {
-                    doc = await XDocument.LoadAsync(stream, LoadOptions.PreserveWhitespace, default);
+                    inputDevicePrivilege.AddAfterSelf(internetPrivilege);
+                    Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege after tv.inputdevice");
                 }
-
-                var widget = doc.Root;
-                if (widget == null || widget.Name.LocalName != "widget")
-                    throw new InvalidOperationException("Invalid Tizen config.xml");
-
-                XNamespace widgetNs = widget.Name.Namespace;
-                XNamespace tizenNs =
-                    widget.GetNamespaceOfPrefix("tizen")
-                    ?? "http://tizen.org/ns/widgets";
-
-                // --------------------------------
-                // Ensure <access origin="*" />
-                // --------------------------------
-                bool hasAccess = widget.Elements(widgetNs + "access")
-                    .Any(e => (string?)e.Attribute("origin") == "*");
-
-                if (!hasAccess)
+                else
                 {
-                    widget.AddFirst(
-                        new XElement(widgetNs + "access",
-                            new XAttribute("origin", "*"),
-                            new XAttribute("subdomains", "true")));
-                }
-
-                // --------------------------------
-                // Ensure internet privilege
-                // --------------------------------
-                bool hasInternetPrivilege = widget.Elements(tizenNs + "privilege")
-                    .Any(e =>
-                        (string?)e.Attribute("name") ==
-                        "http://tizen.org/privilege/internet");
-
-                if (!hasInternetPrivilege)
-                {
-                    var inputDevicePrivilege = widget.Elements(tizenNs + "privilege")
-                        .FirstOrDefault(e =>
-                            (string?)e.Attribute("name") ==
-                            "http://tizen.org/privilege/tv.inputdevice");
-
-                    var internetPrivilege = new XElement(
-                        tizenNs + "privilege",
-                        new XAttribute("name", "http://tizen.org/privilege/internet"));
-
-                    if (inputDevicePrivilege != null)
+                    var access = widget.Elements(widgetNs + "access").FirstOrDefault();
+                    if (access != null)
                     {
-                        inputDevicePrivilege.AddAfterSelf(internetPrivilege);
+                        access.AddAfterSelf(internetPrivilege);
+                        Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege after <access>");
                     }
                     else
                     {
-                        // Fallback: insert after <access>, or at top
-                        var access = widget.Elements(widgetNs + "access").FirstOrDefault();
-                        if (access != null)
-                            access.AddAfterSelf(internetPrivilege);
-                        else
-                            widget.AddFirst(internetPrivilege);
+                        widget.AddFirst(internetPrivilege);
+                        Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege at top of <widget>");
                     }
                 }
-
-                await using (var stream = File.Create(path))
-                {
-                    await doc.SaveAsync(stream, SaveOptions.None, default);
-                }
             }
+
+            await using (var stream = File.Create(path))
+            {
+                await doc.SaveAsync(stream, SaveOptions.None, default);
+            }
+
+            Trace.WriteLine("[EnsureTizenCors] config.xml saved successfully");
+        }
+
     }
 }

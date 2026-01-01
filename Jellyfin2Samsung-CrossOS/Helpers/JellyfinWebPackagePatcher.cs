@@ -26,11 +26,10 @@ namespace Jellyfin2Samsung.Helpers
             if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
                 AppSettings.Default.ConfigUpdateMode.Contains("All"))
             {
+                await _html.EnsureTizenCorsAsync(ws);
+
                 if (AppSettings.Default.UseServerScripts)
-                {
                     await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinIP);
-                    await _html.EnsureTizenCorsAsync(ws);
-                }
 
                 await _html.UpdateMultiServerConfigAsync(ws);
             }
@@ -42,7 +41,6 @@ namespace Jellyfin2Samsung.Helpers
                 await _html.InjectUserSettingsAsync(ws, userIds);
             }
 
-            // 🔥 FIX: dev logs independent of server scripts
             if (AppSettings.Default.EnableDevLogs)
             {
                 Trace.WriteLine("Injecting dev logs...");   

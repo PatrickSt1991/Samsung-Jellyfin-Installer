@@ -5,6 +5,7 @@ using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
