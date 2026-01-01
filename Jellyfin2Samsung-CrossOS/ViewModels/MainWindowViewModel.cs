@@ -417,7 +417,16 @@ namespace Jellyfin2Samsung.ViewModels
 
                 if (allReleases != null)
                     foreach (var release in allReleases)
-                        Releases.Add(release);
+                    {
+                        Releases.Add(new GitHubRelease
+                        {
+                            Name = $"Jellyfin - {release.Name}",
+                            Assets = release.Assets,
+                            PublishedAt = release.PublishedAt,
+                            TagName = release.TagName,
+                            Url = release.Url
+                        });
+                    }
 
                 var moonfinResponse = await _httpClient.GetStringAsync(AppSettings.Default.MoonfinRelease);
                 List<GitHubRelease> moonfinReleases;
