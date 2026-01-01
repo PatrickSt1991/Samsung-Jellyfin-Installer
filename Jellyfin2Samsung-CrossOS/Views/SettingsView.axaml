@@ -9,7 +9,7 @@
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
         Title="Settings"
         Width="610"
-        Height="750"
+        Height="700"
         Background="#F5F5F5">
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -90,24 +90,6 @@
 								</DataTemplate>
 							</ComboBox.ItemTemplate>
 						</ComboBox>
-					</Grid>
-
-					<!-- Custom WGT Section -->
-					<Grid ColumnDefinitions="120,*,40" ColumnSpacing="8">
-						<TextBlock Grid.Column="0"
-                                   Text="{Binding lblCustomWgt}"
-                                   Classes="label"
-                                   VerticalAlignment="Center"/>
-						<TextBox Grid.Column="1"
-                                 Text="{Binding CustomWgtPath, Mode=TwoWay}"
-                                 IsReadOnly="True"
-                                 HorizontalAlignment="Stretch"
-                                 Watermark="{Binding SelectWGT}"/>
-						<Button Grid.Column="2"
-                                Classes="icon"
-                                Command="{Binding BrowseWgtCommand}">
-							<fa:SymbolIcon Symbol="Folder" Width="16" Height="16"/>
-						</Button>
 					</Grid>
 
 					<!-- Local Device IP -->

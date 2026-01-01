@@ -14,7 +14,7 @@
 	<!-- Resources -->
 	<!-- ========================= -->
 	<Window.Resources>
-		<helpers:StatusToColorConverter x:Key="StatusToColorConverter"/>
+		<helpers:TvLogStatusToBrushConverter x:Key="StatusToColorConverter"/>
 	</Window.Resources>
 
 	<!-- ========================= -->

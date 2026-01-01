@@ -4,8 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
-using Jellyfin2Samsung.Services;
-using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
@@ -18,7 +16,6 @@ namespace Jellyfin2Samsung.ViewModels
     public partial class SettingsViewModel : ViewModelBase
     {
         private readonly CertificateHelper _certificateHelper;
-        private readonly FileHelper _fileHelper;
         private readonly ILocalizationService _localizationService;
         private readonly INetworkService _networkService;
 
@@ -30,9 +27,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string selectedCertificate = string.Empty;
-
-        [ObservableProperty]
-        private string customWgtPath = string.Empty;
 
         [ObservableProperty]
         private string localIP = string.Empty;
@@ -66,7 +60,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         public string lblLanguage => _localizationService.GetString("lblLanguage");
         public string lblCertifcate => _localizationService.GetString("lblCertifcate");
-        public string lblCustomWgt => _localizationService.GetString("lblCustomWgt");
         public string lblRememberIp => _localizationService.GetString("lblRememberIp");
         public string lblDeletePrevious => _localizationService.GetString("lblDeletePrevious");
         public string lblForceLogin => _localizationService.GetString("lblForceLogin");
@@ -74,7 +67,6 @@ namespace Jellyfin2Samsung.ViewModels
         public string lblKeepWGTFile => _localizationService.GetString("lblKeepWGTFile");
         public string lblModifyConfig => _localizationService.GetString("lblModifyConfig");
         public string lblOpenConfig => _localizationService.GetString("lblOpenConfig");
-        public string SelectWGT => _localizationService.GetString("SelectWGT");
         public string lblPermitInstall => _localizationService.GetString("lblPermitInstall");
         public string lblSDB => _localizationService.GetString("lblSDB");
         public string lblLocalIP => _localizationService.GetString("lblLocalIP");
@@ -83,18 +75,16 @@ namespace Jellyfin2Samsung.ViewModels
 
         public SettingsViewModel(
             CertificateHelper certificateHelper,
-            FileHelper fileHelper,
             ILocalizationService localizationService,
             INetworkService networkService)
         {
             _certificateHelper = certificateHelper;
-            _fileHelper = fileHelper;
+            
             _localizationService = localizationService;
             _networkService = networkService;
             
             _localizationService.LanguageChanged += OnLanguageChanged;
 
-            // Populate available languages dynamically from LocalizationService
             AvailableLanguages = new ObservableCollection<LanguageOption>(
                 _localizationService.AvailableLanguages
                     .Select(code => new LanguageOption
@@ -105,7 +95,6 @@ namespace Jellyfin2Samsung.ViewModels
                     .OrderBy(lang => lang.Name)
             );
 
-            // Initialize settings
             InitializeSettings();
 
             _ = LoadLocalIpAsync();
@@ -139,7 +128,6 @@ namespace Jellyfin2Samsung.ViewModels
         {
             OnPropertyChanged(nameof(lblLanguage));
             OnPropertyChanged(nameof(lblCertifcate));
-            OnPropertyChanged(nameof(lblCustomWgt));
             OnPropertyChanged(nameof(lblRememberIp));
             OnPropertyChanged(nameof(lblDeletePrevious));
             OnPropertyChanged(nameof(lblForceLogin));
@@ -147,7 +135,6 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(lblSDB));
             OnPropertyChanged(nameof(lblModifyConfig));
             OnPropertyChanged(nameof(lblOpenConfig));
-            OnPropertyChanged(nameof(SelectWGT));
             OnPropertyChanged(nameof(lblLocalIP));
             OnPropertyChanged(nameof(lblTryOverwrite));
         }
@@ -183,15 +170,6 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.ChosenCertificates = SelectedCertificateObject;
         }
 
-        partial void OnCustomWgtPathChanged(string value)
-        {
-            AppSettings.Default.CustomWgtPath = value;
-            AppSettings.Default.Save();
-
-            var mainVM = App.Services.GetRequiredService<MainWindowViewModel>();
-            mainVM?.DownloadAndInstallCommand?.NotifyCanExecuteChanged();
-            mainVM?.DownloadCommand?.NotifyCanExecuteChanged();
-        }
         partial void OnLocalIPChanged(string value)
         {
             AppSettings.Default.LocalIp = value;
@@ -250,22 +228,6 @@ namespace Jellyfin2Samsung.ViewModels
             }
         }
 
-
-        [RelayCommand]
-        private async Task BrowseWgtAsync()
-        {
-            var mainWindow = Avalonia.Application.Current?.ApplicationLifetime is
-                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow : null;
-
-            if (mainWindow?.StorageProvider != null)
-            {
-                var result = await _fileHelper.BrowseWgtFilesAsync(mainWindow.StorageProvider);
-                if (!string.IsNullOrEmpty(result))
-                    CustomWgtPath = result;
-            }
-        }
-
         private void InitializeSettings()
         {
             // Use current language from LocalizationService or fallback to saved setting
@@ -275,7 +237,6 @@ namespace Jellyfin2Samsung.ViewModels
                 .FirstOrDefault(lang => string.Equals(lang.Code, currentLangCode, StringComparison.OrdinalIgnoreCase))
                 ?? AvailableLanguages.FirstOrDefault();
 
-            CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
             RememberCustomIP = AppSettings.Default.RememberCustomIP;
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;

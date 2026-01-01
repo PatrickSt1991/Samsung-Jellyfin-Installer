@@ -47,7 +47,7 @@
   "lblVersion": "Version",
   "lblSelectTv": "Vælg TV",
   "lblLanguage": "Sprog",
-  "lblCustomWgt": "Brugerdefineret WGT",
+  "lblCustomWgt": "WGT-fil",
   "lblSettings": "Indstillinger",
   "lblRememberIp": "Husk IP'er",
   "lblDeletePrevious": "Fjern gamle Jellyfin",

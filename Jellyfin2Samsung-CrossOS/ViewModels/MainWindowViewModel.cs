@@ -25,10 +25,11 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
         private readonly INetworkService _networkService;
+        private readonly ILocalizationService _localizationService;
         private readonly HttpClient _httpClient;
+        private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
         private readonly PackageHelper _packageHelper;
-        private readonly ILocalizationService _localizationService;
         private readonly SettingsViewModel _settingsViewModel;
         private CancellationTokenSource? _samsungLoginCts;
 
@@ -46,6 +47,9 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private Asset? selectedAsset;
+
+        [ObservableProperty]
+        private string customWgtPath = string.Empty;
 
         [ObservableProperty]
         private NetworkDevice? selectedDevice;
@@ -72,7 +76,9 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblVersion => _localizationService.GetString("lblVersion");
         public string LblSelectTv => _localizationService.GetString("lblSelectTv");
         public string DownloadAndInstall => _localizationService.GetString("DownloadAndInstall");
-        public string FooterText =>
+        public string lblCustomWgt => _localizationService.GetString("lblCustomWgt");
+        public string SelectWGT => _localizationService.GetString("SelectWGT");
+        public static string FooterText =>
             $"{AppSettings.Default.AppVersion} " +
             $"- Copyright (c) {DateTime.Now.Year} - MIT License - Patrick Stel";
 
@@ -80,10 +86,12 @@ namespace Jellyfin2Samsung.ViewModels
             ITizenInstallerService tizenInstaller,
             IDialogService dialogService,
             INetworkService networkService,
+            ILocalizationService localizationService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
             PackageHelper packageHelper,
-            ILocalizationService localizationService)
+            FileHelper fileHelper
+            )
         {
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
@@ -92,6 +100,7 @@ namespace Jellyfin2Samsung.ViewModels
             _deviceHelper = deviceHelper;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
+            _fileHelper = fileHelper;
             _settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
 
             _localizationService.LanguageChanged += OnLanguageChanged;
@@ -118,6 +127,8 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(DownloadAndInstall));
             OnPropertyChanged(nameof(FooterText));
             OnPropertyChanged(nameof(StatusBar));
+            OnPropertyChanged(nameof(lblCustomWgt));
+            OnPropertyChanged(nameof(SelectWGT));
         }
 
         partial void OnSelectedReleaseChanged(GitHubRelease? value)
@@ -133,7 +144,14 @@ namespace Jellyfin2Samsung.ViewModels
         {
             RefreshCanExecuteChanged();
         }
+        partial void OnCustomWgtPathChanged(string value)
+        {
+            AppSettings.Default.CustomWgtPath = value;
+            AppSettings.Default.Save();
 
+            DownloadAndInstallCommand?.NotifyCanExecuteChanged();
+            DownloadCommand?.NotifyCanExecuteChanged();
+        }
 
         partial void OnSelectedDeviceChanged(NetworkDevice? value)
         {
@@ -186,6 +204,7 @@ namespace Jellyfin2Samsung.ViewModels
                 await LoadReleasesAsync();
                 SetStatus("ScanningNetwork");
                 await LoadDevicesAsync();
+                CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
             }
             catch (Exception ex)
             {
@@ -313,6 +332,20 @@ namespace Jellyfin2Samsung.ViewModels
             catch (Exception ex)
             {
                 await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex}");
+            }
+        }
+        [RelayCommand]
+        private async Task BrowseWgtAsync()
+        {
+            var mainWindow = Avalonia.Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow : null;
+
+            if (mainWindow?.StorageProvider != null)
+            {
+                var result = await _fileHelper.BrowseWgtFilesAsync(mainWindow.StorageProvider);
+                if (!string.IsNullOrEmpty(result))
+                    CustomWgtPath = result;
             }
         }
         [RelayCommand(CanExecute = nameof(IsSamsungLoginActive))]
@@ -514,6 +547,15 @@ namespace Jellyfin2Samsung.ViewModels
             }
             finally
             {
+                Releases.Add(new GitHubRelease
+                {
+                    Name = "Custom WGT File",
+                    TagName = string.Empty,
+                    PublishedAt = string.Empty,
+                    Url = string.Empty,
+                    Assets = new List<Asset>()
+                });
+
                 IsLoading = false;
             }
         }

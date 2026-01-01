@@ -3,12 +3,18 @@
         x:Class="Jellyfin2Samsung.Views.MainWindow"
 		x:DataType="viewModels:MainWindowViewModel"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
+		xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers"
 		xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         Width="580"
         Height="410"
         WindowStartupLocation="CenterScreen"
         Title="Jellyfin2Samsung"
         Background="#F5F5F5">
+	<Window.Resources>
+		<helpers:TvLogStatusToBrushConverter x:Key="TvLogStatusToBrushConverter"/>
+		<helpers:StringEqualsConverter x:Key="StringEquals"/>
+		<helpers:StringNotEqualsConverter x:Key="StringNotEquals"/>
+	</Window.Resources>
 
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -68,7 +74,7 @@
 				</Grid>
 
 				<!-- Version -->
-				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8">
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease.Name, Converter={StaticResource StringNotEquals}, ConverterParameter=Custom WGT File}">
 					<TextBlock Classes="label"
 							   Text="{Binding LblVersion}"
 							   VerticalAlignment="Center"
@@ -86,12 +92,32 @@
 						</ComboBox.ItemTemplate>
 					</ComboBox>
 
-					<!-- Info Button -->
+					
 					<Button Classes="icon" Grid.Column="2" Command="{Binding ShowBuildInfoCommand}">
 						<fa:SymbolIcon Symbol="Help" Width="20" Height="20"/>
 					</Button>
 				</Grid>
+				<!-- Custom WGT File -->
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease.Name, Converter={StaticResource StringEquals}, ConverterParameter=Custom WGT File, FallbackValue=False}">
+					<TextBlock Classes="label"
+							   Text="{Binding lblCustomWgt}"
+							   VerticalAlignment="Center"
+							   Grid.Column="0"/>
 
+					<TextBox Grid.Column="1"
+								Classes="clean"
+								Text="{Binding CustomWgtPath, Mode=TwoWay}"
+								IsReadOnly="True"
+								HorizontalAlignment="Stretch"
+								Watermark="{Binding SelectWGT}"/>
+
+					<!-- Info Button -->
+					<Button Grid.Column="2"
+                                Classes="icon"
+                                Command="{Binding BrowseWgtCommand}">
+						<fa:SymbolIcon Symbol="Folder" Width="20" Height="20"/>
+					</Button>
+				</Grid>
 
 				<!-- TV Selection -->
 				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8">

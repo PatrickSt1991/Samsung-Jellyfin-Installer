@@ -6,11 +6,10 @@ using System.Globalization;
 
 namespace Jellyfin2Samsung.Helpers
 {
-    public class StatusToColorConverter : IValueConverter
+    public class TvLogStatusToBrushConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            return value switch
+            => value switch
             {
                 TvLogConnectionStatus.Connected => new SolidColorBrush(Color.Parse("#27AE60")),
                 TvLogConnectionStatus.Listening => new SolidColorBrush(Color.Parse("#2980B9")),
@@ -18,7 +17,24 @@ namespace Jellyfin2Samsung.Helpers
                 TvLogConnectionStatus.Stopped => new SolidColorBrush(Color.Parse("#7F8C8D")),
                 _ => Brushes.Gray
             };
-        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    public class StringEqualsConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Equals(value?.ToString(), parameter?.ToString());
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    public class StringNotEqualsConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => !Equals(value?.ToString(), parameter?.ToString());
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotSupportedException();

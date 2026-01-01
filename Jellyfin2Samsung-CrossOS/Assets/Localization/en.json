@@ -47,7 +47,7 @@
   "lblVersion": "Version",
   "lblSelectTv": "Select TV",
   "lblLanguage": "Language",
-  "lblCustomWgt": "Custom WGT",
+  "lblCustomWgt": "WGT File",
   "lblSettings": "Settings",
   "lblRememberIp": "Remember IPs",
   "lblDeletePrevious": "Remove old Jellyfin",
