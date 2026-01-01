@@ -25,7 +25,12 @@ namespace Jellyfin2Samsung.Helpers
     public class StringEqualsConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => Equals(value?.ToString(), parameter?.ToString());
+        {
+            if (value is not GitHubRelease release)
+                return false;
+
+            return release.Name == parameter?.ToString();
+        }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotSupportedException();
@@ -34,7 +39,13 @@ namespace Jellyfin2Samsung.Helpers
     public class StringNotEqualsConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => !Equals(value?.ToString(), parameter?.ToString());
+        {
+            if (value is not GitHubRelease release)
+                return false;
+
+            return release.Name != parameter?.ToString();
+        }
+
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotSupportedException();

@@ -74,7 +74,7 @@
 				</Grid>
 
 				<!-- Version -->
-				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease.Name, Converter={StaticResource StringNotEquals}, ConverterParameter=Custom WGT File}">
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease, Converter={StaticResource StringNotEquals}, ConverterParameter=Custom WGT File}">
 					<TextBlock Classes="label"
 							   Text="{Binding LblVersion}"
 							   VerticalAlignment="Center"
@@ -98,7 +98,7 @@
 					</Button>
 				</Grid>
 				<!-- Custom WGT File -->
-				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease.Name, Converter={StaticResource StringEquals}, ConverterParameter=Custom WGT File, FallbackValue=False}">
+				<Grid ColumnDefinitions="100,*,40" ColumnSpacing="8" IsVisible="{Binding SelectedRelease, Converter={StaticResource StringEquals}, ConverterParameter=Custom WGT File, FallbackValue=False}">
 					<TextBlock Classes="label"
 							   Text="{Binding lblCustomWgt}"
 							   VerticalAlignment="Center"
