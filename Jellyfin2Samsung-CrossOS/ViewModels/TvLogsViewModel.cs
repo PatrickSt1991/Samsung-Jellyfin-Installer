@@ -33,7 +33,7 @@ public partial class TvLogsViewModel : ObservableObject
     public bool CanStart => ConnectionStatus == TvLogConnectionStatus.Stopped;
     public bool CanStop => ConnectionStatus != TvLogConnectionStatus.Stopped;
     public bool IsListening => ConnectionStatus == TvLogConnectionStatus.Listening;
-    public string EndpointText => $"{IpAddress}:5001";
+    public string EndpointText => $"{IpAddress}:54321";
 
     public string IpAddress { get; }
     public string StartLog => _localizationService.GetString("lblStartLog");
@@ -74,7 +74,7 @@ public partial class TvLogsViewModel : ObservableObject
         ConnectionStatus = TvLogConnectionStatus.Listening;
 
         _logService.StartLogServer(
-            5001,
+            54321,
             line => Dispatcher.UIThread.Post(() => Logs += line),
             status => Dispatcher.UIThread.Post(() => ConnectionStatus = status));
     }
