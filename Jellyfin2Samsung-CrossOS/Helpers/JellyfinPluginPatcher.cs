@@ -245,10 +245,11 @@ namespace Jellyfin2Samsung.Helpers
                     if (path != null)
                     {
                         string injectedSrc = $"plugin_cache/{cleanName}/{fileName}";
-                        string tag = _pluginManager.GenerateInjectorLoader(entry.Name, injectedSrc);
+                        AppendScriptOnce(jsBuilder, $"<script src=\"{injectedSrc}\"></script>", injectedSrc);
+                        //string tag = _pluginManager.GenerateInjectorLoader(entry.Name, injectedSrc);
 
                         // Dedup by the injected src (not the whole tag)
-                        AppendScriptOnce(apiJsBuilder, tag, injectedSrc);
+                        //AppendScriptOnce(apiJsBuilder, tag, injectedSrc);
                         break;
                     }
                 }

@@ -102,7 +102,9 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private bool enableDevLogs = false;
-        
+        [ObservableProperty]
+        private bool patchYoutubePlugin = false;
+
         [ObservableProperty]
         private bool canOpenDebugWindow;
         
@@ -176,6 +178,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
         public string lblOpenDebugWindow => _localizationService.GetString("lblOpenDebugWindow");
+        public string lblFixYouTube153 => _localizationService.GetString("FixYouTube153");
         public string TvIp => AppSettings.Default.TvIp;
 
         public JellyfinConfigViewModel(
@@ -227,6 +230,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblUseServerScripts));
             OnPropertyChanged(nameof(LblEnableDevLogs));
             OnPropertyChanged(nameof(lblOpenDebugWindow));
+            OnPropertyChanged(nameof(lblFixYouTube153));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -384,6 +388,11 @@ namespace Jellyfin2Samsung.ViewModels
             CanOpenDebugWindow = (!string.IsNullOrWhiteSpace(TvIp)) && value;
             OpenDebugWindowCommand.NotifyCanExecuteChanged();
         }
+        partial void OnPatchYoutubePluginChanged(bool value)
+        {
+            AppSettings.Default.PatchYoutubePlugin = value;
+            AppSettings.Default.Save();
+        }
 
         partial void OnSelectedJellyfinUserChanged(JellyfinAuth? value)
         {
@@ -459,6 +468,7 @@ namespace Jellyfin2Samsung.ViewModels
             UserAutoLogin = AppSettings.Default.UserAutoLogin;
             UseServerScripts = AppSettings.Default.UseServerScripts;
             EnableDevLogs = AppSettings.Default.EnableDevLogs;
+            PatchYoutubePlugin = AppSettings.Default.PatchYoutubePlugin;
         }
 
         private void UpdateJellyfinAddress()

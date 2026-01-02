@@ -48,7 +48,7 @@
   "lblSelectTv": "Select TV",
   "lblLanguage": "Language",
   "lblCustomWgt": "WGT File",
-  "lblSettings": "Settings",
+  "lblSettings": "Application settings",
   "lblRememberIp": "Remember IPs",
   "lblDeletePrevious": "Remove old Jellyfin",
   "lblexpires": "Expires",
@@ -106,7 +106,7 @@
   "lblSubtitleMode": "Subtitle mode",
   "lblAudioLanguagePreference": "Audio language preference",
   "lblSubtitleLanguagePreference": "Subtitle language preference",
-  "lblJellyfinConfig": "Jellyfin Config",
+  "lblJellyfinConfig": "Jellyfin settings",
   "SelectSubtitleMode": "Select Subtitle Mode",
   "AudioLanguage": "e.g. en | da | nl",
   "lblOpenConfig": "Open config",
@@ -160,5 +160,6 @@
   "lblLaunchOnInstall": "Open after installation",
   "insufficientSpace": "Your device has insufficient space, please remove some apps and try again...",
   "lblKeepWGTFile": "Preserve WGT file",
-  "AuthorMismatch": "Author Certificate mismatch, please re-sign the package with correct certificate."
+  "AuthorMismatch": "Author Certificate mismatch, please re-sign the package with correct certificate.",
+  "FixYouTube153": "Fix YouTube Plugin (Error 153)"
 }

@@ -169,6 +169,15 @@
 										  IsChecked="{Binding UseServerScripts}"
 										  IsEnabled="{Binding ApiKeySet}"/>
 						</Grid>
+						
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Grid.Column="0"
+									   Text="{Binding lblFixYouTube153}"
+									   Classes="label"
+									   VerticalAlignment="Center"/>
+							<ToggleSwitch Grid.Column="1"
+										  IsChecked="{Binding PatchYoutubePlugin}"/>
+						</Grid>
 					</StackPanel>
 
 					<Border Height="1" Background="#E8E8E8"/>

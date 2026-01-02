@@ -48,7 +48,7 @@
   "lblSelectTv": "Vælg TV",
   "lblLanguage": "Sprog",
   "lblCustomWgt": "WGT-fil",
-  "lblSettings": "Indstillinger",
+  "lblSettings": "Applikationsindstillinger",
   "lblRememberIp": "Husk IP'er",
   "lblDeletePrevious": "Fjern gamle Jellyfin",
   "lblexpires": "Udløber",
@@ -106,7 +106,7 @@
   "lblSubtitleMode": "Underteksttilstand",
   "lblAudioLanguagePreference": "Foretrukket lydsprog",
   "lblSubtitleLanguagePreference": "Foretrukket undertekstsprog",
-  "lblJellyfinConfig": "Jellyfin Config",
+  "lblJellyfinConfig": "Jellyfin-indstillinger",
   "SelectSubtitleMode": "Vælg underteksttilstand",
   "AudioLanguage": "f.eks. da | en | de",
   "lblOpenConfig": "Åbn config",
@@ -160,5 +160,6 @@
   "lblLaunchOnInstall": "Åbn efter installation",
   "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen...",
   "lblKeepWGTFile": "Bevar WGT-fil",
-  "AuthorMismatch": "Forfattercertifikat stemmer ikke overens. Underskriv venligst pakken igen med det korrekte certifikat."
+  "AuthorMismatch": "Forfattercertifikat stemmer ikke overens. Underskriv venligst pakken igen med det korrekte certifikat.",
+  "FixYouTube153": "Ret YouTube-plugin (fejl 153)"
 }

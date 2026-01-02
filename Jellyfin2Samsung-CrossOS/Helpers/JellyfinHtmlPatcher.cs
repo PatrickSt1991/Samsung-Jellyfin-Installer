@@ -1,13 +1,10 @@
-﻿using Jellyfin2Samsung.Models;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -208,6 +205,48 @@ namespace Jellyfin2Samsung.Helpers
             }
 
             Trace.WriteLine("[EnsureTizenCors] config.xml saved successfully");
+        }
+        public async Task PatchYoutubePlayerAsync(PackageWorkspace ws)
+        {
+            var www = Path.Combine(ws.Root, "www");
+            if (!Directory.Exists(www))
+                return;
+
+            var files = Directory.GetFiles(www, "youtubePlayer-plugin.*.js");
+
+            foreach (var file in files)
+            {
+                var js = await File.ReadAllTextAsync(file);
+
+                if (js.Contains("origin:\"https://www.youtube.com\""))
+                    continue;
+
+                const string marker = "playerVars:{";
+                var idx = js.IndexOf(marker, StringComparison.Ordinal);
+
+                if (idx == -1)
+                    continue;
+
+                var start = idx + marker.Length;
+                var end = js.IndexOf('}', start);
+
+                if (end == -1)
+                    continue;
+
+                var playerVars = js.Substring(start, end - start);
+
+                var patchedPlayerVars =
+                    playerVars +
+                    ",origin:\"https://www.youtube.com\"" +
+                    ",host:\"https://www.youtube.com\"";
+
+                js =
+                    js.Substring(0, start) +
+                    patchedPlayerVars +
+                    js.Substring(end);
+
+                await File.WriteAllTextAsync(file, js);
+            }
         }
 
     }

@@ -48,7 +48,7 @@
   "lblSelectTv": "Sélectionner le téléviseur",
   "lblLanguage": "Langue",
   "lblCustomWgt": "Fichier WGT",
-  "lblSettings": "Paramètres",
+  "lblSettings": "Paramètres de l'application",
   "lblRememberIp": "Mémoriser les adresses IP",
   "lblDeletePrevious": "Supprimer l'ancien Jellyfin",
   "lblexpires": "Expire",
@@ -106,7 +106,7 @@
   "lblSubtitleMode": "Mode sous-titres",
   "lblAudioLanguagePreference": "Préférence de langue audio",
   "lblSubtitleLanguagePreference": "Préférence de langue des sous-titres",
-  "lblJellyfinConfig": "Configuration Jellyfin",
+  "lblJellyfinConfig": "Paramètres Jellyfin",
   "SelectSubtitleMode": "Sélectionner le mode sous-titres",
   "AudioLanguage": "ex. fr | en | es",
   "lblOpenConfig": "Ouvrir la configuration",
@@ -160,5 +160,6 @@
   "lblLaunchOnInstall": "Ouvrir après l'installation",
   "insufficientSpace": "Votre appareil ne dispose pas d'espace suffisant, veuillez supprimer certaines applications et réessayer...",
   "lblKeepWGTFile": "Conserver le fichier WGT",
-  "AuthorMismatch": "Incompatibilité du certificat d'auteur, veuillez signer à nouveau le package avec le certificat correct."
+  "AuthorMismatch": "Incompatibilité du certificat d'auteur, veuillez signer à nouveau le package avec le certificat correct.",
+  "FixYouTube153": "Correction du plugin YouTube (Erreur 153)"
 }

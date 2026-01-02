@@ -48,7 +48,7 @@
   "lblSelectTv": "Kies TV",
   "lblLanguage": "Taal",
   "lblCustomWgt": "WGT Bestand",
-  "lblSettings": "Instellingen",
+  "lblSettings": "Applicatie-instellingen",
   "lblRememberIp": "IP-adressen onthouden",
   "lblDeletePrevious": "Oude Jellyfin verwijderen",
   "lblexpires": "Verloopt",
@@ -106,7 +106,7 @@
   "lblSubtitleMode": "Ondertitelingmodus",
   "lblAudioLanguagePreference": "Voorkeur audiotaal",
   "lblSubtitleLanguagePreference": "Voorkeur ondertitelingtaal",
-  "lblJellyfinConfig": "Jellyfin Config",
+  "lblJellyfinConfig": "Jellyfin-instellingen",
   "SelectSubtitleMode": "Ondertitelingmodus selecteren",
   "AudioLanguage": "bijv. nl | en | de",
   "lblOpenConfig": "Config openen",
@@ -160,5 +160,6 @@
   "lblLaunchOnInstall": "Openen na installeren",
   "insufficientSpace": "Er is onvoldoende ruimte op uw apparaat. Verwijder enkele apps en probeer het opnieuw...",
   "lblKeepWGTFile": "WGT-bestand behouden",
-  "AuthorMismatch": "Auteurscertificaat komt niet overeen. Onderteken het pakket opnieuw met het juiste certificaat."
+  "AuthorMismatch": "Auteurscertificaat komt niet overeen. Onderteken het pakket opnieuw met het juiste certificaat.",
+  "FixYouTube153": "YouTube-plug-in repareren (fout 153)"
 }

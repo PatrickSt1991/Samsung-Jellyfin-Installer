@@ -169,6 +169,57 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
+        private string PatchHomeScreenSections(string js)
+        {
+            // Idempotent safety
+            if (js.Contains("__HSS_INIT__"))
+                return js;
+
+            return js + @"
+
+(function () {
+  function waitForHome() {
+    if (!window.ApiClient) {
+      return false;
+    }
+
+    var home =
+      document.querySelector('.homePage') ||
+      document.querySelector('[data-page=""home""]');
+
+    if (!home) {
+      return false;
+    }
+
+    if (window.__HSS_INIT__) {
+      console.log('[HSS] already initialized, skipping');
+      return true;
+    }
+
+    window.__HSS_INIT__ = true;
+    console.log('[HSS] init (home detected)');
+    HomeScreenSectionsHandler2.init();
+    return true;
+  }
+
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries++;
+
+    if (waitForHome()) {
+      clearInterval(timer);
+      console.log('[HSS] init complete');
+      return;
+    }
+
+    if (tries > 50) {
+      clearInterval(timer);
+      console.warn('[HSS] init aborted (home not detected)');
+    }
+  }, 100);
+})();
+";
+        }
 
         public async Task<string?> DownloadAndTranspileAsync(string url, string cacheDir, string relPath)
         {
@@ -178,6 +229,9 @@ namespace Jellyfin2Samsung.Helpers
 
                 string js = await _httpClient.GetStringAsync(url);
                 js = await EsbuildHelper.TranspileAsync(js, relPath);
+
+                if (relPath.Contains("HomeScreenSections", StringComparison.OrdinalIgnoreCase))
+                    js = PatchHomeScreenSections(js);
 
                 string localPath = Path.Combine(cacheDir, relPath);
                 Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
@@ -190,22 +244,6 @@ namespace Jellyfin2Samsung.Helpers
                 Trace.WriteLine($"⚠ Plugin download failed: {ex}");
                 return null;
             }
-        }
-        public string GenerateInjectorLoader(string name, string relativeJsPath)
-        {
-            return $@"
-<script>
-window.WaitForApiClient(function () {{
-    try {{
-        var s = document.createElement('script');
-        s.src = '{relativeJsPath}';
-        document.head.appendChild(s);
-        console.log('🧩 Loaded plugin: {name}');
-    }} catch (e) {{
-        console.error('Plugin failed: {name}', e);
-    }}
-}});
-</script>";
         }
 
         public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir, string serverUrl)
