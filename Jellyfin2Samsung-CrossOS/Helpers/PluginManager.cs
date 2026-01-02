@@ -171,54 +171,208 @@ namespace Jellyfin2Samsung.Helpers
         }
         private string PatchHomeScreenSections(string js)
         {
-            // Idempotent safety
-            if (js.Contains("__HSS_INIT__"))
+            Trace.WriteLine("[HSS] PatchHomeScreenSections: start");
+
+            // Idempotency
+            if (js.Contains("__HSS_PATCH_V2__"))
+            {
+                Trace.WriteLine("[HSS] PatchHomeScreenSections: already patched, returning original");
                 return js;
+            }
 
-            return js + @"
+            // 1) Disable the original auto-init(s) (very specific, safe string replacements)
+            js = js.Replace(
+                "$(document).ready(function() {\n    setTimeout(function() {\n      HomeScreenSectionsHandler2.init();\n    }, 50);\n  });",
+                "/* __HSS_PATCH_V2__: original HomeScreenSectionsHandler2.init auto-run removed */"
+            );
 
+            js = js.Replace(
+                "setTimeout(function() {\n    TopTenSectionHandler2.init();\n  }, 50);",
+                "/* __HSS_PATCH_V2__: original TopTenSectionHandler2.init auto-run removed */"
+            );
+
+            // 2) Append new runtime that is “home-aware” + debounced + delegated
+            js += @"
+
+;/* __HSS_PATCH_V2__ */
 (function () {
-  function waitForHome() {
-    if (!window.ApiClient) {
-      return false;
+  try {
+    console.log('[HSS] patch v2 loaded');
+
+    var started = false;
+    var observer = null;
+    var debounceTimer = null;
+
+    function hasHomeMounted() {
+      return !!(
+        document.querySelector('.homePage') ||
+        document.querySelector('[data-page=""home""]') ||
+        document.querySelector('.homePageContent') ||
+        document.querySelector('[data-type=""home""]')
+      );
     }
 
-    var home =
-      document.querySelector('.homePage') ||
-      document.querySelector('[data-page=""home""]');
-
-    if (!home) {
-      return false;
+    function depsReady() {
+      return !!(window.jQuery && window.ApiClient);
     }
 
-    if (window.__HSS_INIT__) {
-      console.log('[HSS] already initialized, skipping');
-      return true;
+    function applyTopTenNumbers() {
+      try {
+        var cards = document.querySelectorAll('.top-ten .card[data-index]');
+        if (!cards || !cards.length) return;
+
+        for (var i = 0; i < cards.length; i++) {
+          var idx = parseInt(cards[i].getAttribute('data-index'), 10);
+          if (!isNaN(idx)) cards[i].setAttribute('data-number', String(idx + 1));
+        }
+      } catch (e) {
+        console.error('[HSS] applyTopTenNumbers failed', e);
+      }
     }
 
-    window.__HSS_INIT__ = true;
-    console.log('[HSS] init (home detected)');
-    HomeScreenSectionsHandler2.init();
-    return true;
+    function onDiscoverClick(e) {
+      try {
+        // event delegation: catches clicks even for nodes added later
+        var btn = e.target && e.target.closest ? e.target.closest('.discover-requestbutton') : null;
+        if (!btn) return;
+
+        // only act when inside a discover-card
+        var card = btn.closest ? btn.closest('.discover-card') : null;
+        if (!card) return;
+
+        console.log('[HSS] discover request click');
+
+        // Match original behavior (uses dataset on the clicked element)
+        window.ApiClient.ajax({
+          url: window.ApiClient.getUrl('HomeScreen/DiscoverRequest'),
+          type: 'POST',
+          data: JSON.stringify({
+            UserId: window.ApiClient._currentUser && window.ApiClient._currentUser.Id,
+            MediaType: btn.getAttribute('data-media-type'),
+            MediaId: btn.getAttribute('data-id')
+          }),
+          contentType: 'application/json; charset=utf-8',
+          dataType: 'json'
+        }).then(function (response) {
+          try {
+            if (response && response.errors && response.errors.length > 0) {
+              Dashboard && Dashboard.alert && Dashboard.alert('Item request failed. Check logs.');
+              console.error('[HSS] request failed response:', response);
+            } else {
+              Dashboard && Dashboard.alert && Dashboard.alert('Item successfully requested');
+              console.log('[HSS] request success');
+            }
+          } catch (_) {}
+        }, function () {
+          try {
+            Dashboard && Dashboard.alert && Dashboard.alert('Item request failed');
+          } catch (_) {}
+        });
+      } catch (err) {
+        console.error('[HSS] onDiscoverClick failed', err);
+      }
+    }
+
+    function attachObserverIfNeeded() {
+      if (observer) return;
+
+      var MO = window.MutationObserver || window.WebKitMutationObserver;
+      if (!MO) {
+        console.warn('[HSS] MutationObserver not available');
+        return;
+      }
+
+      observer = new MO(function () {
+        // debounce so we don't hammer the UI thread
+        if (debounceTimer) return;
+        debounceTimer = setTimeout(function () {
+          debounceTimer = null;
+          applyTopTenNumbers();
+        }, 250);
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+      console.log('[HSS] observer attached');
+    }
+
+    function detachObserver() {
+      if (observer) {
+        try { observer.disconnect(); } catch (_) {}
+        observer = null;
+        console.log('[HSS] observer detached');
+      }
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+    }
+
+    function start() {
+      if (started) return;
+      started = true;
+
+      console.log('[HSS] start');
+
+      // Delegated click handler once
+      document.body.addEventListener('click', onDiscoverClick, true);
+
+      // Initial DOM pass
+      applyTopTenNumbers();
+
+      // Observer only while home is mounted
+      attachObserverIfNeeded();
+    }
+
+    function stop() {
+      if (!started) return;
+      started = false;
+
+      console.log('[HSS] stop');
+      detachObserver();
+      // keep click listener? safer to keep it, but if you want full stop:
+      // document.body.removeEventListener('click', onDiscoverClick, true);
+    }
+
+    function tick(reason) {
+      try {
+        if (!depsReady()) {
+          console.log('[HSS] waiting deps (' + reason + ')');
+          return;
+        }
+
+        if (!hasHomeMounted()) {
+          console.log('[HSS] home not mounted (' + reason + ')');
+          stop();
+          return;
+        }
+
+        // Home is mounted + deps ready
+        start();
+      } catch (e) {
+        console.error('[HSS] tick failed', e);
+      }
+    }
+
+    // Try a few times early, then rely on view events
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      tick('poll #' + tries);
+      if (started || tries >= 40) clearInterval(timer);
+    }, 250);
+
+    // Jellyfin view lifecycle hooks
+    document.addEventListener('viewshow', function () { tick('viewshow'); }, true);
+    document.addEventListener('viewhide', function () { tick('viewhide'); }, true);
+
+  } catch (e) {
+    console.error('[HSS] patch v2 fatal', e);
   }
-
-  var tries = 0;
-  var timer = setInterval(function () {
-    tries++;
-
-    if (waitForHome()) {
-      clearInterval(timer);
-      console.log('[HSS] init complete');
-      return;
-    }
-
-    if (tries > 50) {
-      clearInterval(timer);
-      console.warn('[HSS] init aborted (home not detected)');
-    }
-  }, 100);
 })();
 ";
+
+            Trace.WriteLine("[HSS] PatchHomeScreenSections: end (patched)");
+            return js;
         }
 
         public async Task<string?> DownloadAndTranspileAsync(string url, string cacheDir, string relPath)

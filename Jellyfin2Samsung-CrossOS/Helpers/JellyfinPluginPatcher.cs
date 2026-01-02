@@ -34,7 +34,8 @@ namespace Jellyfin2Samsung.Helpers
             PackageWorkspace workspace,
             string serverUrl,
             StringBuilder cssBuilder,
-            StringBuilder jsBuilder)
+            StringBuilder headJsBuilder,
+            StringBuilder bodyJsBuilder)
         {
             string pluginCacheDir = Path.Combine(workspace.Root, "www", "plugin_cache");
             Directory.CreateDirectory(pluginCacheDir);
@@ -48,13 +49,14 @@ namespace Jellyfin2Samsung.Helpers
                     serverUrl,
                     pluginCacheDir,
                     cssBuilder,
-                    jsBuilder);
+                    bodyJsBuilder);
             }
 
             await ProcessApiPluginsAsync(
                 serverUrl,
                 pluginCacheDir,
-                jsBuilder,
+                headJsBuilder,
+                bodyJsBuilder,
                 cssBuilder);
         }
 
@@ -195,7 +197,8 @@ namespace Jellyfin2Samsung.Helpers
         private async Task ProcessApiPluginsAsync(
             string serverUrl,
             string pluginCacheDir,
-            StringBuilder jsBuilder,
+            StringBuilder headJsBuilder,
+            StringBuilder bodyJsBuilder,
             StringBuilder cssBuilder)
         {
             var apiPlugins = await _apiClient.GetInstalledPluginsAsync(serverUrl);
@@ -245,11 +248,19 @@ namespace Jellyfin2Samsung.Helpers
                     if (path != null)
                     {
                         string injectedSrc = $"plugin_cache/{cleanName}/{fileName}";
-                        AppendScriptOnce(jsBuilder, $"<script src=\"{injectedSrc}\"></script>", injectedSrc);
-                        //string tag = _pluginManager.GenerateInjectorLoader(entry.Name, injectedSrc);
+                        if (relPath.Contains("HomeScreenSections", StringComparison.OrdinalIgnoreCase))
+                        {
+                            AppendScriptOnce(headJsBuilder,
+                                $"<script defer src=\"{injectedSrc}\"></script>",
+                                injectedSrc);
+                        }
+                        else
+                        {
+                            AppendScriptOnce(bodyJsBuilder,
+                                $"<script src=\"{injectedSrc}\"></script>",
+                                injectedSrc);
+                        }
 
-                        // Dedup by the injected src (not the whole tag)
-                        //AppendScriptOnce(apiJsBuilder, tag, injectedSrc);
                         break;
                     }
                 }
@@ -309,14 +320,14 @@ namespace Jellyfin2Samsung.Helpers
                 if (!rel.EndsWith(".js", StringComparison.OrdinalIgnoreCase)) rel += ".js";
 
                 string outSrc = $"plugin_cache/{rel}";
-                AppendScriptOnce(jsBuilder, $"<script src=\"{outSrc}\"></script>", outSrc);
+                AppendScriptOnce(bodyJsBuilder, $"<script src=\"{outSrc}\"></script>", outSrc);
             }
 
             if (apiJsBuilder.Length > 0)
             {
                 // This whole block might be appended multiple times by caller;
                 // individual scripts inside are already deduped above.
-                jsBuilder.AppendLine(apiJsBuilder.ToString());
+                bodyJsBuilder.AppendLine(apiJsBuilder.ToString());
             }
         }
 

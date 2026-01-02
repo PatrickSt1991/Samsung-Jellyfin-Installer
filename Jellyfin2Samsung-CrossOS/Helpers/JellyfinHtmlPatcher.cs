@@ -33,12 +33,13 @@ namespace Jellyfin2Samsung.Helpers
             html = HtmlUtils.RewriteLocalPaths(html);
 
             var css = new StringBuilder();
-            var js = new StringBuilder();
+            var headJs = new StringBuilder();
+            var bodyJs = new StringBuilder();
 
-            await _plugins.PatchPluginsAsync(ws, serverUrl, css, js);
+            await _plugins.PatchPluginsAsync(ws, serverUrl, css, headJs, bodyJs);
 
-            html = html.Replace("</head>", css + "\n</head>");
-            html = html.Replace("</body>", js + "\n</body>");
+            html = html.Replace("</head>", css + "\n" + headJs + "\n</head>");
+            html = html.Replace("</body>", bodyJs + "\n</body>");
 
             html = HtmlUtils.CleanAndApplyCsp(html);
             html = HtmlUtils.EnsurePublicJsIsLast(html);
