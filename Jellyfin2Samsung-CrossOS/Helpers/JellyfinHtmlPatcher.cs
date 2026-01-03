@@ -219,31 +219,40 @@ namespace Jellyfin2Samsung.Helpers
             {
                 var js = await File.ReadAllTextAsync(file);
 
-                if (js.Contains("origin:\"https://www.youtube.com\""))
+                // Always disable JS API on file://
+                js = js.Replace("enablejsapi:1", "enablejsapi:0");
+
+                // Skip origin injection only if already fully patched
+                if (js.Contains("origin:\"https://www.youtube.com\"") &&
+                    js.Contains("host:\"https://www.youtube.com\""))
+                {
+                    await File.WriteAllTextAsync(file, js);
                     continue;
+                }
 
                 const string marker = "playerVars:{";
                 var idx = js.IndexOf(marker, StringComparison.Ordinal);
-
                 if (idx == -1)
                     continue;
 
                 var start = idx + marker.Length;
                 var end = js.IndexOf('}', start);
-
                 if (end == -1)
                     continue;
 
                 var playerVars = js.Substring(start, end - start);
 
-                var patchedPlayerVars =
-                    playerVars +
-                    ",origin:\"https://www.youtube.com\"" +
-                    ",host:\"https://www.youtube.com\"";
+                // Avoid double commas
+                if (!playerVars.EndsWith(","))
+                    playerVars += ",";
+
+                playerVars +=
+                    "origin:\"https://www.youtube.com\"," +
+                    "host:\"https://www.youtube.com\"";
 
                 js =
                     js.Substring(0, start) +
-                    patchedPlayerVars +
+                    playerVars +
                     js.Substring(end);
 
                 await File.WriteAllTextAsync(file, js);
