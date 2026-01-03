@@ -151,7 +151,7 @@
   "deleteExistingNotAllowed": "Suppression impossible. Activez l'option pour autoriser l'outil à supprimer l'application existante...",
   "lblLocalIP": "IP locale :",
   "lblTryOverwrite": "Écraser la version existante",
-  "lblUseServerScripts": "plugins Jellyfin",
+  "lblUseServerScripts": "Télécharger les plugins Jellyfin",
   "lblEnableDevLogs": "Activer le débogage TV",
   "lblOpenDebugWindow": "Ouvrir le journal TV",
   "lblStartLog": "Commencer",

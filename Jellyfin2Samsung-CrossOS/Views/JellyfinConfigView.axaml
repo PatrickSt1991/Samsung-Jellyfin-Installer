@@ -176,7 +176,8 @@
 									   Classes="label"
 									   VerticalAlignment="Center"/>
 							<ToggleSwitch Grid.Column="1"
-										  IsChecked="{Binding PatchYoutubePlugin}"/>
+									IsEnabled="{Binding ApiKeyEnabled}"
+									IsChecked="{Binding PatchYoutubePlugin}"/>
 						</Grid>
 					</StackPanel>
 

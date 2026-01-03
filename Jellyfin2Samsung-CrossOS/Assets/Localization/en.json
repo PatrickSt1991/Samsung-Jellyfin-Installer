@@ -151,7 +151,7 @@
   "deleteExistingNotAllowed": "Deletion not allowed. Enable the setting to allow the tool to remove the existing app...",
   "lblLocalIP": "Local IP:",
   "lblTryOverwrite": "Overwrite existing version",
-  "lblUseServerScripts": "Jellyfin plugins",
+  "lblUseServerScripts": "Download Jellyfin plugins",
   "lblEnableDevLogs": "Enable TV Debug",
   "lblOpenDebugWindow": "Open TV Log",
   "lblStartLog": "Start",
