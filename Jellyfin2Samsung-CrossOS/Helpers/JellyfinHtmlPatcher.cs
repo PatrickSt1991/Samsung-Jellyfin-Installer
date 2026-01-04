@@ -105,113 +105,31 @@ namespace Jellyfin2Samsung.Helpers
         public async Task EnsureTizenCorsAsync(PackageWorkspace ws)
         {
             string path = Path.Combine(ws.Root, "config.xml");
-            Trace.WriteLine($"[EnsureTizenCors] config.xml path = {path}");
+            if (!File.Exists(path)) return;
 
-            if (!File.Exists(path))
-            {
-                Trace.WriteLine("[EnsureTizenCors] ERROR: config.xml not found");
-                throw new FileNotFoundException("config.xml not found", path);
-            }
-
-            XDocument doc;
-            await using (var stream = File.OpenRead(path))
-            {
-                doc = await XDocument.LoadAsync(stream, LoadOptions.PreserveWhitespace, default);
-            }
-
-            Trace.WriteLine("[EnsureTizenCors] config.xml loaded");
-
+            XDocument doc = XDocument.Load(path);
             var widget = doc.Root;
-            if (widget == null || widget.Name.LocalName != "widget")
-            {
-                Trace.WriteLine("[EnsureTizenCors] ERROR: Invalid root element");
-                throw new InvalidOperationException("Invalid Tizen config.xml");
-            }
-
             XNamespace widgetNs = widget.Name.Namespace;
-            XNamespace tizenNs =
-                widget.GetNamespaceOfPrefix("tizen")
-                ?? "http://tizen.org/ns/widgets";
+            XNamespace tizenNs = widget.GetNamespaceOfPrefix("tizen") ?? "http://tizen.org/ns/widgets";
 
-            Trace.WriteLine($"[EnsureTizenCors] widget namespace = {widgetNs}");
-            Trace.WriteLine($"[EnsureTizenCors] tizen namespace  = {tizenNs}");
-
-            // --------------------------------
-            // Ensure <access origin="*" />
-            // --------------------------------
-            var accessElements = widget.Elements(widgetNs + "access").ToList();
-            Trace.WriteLine($"[EnsureTizenCors] access elements found = {accessElements.Count}");
-
-            bool hasAccess = accessElements
-                .Any(e => (string?)e.Attribute("origin") == "*");
-
-            Trace.WriteLine($"[EnsureTizenCors] has access origin=\"*\" = {hasAccess}");
-
-            if (!hasAccess)
+            // Standard Access
+            if (!widget.Elements(widgetNs + "access").Any(e => (string?)e.Attribute("origin") == "*"))
             {
-                widget.AddFirst(
-                    new XElement(widgetNs + "access",
-                        new XAttribute("origin", "*"),
-                        new XAttribute("subdomains", "true")));
-
-                Trace.WriteLine("[EnsureTizenCors] Added <access origin=\"*\" subdomains=\"true\" />");
+                widget.Add(new XElement(widgetNs + "access", new XAttribute("origin", "*"), new XAttribute("subdomains", "true")));
             }
 
-            // --------------------------------
-            // Ensure internet privilege
-            // --------------------------------
-            var privilegeElements = widget.Elements(tizenNs + "privilege").ToList();
-            Trace.WriteLine($"[EnsureTizenCors] privilege elements found = {privilegeElements.Count}");
-
-            bool hasInternetPrivilege = privilegeElements.Any(e =>
-                (string?)e.Attribute("name") ==
-                "http://tizen.org/privilege/internet");
-
-            Trace.WriteLine($"[EnsureTizenCors] has internet privilege = {hasInternetPrivilege}");
-
-            if (!hasInternetPrivilege)
+            // Essential for Tizen 5.5 to allow cross-origin messaging between file:// and https://
+            if (!widget.Elements(tizenNs + "allow-navigation").Any())
             {
-                var inputDevicePrivilege = privilegeElements.FirstOrDefault(e =>
-                    (string?)e.Attribute("name") ==
-                    "http://tizen.org/privilege/tv.inputdevice");
-
-                var internetPrivilege = new XElement(
-                    tizenNs + "privilege",
-                    new XAttribute("name", "http://tizen.org/privilege/internet"));
-
-                if (inputDevicePrivilege != null)
-                {
-                    inputDevicePrivilege.AddAfterSelf(internetPrivilege);
-                    Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege after tv.inputdevice");
-                }
-                else
-                {
-                    var access = widget.Elements(widgetNs + "access").FirstOrDefault();
-                    if (access != null)
-                    {
-                        access.AddAfterSelf(internetPrivilege);
-                        Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege after <access>");
-                    }
-                    else
-                    {
-                        widget.AddFirst(internetPrivilege);
-                        Trace.WriteLine("[EnsureTizenCors] Inserted internet privilege at top of <widget>");
-                    }
-                }
+                widget.Add(new XElement(tizenNs + "allow-navigation", "*"));
             }
 
-            await using (var stream = File.Create(path))
-            {
-                await doc.SaveAsync(stream, SaveOptions.None, default);
-            }
-
-            Trace.WriteLine("[EnsureTizenCors] config.xml saved successfully");
+            doc.Save(path);
         }
         public async Task PatchYoutubePlayerAsync(PackageWorkspace ws)
         {
             var www = Path.Combine(ws.Root, "www");
-            if (!Directory.Exists(www))
-                return;
+            if (!Directory.Exists(www)) return;
 
             var files = Directory.GetFiles(www, "youtubePlayer-plugin.*.js");
 
@@ -219,45 +137,59 @@ namespace Jellyfin2Samsung.Helpers
             {
                 var js = await File.ReadAllTextAsync(file);
 
-                // Always disable JS API on file://
-                js = js.Replace("enablejsapi:1", "enablejsapi:0");
-
-                // Skip origin injection only if already fully patched
-                if (js.Contains("origin:\"https://www.youtube.com\"") &&
-                    js.Contains("host:\"https://www.youtube.com\""))
-                {
-                    await File.WriteAllTextAsync(file, js);
-                    continue;
-                }
+                // Switch to 1 so the iframe and the parent can actually 'talk' 
+                // using our spoofed origin.
+                js = js.Replace("enablejsapi:0", "enablejsapi:1");
 
                 const string marker = "playerVars:{";
                 var idx = js.IndexOf(marker, StringComparison.Ordinal);
-                if (idx == -1)
-                    continue;
+                if (idx != -1)
+                {
+                    var start = idx + marker.Length;
+                    if (!js.Contains("widget_referrer"))
+                    {
+                        // We provide the origin and the widget_referrer. 
+                        // This is the combination that usually satisfies the Error 153.
+                        string injection =
+                            "origin:\"https://www.youtube.com\"," +
+                            "widget_referrer:\"https://www.youtube.com\",";
 
-                var start = idx + marker.Length;
-                var end = js.IndexOf('}', start);
-                if (end == -1)
-                    continue;
-
-                var playerVars = js.Substring(start, end - start);
-
-                // Avoid double commas
-                if (!playerVars.EndsWith(","))
-                    playerVars += ",";
-
-                playerVars +=
-                    "origin:\"https://www.youtube.com\"," +
-                    "host:\"https://www.youtube.com\"";
-
-                js =
-                    js.Substring(0, start) +
-                    playerVars +
-                    js.Substring(end);
-
+                        js = js.Insert(start, injection);
+                    }
+                }
                 await File.WriteAllTextAsync(file, js);
             }
         }
+        public async Task PatchIndexHtmlAsync(PackageWorkspace ws)
+        {
+            var indexPath = Path.Combine(ws.Root, "www", "index.html");
+            if (!File.Exists(indexPath)) return;
 
+            var html = await File.ReadAllTextAsync(indexPath);
+            const string headMarker = "<head>";
+            var headIdx = html.IndexOf(headMarker, StringComparison.Ordinal);
+
+            if (headIdx != -1 && !html.Contains("YT-SAFE-PATCH"))
+            {
+                string safeScript = "\n<script id='YT-SAFE-PATCH'>\n" +
+                    "  try {\n" +
+                    "    console.log('[YT-PATCH] Running Safe Handshake Fix');\n" +
+                    "    Object.defineProperty(window, 'origin', { get: () => 'https://www.youtube.com' });\n" +
+                    "    Object.defineProperty(document, 'referrer', { get: () => 'https://www.youtube.com/' });\n" +
+                    "    // Observer to fix iframe src before it loads\n" +
+                    "    new MutationObserver(mutations => {\n" +
+                    "      mutations.forEach(m => m.addedNodes.forEach(n => {\n" +
+                    "        if(n.tagName === 'IFRAME' && n.src.includes('youtube.com')) {\n" +
+                    "           if(!n.src.includes('origin=')) n.src += '&origin=https://www.youtube.com';\n" +
+                    "        }\n" +
+                    "      }));\n" +
+                    "    }).observe(document.documentElement, { childList: true, subtree: true });\n" +
+                    "  } catch(e) { console.error(e); }\n" +
+                    "</script>";
+
+                html = html.Insert(headIdx + headMarker.Length, safeScript);
+                await File.WriteAllTextAsync(indexPath, html);
+            }
+        }
     }
 }

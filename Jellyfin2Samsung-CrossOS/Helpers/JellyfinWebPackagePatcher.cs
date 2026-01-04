@@ -31,8 +31,11 @@ namespace Jellyfin2Samsung.Helpers
                 if (AppSettings.Default.UseServerScripts)
                     await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinIP);
 
-                if(AppSettings.Default.PatchYoutubePlugin)
+                if (AppSettings.Default.PatchYoutubePlugin)
+                {
+                    await _html.PatchIndexHtmlAsync(ws);
                     await _html.PatchYoutubePlayerAsync(ws);
+                }
 
                 await _html.UpdateMultiServerConfigAsync(ws);
             }
