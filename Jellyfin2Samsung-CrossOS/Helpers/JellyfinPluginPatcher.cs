@@ -348,7 +348,8 @@ namespace Jellyfin2Samsung.Helpers
                 || lower.Contains("jellyfinenhanced")
                 || lower.Contains("mediabar")
                 || lower.Contains("kefin")
-                || lower.Contains("homescreensections");
+                || lower.Contains("homescreensections")
+                || lower.Contains("editorschoice");
         }
 
         private bool IsCoreBundle(string lower)

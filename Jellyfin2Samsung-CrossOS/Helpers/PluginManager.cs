@@ -1,4 +1,5 @@
-﻿using Jellyfin2Samsung.Models;
+﻿using Avalonia.Controls;
+using Jellyfin2Samsung.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Jellyfin2Samsung.Helpers
 {
@@ -169,376 +171,123 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
-        private string PatchHomeScreenSections(string js)
+        private string PatchEditorsChoice(string js)
         {
-            if (js.Contains("__HSS_TV_REBUILD__"))
-                return js;
+            if (js.Contains("__HSS_NATIVE_FIX_V9__")) return js;
 
-            // Best-effort removal of original plugin auto-inits (don’t rely on exact whitespace forever)
-            js = js.Replace(
-                "$(document).ready(function() {\n    setTimeout(function() {\n      HomeScreenSectionsHandler2.init();\n    }, 50);\n  });",
-                "/* HSS original auto-init removed */"
-            );
+            string css = @"
+        .hss-hero-container { position: relative; width: 94%; height: 480px; margin: 100px auto 40px auto; overflow: hidden; border-radius: 20px; background: #000; }
+        .hss-bg-wrapper { position: absolute; inset: 0; z-index: 1; }
+        .hss-bg-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease-in-out; }
+        .hss-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.3) 50%, transparent 100%); z-index: 2; }
+        .hss-content { position: absolute; inset: 0; padding: 0 6%; display: flex; flex-direction: column; justify-content: center; z-index: 3; }
+        .editorsChoiceItemLogo { max-width: 400px; max-height: 120px; object-fit: contain; margin-bottom: 25px; }
+        .editorsChoiceItemOverview { color: #eee; width: 48%; font-size: 1.15em; line-height: 1.5; margin-bottom: 30px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .hss-watch-btn { background: #00a4dc; color: #fff; border: none; padding: 18px 50px; border-radius: 8px; font-weight: bold; font-size: 1.3em; cursor: pointer; width: fit-content; transition: transform 0.2s; }
+        .hss-watch-btn:focus { background: #fff; color: #000; transform: scale(1.1); outline: none; }
+    ";
 
-            js = js.Replace(
-                "setTimeout(function() {\n    TopTenSectionHandler2.init();\n  }, 50);",
-                "/* HSS TopTen auto-init removed */"
-            );
-
-            js += @"
-;/* __HSS_TV_REBUILD__ */
+            string injection = @"
+/* __HSS_NATIVE_FIX_V9__ */
 (function () {
-  try {
-    if (window.__HSS_TV_REBUILD_LOADED__) return;
-    window.__HSS_TV_REBUILD_LOADED__ = true;
+    var style = document.createElement('style');
+    style.innerText = `" + css.Replace("\r\n", " ").Replace("\"", "\\\"") + @"`;
+    document.head.appendChild(style);
 
-    function log() {
-      try { console.log.apply(console, arguments); } catch (_) {}
-    }
-    function warn() {
-      try { console.warn.apply(console, arguments); } catch (_) {}
-    }
-    function err() {
-      try { console.error.apply(console, arguments); } catch (_) {}
+    var items = [];
+    var idx = 0;
+
+    function getApi() {
+        return window.ApiClient || (window.ConnectionManager && window.ConnectionManager.getcurrentitem().apiClient);
     }
 
-    log('[HSS][TV] rebuild loaded');
+    function updateHero() {
+        var hero = document.getElementById('hss-hero-container');
+        if (!hero || items.length === 0) return;
+        
+        var item = items[idx];
+        var api = getApi();
+        var host = api.serverAddress();
+        var token = api.accessToken();
+        
+        // We forceren de URL met api_key voor de <img> tag
+        var bgUrl = host + '/Items/' + item.Id + '/Images/Backdrop/0?api_key=' + token;
+        var logoUrl = host + '/Items/' + item.Id + '/Images/Logo/0?api_key=' + token;
 
-    function apiReady() {
-      return !!(window.ApiClient && window.ApiClient._currentUser && window.ApiClient._currentUser.Id);
+        console.log('[HSS] Wisselen naar:', item.Name);
+
+        var bgImg = hero.querySelector('.hss-bg-img');
+        bgImg.style.opacity = '0';
+        
+        setTimeout(function() {
+            bgImg.src = bgUrl;
+            bgImg.onload = function() { bgImg.style.opacity = '0.75'; };
+            
+            var logo = hero.querySelector('.editorsChoiceItemLogo');
+            if (item.ImageTags && item.ImageTags.Logo) {
+                logo.src = logoUrl;
+                logo.style.display = 'block';
+            } else {
+                logo.style.display = 'none';
+            }
+            
+            hero.querySelector('.editorsChoiceItemOverview').innerText = item.Overview || '';
+            
+            // Native Jellyfin/Emby navigatie voor TV
+            hero.querySelector('.hss-watch-btn').onclick = function() {
+                console.log('[HSS] Navigeren naar:', item.Id);
+                if (window.Emby && window.Emby.Page) {
+                    window.Emby.Page.showItem(item.Id);
+                } else {
+                    window.location.hash = '#!/item?id=' + item.Id;
+                }
+            };
+            
+            idx = (idx + 1) % items.length;
+        }, 500);
     }
 
-    function getRoot() {
-      return document.getElementById('reactRoot') || document.body;
+    function init() {
+        var api = getApi();
+        if (!api || !api.getCurrentUserId() || document.getElementById('hss-hero-container')) return;
+
+        var container = document.querySelector('.sections') || document.querySelector('.homeSectionsContainer');
+        if (!container) return;
+
+        var html = `
+            <div id=""hss-hero-container"" class=""hss-hero-container"">
+                <div class=""hss-bg-wrapper""><img class=""hss-bg-img"" crossorigin=""anonymous""></div>
+                <div class=""hss-overlay""></div>
+                <div class=""hss-content"">
+                    <img class=""editorsChoiceItemLogo"" src="""">
+                    <p class=""editorsChoiceItemOverview""></p>
+                    <button class=""hss-watch-btn"" tabindex=""0"">Watch Now</button>
+                </div>
+            </div>`;
+        
+        container.insertAdjacentHTML('afterbegin', html);
+
+        api.getItems(api.getCurrentUserId(), { 
+            IncludeItemTypes: 'Movie', 
+            SortBy: 'DateCreated', 
+            SortOrder: 'Descending', 
+            Limit: 6, 
+            Recursive: true, 
+            Fields: 'Overview,ImageTags' 
+        }).then(function(res) {
+            items = res.Items || [];
+            if (items.length > 0) {
+                updateHero();
+                setInterval(updateHero, 12000);
+            }
+        });
     }
 
-    function ensureContainer() {
-      var existing = document.getElementById('hssTvRoot');
-      if (existing) return existing;
-
-      var root = getRoot();
-      if (!root) return null;
-
-      var wrap = document.createElement('div');
-      wrap.id = 'hssTvRoot';
-      wrap.setAttribute('data-hss-tv', 'true');
-
-      // Keep styling minimal; rely mostly on Jellyfin’s existing CSS
-      wrap.style.padding = '0.5rem 0';
-      wrap.style.margin = '0';
-      wrap.style.width = '100%';
-      wrap.style.position = 'relative';
-      wrap.style.zIndex = '2';
-
-      // Insert near top so it’s visible on home
-      // If reactRoot contains the app, prepend so it shows above lists (TV friendly)
-      if (root.firstChild) root.insertBefore(wrap, root.firstChild);
-      else root.appendChild(wrap);
-
-      return wrap;
-    }
-
-    function cssOnce() {
-      if (document.getElementById('hssTvCss')) return;
-      var style = document.createElement('style');
-      style.id = 'hssTvCss';
-      style.type = 'text/css';
-      style.textContent = ''
-        + '#hssTvRoot .hss-row { margin: 0.75rem 0; }'
-        + '#hssTvRoot .hss-title { font-size: 1.2em; padding: 0 0.75rem; opacity: 0.95; }'
-        + '#hssTvRoot .hss-scroller { display: flex; overflow: hidden; padding: 0.5rem 0.75rem; gap: 0.75rem; }'
-        + '#hssTvRoot .hss-card { flex: 0 0 auto; width: 16rem; }'
-        + '#hssTvRoot .hss-card [tabindex] { outline: none; }'
-        + '#hssTvRoot .hss-focus { box-shadow: 0 0 0 3px rgba(255,255,255,0.65); border-radius: 0.5rem; }'
-        + '#hssTvRoot .hss-poster { width: 100%; aspect-ratio: 16/9; border-radius: 0.5rem; background: rgba(255,255,255,0.08); overflow: hidden; }'
-        + '#hssTvRoot .hss-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }'
-        + '#hssTvRoot .hss-name { margin-top: 0.35rem; font-size: 1.0em; opacity: 0.95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'
-        + '#hssTvRoot .hss-sub { font-size: 0.85em; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'
-        + '';
-      document.head.appendChild(style);
-    }
-
-    // Build image URL (Jellyfin)
-    function imageUrl(itemId, tag, type, maxWidth) {
-      try {
-        if (!window.ApiClient || !window.ApiClient.getUrl) return null;
-        var q = [];
-        if (maxWidth) q.push('maxWidth=' + encodeURIComponent(maxWidth));
-        if (tag) q.push('tag=' + encodeURIComponent(tag));
-        var qs = q.length ? ('?' + q.join('&')) : '';
-        // /Items/{id}/Images/Primary
-        return window.ApiClient.getUrl('Items/' + itemId + '/Images/' + type) + qs;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function safeNavigateToItem(id) {
-      try {
-        // Best effort: Jellyfin web uses routes like '#!/details?id=...'
-        // Some builds accept 'details?id=' as well.
-        if (window.Dashboard && typeof window.Dashboard.navigate === 'function') {
-          window.Dashboard.navigate('#!/details?id=' + encodeURIComponent(id));
-          return;
-        }
-      } catch (_) {}
-
-      try {
-        window.location.hash = '#!/details?id=' + encodeURIComponent(id);
-      } catch (_) {}
-    }
-
-    // ---- ApiClient wrappers ----
-    function apiGet(url) {
-      return window.ApiClient.ajax({
-        url: window.ApiClient.getUrl(url),
-        type: 'GET',
-        dataType: 'json'
-      });
-    }
-
-    function getViews(userId) {
-      // /Users/{id}/Views
-      return apiGet('Users/' + userId + '/Views');
-    }
-
-    function getLatest(userId, parentId, limit) {
-      // /Users/{id}/Items/Latest?ParentId=...
-      var url = 'Users/' + userId + '/Items/Latest'
-        + '?Limit=' + encodeURIComponent(limit || 16)
-        + '&Fields=PrimaryImageAspectRatio%2CPath%2CPrimaryImageTag'
-        + '&ImageTypeLimit=1'
-        + '&EnableImageTypes=Primary%2CBackdrop%2CThumb'
-        + '&ParentId=' + encodeURIComponent(parentId);
-      return apiGet(url);
-    }
-
-    // ---- Rendering ----
-    var focus = {
-      rows: [],     // [{ elRow, cards:[{el, id}] }]
-      r: 0,
-      c: 0
-    };
-
-    function clearFocusMap() {
-      focus.rows = [];
-      focus.r = 0;
-      focus.c = 0;
-    }
-
-    function setFocused(r, c) {
-      // remove old
-      for (var i = 0; i < focus.rows.length; i++) {
-        var cards = focus.rows[i].cards;
-        for (var j = 0; j < cards.length; j++) {
-          cards[j].el.classList.remove('hss-focus');
-        }
-      }
-
-      focus.r = Math.max(0, Math.min(r, focus.rows.length - 1));
-      var row = focus.rows[focus.r];
-      if (!row || !row.cards.length) return;
-
-      focus.c = Math.max(0, Math.min(c, row.cards.length - 1));
-      var card = row.cards[focus.c];
-      card.el.classList.add('hss-focus');
-
-      // ensure visible in scroller
-      try {
-        var scroller = row.elRow.querySelector('.hss-scroller');
-        if (scroller && card.el && card.el.scrollIntoView) {
-          card.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-        }
-      } catch (_) {}
-    }
-
-    function onKeyDown(e) {
-      // Tizen remote: keyCode varies by model; handle arrows + enter + return/back
-      var code = e.keyCode || 0;
-
-      // Left 37, Up 38, Right 39, Down 40, Enter 13
-      if (code === 37) { setFocused(focus.r, focus.c - 1); e.preventDefault(); return; }
-      if (code === 39) { setFocused(focus.r, focus.c + 1); e.preventDefault(); return; }
-      if (code === 38) { setFocused(focus.r - 1, focus.c); e.preventDefault(); return; }
-      if (code === 40) { setFocused(focus.r + 1, focus.c); e.preventDefault(); return; }
-
-      if (code === 13) {
-        var row = focus.rows[focus.r];
-        if (!row) return;
-        var card = row.cards[focus.c];
-        if (!card) return;
-        log('[HSS][TV] enter -> item', card.id);
-        safeNavigateToItem(card.id);
-        e.preventDefault();
-        return;
-      }
-    }
-
-    function makeCard(item, subtitle) {
-      var card = document.createElement('div');
-      card.className = 'hss-card';
-      card.setAttribute('tabindex', '-1');
-
-      var poster = document.createElement('div');
-      poster.className = 'hss-poster';
-
-      var img = document.createElement('img');
-      img.alt = item && item.Name ? item.Name : '';
-      // Prefer Primary tag if present
-      var tag = null;
-      if (item && item.ImageTags && item.ImageTags.Primary) tag = item.ImageTags.Primary;
-      if (item && item.PrimaryImageTag) tag = item.PrimaryImageTag;
-
-      var src = imageUrl(item.Id, tag, 'Primary', 600) || '';
-      if (src) img.src = src;
-
-      poster.appendChild(img);
-
-      var name = document.createElement('div');
-      name.className = 'hss-name';
-      name.textContent = (item && item.Name) ? item.Name : 'Unknown';
-
-      var sub = document.createElement('div');
-      sub.className = 'hss-sub';
-      sub.textContent = subtitle || '';
-
-      card.appendChild(poster);
-      card.appendChild(name);
-      card.appendChild(sub);
-
-      // Click support (mouse / click)
-      card.addEventListener('click', function () {
-        safeNavigateToItem(item.Id);
-      }, true);
-
-      return card;
-    }
-
-    function renderRow(container, title, items, subtitleBuilder) {
-      var row = document.createElement('div');
-      row.className = 'hss-row';
-
-      var h = document.createElement('div');
-      h.className = 'hss-title';
-      h.textContent = title;
-
-      var sc = document.createElement('div');
-      sc.className = 'hss-scroller';
-
-      row.appendChild(h);
-      row.appendChild(sc);
-      container.appendChild(row);
-
-      var cards = [];
-      for (var i = 0; i < items.length; i++) {
-        var it = items[i];
-        var sub = '';
-        try { sub = subtitleBuilder ? subtitleBuilder(it) : ''; } catch (_) {}
-        var el = makeCard(it, sub);
-        sc.appendChild(el);
-        cards.push({ el: el, id: it.Id });
-      }
-
-      focus.rows.push({ elRow: row, cards: cards });
-    }
-
-    function activateOnce() {
-      if (window.__HSS_TV_ACTIVE__) return;
-      window.__HSS_TV_ACTIVE__ = true;
-
-      cssOnce();
-
-      var container = ensureContainer();
-      if (!container) {
-        warn('[HSS][TV] no container (reactRoot/body missing)');
-        return;
-      }
-
-      // Clear any previous content
-      container.innerHTML = '';
-      clearFocusMap();
-
-      // Attach remote handler once
-      if (!window.__HSS_TV_KEYS__) {
-        window.__HSS_TV_KEYS__ = true;
-        document.addEventListener('keydown', onKeyDown, true);
-      }
-
-      var userId = window.ApiClient._currentUser.Id;
-
-      // Row 1: “Mijn media” based on Views (libraries)
-      getViews(userId).then(function (viewsResp) {
-        try {
-          var viewItems = (viewsResp && viewsResp.Items) ? viewsResp.Items : [];
-          if (!viewItems.length) {
-            warn('[HSS][TV] no views returned');
-            return;
-          }
-
-          renderRow(container, 'Mijn media', viewItems.slice(0, 12), function (it) {
-            // Types: CollectionFolder, etc
-            return it.CollectionType ? it.CollectionType : (it.Type ? it.Type : '');
-          });
-
-          // Row 2+: Latest for first two libraries (like Jellyfin does)
-          // This mimics your log calls: Items/Latest?ParentId=<libraryId>
-          var libs = viewItems.slice(0, 2);
-          var p = Promise.resolve();
-
-          for (var i = 0; i < libs.length; i++) {
-            (function (lib) {
-              p = p.then(function () {
-                return getLatest(userId, lib.Id, 12).then(function (latestItems) {
-                  if (!latestItems || !latestItems.length) return;
-                  renderRow(container, 'Nieuw in ' + (lib.Name || 'Bibliotheek'), latestItems, function (it) {
-                    return it.ProductionYear ? String(it.ProductionYear) : '';
-                  });
-                });
-              });
-            })(libs[i]);
-          }
-
-          p.then(function () {
-            // Set initial focus on first card
-            setTimeout(function () { setFocused(0, 0); }, 50);
-            log('[HSS][TV] rendered rows:', focus.rows.length);
-          });
-
-        } catch (e) {
-          err('[HSS][TV] render failed', e);
-        }
-      }, function (e) {
-        err('[HSS][TV] getViews failed', e);
-      });
-    }
-
-    // Wait for ApiClient + user, then activate
-    var tries = 0;
-    var timer = setInterval(function () {
-      tries++;
-
-      if (apiReady()) {
-        clearInterval(timer);
-        log('[HSS][TV] ApiClient ready -> activate');
-        activateOnce();
-        return;
-      }
-
-      if (tries >= 80) {
-        clearInterval(timer);
-        warn('[HSS][TV] ApiClient not ready (timeout)');
-      }
-    }, 200);
-
-  } catch (e) {
-    try { console.error('[HSS][TV] fatal', e); } catch (_) {}
-  }
+    setInterval(init, 3000);
 })();
 ";
-
-            return js;
+            return js + injection;
         }
-
 
         public async Task<string?> DownloadAndTranspileAsync(string url, string cacheDir, string relPath)
         {
@@ -549,8 +298,8 @@ namespace Jellyfin2Samsung.Helpers
                 string js = await _httpClient.GetStringAsync(url);
                 js = await EsbuildHelper.TranspileAsync(js, relPath);
 
-                if (relPath.Contains("HomeScreenSections", StringComparison.OrdinalIgnoreCase))
-                    js = PatchHomeScreenSections(js);
+                if (relPath.Contains("EditorsChoice", StringComparison.OrdinalIgnoreCase))
+                    js = PatchEditorsChoice(js);
 
                 string localPath = Path.Combine(cacheDir, relPath);
                 Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
