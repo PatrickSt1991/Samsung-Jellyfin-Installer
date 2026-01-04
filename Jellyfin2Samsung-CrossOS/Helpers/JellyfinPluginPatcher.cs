@@ -248,7 +248,7 @@ namespace Jellyfin2Samsung.Helpers
                     if (path != null)
                     {
                         string injectedSrc = $"plugin_cache/{cleanName}/{fileName}";
-                        if (relPath.Contains("HomeScreenSections", StringComparison.OrdinalIgnoreCase))
+                        if (relPath.Contains("EditorsChoice", StringComparison.OrdinalIgnoreCase))
                         {
                             AppendScriptOnce(bodyJsBuilder,
                                 $"<script defer src=\"{injectedSrc}\"></script>",

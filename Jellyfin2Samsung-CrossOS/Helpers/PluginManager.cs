@@ -79,8 +79,11 @@ namespace Jellyfin2Samsung.Helpers
             new PluginMatrixEntry
             {
                 Name = "EditorsChoice",
-                FallbackUrls = new(),
-                UseBabel = true
+                FallbackUrls =
+                [
+                    "https://raw.githubusercontent.com/lachlandcp/jellyfin-editors-choice-plugin/refs/heads/main/EditorsChoicePlugin/Api/client.js"
+                ],
+                UseBabel = false
             },
             new PluginMatrixEntry
             {
@@ -119,10 +122,7 @@ namespace Jellyfin2Samsung.Helpers
                 pluginName.Contains(entry.Name.ToLowerInvariant()));
         }
 
-        public async Task DownloadExplicitFilesAsync(
-                    string serverUrl,
-                    string pluginCacheDir,
-                    PluginMatrixEntry entry)
+        public async Task DownloadExplicitFilesAsync(string serverUrl, string pluginCacheDir, PluginMatrixEntry entry)
         {
             if (entry?.ExplicitServerFiles == null || entry.ExplicitServerFiles.Count == 0)
                 return;
@@ -171,124 +171,6 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
-        private string PatchEditorsChoice(string js)
-        {
-            if (js.Contains("__HSS_NATIVE_FIX_V9__")) return js;
-
-            string css = @"
-        .hss-hero-container { position: relative; width: 94%; height: 480px; margin: 100px auto 40px auto; overflow: hidden; border-radius: 20px; background: #000; }
-        .hss-bg-wrapper { position: absolute; inset: 0; z-index: 1; }
-        .hss-bg-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease-in-out; }
-        .hss-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.3) 50%, transparent 100%); z-index: 2; }
-        .hss-content { position: absolute; inset: 0; padding: 0 6%; display: flex; flex-direction: column; justify-content: center; z-index: 3; }
-        .editorsChoiceItemLogo { max-width: 400px; max-height: 120px; object-fit: contain; margin-bottom: 25px; }
-        .editorsChoiceItemOverview { color: #eee; width: 48%; font-size: 1.15em; line-height: 1.5; margin-bottom: 30px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        .hss-watch-btn { background: #00a4dc; color: #fff; border: none; padding: 18px 50px; border-radius: 8px; font-weight: bold; font-size: 1.3em; cursor: pointer; width: fit-content; transition: transform 0.2s; }
-        .hss-watch-btn:focus { background: #fff; color: #000; transform: scale(1.1); outline: none; }
-    ";
-
-            string injection = @"
-/* __HSS_NATIVE_FIX_V9__ */
-(function () {
-    var style = document.createElement('style');
-    style.innerText = `" + css.Replace("\r\n", " ").Replace("\"", "\\\"") + @"`;
-    document.head.appendChild(style);
-
-    var items = [];
-    var idx = 0;
-
-    function getApi() {
-        return window.ApiClient || (window.ConnectionManager && window.ConnectionManager.getcurrentitem().apiClient);
-    }
-
-    function updateHero() {
-        var hero = document.getElementById('hss-hero-container');
-        if (!hero || items.length === 0) return;
-        
-        var item = items[idx];
-        var api = getApi();
-        var host = api.serverAddress();
-        var token = api.accessToken();
-        
-        // We forceren de URL met api_key voor de <img> tag
-        var bgUrl = host + '/Items/' + item.Id + '/Images/Backdrop/0?api_key=' + token;
-        var logoUrl = host + '/Items/' + item.Id + '/Images/Logo/0?api_key=' + token;
-
-        console.log('[HSS] Wisselen naar:', item.Name);
-
-        var bgImg = hero.querySelector('.hss-bg-img');
-        bgImg.style.opacity = '0';
-        
-        setTimeout(function() {
-            bgImg.src = bgUrl;
-            bgImg.onload = function() { bgImg.style.opacity = '0.75'; };
-            
-            var logo = hero.querySelector('.editorsChoiceItemLogo');
-            if (item.ImageTags && item.ImageTags.Logo) {
-                logo.src = logoUrl;
-                logo.style.display = 'block';
-            } else {
-                logo.style.display = 'none';
-            }
-            
-            hero.querySelector('.editorsChoiceItemOverview').innerText = item.Overview || '';
-            
-            // Native Jellyfin/Emby navigatie voor TV
-            hero.querySelector('.hss-watch-btn').onclick = function() {
-                console.log('[HSS] Navigeren naar:', item.Id);
-                if (window.Emby && window.Emby.Page) {
-                    window.Emby.Page.showItem(item.Id);
-                } else {
-                    window.location.hash = '#!/item?id=' + item.Id;
-                }
-            };
-            
-            idx = (idx + 1) % items.length;
-        }, 500);
-    }
-
-    function init() {
-        var api = getApi();
-        if (!api || !api.getCurrentUserId() || document.getElementById('hss-hero-container')) return;
-
-        var container = document.querySelector('.sections') || document.querySelector('.homeSectionsContainer');
-        if (!container) return;
-
-        var html = `
-            <div id=""hss-hero-container"" class=""hss-hero-container"">
-                <div class=""hss-bg-wrapper""><img class=""hss-bg-img"" crossorigin=""anonymous""></div>
-                <div class=""hss-overlay""></div>
-                <div class=""hss-content"">
-                    <img class=""editorsChoiceItemLogo"" src="""">
-                    <p class=""editorsChoiceItemOverview""></p>
-                    <button class=""hss-watch-btn"" tabindex=""0"">Watch Now</button>
-                </div>
-            </div>`;
-        
-        container.insertAdjacentHTML('afterbegin', html);
-
-        api.getItems(api.getCurrentUserId(), { 
-            IncludeItemTypes: 'Movie', 
-            SortBy: 'DateCreated', 
-            SortOrder: 'Descending', 
-            Limit: 6, 
-            Recursive: true, 
-            Fields: 'Overview,ImageTags' 
-        }).then(function(res) {
-            items = res.Items || [];
-            if (items.length > 0) {
-                updateHero();
-                setInterval(updateHero, 12000);
-            }
-        });
-    }
-
-    setInterval(init, 3000);
-})();
-";
-            return js + injection;
-        }
-
         public async Task<string?> DownloadAndTranspileAsync(string url, string cacheDir, string relPath)
         {
             try
@@ -313,7 +195,107 @@ namespace Jellyfin2Samsung.Helpers
                 return null;
             }
         }
+        private string PatchEditorsChoice(string js)
+        {
+            string css = @"
+        .hss-hero { position: relative; width: 94%; height: 500px; margin: 90px auto 30px auto; overflow: hidden; border-radius: 15px; background: #000; }
+        .hss-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; z-index: 1; }
+        .hss-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.4) 60%, transparent 100%); z-index: 2; }
+        .hss-content { position: absolute; inset: 0; padding: 0 5%; display: flex; flex-direction: column; justify-content: center; z-index: 3; pointer-events: none; }
+        .hss-logo { max-width: 400px; max-height: 120px; object-fit: contain; margin-bottom: 15px; pointer-events: auto; }
+        .hss-overview { color: #eee; width: 45%; font-size: 1.1em; line-height: 1.5; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; pointer-events: auto; }
+        
+        /* De grotere Watch Now knop */
+        .hss-btn { 
+            background: #00a4dc; 
+            color: #fff; 
+            border: none; 
+            padding: 20px 60px; /* Meer padding voor een grotere knop */
+            border-radius: 10px; 
+            font-weight: 900; 
+            font-size: 1.6em; /* Veel grotere tekst */
+            text-transform: uppercase; /* Hoofdletters voor betere leesbaarheid op afstand */
+            cursor: pointer; 
+            pointer-events: auto; 
+            width: fit-content; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .hss-btn:focus { 
+            background: #fff; 
+            color: #000; 
+            transform: scale(1.15); /* Iets meer 'pop' bij focus */
+            outline: none; 
+        }
+        
+        .editorsChoiceItemBanner, .editorsChoiceItemsContainer { display: none !important; }
+    ";
 
+            return @"
+(function () {
+    var style = document.createElement('style');
+    style.innerText = `" + css.Replace("\r\n", " ").Replace("\"", "\\\"") + @"`;
+    document.head.appendChild(style);
+
+    function init() {
+        var api = window.ApiClient || (window.ConnectionManager && window.ConnectionManager.getcurrentitem().apiClient);
+        var container = document.querySelector('.sections') || document.querySelector('.homeSectionsContainer');
+        
+        if (!api || !container || document.getElementById('hss-hero')) return;
+
+        api.getItems(api.getCurrentUserId(), { IncludeItemTypes: 'Movie', SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 8, Recursive: true, Fields: 'Overview,ImageTags,CommunityRating' }).then(function(res) {
+            var items = res.Items || [];
+            if (!items.length) return;
+
+            var html = `
+                <div id=""hss-hero"" class=""hss-hero"">
+                    <img class=""hss-bg"" crossorigin=""anonymous"">
+                    <div class=""hss-overlay""></div>
+                    <div class=""hss-content"">
+                        <img class=""hss-logo"" crossorigin=""anonymous"">
+                        <div style=""color:#f5c518; font-size:1.6em; font-weight:bold; margin-bottom:10px;"">⭐ <span class=""hss-rate""></span></div>
+                        <p class=""hss-overview""></p>
+                        <button class=""hss-btn"">Watch Now</button>
+                    </div>
+                </div>`;
+            container.insertAdjacentHTML('afterbegin', html);
+
+            var idx = 0;
+            function slide() {
+                var item = items[idx];
+                var el = document.getElementById('hss-hero');
+                var host = api.serverAddress();
+                var token = api.accessToken();
+
+                var bg = el.querySelector('.hss-bg');
+                bg.style.opacity = '0';
+                
+                setTimeout(function() {
+                    bg.src = host + '/Items/' + item.Id + '/Images/Backdrop/0?api_key=' + token;
+                    bg.onload = function() { bg.style.opacity = '0.8'; };
+                    
+                    var logo = el.querySelector('.hss-logo');
+                    if (item.ImageTags.Logo) {
+                        logo.src = host + '/Items/' + item.Id + '/Images/Logo/0?api_key=' + token;
+                        logo.style.display = 'block';
+                    } else { logo.style.display = 'none'; }
+
+                    el.querySelector('.hss-rate').innerText = (item.CommunityRating || '7.5');
+                    el.querySelector('.hss-overview').innerText = item.Overview || '';
+                    el.querySelector('.hss-btn').onclick = function() { 
+                        if(window.Emby && window.Emby.Page) window.Emby.Page.showItem(item.Id);
+                        else window.location.hash = '#!/item?id=' + item.Id;
+                    };
+                    idx = (idx + 1) % items.length;
+                }, 400);
+            }
+            slide();
+            setInterval(slide, 10000);
+        });
+    }
+    setInterval(init, 2000);
+})();";
+        }
+        //Needs rework, if needed at all? not sure anymore
         public async Task PatchJavaScriptInjectorPublicJsAsync(string pluginCacheDir, string serverUrl)
         {
             try
@@ -460,7 +442,6 @@ namespace Jellyfin2Samsung.Helpers
                 Trace.WriteLine($"⚠ JavaScript Injector error: {ex}");
             }
         }
-
         private async Task ProcessKefinTweaksModulesAsync(string pluginCacheDir, string downloadRoot)
         {
             try
@@ -574,7 +555,6 @@ namespace Jellyfin2Samsung.Helpers
 }})();
 ";
         }
-
         private async Task ProcessKefinTweaksCssAsync(string pluginCacheDir, string downloadRoot)
         {
             // List of CSS files found in the KefinTweaks 'skins' directory
@@ -625,7 +605,6 @@ namespace Jellyfin2Samsung.Helpers
                 }
             }
         }
-
         private async Task PatchEnhancedMainScript(string scriptPath)
         {
             if (!File.Exists(scriptPath))
