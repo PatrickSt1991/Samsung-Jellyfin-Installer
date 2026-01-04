@@ -7,7 +7,8 @@
 <div align="center">
   <p>Install <strong>Jellyfin</strong> on your <strong>Samsung Smart TV</strong> — fast, easy, and error-free.</p>
 
-  <img src="https://img.shields.io/badge/✅_Supports_all_Tizen_versions-blue?style=for-the-badge" /> 
+  <img src="https://img.shields.io/badge/✅_Supports_all_Tizen_TV_versions-blue?style=for-the-badge" /> 
+  <img src="https://img.shields.io/badge/✅_Supports_Tizen_Studio_Emulator-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/😤_Tired_of_the_certificate_error%3F-You're_in_the_right_place!-brightgreen?style=for-the-badge" />
   <a href="https://discord.gg/7mga3zh8Cv"><img src="https://img.shields.io/badge/Ask%20it%20on%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white" /></a>
   <img src="https://img.shields.io/badge/Samsung_TV-Jellyfin_Plugins_Supported-7E57C2?style=for-the-badge&logo=samsung&logoColor=white" />
