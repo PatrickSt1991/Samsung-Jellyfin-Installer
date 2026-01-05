@@ -105,90 +105,94 @@ namespace Jellyfin2Samsung.Helpers
         public async Task EnsureTizenCorsAsync(PackageWorkspace ws)
         {
             string path = Path.Combine(ws.Root, "config.xml");
-            if (!File.Exists(path)) return;
-
             XDocument doc = XDocument.Load(path);
-            var widget = doc.Root;
-            XNamespace widgetNs = widget.Name.Namespace;
-            XNamespace tizenNs = widget.GetNamespaceOfPrefix("tizen") ?? "http://tizen.org/ns/widgets";
 
-            // Standard Access
-            if (!widget.Elements(widgetNs + "access").Any(e => (string?)e.Attribute("origin") == "*"))
+            string[] domains = {
+        "https://yewtu.be",
+        "https://invidious.f5.si",
+        "https://invidious.nerdvpn.de"
+    };
+
+            foreach (var d in domains)
             {
-                widget.Add(new XElement(widgetNs + "access", new XAttribute("origin", "*"), new XAttribute("subdomains", "true")));
+                if (!doc.Root.Elements("access").Any(e => (string?)e.Attribute("origin") == d))
+                {
+                    doc.Root.Add(new XElement("access", new XAttribute("origin", d), new XAttribute("subdomains", "true")));
+                }
             }
-
-            // Essential for Tizen 5.5 to allow cross-origin messaging between file:// and https://
-            if (!widget.Elements(tizenNs + "allow-navigation").Any())
-            {
-                widget.Add(new XElement(tizenNs + "allow-navigation", "*"));
-            }
-
             doc.Save(path);
         }
         public async Task PatchYoutubePlayerAsync(PackageWorkspace ws)
         {
             var www = Path.Combine(ws.Root, "www");
-            if (!Directory.Exists(www)) return;
-
-            var files = Directory.GetFiles(www, "youtubePlayer-plugin.*.js");
-
-            foreach (var file in files)
+            foreach (var file in Directory.GetFiles(www, "youtubePlayer-plugin.*.js"))
             {
                 var js = await File.ReadAllTextAsync(file);
+                js = js.Replace("https://www.youtube.com/iframe_api", "data:text/javascript,console.log('[NATIVE] Bridge Active')");
 
-                // Switch to 1 so the iframe and the parent can actually 'talk' 
-                // using our spoofed origin.
-                js = js.Replace("enablejsapi:0", "enablejsapi:1");
-
-                const string marker = "playerVars:{";
-                var idx = js.IndexOf(marker, StringComparison.Ordinal);
-                if (idx != -1)
+                if (!js.Contains("__TIZEN_CLEAN_V33__"))
                 {
-                    var start = idx + marker.Length;
-                    if (!js.Contains("widget_referrer"))
-                    {
-                        // We provide the origin and the widget_referrer. 
-                        // This is the combination that usually satisfies the Error 153.
-                        string injection =
-                            "origin:\"https://www.youtube.com\"," +
-                            "widget_referrer:\"https://www.youtube.com\",";
+                    string nativeCode = @"
+/* === TIZEN CLEAN V33 === */
+var __TIZEN_CLEAN_V33__ = true;
 
-                        js = js.Insert(start, injection);
-                    }
+// 1. FORCED FOCUS RECOVERY: Keep focus on the main window every 2 seconds
+// This ensures that even if an iframe 'steals' focus, the TV remains responsive.
+setInterval(function() {
+    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        // Do nothing, let user interact with video
+    } else {
+        window.focus(); 
+    }
+}, 2000);
+
+function __tPlayEmbed(videoId) {
+    var existing = document.getElementById('tizen_youtube_player');
+    if (existing) existing.remove();
+
+    var f = document.createElement('iframe');
+    f.id = 'tizen_youtube_player';
+    
+    // We add a 'clean' parameter to the URL to try and minimize UI
+    f.src = 'https://inv.perditum.com/embed/' + videoId + '?autoplay=1&local=true&controlBar=false';
+    
+    f.setAttribute('allow', 'autoplay; encrypted-media');
+    
+    // 2. THE CSS NUKE: We inject styles directly into the player via the URL 
+    // to hide the 'X', the spinner, and the error dialog.
+    f.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;background:#000;border:none;';
+    
+    document.body.appendChild(f);
+
+    // 3. IFRAME INJECTION: Hide VideoJS error elements
+    f.onload = function() {
+        try {
+            var style = document.createElement('style');
+            style.innerHTML = '.vjs-error-display, .vjs-modal-dialog, .vjs-loading-spinner, .vjs-close-button { display: none !important; visibility: hidden !important; }';
+            f.contentDocument.head.appendChild(style);
+        } catch(e) { console.log('Cross-origin prevents deep CSS injection'); }
+    };
+
+    // Remove Jellyfin loading spinners
+    setTimeout(function() {
+        document.querySelectorAll('.docspinner, .mdl-spinner').forEach(s => s.remove());
+    }, 1000);
+}
+
+window.YT = {
+    Player: function(id, config) {
+        if (config.videoId) __tPlayEmbed(config.videoId);
+        this.destroy = function() { 
+            var f = document.getElementById('tizen_youtube_player');
+            if(f) f.remove();
+        };
+        this.stopVideo = function(){ this.destroy(); };
+    }
+};
+";
+                    js = nativeCode + js;
                 }
                 await File.WriteAllTextAsync(file, js);
-            }
-        }
-        public async Task PatchIndexHtmlAsync(PackageWorkspace ws)
-        {
-            var indexPath = Path.Combine(ws.Root, "www", "index.html");
-            if (!File.Exists(indexPath)) return;
-
-            var html = await File.ReadAllTextAsync(indexPath);
-            const string headMarker = "<head>";
-            var headIdx = html.IndexOf(headMarker, StringComparison.Ordinal);
-
-            if (headIdx != -1 && !html.Contains("YT-SAFE-PATCH"))
-            {
-                string safeScript = "\n<script id='YT-SAFE-PATCH'>\n" +
-                    "  try {\n" +
-                    "    console.log('[YT-PATCH] Running Safe Handshake Fix');\n" +
-                    "    Object.defineProperty(window, 'origin', { get: () => 'https://www.youtube.com' });\n" +
-                    "    Object.defineProperty(document, 'referrer', { get: () => 'https://www.youtube.com/' });\n" +
-                    "    // Observer to fix iframe src before it loads\n" +
-                    "    new MutationObserver(mutations => {\n" +
-                    "      mutations.forEach(m => m.addedNodes.forEach(n => {\n" +
-                    "        if(n.tagName === 'IFRAME' && n.src.includes('youtube.com')) {\n" +
-                    "           if(!n.src.includes('origin=')) n.src += '&origin=https://www.youtube.com';\n" +
-                    "        }\n" +
-                    "      }));\n" +
-                    "    }).observe(document.documentElement, { childList: true, subtree: true });\n" +
-                    "  } catch(e) { console.error(e); }\n" +
-                    "</script>";
-
-                html = html.Insert(headIdx + headMarker.Length, safeScript);
-                await File.WriteAllTextAsync(indexPath, html);
             }
         }
     }

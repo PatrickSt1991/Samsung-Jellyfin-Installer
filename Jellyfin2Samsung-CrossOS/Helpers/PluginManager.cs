@@ -198,37 +198,109 @@ namespace Jellyfin2Samsung.Helpers
         private string PatchEditorsChoice(string js)
         {
             string css = @"
-        .hss-hero { position: relative; width: 94%; height: 500px; margin: 90px auto 30px auto; overflow: hidden; border-radius: 15px; background: #000; }
-        .hss-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; z-index: 1; }
-        .hss-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.4) 60%, transparent 100%); z-index: 2; }
-        .hss-content { position: absolute; inset: 0; padding: 0 5%; display: flex; flex-direction: column; justify-content: center; z-index: 3; pointer-events: none; }
-        .hss-logo { max-width: 400px; max-height: 120px; object-fit: contain; margin-bottom: 15px; pointer-events: auto; }
-        .hss-overview { color: #eee; width: 45%; font-size: 1.1em; line-height: 1.5; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; pointer-events: auto; }
-        
-        /* De grotere Watch Now knop */
-        .hss-btn { 
-            background: #00a4dc; 
-            color: #fff; 
-            border: none; 
-            padding: 20px 60px; /* Meer padding voor een grotere knop */
-            border-radius: 10px; 
-            font-weight: 900; 
-            font-size: 1.6em; /* Veel grotere tekst */
-            text-transform: uppercase; /* Hoofdletters voor betere leesbaarheid op afstand */
-            cursor: pointer; 
-            pointer-events: auto; 
-            width: fit-content; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-        }
-        .hss-btn:focus { 
-            background: #fff; 
-            color: #000; 
-            transform: scale(1.15); /* Iets meer 'pop' bij focus */
-            outline: none; 
-        }
-        
-        .editorsChoiceItemBanner, .editorsChoiceItemsContainer { display: none !important; }
-    ";
+.hss-hero { 
+    position: relative; 
+    width: 94%; 
+    height: 500px !important; 
+    margin: 30px auto 30px auto !important; 
+    overflow: hidden; 
+    border-radius: 15px; 
+    background: #000; 
+    border: 0.06em solid var(--borderColor) !important;
+}
+
+.hss-bg { 
+    position: absolute; 
+    inset: 0; 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    opacity: 0; 
+    transition: opacity 1s; 
+    z-index: 1; 
+}
+
+.hss-overlay { 
+    position: absolute; 
+    inset: 0; 
+    background: linear-gradient(
+        90deg, 
+        rgba(0, 0, 0, 1) 0%, 
+        rgba(0, 0, 0, 0) 60%, 
+        rgba(0, 0, 0, 0) 100%
+    ) !important; 
+    z-index: 2; 
+}
+
+.hss-content { 
+    position: absolute; 
+    inset: 0; 
+    padding: 30px !important; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    z-index: 3; 
+    pointer-events: none; 
+}
+
+.hss-logo { 
+    max-width: 400px; 
+    max-height: 120px; 
+    object-fit: contain; 
+    margin-bottom: 15px; 
+    pointer-events: auto; 
+}
+
+.hss-logo + div, 
+.hss-rate {
+    color: #fff !important;
+    font-size: 1em !important;
+    font-weight: 400 !important;
+    height: 10px !important;
+}
+
+.hss-overview { 
+    color: #eee !important; 
+    width: 45%; 
+    font-size: 0.9em !important; 
+    line-height: 1.5; 
+    margin-bottom: 25px !important; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 4; 
+    -webkit-box-orient: vertical; 
+    overflow: hidden; 
+    text-overflow: ellipsis !important;
+    pointer-events: auto; 
+}
+
+.hss-btn { 
+    background: #fff !important; 
+    color: #000 !important; 
+    border: none; 
+    padding: 0.9em 1em !important; 
+    border-radius: 0.5em !important; 
+    font-weight: 500 !important; 
+    font-size: 1em !important; 
+    text-transform: none !important; 
+    cursor: pointer; 
+    pointer-events: auto; 
+    width: fit-content; 
+    box-shadow: none !important;
+}
+
+.hss-btn:focus { 
+    background: var(--highlightOutlineColor) !important; 
+    color: #fff !important; 
+    transform: none !important; 
+    outline: none; 
+}
+
+.editorsChoiceItemBanner, 
+.editorsChoiceItemsContainer { 
+    display: none !important; 
+}
+";
+
 
             return @"
 (function () {
