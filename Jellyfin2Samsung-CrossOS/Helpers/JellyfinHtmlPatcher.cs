@@ -108,10 +108,11 @@ namespace Jellyfin2Samsung.Helpers
             XDocument doc = XDocument.Load(path);
 
             string[] domains = {
-        "https://yewtu.be",
-        "https://invidious.f5.si",
-        "https://invidious.nerdvpn.de"
-    };
+                "https://yewtu.be",
+                "https://invidious.f5.si",
+                "https://invidious.nerdvpn.de",
+                "https://inv.perditum.com"
+            };
 
             foreach (var d in domains)
             {
@@ -120,6 +121,11 @@ namespace Jellyfin2Samsung.Helpers
                     doc.Root.Add(new XElement("access", new XAttribute("origin", d), new XAttribute("subdomains", "true")));
                 }
             }
+            if (!doc.Root.Elements("allow-navigation").Any(e => (string?)e.Attribute("href") == "https://*.perditum.com"))
+            {
+                doc.Root.Add(new XElement("allow-navigation", new XAttribute("href", "https://*.perditum.com")));
+            }
+
             doc.Save(path);
         }
         public async Task PatchYoutubePlayerAsync(PackageWorkspace ws)
@@ -128,67 +134,84 @@ namespace Jellyfin2Samsung.Helpers
             foreach (var file in Directory.GetFiles(www, "youtubePlayer-plugin.*.js"))
             {
                 var js = await File.ReadAllTextAsync(file);
-                js = js.Replace("https://www.youtube.com/iframe_api", "data:text/javascript,console.log('[NATIVE] Bridge Active')");
-
-                if (!js.Contains("__TIZEN_CLEAN_V33__"))
+                if (!js.Contains("__V67__"))
                 {
                     string nativeCode = @"
-/* === TIZEN CLEAN V33 === */
-var __TIZEN_CLEAN_V33__ = true;
+/* === TIZEN V67 (Deep Logging) === */
+(function() {
+    console.log('[NATIVE-V67] INITIALIZING RECOVERY SYSTEM');
+    var activeVideo = null;
 
-// 1. FORCED FOCUS RECOVERY: Keep focus on the main window every 2 seconds
-// This ensures that even if an iframe 'steals' focus, the TV remains responsive.
-setInterval(function() {
-    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-        // Do nothing, let user interact with video
-    } else {
-        window.focus(); 
-    }
-}, 2000);
+    window.YT = {
+        PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+        Player: function(id, config) {
+            console.log('[NATIVE-V67] TARGET ID: ' + config.videoId);
+            var self = this;
+            
+            var v = document.createElement('video');
+            v.id = 'tizen_yt_video';
+            
+            // We'll use the URL you confirmed works on your laptop (itag 18) for stability
+            var targetUrl = 'https://inv.perditum.com/latest_version?id=' + config.videoId + '&itag=18&local=true';
+            console.log('[NATIVE-V67] SETTING SRC: ' + targetUrl);
+            v.src = targetUrl;
+            
+            v.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;background:#000;';
+            v.autoplay = true;
+            activeVideo = v;
 
-function __tPlayEmbed(videoId) {
-    var existing = document.getElementById('tizen_youtube_player');
-    if (existing) existing.remove();
+            // TRACKING LOGS
+            v.onloadstart = function() { console.log('[NATIVE-V67] VIDEO LOAD START'); };
+            v.oncanplay = function() { console.log('[NATIVE-V67] CAN PLAY - CLIENT READY'); };
+            v.onplaying = function() { 
+                console.log('[NATIVE-V67] SUCCESS: PLAYING STARTED'); 
+                document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(function(s){ s.remove(); });
+            };
+            
+            v.onerror = function() {
+                var err = v.error ? (v.error.code + ' ' + v.error.message) : 'Unknown Error';
+                console.error('[NATIVE-V67] VIDEO ERROR: ' + err);
+            };
 
-    var f = document.createElement('iframe');
-    f.id = 'tizen_youtube_player';
-    
-    // We add a 'clean' parameter to the URL to try and minimize UI
-    f.src = 'https://inv.perditum.com/embed/' + videoId + '?autoplay=1&local=true&controlBar=false';
-    
-    f.setAttribute('allow', 'autoplay; encrypted-media');
-    
-    // 2. THE CSS NUKE: We inject styles directly into the player via the URL 
-    // to hide the 'X', the spinner, and the error dialog.
-    f.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;background:#000;border:none;';
-    
-    document.body.appendChild(f);
+            this.playVideo = function() { 
+                console.log('[NATIVE-V67] EXECUTE .play()');
+                v.play().catch(function(e) {
+                    console.warn('[NATIVE-V67] PLAY BLOCKED: ' + e.message);
+                });
+            };
+            
+            this.stopVideo = function() { v.pause(); v.remove(); activeVideo = null; };
+            this.destroy = function() { this.stopVideo(); };
 
-    // 3. IFRAME INJECTION: Hide VideoJS error elements
-    f.onload = function() {
-        try {
-            var style = document.createElement('style');
-            style.innerHTML = '.vjs-error-display, .vjs-modal-dialog, .vjs-loading-spinner, .vjs-close-button { display: none !important; visibility: hidden !important; }';
-            f.contentDocument.head.appendChild(style);
-        } catch(e) { console.log('Cross-origin prevents deep CSS injection'); }
+            document.body.appendChild(v);
+            
+            if (config.events && config.events.onReady) {
+                setTimeout(function() {
+                    console.log('[NATIVE-V67] SIGNALING JELLYFIN READY');
+                    config.events.onReady({ target: self });
+                    self.playVideo();
+                }, 1000);
+            }
+        }
     };
 
-    // Remove Jellyfin loading spinners
-    setTimeout(function() {
-        document.querySelectorAll('.docspinner, .mdl-spinner').forEach(s => s.remove());
-    }, 1000);
-}
+    window.addEventListener('keydown', function(e) {
+        if (!activeVideo) return;
+        console.log('[NATIVE-V67] KEY PRESSED: ' + e.keyCode);
+        if (e.keyCode === 13 || e.key === 'Enter') {
+            console.log('[NATIVE-V67] MANUAL PLAY TRIGGERED');
+            activeVideo.play();
+        } else if (e.keyCode === 10009 || e.key === 'GoBack') {
+            activeVideo.pause(); activeVideo.remove(); activeVideo = null;
+            e.preventDefault();
+        }
+    }, true);
 
-window.YT = {
-    Player: function(id, config) {
-        if (config.videoId) __tPlayEmbed(config.videoId);
-        this.destroy = function() { 
-            var f = document.getElementById('tizen_youtube_player');
-            if(f) f.remove();
-        };
-        this.stopVideo = function(){ this.destroy(); };
+    if (typeof window.onYouTubeIframeAPIReady === 'function') {
+        console.log('[NATIVE-V67] BOOTSTRAPPING API');
+        window.onYouTubeIframeAPIReady();
     }
-};
+})();
 ";
                     js = nativeCode + js;
                 }

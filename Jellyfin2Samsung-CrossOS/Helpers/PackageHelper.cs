@@ -45,7 +45,8 @@ namespace Jellyfin2Samsung.Helpers
                               .Select(ip => ip.ToString())
                               .ToList();
 
-            bool ipMismatch = !localIps.Contains(selectedDevice.DeveloperIP);
+            bool ipMismatch = !localIps.Contains(selectedDevice.DeveloperIP) && !string.IsNullOrEmpty(selectedDevice.DeveloperIP);
+
 
             if (string.IsNullOrEmpty(packagePath) || !File.Exists(packagePath))
             {
