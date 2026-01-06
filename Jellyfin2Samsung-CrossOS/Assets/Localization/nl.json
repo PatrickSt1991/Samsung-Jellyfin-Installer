@@ -161,5 +161,13 @@
   "insufficientSpace": "Er is onvoldoende ruimte op uw apparaat. Verwijder enkele apps en probeer het opnieuw...",
   "lblKeepWGTFile": "WGT-bestand behouden",
   "AuthorMismatch": "Auteurscertificaat komt niet overeen. Onderteken het pakket opnieuw met het juiste certificaat.",
-  "FixYouTube153": "YouTube-plug-in repareren (fout 153)"
+  "FixYouTube153": "YouTube-plug-in repareren (fout 153)",
+  "lblBasePath": "Basispad",
+  "lblJellyfinUsername": "Gebruikersnaam",
+  "lblJellyfinPassword": "Wachtwoord",
+  "lblAuthenticate": "Inloggen",
+  "lblAutoLoginSettings": "Auto-login instellingen",
+  "lblBasePathHint": "Tip: Plak volledige URL (bijv. https://host.com/pad/jellyfin) om alle velden automatisch in te vullen",
+  "lblTestServer": "Test server",
+  "lblEnableAutoLoginConfig": "Config-patching voor auto-login inschakelen"
 }

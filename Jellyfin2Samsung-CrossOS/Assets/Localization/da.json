@@ -161,5 +161,13 @@
   "insufficientSpace": "Din enhed har ikke nok plads. Fjern nogle apps og prøv igen...",
   "lblKeepWGTFile": "Bevar WGT-fil",
   "AuthorMismatch": "Forfattercertifikat stemmer ikke overens. Underskriv venligst pakken igen med det korrekte certifikat.",
-  "FixYouTube153": "Ret YouTube-plugin (fejl 153)"
+  "FixYouTube153": "Ret YouTube-plugin (fejl 153)",
+  "lblBasePath": "Basissti",
+  "lblJellyfinUsername": "Brugernavn",
+  "lblJellyfinPassword": "Adgangskode",
+  "lblAuthenticate": "Log ind",
+  "lblAutoLoginSettings": "Auto-login indstillinger",
+  "lblBasePathHint": "Tip: Indsæt fuld URL (f.eks. https://host.com/sti/jellyfin) for at udfylde alle felter automatisk",
+  "lblTestServer": "Test server",
+  "lblEnableAutoLoginConfig": "Aktivér config-patching for auto-login"
 }

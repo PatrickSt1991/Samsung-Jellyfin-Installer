@@ -22,10 +22,10 @@ namespace Jellyfin2Samsung.Helpers
 
         public static bool IsValidJellyfinConfiguration()
         {
-            return !string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) &&
+            return !string.IsNullOrEmpty(AppSettings.Default.JellyfinFullUrl) &&
                    !string.IsNullOrEmpty(AppSettings.Default.JellyfinApiKey) &&
                    AppSettings.Default.JellyfinApiKey.Length == 32 &&
-                   IsValidUrl($"{AppSettings.Default.JellyfinIP}/Users");
+                   IsValidUrl($"{AppSettings.Default.JellyfinFullUrl}/Users");
         }
 
         public static bool IsValidUrl(string url)
@@ -42,7 +42,7 @@ namespace Jellyfin2Samsung.Helpers
             try
             {
                 SetupHeaders();
-                using var response = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinIP}/Users");
+                using var response = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinFullUrl}/Users");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -121,7 +121,7 @@ namespace Jellyfin2Samsung.Helpers
                     try
                     {
                         // Fetch user info
-                        var getUserResponse = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinIP}/Users/{userId}");
+                        var getUserResponse = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinFullUrl}/Users/{userId}");
                         getUserResponse.EnsureSuccessStatusCode();
                         var userJson = await getUserResponse.Content.ReadAsStringAsync();
 
@@ -137,7 +137,7 @@ namespace Jellyfin2Samsung.Helpers
 
                         using (userContent)
                         {
-                            var userResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users?userId={userId}", userContent);
+                            var userResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinFullUrl}/Users?userId={userId}", userContent);
                             userResponse.EnsureSuccessStatusCode();
                         }
 
@@ -155,7 +155,7 @@ namespace Jellyfin2Samsung.Helpers
                         var configJson = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
 
                         using var configContent = new StringContent(configJson, Encoding.UTF8, "application/json");
-                        var configResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinIP}/Users/Configuration?userId={userId}", configContent);
+                        var configResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinFullUrl}/Users/Configuration?userId={userId}", configContent);
                         configResponse.EnsureSuccessStatusCode();
                     }
                     catch (Exception userEx)
@@ -175,6 +175,76 @@ namespace Jellyfin2Samsung.Helpers
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
+        }
+
+        /// <summary>
+        /// Authenticates with Jellyfin using username and password.
+        /// Returns the access token and user ID on success.
+        /// </summary>
+        public async Task<(string? accessToken, string? userId, string? error)> AuthenticateAsync(string username, string password)
+        {
+            try
+            {
+                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var authUrl = $"{serverUrl}/Users/AuthenticateByName";
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization",
+                    "MediaBrowser Client=\"Samsung Jellyfin Installer\", Device=\"PC\", DeviceId=\"samsungjellyfin\", Version=\"1.0.0\"");
+
+                var authPayload = new
+                {
+                    Username = username,
+                    Pw = password
+                };
+
+                var json = JsonSerializer.Serialize(authPayload);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(authUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var authResponse = JsonNode.Parse(responseJson);
+
+                    var accessToken = authResponse?["AccessToken"]?.GetValue<string>();
+                    var userId = authResponse?["User"]?["Id"]?.GetValue<string>();
+
+                    return (accessToken, userId, null);
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Trace.WriteLine($"Authentication failed: {response.StatusCode} - {errorContent}");
+                    return (null, null, $"Authentication failed: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Authentication error: {ex}");
+                return (null, null, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Tests if the current server URL is reachable by checking the public system info endpoint.
+        /// </summary>
+        public async Task<bool> TestServerConnectionAsync()
+        {
+            try
+            {
+                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var testUrl = $"{serverUrl}/System/Info/Public";
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                var response = await _httpClient.GetAsync(testUrl);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

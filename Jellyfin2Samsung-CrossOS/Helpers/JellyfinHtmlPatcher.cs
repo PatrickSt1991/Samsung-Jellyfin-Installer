@@ -73,7 +73,7 @@ namespace Jellyfin2Samsung.Helpers
                 config["servers"] = servers;
             }
 
-            var serverUrl = AppSettings.Default.JellyfinIP.TrimEnd('/');
+            var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
 
             // Avoid duplicates
             if (!servers.Any(s => s?.GetValue<string>() == serverUrl))
@@ -83,6 +83,79 @@ namespace Jellyfin2Samsung.Helpers
 
             await File.WriteAllTextAsync(path, config.ToJsonString());
 
+        }
+
+        /// <summary>
+        /// Injects auto-login credentials into the Jellyfin web app.
+        /// This stores the access token and server info in localStorage format.
+        /// </summary>
+        public async Task InjectAutoLoginAsync(PackageWorkspace ws)
+        {
+            var accessToken = AppSettings.Default.JellyfinAccessToken;
+            var userId = AppSettings.Default.JellyfinUserId;
+            var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(serverUrl))
+            {
+                Trace.WriteLine("[InjectAutoLogin] Missing credentials, skipping auto-login injection");
+                return;
+            }
+
+            string indexPath = Path.Combine(ws.Root, "www", "index.html");
+            if (!File.Exists(indexPath))
+            {
+                Trace.WriteLine("[InjectAutoLogin] index.html not found");
+                return;
+            }
+
+            var html = await File.ReadAllTextAsync(indexPath);
+
+            // Create the credentials object that Jellyfin web expects
+            var credentialsScript = new StringBuilder();
+            credentialsScript.AppendLine("<script>");
+            credentialsScript.AppendLine("(function() {");
+            credentialsScript.AppendLine("  try {");
+            credentialsScript.AppendLine($"    var serverUrl = '{EscapeJsString(serverUrl)}';");
+            credentialsScript.AppendLine($"    var userId = '{EscapeJsString(userId)}';");
+            credentialsScript.AppendLine($"    var accessToken = '{EscapeJsString(accessToken)}';");
+            credentialsScript.AppendLine();
+            credentialsScript.AppendLine("    // Create credentials object matching Jellyfin's expected format");
+            credentialsScript.AppendLine("    var credentials = {");
+            credentialsScript.AppendLine("      Servers: [{");
+            credentialsScript.AppendLine("        ManualAddress: serverUrl,");
+            credentialsScript.AppendLine("        Id: serverUrl.replace(/[^a-zA-Z0-9]/g, ''),");
+            credentialsScript.AppendLine("        UserId: userId,");
+            credentialsScript.AppendLine("        AccessToken: accessToken,");
+            credentialsScript.AppendLine("        DateLastAccessed: new Date().getTime()");
+            credentialsScript.AppendLine("      }]");
+            credentialsScript.AppendLine("    };");
+            credentialsScript.AppendLine();
+            credentialsScript.AppendLine("    // Store in localStorage");
+            credentialsScript.AppendLine("    localStorage.setItem('jellyfin_credentials', JSON.stringify(credentials));");
+            credentialsScript.AppendLine();
+            credentialsScript.AppendLine("    console.log('[Auto-Login] Credentials injected for server: ' + serverUrl);");
+            credentialsScript.AppendLine("  } catch(e) {");
+            credentialsScript.AppendLine("    console.error('[Auto-Login] Failed to inject credentials:', e);");
+            credentialsScript.AppendLine("  }");
+            credentialsScript.AppendLine("})();");
+            credentialsScript.AppendLine("</script>");
+
+            // Inject before </head> to ensure it runs before Jellyfin's scripts
+            html = html.Replace("</head>", credentialsScript + "\n</head>");
+
+            await File.WriteAllTextAsync(indexPath, html);
+            Trace.WriteLine("[InjectAutoLogin] Auto-login credentials injected successfully");
+        }
+
+        private static string EscapeJsString(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r");
         }
         public async Task InjectUserSettingsAsync(PackageWorkspace ws, string[] userIds)
         {

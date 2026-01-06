@@ -39,6 +39,10 @@ namespace Jellyfin2Samsung.Helpers
         public bool ForceSamsungLogin { get; set; } = false;
         public bool RTLReading { get; set; } = false;
         public string JellyfinIP { get; set; } = "";
+        public string JellyfinBasePath { get; set; } = "";
+        public string JellyfinUsername { get; set; } = "";
+        public string JellyfinPassword { get; set; } = "";
+        public string JellyfinAccessToken { get; set; } = "";
         public string AudioLanguagePreference { get; set; } = "";
         public string SubtitleLanguagePreference { get; set; } = "";
         public bool EnableBackdrops { get; set; } = false;
@@ -82,6 +86,25 @@ namespace Jellyfin2Samsung.Helpers
         public string ReleaseInfo { get; set; } = "https://raw.githubusercontent.com/jeppevinkel/jellyfin-tizen-builds/refs/heads/master/README.md";
         public string CommunityInfo { get; set; } = "https://raw.githubusercontent.com/PatrickSt1991/tizen-community-packages/refs/heads/main/README.md";
         public AppSettings() { }
+
+        /// <summary>
+        /// Gets the full Jellyfin URL including base path for reverse proxy setups.
+        /// Example: https://xxx.seedhost.eu/xxx/jellyfin
+        /// </summary>
+        [JsonIgnore]
+        public string JellyfinFullUrl
+        {
+            get
+            {
+                var baseUrl = JellyfinIP?.TrimEnd('/') ?? "";
+                var basePath = JellyfinBasePath?.Trim('/') ?? "";
+
+                if (string.IsNullOrEmpty(basePath))
+                    return baseUrl;
+
+                return $"{baseUrl}/{basePath}";
+            }
+        }
 
         public void Save()
         {
