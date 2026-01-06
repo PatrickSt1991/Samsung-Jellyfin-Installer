@@ -314,7 +314,7 @@ namespace Jellyfin2Samsung.Helpers
         
         if (!api || !container || document.getElementById('hss-hero')) return;
 
-        api.getItems(api.getCurrentUserId(), { IncludeItemTypes: 'Movie', SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 8, Recursive: true, Fields: 'Overview,ImageTags,CommunityRating' }).then(function(res) {
+        api.getItems(api.getCurrentUserId(), { IncludeItemTypes: 'Movie', SortBy: 'Random', SortOrder: 'Descending', Limit: 8, Recursive: true, Fields: 'Overview,ImageTags,CommunityRating' }).then(function(res) {
             var items = res.Items || [];
             if (!items.length) return;
 

@@ -134,83 +134,88 @@ namespace Jellyfin2Samsung.Helpers
             foreach (var file in Directory.GetFiles(www, "youtubePlayer-plugin.*.js"))
             {
                 var js = await File.ReadAllTextAsync(file);
-                if (!js.Contains("__V67__"))
+                if (!js.Contains("__V75__"))
                 {
                     string nativeCode = @"
-/* === TIZEN V67 (Deep Logging) === */
+/* === TIZEN V75 (Bulletproof Bridge) === */
 (function() {
-    console.log('[NATIVE-V67] INITIALIZING RECOVERY SYSTEM');
+    console.log('[NATIVE-V75] INITIALIZING STABLE BRIDGE');
     var activeVideo = null;
 
     window.YT = {
         PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
         Player: function(id, config) {
-            console.log('[NATIVE-V67] TARGET ID: ' + config.videoId);
             var self = this;
+            var container = document.getElementById(id);
             
+            // Create Video Element
             var v = document.createElement('video');
-            v.id = 'tizen_yt_video';
-            
-            // We'll use the URL you confirmed works on your laptop (itag 18) for stability
-            var targetUrl = 'https://inv.perditum.com/latest_version?id=' + config.videoId + '&itag=18&local=true';
-            console.log('[NATIVE-V67] SETTING SRC: ' + targetUrl);
-            v.src = targetUrl;
-            
-            v.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;background:#000;';
+            v.id = 'tizen_final_video';
+            v.src = 'https://inv.perditum.com/latest_version?id=' + config.videoId + '&itag=18&local=true';
+            v.style.cssText = 'width:100%;height:100%;background:#000;position:absolute;top:0;left:0;z-index:99999;';
             v.autoplay = true;
+            v.controls = false;
             activeVideo = v;
 
-            // TRACKING LOGS
-            v.onloadstart = function() { console.log('[NATIVE-V67] VIDEO LOAD START'); };
-            v.oncanplay = function() { console.log('[NATIVE-V67] CAN PLAY - CLIENT READY'); };
-            v.onplaying = function() { 
-                console.log('[NATIVE-V67] SUCCESS: PLAYING STARTED'); 
-                document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(function(s){ s.remove(); });
+            // Define the API functions Jellyfin expects
+            this.playVideo = function() { v.play(); };
+            this.pauseVideo = function() { v.pause(); };
+            this.stopVideo = function() {
+                console.log('[V75] Stop Triggered');
+                v.pause(); v.src = ''; v.remove();
+                activeVideo = null;
+                if (config.events && config.events.onStateChange) {
+                    config.events.onStateChange({ data: 0 }); // Signal 'Ended'
+                }
+                if (window.appRouter) window.appRouter.back();
             };
-            
-            v.onerror = function() {
-                var err = v.error ? (v.error.code + ' ' + v.error.message) : 'Unknown Error';
-                console.error('[NATIVE-V67] VIDEO ERROR: ' + err);
-            };
-
-            this.playVideo = function() { 
-                console.log('[NATIVE-V67] EXECUTE .play()');
-                v.play().catch(function(e) {
-                    console.warn('[NATIVE-V67] PLAY BLOCKED: ' + e.message);
-                });
-            };
-            
-            this.stopVideo = function() { v.pause(); v.remove(); activeVideo = null; };
             this.destroy = function() { this.stopVideo(); };
 
-            document.body.appendChild(v);
+            // Attach to DOM
+            if (container) {
+                container.innerHTML = '';
+                container.appendChild(v);
+            }
+
+            // Sync with Jellyfin
+            v.onended = function() { self.stopVideo(); };
             
             if (config.events && config.events.onReady) {
-                setTimeout(function() {
-                    console.log('[NATIVE-V67] SIGNALING JELLYFIN READY');
-                    config.events.onReady({ target: self });
-                    self.playVideo();
-                }, 1000);
+                // Wait for the DOM to settle before telling Jellyfin we are ready
+                setTimeout(function() { 
+                    config.events.onReady({ target: self }); 
+                    document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(s => s.remove());
+                }, 200);
             }
         }
     };
 
+    // Global Key Listener for Return Key
     window.addEventListener('keydown', function(e) {
         if (!activeVideo) return;
-        console.log('[NATIVE-V67] KEY PRESSED: ' + e.keyCode);
-        if (e.keyCode === 13 || e.key === 'Enter') {
-            console.log('[NATIVE-V67] MANUAL PLAY TRIGGERED');
-            activeVideo.play();
-        } else if (e.keyCode === 10009 || e.key === 'GoBack') {
-            activeVideo.pause(); activeVideo.remove(); activeVideo = null;
+        if (e.keyCode === 10009 || e.key === 'GoBack' || e.keyCode === 27) {
+            console.log('[V75] Return Pressed - Cleaning Up');
             e.preventDefault();
+            e.stopPropagation();
+
+            // Find the player instance and kill it
+            if (activeVideo) {
+                activeVideo.pause();
+                activeVideo.src = '';
+                activeVideo.remove();
+                activeVideo = null;
+            }
+
+            // Force App to Navigation Back
+            if (window.appRouter) {
+                window.appRouter.back();
+            } else {
+                window.history.back();
+            }
         }
     }, true);
 
-    if (typeof window.onYouTubeIframeAPIReady === 'function') {
-        console.log('[NATIVE-V67] BOOTSTRAPPING API');
-        window.onYouTubeIframeAPIReady();
-    }
+    if (typeof window.onYouTubeIframeAPIReady === 'function') window.onYouTubeIframeAPIReady();
 })();
 ";
                     js = nativeCode + js;
