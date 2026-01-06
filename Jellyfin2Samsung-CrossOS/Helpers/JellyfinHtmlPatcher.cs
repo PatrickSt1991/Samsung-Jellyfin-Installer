@@ -134,84 +134,95 @@ namespace Jellyfin2Samsung.Helpers
             foreach (var file in Directory.GetFiles(www, "youtubePlayer-plugin.*.js"))
             {
                 var js = await File.ReadAllTextAsync(file);
-                if (!js.Contains("__V75__"))
+                if (!js.Contains("__V79__"))
                 {
                     string nativeCode = @"
-/* === TIZEN V75 (Bulletproof Bridge) === */
+/* === TIZEN V79 (Total API Satisfaction) === */
 (function() {
-    console.log('[NATIVE-V75] INITIALIZING STABLE BRIDGE');
+    console.log('[NATIVE-V79] FINALIZING API BRIDGE');
     var activeVideo = null;
+    var currentConfig = null;
 
     window.YT = {
-        PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+        PlayerState: { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
         Player: function(id, config) {
             var self = this;
+            currentConfig = config;
             var container = document.getElementById(id);
             
-            // Create Video Element
             var v = document.createElement('video');
             v.id = 'tizen_final_video';
             v.src = 'https://inv.perditum.com/latest_version?id=' + config.videoId + '&itag=18&local=true';
             v.style.cssText = 'width:100%;height:100%;background:#000;position:absolute;top:0;left:0;z-index:99999;';
             v.autoplay = true;
-            v.controls = false;
             activeVideo = v;
 
-            // Define the API functions Jellyfin expects
+            // --- MANDATORY API FUNCTIONS ---
             this.playVideo = function() { v.play(); };
             this.pauseVideo = function() { v.pause(); };
             this.stopVideo = function() {
-                console.log('[V75] Stop Triggered');
-                v.pause(); v.src = ''; v.remove();
+                console.log('[V79] STOP SEQUENCE');
+                v.pause(); v.src = ''; v.load(); v.remove();
                 activeVideo = null;
                 if (config.events && config.events.onStateChange) {
-                    config.events.onStateChange({ data: 0 }); // Signal 'Ended'
+                    config.events.onStateChange({ data: 0 }); 
                 }
-                if (window.appRouter) window.appRouter.back();
             };
             this.destroy = function() { this.stopVideo(); };
+            
+            // State & Time API
+            this.getPlayerState = function() { 
+                if (!v) return -1;
+                if (v.ended) return 0;
+                if (v.paused) return 2;
+                return 1; // Playing
+            };
+            this.getCurrentTime = function() { return v ? v.currentTime : 0; };
+            this.getDuration = function() { return v ? v.duration : 0; };
+            this.getVideoLoadedFraction = function() { return 1; };
 
-            // Attach to DOM
+            // Volume API
+            this.getVolume = function() { return v ? v.volume * 100 : 100; };
+            this.setVolume = function(vol) { if(v) v.volume = vol / 100; };
+            this.mute = function() { if(v) v.muted = true; };
+            this.unMute = function() { if(v) v.muted = false; };
+            this.isMuted = function() { return v ? v.muted : false; };
+            // -----------------------------
+
+            v.onended = function() { self.stopVideo(); };
+            v.onplaying = function() {
+                document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(s => s.remove());
+            };
+
             if (container) {
                 container.innerHTML = '';
                 container.appendChild(v);
             }
 
-            // Sync with Jellyfin
-            v.onended = function() { self.stopVideo(); };
-            
             if (config.events && config.events.onReady) {
-                // Wait for the DOM to settle before telling Jellyfin we are ready
-                setTimeout(function() { 
-                    config.events.onReady({ target: self }); 
-                    document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(s => s.remove());
-                }, 200);
+                setTimeout(function() { config.events.onReady({ target: self }); }, 200);
             }
         }
     };
 
-    // Global Key Listener for Return Key
     window.addEventListener('keydown', function(e) {
         if (!activeVideo) return;
-        if (e.keyCode === 10009 || e.key === 'GoBack' || e.keyCode === 27) {
-            console.log('[V75] Return Pressed - Cleaning Up');
+        if (e.keyCode === 10009 || e.key === 'GoBack') {
+            console.log('[V79] CLEAN EXIT VIA RETURN');
             e.preventDefault();
             e.stopPropagation();
 
-            // Find the player instance and kill it
             if (activeVideo) {
-                activeVideo.pause();
-                activeVideo.src = '';
-                activeVideo.remove();
-                activeVideo = null;
+                activeVideo.pause(); activeVideo.src = ''; v.load(); activeVideo.remove(); activeVideo = null;
             }
 
-            // Force App to Navigation Back
-            if (window.appRouter) {
-                window.appRouter.back();
-            } else {
-                window.history.back();
+            if (currentConfig && currentConfig.events && currentConfig.events.onStateChange) {
+                currentConfig.events.onStateChange({ data: 0 });
             }
+
+            setTimeout(function() {
+                if (window.appRouter) { window.appRouter.back(); } else { window.history.back(); }
+            }, 50);
         }
     }, true);
 
