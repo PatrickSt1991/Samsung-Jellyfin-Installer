@@ -161,5 +161,13 @@
   "insufficientSpace": "Your device has insufficient space, please remove some apps and try again...",
   "lblKeepWGTFile": "Preserve WGT file",
   "AuthorMismatch": "Author Certificate mismatch, please re-sign the package with correct certificate.",
-  "FixYouTube153": "Fix YouTube Plugin (Error 153)"
+  "FixYouTube153": "Fix YouTube Plugin (Error 153)",
+  "lblBasePath": "Base Path",
+  "lblJellyfinUsername": "Username",
+  "lblJellyfinPassword": "Password",
+  "lblAuthenticate": "Login",
+  "lblAutoLoginSettings": "Auto-Login Settings",
+  "lblBasePathHint": "Tip: Paste full URL (e.g., https://host.com/path/jellyfin) to auto-fill all fields",
+  "lblTestServer": "Test Server",
+  "lblEnableAutoLoginConfig": "Enable config patching for auto-login"
 }

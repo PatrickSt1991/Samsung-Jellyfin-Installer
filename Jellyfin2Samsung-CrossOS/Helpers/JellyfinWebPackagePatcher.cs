@@ -29,7 +29,7 @@ namespace Jellyfin2Samsung.Helpers
                 await _html.EnsureTizenCorsAsync(ws);
 
                 if (AppSettings.Default.UseServerScripts)
-                    await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinIP);
+                    await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinFullUrl);
 
                 if (AppSettings.Default.PatchYoutubePlugin)
                     await _html.PatchYoutubePlayerAsync(ws);
@@ -44,9 +44,17 @@ namespace Jellyfin2Samsung.Helpers
                 await _html.InjectUserSettingsAsync(ws, userIds);
             }
 
+            // Always inject auto-login credentials if available
+            if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
+                !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId))
+            {
+                Trace.WriteLine("Injecting auto-login credentials...");
+                await _html.InjectAutoLoginAsync(ws);
+            }
+
             if (AppSettings.Default.EnableDevLogs)
             {
-                Trace.WriteLine("Injecting dev logs...");   
+                Trace.WriteLine("Injecting dev logs...");
                 await _boot.InjectDevLogsAsync(ws);
             }
 

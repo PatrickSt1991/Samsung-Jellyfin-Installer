@@ -42,9 +42,30 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string selectedJellyfinPort = string.Empty;
-        
+
         [ObservableProperty]
         private string selectedJellyfinProtocol = string.Empty;
+
+        [ObservableProperty]
+        private string jellyfinBasePath = string.Empty;
+
+        [ObservableProperty]
+        private string jellyfinUsername = string.Empty;
+
+        [ObservableProperty]
+        private string jellyfinPassword = string.Empty;
+
+        [ObservableProperty]
+        private bool isAuthenticated = false;
+
+        [ObservableProperty]
+        private string authenticationStatus = string.Empty;
+
+        [ObservableProperty]
+        private string serverConnectionStatus = string.Empty;
+
+        [ObservableProperty]
+        private bool serverValidated = false;
 
         [ObservableProperty]
         private bool enableBackdrops;
@@ -179,6 +200,17 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
         public string lblOpenDebugWindow => _localizationService.GetString("lblOpenDebugWindow");
         public string lblFixYouTube153 => _localizationService.GetString("FixYouTube153");
+        public string LblBasePath => _localizationService.GetString("lblBasePath");
+        public string LblJellyfinUsername => _localizationService.GetString("lblJellyfinUsername");
+        public string LblJellyfinPassword => _localizationService.GetString("lblJellyfinPassword");
+        public string LblAuthenticate => _localizationService.GetString("lblAuthenticate");
+        public string LblAutoLoginSettings => _localizationService.GetString("lblAutoLoginSettings");
+        public string LblBasePathHint => _localizationService.GetString("lblBasePathHint");
+        public string LblTestServer => _localizationService.GetString("lblTestServer");
+        public string LblEnableAutoLoginConfig => _localizationService.GetString("lblEnableAutoLoginConfig");
+        public bool CanLogin => ServerValidated &&
+                                !string.IsNullOrWhiteSpace(JellyfinUsername) &&
+                                !string.IsNullOrWhiteSpace(JellyfinPassword);
         public string TvIp => AppSettings.Default.TvIp;
 
         public JellyfinConfigViewModel(
@@ -231,6 +263,14 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblEnableDevLogs));
             OnPropertyChanged(nameof(lblOpenDebugWindow));
             OnPropertyChanged(nameof(lblFixYouTube153));
+            OnPropertyChanged(nameof(LblBasePath));
+            OnPropertyChanged(nameof(LblJellyfinUsername));
+            OnPropertyChanged(nameof(LblJellyfinPassword));
+            OnPropertyChanged(nameof(LblAuthenticate));
+            OnPropertyChanged(nameof(LblAutoLoginSettings));
+            OnPropertyChanged(nameof(LblBasePathHint));
+            OnPropertyChanged(nameof(LblTestServer));
+            OnPropertyChanged(nameof(LblEnableAutoLoginConfig));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -248,6 +288,7 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnJellyfinServerIpChanged(string? value)
         {
             UpdateJellyfinAddress();
+            ServerIpSet = !string.IsNullOrWhiteSpace(value);
         }
 
         partial void OnSelectedThemeChanged(string? value)
@@ -288,6 +329,112 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSelectedJellyfinProtocolChanged(string value)
         {
             UpdateJellyfinAddress();
+        }
+
+        partial void OnJellyfinBasePathChanged(string value)
+        {
+            // Check if user pasted a full URL - auto-parse it
+            if (!string.IsNullOrEmpty(value) && Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == "http" || uri.Scheme == "https"))
+            {
+                // User pasted a full URL like https://xx.seedhost.eu/xx/jellyfin
+                SelectedJellyfinProtocol = uri.Scheme;
+                JellyfinServerIp = uri.Host;
+                SelectedJellyfinPort = uri.IsDefaultPort ? (uri.Scheme == "https" ? "443" : "80") : uri.Port.ToString();
+
+                // Extract the path portion (without triggering this handler again)
+                var path = uri.AbsolutePath.TrimEnd('/');
+                AppSettings.Default.JellyfinBasePath = path;
+                jellyfinBasePath = path; // Set backing field directly to avoid recursion
+                OnPropertyChanged(nameof(JellyfinBasePath));
+            }
+            else
+            {
+                AppSettings.Default.JellyfinBasePath = value;
+            }
+            AppSettings.Default.Save();
+            UpdateServerIpStatus();
+        }
+
+        partial void OnJellyfinUsernameChanged(string value)
+        {
+            AppSettings.Default.JellyfinUsername = value;
+            AppSettings.Default.Save();
+            OnPropertyChanged(nameof(CanLogin));
+        }
+
+        partial void OnJellyfinPasswordChanged(string value)
+        {
+            AppSettings.Default.JellyfinPassword = value;
+            AppSettings.Default.Save();
+            OnPropertyChanged(nameof(CanLogin));
+        }
+
+        [RelayCommand]
+        private async Task AuthenticateAsync()
+        {
+            if (string.IsNullOrWhiteSpace(JellyfinUsername) || string.IsNullOrWhiteSpace(JellyfinPassword))
+            {
+                AuthenticationStatus = "Please enter username and password";
+                return;
+            }
+
+            AuthenticationStatus = "Authenticating...";
+
+            var (accessToken, userId, error) = await _jellyfinApiClient.AuthenticateAsync(JellyfinUsername, JellyfinPassword);
+
+            if (accessToken != null && userId != null)
+            {
+                AppSettings.Default.JellyfinAccessToken = accessToken;
+                AppSettings.Default.JellyfinUserId = userId;
+                AppSettings.Default.Save();
+
+                IsAuthenticated = true;
+                AuthenticationStatus = "Authentication successful!";
+
+                // Reload users
+                await LoadJellyfinUsersAsync();
+
+                // Select the authenticated user
+                SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == userId);
+            }
+            else
+            {
+                IsAuthenticated = false;
+                AuthenticationStatus = error ?? "Authentication failed";
+            }
+        }
+
+        [RelayCommand]
+        private void EnableAutoLoginConfig()
+        {
+            // Set Update Mode to "Server Settings" if currently "None"
+            if (SelectedUpdateMode == "None" || string.IsNullOrEmpty(SelectedUpdateMode))
+            {
+                SelectedUpdateMode = "Server Settings";
+            }
+        }
+
+        [RelayCommand]
+        private async Task TestConnectionAsync()
+        {
+            ServerConnectionStatus = "Testing...";
+            ServerValidated = false;
+            OnPropertyChanged(nameof(CanLogin));
+
+            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync();
+
+            if (isReachable)
+            {
+                ServerConnectionStatus = "Server OK!";
+                ServerValidated = true;
+            }
+            else
+            {
+                ServerConnectionStatus = "Connection failed!";
+                ServerValidated = false;
+            }
+            OnPropertyChanged(nameof(CanLogin));
         }
 
         partial void OnEnableBackdropsChanged(bool value)
@@ -444,6 +591,18 @@ namespace Jellyfin2Samsung.ViewModels
                 SelectedJellyfinPort = "8096";
             }
 
+            // Load base path for reverse proxy support
+            JellyfinBasePath = AppSettings.Default.JellyfinBasePath ?? "";
+
+            // Load auto-login credentials
+            JellyfinUsername = AppSettings.Default.JellyfinUsername ?? "";
+            JellyfinPassword = AppSettings.Default.JellyfinPassword ?? "";
+            IsAuthenticated = !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken);
+            if (IsAuthenticated)
+            {
+                AuthenticationStatus = "Previously authenticated";
+            }
+
             SelectedUpdateMode = AppSettings.Default.ConfigUpdateMode ?? "None";
             JellyfinApiKey = AppSettings.Default.JellyfinApiKey ?? "";
 
@@ -496,7 +655,8 @@ namespace Jellyfin2Samsung.ViewModels
 
         private void UpdateServerIpStatus()
         {
-            ServerIpSet = !string.IsNullOrEmpty(AppSettings.Default.JellyfinIP);
+            ServerIpSet = !string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) ||
+                          !string.IsNullOrWhiteSpace(JellyfinServerIp);
         }
 
         private async Task LoadJellyfinUsersAsync()
