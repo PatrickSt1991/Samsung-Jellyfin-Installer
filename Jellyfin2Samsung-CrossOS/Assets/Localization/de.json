@@ -165,9 +165,16 @@
   "lblBasePath": "Basispfad",
   "lblJellyfinUsername": "Benutzername",
   "lblJellyfinPassword": "Passwort",
-  "lblAuthenticate": "Anmelden",
+  "lblAuthenticate": "Test Login",
   "lblAutoLoginSettings": "Auto-Login-Einstellungen",
   "lblBasePathHint": "Tipp: Vollständige URL einfügen (z.B. https://host.com/pfad/jellyfin) um alle Felder automatisch auszufüllen",
   "lblTestServer": "Server testen",
-  "lblEnableAutoLoginConfig": "Config-Patching für Auto-Login aktivieren"
+  "lblEnableAutoLoginConfig": "Config-Patching für Auto-Login aktivieren",
+  "lblTabServer": "Server",
+  "lblTabPlayback": "Wiedergabe",
+  "lblTabUser": "Benutzer",
+  "lblServerInputMode": "Eingabemodus",
+  "lblServerUrl": "Server-URL",
+  "lblConnectionStatus": "Server Status",
+  "lblAutoLoginUser": "Benutzer"
 }

@@ -165,9 +165,16 @@
   "lblBasePath": "Basissti",
   "lblJellyfinUsername": "Brugernavn",
   "lblJellyfinPassword": "Adgangskode",
-  "lblAuthenticate": "Log ind",
+  "lblAuthenticate": "Test Login",
   "lblAutoLoginSettings": "Auto-login indstillinger",
   "lblBasePathHint": "Tip: Indsæt fuld URL (f.eks. https://host.com/sti/jellyfin) for at udfylde alle felter automatisk",
-  "lblTestServer": "Test server",
-  "lblEnableAutoLoginConfig": "Aktivér config-patching for auto-login"
+  "lblTestServer": "Test Server",
+  "lblEnableAutoLoginConfig": "Aktivér config-patching for auto-login",
+  "lblTabServer": "Server",
+  "lblTabPlayback": "Afspilning",
+  "lblTabUser": "Bruger",
+  "lblServerInputMode": "Inputtilstand",
+  "lblServerUrl": "Server-URL",
+  "lblConnectionStatus": "Server Status",
+  "lblAutoLoginUser": "Bruger"
 }

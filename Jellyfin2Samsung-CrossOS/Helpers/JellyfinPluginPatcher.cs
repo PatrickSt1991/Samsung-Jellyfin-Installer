@@ -20,6 +20,11 @@ namespace Jellyfin2Samsung.Helpers
         private readonly HashSet<string> _injectedScripts = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _injectedStyles = new(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// Exposes the Jellyfin API client for server info lookups.
+        /// </summary>
+        public JellyfinApiClient Api => _apiClient;
+
         public JellyfinPluginPatcher(
             HttpClient httpClient,
             JellyfinApiClient apiClient,

@@ -161,5 +161,20 @@
   "insufficientSpace": "Cihazınızda yetersiz alan var, lütfen bazı uygulamaları kaldırın ve tekrar deneyin...",
   "lblKeepWGTFile": "WGT dosyasını koru",
   "AuthorMismatch": "Yazar Sertifikası uyumsuzluğu, lütfen paketi doğru sertifika ile yeniden imzalayın.",
-  "FixYouTube153": "YouTube Eklentisini Düzelt (Hata 153)"
+  "FixYouTube153": "YouTube Eklentisini Düzelt (Hata 153)",
+  "lblBasePath": "Temel Yol",
+  "lblJellyfinUsername": "Kullanıcı Adı",
+  "lblJellyfinPassword": "Şifre",
+  "lblAuthenticate": "Test Login",
+  "lblAutoLoginSettings": "Otomatik Giriş Ayarları",
+  "lblBasePathHint": "İpucu: Tüm alanları otomatik doldurmak için tam URL yapıştırın",
+  "lblTestServer": "Sunucuyu Test Et",
+  "lblEnableAutoLoginConfig": "Otomatik giriş için config yaması etkinleştir",
+  "lblTabServer": "Sunucu",
+  "lblTabPlayback": "Oynatma",
+  "lblTabUser": "Kullanıcı",
+  "lblServerInputMode": "Giriş Modu",
+  "lblServerUrl": "Sunucu URL",
+  "lblConnectionStatus": "Sunucu Durumu",
+  "lblAutoLoginUser": "Kullanıcı"
 }

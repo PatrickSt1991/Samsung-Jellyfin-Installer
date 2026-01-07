@@ -165,9 +165,16 @@
   "lblBasePath": "Chemin de base",
   "lblJellyfinUsername": "Nom d'utilisateur",
   "lblJellyfinPassword": "Mot de passe",
-  "lblAuthenticate": "Connexion",
+  "lblAuthenticate": "Test Login",
   "lblAutoLoginSettings": "Paramètres de connexion automatique",
   "lblBasePathHint": "Astuce: Collez l'URL complète (ex: https://host.com/chemin/jellyfin) pour remplir automatiquement",
   "lblTestServer": "Tester serveur",
-  "lblEnableAutoLoginConfig": "Activer le patch config pour auto-login"
+  "lblEnableAutoLoginConfig": "Activer le patch config pour auto-login",
+  "lblTabServer": "Serveur",
+  "lblTabPlayback": "Lecture",
+  "lblTabUser": "Utilisateur",
+  "lblServerInputMode": "Mode de saisie",
+  "lblServerUrl": "URL du serveur",
+  "lblConnectionStatus": "Statut serveur",
+  "lblAutoLoginUser": "Utilisateur"
 }
