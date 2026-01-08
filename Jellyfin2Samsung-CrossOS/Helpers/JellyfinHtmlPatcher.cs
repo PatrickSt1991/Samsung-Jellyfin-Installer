@@ -88,17 +88,41 @@ namespace Jellyfin2Samsung.Helpers
         /// <summary>
         /// Injects auto-login credentials into the Jellyfin web app.
         /// This stores the access token and server info in localStorage format.
+        /// Uses the real server ID from /System/Info/Public to prevent ServerMismatch errors.
         /// </summary>
         public async Task InjectAutoLoginAsync(PackageWorkspace ws)
         {
             var accessToken = AppSettings.Default.JellyfinAccessToken;
             var userId = AppSettings.Default.JellyfinUserId;
             var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+            var serverId = AppSettings.Default.JellyfinServerId;
+            var localAddress = AppSettings.Default.JellyfinServerLocalAddress;
 
             if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(serverUrl))
             {
                 Trace.WriteLine("[InjectAutoLogin] Missing credentials, skipping auto-login injection");
                 return;
+            }
+
+            // If server ID is not stored, try to fetch it now
+            if (string.IsNullOrEmpty(serverId))
+            {
+                Trace.WriteLine("[InjectAutoLogin] Server ID not cached, fetching from server...");
+                var serverInfo = await _plugins.Api.GetPublicSystemInfoAsync(serverUrl);
+                if (serverInfo != null && !string.IsNullOrEmpty(serverInfo.Id))
+                {
+                    serverId = serverInfo.Id;
+                    localAddress = serverInfo.LocalAddress ?? "";
+                    AppSettings.Default.JellyfinServerId = serverId;
+                    AppSettings.Default.JellyfinServerLocalAddress = localAddress;
+                    AppSettings.Default.Save();
+                    Trace.WriteLine($"[InjectAutoLogin] Fetched and stored server ID: {serverId}");
+                }
+                else
+                {
+                    Trace.WriteLine("[InjectAutoLogin] WARNING: Could not fetch server ID, auto-login may fail with ServerMismatch");
+                    return;
+                }
             }
 
             string indexPath = Path.Combine(ws.Root, "www", "index.html");
@@ -111,19 +135,24 @@ namespace Jellyfin2Samsung.Helpers
             var html = await File.ReadAllTextAsync(indexPath);
 
             // Create the credentials object that Jellyfin web expects
+            // Using the REAL server ID (GUID) from /System/Info/Public to prevent ServerMismatch
             var credentialsScript = new StringBuilder();
             credentialsScript.AppendLine("<script>");
             credentialsScript.AppendLine("(function() {");
             credentialsScript.AppendLine("  try {");
             credentialsScript.AppendLine($"    var serverUrl = '{EscapeJsString(serverUrl)}';");
+            credentialsScript.AppendLine($"    var serverId = '{EscapeJsString(serverId)}';");
+            credentialsScript.AppendLine($"    var localAddress = '{EscapeJsString(localAddress)}';");
             credentialsScript.AppendLine($"    var userId = '{EscapeJsString(userId)}';");
             credentialsScript.AppendLine($"    var accessToken = '{EscapeJsString(accessToken)}';");
             credentialsScript.AppendLine();
             credentialsScript.AppendLine("    // Create credentials object matching Jellyfin's expected format");
+            credentialsScript.AppendLine("    // Using real server ID (GUID) from /System/Info/Public");
             credentialsScript.AppendLine("    var credentials = {");
             credentialsScript.AppendLine("      Servers: [{");
             credentialsScript.AppendLine("        ManualAddress: serverUrl,");
-            credentialsScript.AppendLine("        Id: serverUrl.replace(/[^a-zA-Z0-9]/g, ''),");
+            credentialsScript.AppendLine("        LocalAddress: localAddress || serverUrl,");
+            credentialsScript.AppendLine("        Id: serverId,");
             credentialsScript.AppendLine("        UserId: userId,");
             credentialsScript.AppendLine("        AccessToken: accessToken,");
             credentialsScript.AppendLine("        DateLastAccessed: new Date().getTime()");
@@ -133,7 +162,7 @@ namespace Jellyfin2Samsung.Helpers
             credentialsScript.AppendLine("    // Store in localStorage");
             credentialsScript.AppendLine("    localStorage.setItem('jellyfin_credentials', JSON.stringify(credentials));");
             credentialsScript.AppendLine();
-            credentialsScript.AppendLine("    console.log('[Auto-Login] Credentials injected for server: ' + serverUrl);");
+            credentialsScript.AppendLine("    console.log('[Auto-Login] Credentials injected for server: ' + serverUrl + ' with ID: ' + serverId);");
             credentialsScript.AppendLine("  } catch(e) {");
             credentialsScript.AppendLine("    console.error('[Auto-Login] Failed to inject credentials:', e);");
             credentialsScript.AppendLine("  }");
@@ -144,7 +173,7 @@ namespace Jellyfin2Samsung.Helpers
             html = html.Replace("</head>", credentialsScript + "\n</head>");
 
             await File.WriteAllTextAsync(indexPath, html);
-            Trace.WriteLine("[InjectAutoLogin] Auto-login credentials injected successfully");
+            Trace.WriteLine($"[InjectAutoLogin] Auto-login credentials injected successfully with server ID: {serverId}");
         }
 
         private static string EscapeJsString(string input)

@@ -165,9 +165,16 @@
   "lblBasePath": "Basispad",
   "lblJellyfinUsername": "Gebruikersnaam",
   "lblJellyfinPassword": "Wachtwoord",
-  "lblAuthenticate": "Inloggen",
+  "lblAuthenticate": "Test Login",
   "lblAutoLoginSettings": "Auto-login instellingen",
   "lblBasePathHint": "Tip: Plak volledige URL (bijv. https://host.com/pad/jellyfin) om alle velden automatisch in te vullen",
-  "lblTestServer": "Test server",
-  "lblEnableAutoLoginConfig": "Config-patching voor auto-login inschakelen"
+  "lblTestServer": "Server testen",
+  "lblEnableAutoLoginConfig": "Config-patching voor auto-login inschakelen",
+  "lblTabServer": "Server",
+  "lblTabPlayback": "Afspelen",
+  "lblTabUser": "Gebruiker",
+  "lblServerInputMode": "Invoermodus",
+  "lblServerUrl": "Server-URL",
+  "lblConnectionStatus": "Server Status",
+  "lblAutoLoginUser": "Gebruiker"
 }

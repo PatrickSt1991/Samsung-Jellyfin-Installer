@@ -43,6 +43,8 @@ namespace Jellyfin2Samsung.Helpers
         public string JellyfinUsername { get; set; } = "";
         public string JellyfinPassword { get; set; } = "";
         public string JellyfinAccessToken { get; set; } = "";
+        public string JellyfinServerId { get; set; } = "";
+        public string JellyfinServerLocalAddress { get; set; } = "";
         public string AudioLanguagePreference { get; set; } = "";
         public string SubtitleLanguagePreference { get; set; } = "";
         public bool EnableBackdrops { get; set; } = false;
