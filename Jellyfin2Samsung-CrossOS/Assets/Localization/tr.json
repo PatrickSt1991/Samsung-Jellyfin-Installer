@@ -176,5 +176,7 @@
   "lblServerInputMode": "Giriş Modu",
   "lblServerUrl": "Sunucu URL",
   "lblConnectionStatus": "Sunucu Durumu",
-  "lblAutoLoginUser": "Kullanıcı"
+  "lblAutoLoginUser": "Kullanıcı",
+  "lblAdvancedSettings": "Gelişmiş Ayarlar",
+  "lblLegacyApiKeySystem": "Legacy API Key System"
 }

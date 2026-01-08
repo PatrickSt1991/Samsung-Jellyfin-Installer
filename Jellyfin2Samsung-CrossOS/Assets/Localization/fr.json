@@ -176,5 +176,7 @@
   "lblServerInputMode": "Mode de saisie",
   "lblServerUrl": "URL du serveur",
   "lblConnectionStatus": "Statut serveur",
-  "lblAutoLoginUser": "Utilisateur"
+  "lblAutoLoginUser": "Utilisateur",
+  "lblAdvancedSettings": "Paramètres avancés",
+  "lblLegacyApiKeySystem": "Legacy API Key System"
 }

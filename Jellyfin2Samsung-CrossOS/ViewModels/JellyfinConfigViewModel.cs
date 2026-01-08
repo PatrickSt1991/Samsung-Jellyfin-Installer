@@ -227,6 +227,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblPlayDefaultAudioTrack => _localizationService.GetString("lblPlayDefaultAudioTrack");
         public string LbluserAutoLogin => _localizationService.GetString("lbluserAutoLogin");
         public string LblUserSettings => _localizationService.GetString("lblUserSettings");
+        public string LblLegacyApiKeySystem => _localizationService.GetString("lblLegacyApiKeySystem");
         public string LblBrowserSettings => _localizationService.GetString("lblBrowserSettings");
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
@@ -237,6 +238,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblJellyfinPassword => _localizationService.GetString("lblJellyfinPassword");
         public string LblAuthenticate => _localizationService.GetString("lblAuthenticate");
         public string LblAutoLoginSettings => _localizationService.GetString("lblAutoLoginSettings");
+        public string LblAdvancedSettings => _localizationService.GetString("lblAdvancedSettings");
         public string LblBasePathHint => _localizationService.GetString("lblBasePathHint");
         public string LblTestServer => _localizationService.GetString("lblTestServer");
 
@@ -299,6 +301,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblPlayDefaultAudioTrack));
             OnPropertyChanged(nameof(LbluserAutoLogin));
             OnPropertyChanged(nameof(LblUserSettings));
+            OnPropertyChanged(nameof(LblLegacyApiKeySystem));
             OnPropertyChanged(nameof(LblBrowserSettings));
             OnPropertyChanged(nameof(LblUseServerScripts));
             OnPropertyChanged(nameof(LblEnableDevLogs));
@@ -309,6 +312,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblJellyfinPassword));
             OnPropertyChanged(nameof(LblAuthenticate));
             OnPropertyChanged(nameof(LblAutoLoginSettings));
+            OnPropertyChanged(nameof(LblAdvancedSettings));
             OnPropertyChanged(nameof(LblBasePathHint));
             OnPropertyChanged(nameof(LblTestServer));
             // New tab and UI labels

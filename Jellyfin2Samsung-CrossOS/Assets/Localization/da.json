@@ -176,5 +176,7 @@
   "lblServerInputMode": "Inputtilstand",
   "lblServerUrl": "Server-URL",
   "lblConnectionStatus": "Server Status",
-  "lblAutoLoginUser": "Bruger"
+  "lblAutoLoginUser": "Bruger",
+  "lblAdvancedSettings": "Avancerede indstillinger",
+  "lblLegacyApiKeySystem": "Legacy API Key System"
 }
