@@ -309,7 +309,7 @@ namespace Jellyfin2Samsung.Services
                     }
                 }
 
-                if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None"))
+                if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None") && packageUrl.Contains("jellyfin", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] userIds = [];
 
