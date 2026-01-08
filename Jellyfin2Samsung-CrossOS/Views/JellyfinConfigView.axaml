@@ -9,7 +9,7 @@
         x:DataType="viewModels:JellyfinConfigViewModel"
         Title="Jellyfin Config"
         Width="650"
-        Height="750"
+        Height="800"
         Background="#F5F5F5">
 
 	<Window.Styles>
@@ -457,6 +457,54 @@
 										</DataTemplate>
 									</ComboBox.ItemTemplate>
 								</ComboBox>
+							</Grid>
+						</StackPanel>
+					</ScrollViewer>
+				</TabItem>
+
+				<!-- TAB 4: CSS Style -->
+				<TabItem Header="{Binding LblTabCss}">
+					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
+						<StackPanel Spacing="12">
+							<TextBlock Text="{Binding LblCssSettings}"
+									   FontSize="15"
+									   FontWeight="SemiBold"
+									   Foreground="#2C3E50"/>
+
+							<!-- CSS Hint -->
+							<TextBlock Text="{Binding LblCssHint}"
+									   FontSize="12"
+									   Foreground="#7F8C8D"
+									   TextWrapping="Wrap"/>
+
+							<!-- Custom CSS TextBox -->
+							<TextBlock Text="{Binding LblCustomCss}"
+									   Classes="label"
+									   Margin="0,8,0,4"/>
+							<TextBox Text="{Binding CustomCss}"
+									 AcceptsReturn="True"
+									 TextWrapping="Wrap"
+									 MinHeight="200"
+									 MaxHeight="400"
+									 Watermark="@import url('https://cdn.jsdelivr.net/...');"
+									 Classes="clean"
+									 FontFamily="Consolas, Monaco, monospace"
+									 FontSize="12"/>
+
+							<!-- Validation Button and Status -->
+							<Grid ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+								<Button Grid.Column="0"
+										Classes="secondary"
+										Content="{Binding LblValidateCss}"
+										Command="{Binding ValidateCssCommand}"
+										IsEnabled="{Binding CanValidateCss}"
+										Padding="8,4"
+										FontSize="12"/>
+								<TextBlock Grid.Column="2"
+										   Text="{Binding CssValidationStatus}"
+										   Foreground="{Binding CssValidationColor}"
+										   VerticalAlignment="Center"
+										   FontWeight="SemiBold"/>
 							</Grid>
 						</StackPanel>
 					</ScrollViewer>

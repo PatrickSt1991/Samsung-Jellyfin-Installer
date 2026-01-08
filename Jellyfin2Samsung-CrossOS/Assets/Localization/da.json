@@ -178,5 +178,18 @@
   "lblConnectionStatus": "Server Status",
   "lblAutoLoginUser": "Bruger",
   "lblAdvancedSettings": "Avancerede indstillinger",
-  "lblLegacyApiKeySystem": "Legacy API Key System"
+  "lblLegacyApiKeySystem": "Legacy API Key System",
+  "lblTabCss": "CSS Stil",
+  "lblCssSettings": "Brugerdefinerede CSS-indstillinger",
+  "lblCustomCss": "Brugerdefineret CSS-kode",
+  "lblCssHint": "Indtast CSS eller brug @import til at indlæse eksterne temaer (f.eks. ElegantFin, Ultrachromic)",
+  "lblValidateCss": "Valider CSS",
+  "lblCssValidationStatus": "Valideringsstatus",
+  "lblCssEmpty": "Ingen CSS at validere",
+  "lblCssValidating": "Validerer...",
+  "lblCssUrlFailed": "{0} URL(er) ikke tilgængelige",
+  "lblCssUrlsValid": "{0} URL(er) valideret med succes",
+  "lblCssSyntaxValid": "CSS-syntaks gyldig",
+  "lblCssUnmatchedBrace": "Ulige klammer { }",
+  "lblCssUnmatchedParen": "Ulige parenteser ( )"
 }

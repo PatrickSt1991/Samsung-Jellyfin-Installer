@@ -75,6 +75,7 @@ namespace Jellyfin2Samsung.Helpers
         public bool EnableDevLogs { get; set; } = false;
         public bool KeepWGTFile { get; set; } = false;
         public bool PatchYoutubePlugin { get; set; } = false;
+        public string CustomCss { get; set; } = "";
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";

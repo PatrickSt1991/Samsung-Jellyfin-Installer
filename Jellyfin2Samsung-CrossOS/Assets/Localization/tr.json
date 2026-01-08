@@ -178,5 +178,18 @@
   "lblConnectionStatus": "Sunucu Durumu",
   "lblAutoLoginUser": "Kullanıcı",
   "lblAdvancedSettings": "Gelişmiş Ayarlar",
-  "lblLegacyApiKeySystem": "Legacy API Key System"
+  "lblLegacyApiKeySystem": "Legacy API Key System",
+  "lblTabCss": "CSS Stili",
+  "lblCssSettings": "Özel CSS Ayarları",
+  "lblCustomCss": "Özel CSS Kodu",
+  "lblCssHint": "CSS girin veya harici temalar için @import kullanın (örn. ElegantFin, Ultrachromic)",
+  "lblValidateCss": "CSS Doğrula",
+  "lblCssValidationStatus": "Doğrulama Durumu",
+  "lblCssEmpty": "Doğrulanacak CSS yok",
+  "lblCssValidating": "Doğrulanıyor...",
+  "lblCssUrlFailed": "{0} URL(ler) ulaşılamıyor",
+  "lblCssUrlsValid": "{0} URL(ler) başarıyla doğrulandı",
+  "lblCssSyntaxValid": "CSS söz dizimi geçerli",
+  "lblCssUnmatchedBrace": "Eşleşmeyen süslü parantezler { }",
+  "lblCssUnmatchedParen": "Eşleşmeyen parantezler ( )"
 }

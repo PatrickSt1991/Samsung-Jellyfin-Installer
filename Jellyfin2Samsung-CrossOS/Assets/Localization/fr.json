@@ -178,5 +178,18 @@
   "lblConnectionStatus": "Statut serveur",
   "lblAutoLoginUser": "Utilisateur",
   "lblAdvancedSettings": "Paramètres avancés",
-  "lblLegacyApiKeySystem": "Legacy API Key System"
+  "lblLegacyApiKeySystem": "Legacy API Key System",
+  "lblTabCss": "Style CSS",
+  "lblCssSettings": "Paramètres CSS personnalisés",
+  "lblCustomCss": "Code CSS personnalisé",
+  "lblCssHint": "Entrez du CSS ou utilisez @import pour charger des thèmes externes (ex: ElegantFin, Ultrachromic)",
+  "lblValidateCss": "Valider CSS",
+  "lblCssValidationStatus": "Statut de validation",
+  "lblCssEmpty": "Aucun CSS à valider",
+  "lblCssValidating": "Validation en cours...",
+  "lblCssUrlFailed": "{0} URL(s) inaccessible(s)",
+  "lblCssUrlsValid": "{0} URL(s) validée(s) avec succès",
+  "lblCssSyntaxValid": "Syntaxe CSS valide",
+  "lblCssUnmatchedBrace": "Accolades non appariées { }",
+  "lblCssUnmatchedParen": "Parenthèses non appariées ( )"
 }
