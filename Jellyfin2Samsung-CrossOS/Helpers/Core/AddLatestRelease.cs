@@ -1,7 +1,7 @@
 ﻿using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,37 +11,46 @@ namespace Jellyfin2Samsung.Helpers.Core
     public class AddLatestRelease
     {
         private readonly HttpClient _httpClient;
-        private readonly IList<GitHubRelease> _releases;
 
-        public AddLatestRelease(HttpClient httpClient, IList<GitHubRelease> releases)
+        public AddLatestRelease(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _releases = releases;
         }
 
-        public async Task AddLatestReleaseAsync(
+        public async Task<GitHubRelease?> GetLatestReleaseAsync(
             string url,
             string displayName,
             JsonSerializerSettings settings)
         {
-            var response = await _httpClient.GetStringAsync(url);
+            using var stream = await _httpClient.GetStreamAsync(url);
+            using var sr = new StreamReader(stream);
+            using var reader = new JsonTextReader(sr);
 
-            var releases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)
-                           ?? new List<GitHubRelease>();
+            var serializer = JsonSerializer.Create(settings);
 
-            var latest = releases.MaxBy(r => r.PublishedAt);
+            GitHubRelease? latest = null;
+
+            if (reader.Read())
+            {
+                // Case 1: API returns array (normal GitHub behavior)
+                if (reader.TokenType == JsonToken.StartArray)
+                {
+                    reader.Read(); // move to first element
+                    latest = serializer.Deserialize<GitHubRelease>(reader);
+                }
+                // Case 2: API returns single object
+                else if (reader.TokenType == JsonToken.StartObject)
+                {
+                    latest = serializer.Deserialize<GitHubRelease>(reader);
+                }
+            }
 
             if (latest == null)
-                return;
+                return null;
 
-            _releases.Add(new GitHubRelease
-            {
-                Name = displayName,
-                Assets = latest.Assets,
-                PublishedAt = latest.PublishedAt,
-                TagName = latest.TagName,
-                Url = latest.Url
-            });
+            latest.Name = displayName;
+            return latest;
         }
+
     }
 }

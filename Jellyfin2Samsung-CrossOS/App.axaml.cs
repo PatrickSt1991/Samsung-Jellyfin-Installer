@@ -41,7 +41,6 @@ namespace Jellyfin2Samsung
             {
                 DisableAvaloniaDataAnnotationValidation();
 
-                // Always use Dispatcher.Post for cross-platform safety
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -60,19 +59,27 @@ namespace Jellyfin2Samsung
 
             var settings = AppSettings.Load();
 
-            // Services
+            // --------------------
+            // Core services
+            // --------------------
             services.AddSingleton(settings);
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
             services.AddSingleton<INetworkService, NetworkService>();
             services.AddSingleton<ITizenCertificateService, TizenCertificateService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
+
+            // HttpClient (configured ONCE)
             services.AddSingleton(sp =>
             {
-                var client = new HttpClient();
+                var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
 
-                client.DefaultRequestHeaders.UserAgent.ParseAdd(
-                    "SamsungJellyfinInstaller/1.1");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+
 
                 return client;
             });
@@ -83,7 +90,9 @@ namespace Jellyfin2Samsung
             services.AddSingleton<PluginManager>();
             services.AddSingleton<JellyfinWebPackagePatcher>();
 
-            // Other Helpers
+            // --------------------
+            // Helpers
+            // --------------------
             services.AddSingleton<DeviceHelper>();
             services.AddSingleton<PackageHelper>();
             services.AddSingleton<CertificateHelper>();
@@ -91,22 +100,36 @@ namespace Jellyfin2Samsung
             services.AddSingleton<ProcessHelper>();
             services.AddSingleton<TvLogService>();
 
+            // --------------------
             // ViewModels
-            services.AddSingleton<MainWindowViewModel>();
+            // --------------------
+            services.AddTransient<MainWindowViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddTransient<InstallationCompleteViewModel>();
             services.AddTransient<InstallingWindowViewModel>();
             services.AddTransient<TvLogsViewModel>();
-            services.AddTransient<TvLogsWindow>();
             services.AddTransient<JellyfinConfigViewModel>();
 
+            // --------------------
             // Views
+            // --------------------
             services.AddSingleton(provider =>
             {
-                return new MainWindow
+                var vm = provider.GetRequiredService<MainWindowViewModel>();
+
+                var window = new MainWindow
                 {
-                    DataContext = provider.GetRequiredService<MainWindowViewModel>()
+                    DataContext = vm
                 };
+
+                // IMPORTANT: prevent memory leak
+                window.Closed += (_, _) =>
+                {
+                    if (vm is IDisposable d)
+                        d.Dispose();
+                };
+
+                return window;
             });
 
             services.AddTransient(provider =>
@@ -130,11 +153,13 @@ namespace Jellyfin2Samsung
                 return new InstallationCompleteWindow(vm);
             });
 
-            // Build and assign service provider
+            // --------------------
+            // Build provider
+            // --------------------
             _serviceProvider = services.BuildServiceProvider();
             Services = _serviceProvider;
 
-            // Set localization service globally
+            // Localization bootstrap
             var localizationService = _serviceProvider.GetRequiredService<ILocalizationService>();
             LocalizationExtensions.SetLocalizationService(localizationService);
         }
@@ -142,7 +167,9 @@ namespace Jellyfin2Samsung
         private void DisableAvaloniaDataAnnotationValidation()
         {
             var dataValidationPluginsToRemove =
-                BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+                BindingPlugins.DataValidators
+                    .OfType<DataAnnotationsValidationPlugin>()
+                    .ToArray();
 
             foreach (var plugin in dataValidationPluginsToRemove)
                 BindingPlugins.DataValidators.Remove(plugin);

@@ -25,7 +25,7 @@ using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.ViewModels
 {
-    public partial class MainWindowViewModel : ViewModelBase
+    public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
@@ -97,8 +97,9 @@ namespace Jellyfin2Samsung.ViewModels
             DeviceHelper deviceHelper,
             TizenApiClient tizenApiClient,
             PackageHelper packageHelper,
-            FileHelper fileHelper
-            )
+            FileHelper fileHelper,
+            SettingsViewModel settingsViewModel
+        )
         {
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
@@ -108,11 +109,13 @@ namespace Jellyfin2Samsung.ViewModels
             _packageHelper = packageHelper;
             _localizationService = localizationService;
             _fileHelper = fileHelper;
-            _addLatestRelease = new AddLatestRelease(httpClient, Releases);
-            _settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
+            _settingsViewModel = settingsViewModel;
+
+            _addLatestRelease = new AddLatestRelease(httpClient);
 
             _localizationService.LanguageChanged += OnLanguageChanged;
         }
+
 
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
@@ -407,7 +410,6 @@ namespace Jellyfin2Samsung.ViewModels
         private async Task LoadReleasesAsync()
         {
             IsLoading = true;
-            Releases.Clear();
 
             try
             {
@@ -417,20 +419,27 @@ namespace Jellyfin2Samsung.ViewModels
                     Converters = { new SingleOrArrayConverter<GitHubRelease>() }
                 };
 
-                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.ReleasesUrl, "Jellyfin", settings);
-                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.MoonfinRelease, "Moonfin", settings);
-                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay", settings);
-                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy", settings);
-                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.CommunityRelease, "Tizen Community", settings);
+                // 1️⃣ Do ALL async / HTTP work first
+                var list = new List<GitHubRelease>();
 
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex}");
-            }
-            finally
-            {
+                async Task fetch(string url, string name)
+                {
+                    var release = await _addLatestRelease.GetLatestReleaseAsync(url, name, settings);
+                    if (release != null)
+                        list.Add(release);
+                }
+
+                await fetch(AppSettings.Default.ReleasesUrl, "Jellyfin");
+                await fetch(AppSettings.Default.MoonfinRelease, "Moonfin");
+                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay");
+                await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
+                await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
+
+                // 2️⃣ ONE UI-thread update, just like your original working version
+                Releases.Clear();
+                foreach (var r in list)
+                    Releases.Add(r);
+
                 Releases.Add(new GitHubRelease
                 {
                     Name = "Custom WGT File",
@@ -439,10 +448,18 @@ namespace Jellyfin2Samsung.ViewModels
                     Url = string.Empty,
                     Assets = new List<Asset>()
                 });
-
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex}");
+            }
+            finally
+            {
                 IsLoading = false;
             }
         }
+
 
         private async Task LoadDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
         {
@@ -559,10 +576,6 @@ namespace Jellyfin2Samsung.ViewModels
                 await _dialogService.ShowErrorAsync(L("InvalidDeviceIp"));
             }
         }
-        public void Dispose()
-        {
-            _localizationService.LanguageChanged -= OnLanguageChanged;
-        }
         partial void OnIsSamsungLoginActiveChanged(bool value)
         {
             CancelSamsungLoginCommand.NotifyCanExecuteChanged();
@@ -573,6 +586,17 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 IsSamsungLoginActive = true;
             });
+        }
+        private void DisposeSamsungCts()
+        {
+            _samsungLoginCts?.Cancel();
+            _samsungLoginCts?.Dispose();
+            _samsungLoginCts = null;
+        }
+        public void Dispose()
+        {
+            DisposeSamsungCts();
+            _localizationService.LanguageChanged -= OnLanguageChanged;
         }
 
     }
