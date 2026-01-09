@@ -1,5 +1,6 @@
 ﻿using Jellyfin2Samsung.Extensions;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Tizen.Certificate;
 using Jellyfin2Samsung.Interfaces;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;

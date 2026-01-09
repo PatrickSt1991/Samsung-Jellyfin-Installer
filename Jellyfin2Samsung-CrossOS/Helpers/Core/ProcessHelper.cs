@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Core
 {
     public class ProcessHelper
     {

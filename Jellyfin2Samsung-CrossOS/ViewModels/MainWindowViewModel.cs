@@ -4,6 +4,9 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +32,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly HttpClient _httpClient;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
+        private readonly TizenApiClient _tizenApiClient;
         private readonly PackageHelper _packageHelper;
         private readonly SettingsViewModel _settingsViewModel;
         private CancellationTokenSource? _samsungLoginCts;
@@ -89,6 +93,7 @@ namespace Jellyfin2Samsung.ViewModels
             ILocalizationService localizationService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
+            TizenApiClient tizenApiClient,
             PackageHelper packageHelper,
             FileHelper fileHelper
             )
@@ -98,6 +103,7 @@ namespace Jellyfin2Samsung.ViewModels
             _networkService = networkService;
             _httpClient = httpClient;
             _deviceHelper = deviceHelper;
+            _tizenApiClient = tizenApiClient;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
             _fileHelper = fileHelper;
@@ -666,7 +672,7 @@ namespace Jellyfin2Samsung.ViewModels
                 return;
             }
 
-            var samsungDevice = await _deviceHelper.GetDeveloperInfoAsync(device);
+            var samsungDevice = await _tizenApiClient.GetDeveloperInfoAsync(device);
 
             if (samsungDevice != null)
             {

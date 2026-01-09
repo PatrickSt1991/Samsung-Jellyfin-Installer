@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Core
 {
     public static class HtmlUtils
     {

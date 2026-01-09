@@ -1,4 +1,6 @@
-﻿using Jellyfin2Samsung.Models;
+﻿using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 {
     public class JellyfinPluginPatcher
     {

@@ -3,7 +3,7 @@
         x:Class="Jellyfin2Samsung.Views.MainWindow"
 		x:DataType="viewModels:MainWindowViewModel"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
-		xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers"
+		xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers.Converters"
 		xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         Width="580"
         Height="410"

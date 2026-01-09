@@ -1,10 +1,11 @@
-﻿using System.IO;
+﻿using Jellyfin2Samsung.Helpers.Core;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Jellyfin.Diagnostic
 {
-    public class JellyfinBootloaderInjector
+    public class JellyfinDiagnostic
     {
         public async Task InjectDevLogsAsync(PackageWorkspace ws)
         {

@@ -1,34 +1,22 @@
-﻿using FluentAvalonia.Core;
-using Jellyfin2Samsung.Interfaces;
+﻿using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Utilities.Net;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.API
 {
-    public class DeviceHelper
+    public class TizenApiClient
     {
-        private readonly INetworkService _networkService;
-        private readonly ITizenInstallerService _installerService;
         private readonly IDialogService _dialogService;
         private readonly HttpClient _httpClient;
-
-        public DeviceHelper(
-            INetworkService networkService,
-            ITizenInstallerService installerService,
-            IDialogService dialogService,
-            HttpClient httpClient)
+        public TizenApiClient(
+            HttpClient httpClient,
+            IDialogService dialogService)
         {
-            _networkService = networkService;
-            _installerService = installerService;
             _dialogService = dialogService;
             _httpClient = httpClient;
         }
@@ -79,43 +67,6 @@ namespace Jellyfin2Samsung.Helpers
                 DeveloperMode = string.Empty,
                 DeveloperIP = string.Empty
             };
-        }
-
-        public async Task<List<NetworkDevice>> ScanForDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
-        {
-            var devices = new List<NetworkDevice>();
-            var networkDevices = await _networkService.GetLocalTizenAddresses(cancellationToken, virtualScan);
-
-            foreach (NetworkDevice device in networkDevices)
-            {
-                if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
-                {
-                    try
-                    {
-                        var samsungDevice = await GetDeveloperInfoAsync(device);
-                        if (!string.IsNullOrEmpty(samsungDevice.DeviceName))
-                            devices.Add(samsungDevice);
-                    }
-                    catch
-                    {
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        device.ModelName = device.ModelName;
-                        device.Manufacturer = device.Manufacturer;
-                        device.DeveloperMode = "1";
-                        device.DeveloperIP = string.Empty;
-
-                        devices.Add(device);
-                    }
-                    catch { }
-                }
-            }
-
-            return devices;
         }
     }
 }

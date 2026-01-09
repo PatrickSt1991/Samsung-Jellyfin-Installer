@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
-        xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers"
+        xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers.Converters"
         x:Class="Jellyfin2Samsung.Views.TvLogsWindow"
         x:DataType="viewModels:TvLogsViewModel"
         Width="900"

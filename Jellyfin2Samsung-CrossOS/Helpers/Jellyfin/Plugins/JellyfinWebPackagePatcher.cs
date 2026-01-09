@@ -1,14 +1,19 @@
-﻿using Jellyfin2Samsung.Models;
+﻿using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Jellyfin.Diagnostic;
+using Jellyfin2Samsung.Helpers.Jellyfin.Fixes;
+using Jellyfin2Samsung.Models;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 {
     public class JellyfinWebPackagePatcher
     {
         private readonly JellyfinHtmlPatcher _html;
-        private readonly JellyfinBootloaderInjector _boot;
+        private readonly JellyfinDiagnostic _diagnostic;
+        private readonly FixYouTube _youTube;
 
         public JellyfinWebPackagePatcher(HttpClient http)
         {
@@ -16,7 +21,8 @@ namespace Jellyfin2Samsung.Helpers
             var plugins = new PluginManager(http, api);
 
             _html = new JellyfinHtmlPatcher(http, api, plugins);
-            _boot = new JellyfinBootloaderInjector();
+            _diagnostic = new JellyfinDiagnostic();
+            _youTube = new FixYouTube();
         }
 
         public async Task<InstallResult> ApplyJellyfinConfigAsync(string packagePath, string[] userIds)
@@ -32,7 +38,7 @@ namespace Jellyfin2Samsung.Helpers
                     await _html.PatchServerIndexAsync(ws, AppSettings.Default.JellyfinFullUrl);
 
                 if (AppSettings.Default.PatchYoutubePlugin)
-                    await _html.PatchYoutubePlayerAsync(ws);
+                    await _youTube.FixAsync(ws);
 
                 await _html.UpdateMultiServerConfigAsync(ws);
             }
@@ -55,7 +61,7 @@ namespace Jellyfin2Samsung.Helpers
             if (AppSettings.Default.EnableDevLogs)
             {
                 Trace.WriteLine("Injecting dev logs...");
-                await _boot.InjectDevLogsAsync(ws);
+                await _diagnostic.InjectDevLogsAsync(ws);
             }
 
             // Inject custom CSS if configured
