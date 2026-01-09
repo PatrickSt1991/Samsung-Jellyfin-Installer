@@ -45,8 +45,6 @@ namespace Jellyfin2Samsung.Services
             _jellyfinWebPackagePatcher = jellyfinWebPackagePatcher;
             _jellyfinApiClient = jellyfinApiClient;
             _processHelper = processHelper;
-
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
         }
 
         public async Task<string> EnsureTizenSdbAvailable()

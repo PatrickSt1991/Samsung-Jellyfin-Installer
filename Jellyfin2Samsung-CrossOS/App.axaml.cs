@@ -67,9 +67,19 @@ namespace Jellyfin2Samsung
             services.AddSingleton<INetworkService, NetworkService>();
             services.AddSingleton<ITizenCertificateService, TizenCertificateService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
+            services.AddSingleton(sp =>
+            {
+                var client = new HttpClient();
+
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                    "SamsungJellyfinInstaller/1.1");
+
+                return client;
+            });
+
             services.AddSingleton<SamsungLoginService>();
-            services.AddSingleton<HttpClient>();
             services.AddSingleton<JellyfinApiClient>();
+            services.AddSingleton<TizenApiClient>();
             services.AddSingleton<PluginManager>();
             services.AddSingleton<JellyfinWebPackagePatcher>();
 

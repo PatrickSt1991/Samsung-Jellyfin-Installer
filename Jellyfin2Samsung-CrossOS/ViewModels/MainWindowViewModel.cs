@@ -5,12 +5,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Converters;
 using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,12 +31,12 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly IDialogService _dialogService;
         private readonly INetworkService _networkService;
         private readonly ILocalizationService _localizationService;
-        private readonly HttpClient _httpClient;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
         private readonly TizenApiClient _tizenApiClient;
         private readonly PackageHelper _packageHelper;
         private readonly SettingsViewModel _settingsViewModel;
+        private readonly AddLatestRelease _addLatestRelease;
         private CancellationTokenSource? _samsungLoginCts;
 
         [ObservableProperty]
@@ -101,12 +103,12 @@ namespace Jellyfin2Samsung.ViewModels
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
             _networkService = networkService;
-            _httpClient = httpClient;
             _deviceHelper = deviceHelper;
             _tizenApiClient = tizenApiClient;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
             _fileHelper = fileHelper;
+            _addLatestRelease = new AddLatestRelease(httpClient, Releases);
             _settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
 
             _localizationService.LanguageChanged += OnLanguageChanged;
@@ -411,148 +413,15 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 var settings = new JsonSerializerSettings
                 {
-                    MissingMemberHandling = MissingMemberHandling.Ignore
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    Converters = { new SingleOrArrayConverter<GitHubRelease>() }
                 };
 
-                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
-                var response = await _httpClient.GetStringAsync(AppSettings.Default.ReleasesUrl);
-
-                var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
-                    .OrderByDescending(r => r.PublishedAt)
-                    .Take(5);
-
-                if (allReleases != null)
-                    foreach (var release in allReleases)
-                    {
-                        Releases.Add(new GitHubRelease
-                        {
-                            Name = $"Jellyfin - {release.Name}",
-                            Assets = release.Assets,
-                            PublishedAt = release.PublishedAt,
-                            TagName = release.TagName,
-                            Url = release.Url
-                        });
-                    }
-
-                var moonfinResponse = await _httpClient.GetStringAsync(AppSettings.Default.MoonfinRelease);
-                List<GitHubRelease> moonfinReleases;
-
-                if (moonfinResponse.TrimStart().StartsWith("["))
-                {
-                    moonfinReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(moonfinResponse, settings);
-                }
-                else if (moonfinResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(moonfinResponse, settings);
-                    moonfinReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    moonfinReleases = new List<GitHubRelease>();
-                }
-
-                moonfinReleases = moonfinReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-                foreach (var moonfinRelease in moonfinReleases)
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Moonfin",
-                        Assets = moonfinRelease.Assets,
-                        PublishedAt = moonfinRelease.PublishedAt,
-                        TagName = moonfinRelease.TagName,
-                        Url = moonfinRelease.Url
-                    });
-
-                /* av release */
-                var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
-
-                List<GitHubRelease> avReleases;
-                if (avResponse.TrimStart().StartsWith("["))
-                {
-                    avReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(avResponse, settings);
-                }
-                else if (avResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
-                    avReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    avReleases = new List<GitHubRelease>();
-                }
-
-                avReleases = avReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var avRelease in avReleases)
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Jellyfin AVPlay",
-                        Assets = avRelease.Assets,
-                        PublishedAt = avRelease.PublishedAt,
-                        TagName = avRelease.TagName,
-                        Url = avRelease.Url
-                    });
-
-                /* Legacy */
-                var legacyResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinLegacy);
-
-                List<GitHubRelease> legacyReleases;
-                if (legacyResponse.TrimStart().StartsWith("["))
-                {
-                    legacyReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(legacyResponse, settings);
-                }
-                else if (legacyResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(legacyResponse, settings);
-                    legacyReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    legacyReleases = new List<GitHubRelease>();
-                }
-
-                legacyReleases = legacyReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var legacyRelease in legacyReleases)
-                {
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Jellyfin Legacy",
-                        Assets = legacyRelease.Assets,
-                        PublishedAt = legacyRelease.PublishedAt,
-                        TagName = legacyRelease.TagName,
-                        Url = legacyRelease.Url
-                    });
-                }
-
-                var communityResponse = await _httpClient.GetStringAsync(AppSettings.Default.CommunityRelease);
-                List<GitHubRelease> communityReleases;
-                if(communityResponse.TrimStart().StartsWith("["))
-                {
-                    communityReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(communityResponse, settings);
-                }
-                else if (communityResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(communityResponse, settings);
-                    communityReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    communityReleases = new List<GitHubRelease>();
-                }
-
-                communityReleases = communityReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var communityRelease in communityReleases)
-                {
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Tizen Community",
-                        Assets = communityRelease.Assets,
-                        PublishedAt = communityRelease.PublishedAt,
-                        TagName = communityRelease.TagName,
-                        Url = communityRelease.Url
-                    });
-                }
+                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.ReleasesUrl, "Jellyfin", settings);
+                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.MoonfinRelease, "Moonfin", settings);
+                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay", settings);
+                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy", settings);
+                await _addLatestRelease.AddLatestReleaseAsync(AppSettings.Default.CommunityRelease, "Tizen Community", settings);
 
             }
             catch (Exception ex)
