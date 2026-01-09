@@ -1,6 +1,8 @@
 ﻿using Jellyfin2Samsung.Helpers.Core;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
 {
@@ -119,6 +121,32 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
                 }
                 await File.WriteAllTextAsync(file, js);
             }
+        }
+        public async Task CorsAsync(PackageWorkspace ws)
+        {
+            string path = Path.Combine(ws.Root, "config.xml");
+            XDocument doc = XDocument.Load(path);
+
+            string[] domains = {
+                "https://yewtu.be",
+                "https://invidious.f5.si",
+                "https://invidious.nerdvpn.de",
+                "https://inv.perditum.com"
+            };
+
+            foreach (var d in domains)
+            {
+                if (!doc.Root.Elements("access").Any(e => (string?)e.Attribute("origin") == d))
+                {
+                    doc.Root.Add(new XElement("access", new XAttribute("origin", d), new XAttribute("subdomains", "true")));
+                }
+            }
+            if (!doc.Root.Elements("allow-navigation").Any(e => (string?)e.Attribute("href") == "https://*.perditum.com"))
+            {
+                doc.Root.Add(new XElement("allow-navigation", new XAttribute("href", "https://*.perditum.com")));
+            }
+
+            doc.Save(path);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Jellyfin2Samsung.Helpers.API;
 using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Jellyfin.Plugins;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -10,21 +11,16 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
+namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
 {
-    public class JellyfinHtmlPatcher
+    public class JellyfinIndex(
+        HttpClient http,
+        JellyfinApiClient api,
+        PluginManager plugins)
     {
-        private readonly JellyfinPluginPatcher _plugins;
+        private readonly JellyfinPluginPatcher _plugins = new(http, api, plugins);
 
-        public JellyfinHtmlPatcher(
-            HttpClient http,
-            JellyfinApiClient api,
-            PluginManager plugins)
-        {
-            _plugins = new JellyfinPluginPatcher(http, api, plugins);
-        }
-
-        public async Task PatchServerIndexAsync(PackageWorkspace ws, string serverUrl)
+        public async Task PatchIndexAsync(PackageWorkspace ws, string serverUrl)
         {
             string index = Path.Combine(ws.Root, "www", "index.html");
             if (!File.Exists(index)) return;
@@ -48,7 +44,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 
             await File.WriteAllTextAsync(index, html);
         }
-        public async Task UpdateMultiServerConfigAsync(PackageWorkspace ws)
+        public async Task UpdateServerAddressAsync(PackageWorkspace ws)
         {
             string path = Path.Combine(ws.Root, "www", "config.json");
 
@@ -79,9 +75,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 
             // Avoid duplicates
             if (!servers.Any(s => s?.GetValue<string>() == serverUrl))
-            {
                 servers.Add(serverUrl);
-            }
 
             await File.WriteAllTextAsync(path, config.ToJsonString());
 
@@ -142,11 +136,11 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             credentialsScript.AppendLine("<script>");
             credentialsScript.AppendLine("(function() {");
             credentialsScript.AppendLine("  try {");
-            credentialsScript.AppendLine($"    var serverUrl = '{EscapeJsString(serverUrl)}';");
-            credentialsScript.AppendLine($"    var serverId = '{EscapeJsString(serverId)}';");
-            credentialsScript.AppendLine($"    var localAddress = '{EscapeJsString(localAddress)}';");
-            credentialsScript.AppendLine($"    var userId = '{EscapeJsString(userId)}';");
-            credentialsScript.AppendLine($"    var accessToken = '{EscapeJsString(accessToken)}';");
+            credentialsScript.AppendLine($"    var serverUrl = '{HtmlUtils.EscapeJsString(serverUrl)}';");
+            credentialsScript.AppendLine($"    var serverId = '{HtmlUtils.EscapeJsString(serverId)}';");
+            credentialsScript.AppendLine($"    var localAddress = '{HtmlUtils.EscapeJsString(localAddress)}';");
+            credentialsScript.AppendLine($"    var userId = '{HtmlUtils.EscapeJsString(userId)}';");
+            credentialsScript.AppendLine($"    var accessToken = '{HtmlUtils.EscapeJsString(accessToken)}';");
             credentialsScript.AppendLine();
             credentialsScript.AppendLine("    // Create credentials object matching Jellyfin's expected format");
             credentialsScript.AppendLine("    // Using real server ID (GUID) from /System/Info/Public");
@@ -177,53 +171,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             await File.WriteAllTextAsync(indexPath, html);
             Trace.WriteLine($"[InjectAutoLogin] Auto-login credentials injected successfully with server ID: {serverId}");
         }
-
-        private static string EscapeJsString(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return "";
-            return input
-                .Replace("\\", "\\\\")
-                .Replace("'", "\\'")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r");
-        }
-
-        /// <summary>
-        /// Injects custom CSS into the Jellyfin web app.
-        /// Supports both inline CSS and @import rules for external themes like ElegantFin or Ultrachromic.
-        /// </summary>
-        public async Task InjectCustomCssAsync(PackageWorkspace ws)
-        {
-            var customCss = AppSettings.Default.CustomCss;
-
-            if (string.IsNullOrWhiteSpace(customCss))
-            {
-                Trace.WriteLine("[InjectCustomCss] No custom CSS configured, skipping injection");
-                return;
-            }
-
-            string indexPath = Path.Combine(ws.Root, "www", "index.html");
-            if (!File.Exists(indexPath))
-            {
-                Trace.WriteLine("[InjectCustomCss] index.html not found");
-                return;
-            }
-
-            var html = await File.ReadAllTextAsync(indexPath);
-
-            var cssBlock = new StringBuilder();
-            cssBlock.AppendLine("<style id=\"jellyfin-custom-css\">");
-            cssBlock.AppendLine(customCss);
-            cssBlock.AppendLine("</style>");
-
-            // Inject before </head> to ensure CSS is loaded with the page
-            html = html.Replace("</head>", cssBlock + "</head>");
-
-            await File.WriteAllTextAsync(indexPath, html);
-            Trace.WriteLine("[InjectCustomCss] Custom CSS injected successfully");
-        }
-
+        //Check if InjectUserSettingsAsync is still required or if we can remove it
         public async Task InjectUserSettingsAsync(PackageWorkspace ws, string[] userIds)
         {
             if (userIds == null || userIds.Length == 0) return;
@@ -241,32 +189,6 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 
             html = html.Replace("</body>", sb + "\n</body>");
             await File.WriteAllTextAsync(index, html);
-        }
-        public async Task EnsureTizenCorsAsync(PackageWorkspace ws)
-        {
-            string path = Path.Combine(ws.Root, "config.xml");
-            XDocument doc = XDocument.Load(path);
-
-            string[] domains = {
-                "https://yewtu.be",
-                "https://invidious.f5.si",
-                "https://invidious.nerdvpn.de",
-                "https://inv.perditum.com"
-            };
-
-            foreach (var d in domains)
-            {
-                if (!doc.Root.Elements("access").Any(e => (string?)e.Attribute("origin") == d))
-                {
-                    doc.Root.Add(new XElement("access", new XAttribute("origin", d), new XAttribute("subdomains", "true")));
-                }
-            }
-            if (!doc.Root.Elements("allow-navigation").Any(e => (string?)e.Attribute("href") == "https://*.perditum.com"))
-            {
-                doc.Root.Add(new XElement("allow-navigation", new XAttribute("href", "https://*.perditum.com")));
-            }
-
-            doc.Save(path);
-        }
+        }   
     }
 }

@@ -12,14 +12,10 @@ namespace Jellyfin2Samsung.Models
     public class PluginMatrixEntry
     {
         public string Name { get; set; }
-        public string IdContains { get; set; }
-        public string ServerPath { get; set; }
         public List<string> ExplicitServerFiles { get; set; }
         public List<string> FallbackUrls { get; set; }
         public bool UseBabel { get; set; }
-        public bool RequiresModuleBundle { get; set; }
-        public string ModuleRepoApiRoot { get; set; }
-        public string ModuleBundleFileName { get; set; }
+        public string RawRoot { get; set; }
     }
     public class ExtractedDomBlocks
     {

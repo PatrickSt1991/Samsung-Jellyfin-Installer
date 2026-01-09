@@ -91,7 +91,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Assets\TizenSDB\" />
-	  <Folder Include="Helpers\Jellyfin\CSS\" />
 	</ItemGroup>
 
 	<ItemGroup>

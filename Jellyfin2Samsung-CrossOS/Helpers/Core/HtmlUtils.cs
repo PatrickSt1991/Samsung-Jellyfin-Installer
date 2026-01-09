@@ -11,20 +11,17 @@ namespace Jellyfin2Samsung.Helpers.Core
 
             return html.Replace("<head>", "<head><base href=\".\">");
         }
-
         public static string RewriteLocalPaths(string html)
         {
             html = Regex.Replace(html, @"(src|href)=""[^""]*/web/([^""]+)""", "$1=\"$2\"");
             return html;
         }
-
         public static string CleanAndApplyCsp(string html)
         {
             html = Regex.Replace(html, @"<meta[^>]*Content-Security-Policy[^>]*>", "");
             return html.Replace("</head>",
                 "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;\">\n</head>");
         }
-
         public static string EnsurePublicJsIsLast(string html)
         {
             const string tag = "<script src=\"plugin_cache/public.js\"></script>";
@@ -32,6 +29,16 @@ namespace Jellyfin2Samsung.Helpers.Core
 
             html = html.Replace(tag, "");
             return html.Replace("</body>", tag + "\n</body>");
+        }
+        public static string EscapeJsString(string html)
+        {
+            if (string.IsNullOrEmpty(html)) return "";
+            return html
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r");
         }
     }
 }
