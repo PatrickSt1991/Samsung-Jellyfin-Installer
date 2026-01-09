@@ -176,5 +176,20 @@
   "lblServerInputMode": "Input Mode",
   "lblServerUrl": "Server URL",
   "lblConnectionStatus": "Server Status",
-  "lblAutoLoginUser": "User"
+  "lblAutoLoginUser": "User",
+  "lblAdvancedSettings": "Advanced Settings",
+  "lblLegacyApiKeySystem": "Legacy API Key System",
+  "lblTabCss": "CSS Style",
+  "lblCssSettings": "Custom CSS Settings",
+  "lblCustomCss": "Custom CSS Code",
+  "lblCssHint": "Enter custom CSS or use @import to load external themes (e.g. ElegantFin, Ultrachromic)",
+  "lblValidateCss": "Validate CSS",
+  "lblCssValidationStatus": "Validation Status",
+  "lblCssEmpty": "No CSS to validate",
+  "lblCssValidating": "Validating...",
+  "lblCssUrlFailed": "{0} URL(s) unreachable",
+  "lblCssUrlsValid": "{0} URL(s) validated successfully",
+  "lblCssSyntaxValid": "CSS syntax valid",
+  "lblCssUnmatchedBrace": "Unmatched braces { }",
+  "lblCssUnmatchedParen": "Unmatched parentheses ( )"
 }

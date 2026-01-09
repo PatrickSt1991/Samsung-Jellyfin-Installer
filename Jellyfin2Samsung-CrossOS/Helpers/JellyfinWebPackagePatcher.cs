@@ -58,6 +58,13 @@ namespace Jellyfin2Samsung.Helpers
                 await _boot.InjectDevLogsAsync(ws);
             }
 
+            // Inject custom CSS if configured
+            if (!string.IsNullOrWhiteSpace(AppSettings.Default.CustomCss))
+            {
+                Trace.WriteLine("Injecting custom CSS...");
+                await _html.InjectCustomCssAsync(ws);
+            }
+
             ws.Repack();
             return InstallResult.SuccessResult();
         }

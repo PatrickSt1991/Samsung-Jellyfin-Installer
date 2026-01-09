@@ -128,6 +128,18 @@ namespace Jellyfin2Samsung.ViewModels
         private bool patchYoutubePlugin = false;
 
         [ObservableProperty]
+        private string customCss = string.Empty;
+
+        [ObservableProperty]
+        private string cssValidationStatus = string.Empty;
+
+        [ObservableProperty]
+        private bool cssValidationSuccess = false;
+
+        [ObservableProperty]
+        private bool isValidatingCss = false;
+
+        [ObservableProperty]
         private bool canOpenDebugWindow;
         
         [ObservableProperty]
@@ -202,6 +214,10 @@ namespace Jellyfin2Samsung.ViewModels
             ? new SolidColorBrush(Color.FromRgb(39, 174, 96))   // Green
             : new SolidColorBrush(Color.FromRgb(127, 140, 141)); // Gray
 
+        public IBrush CssValidationColor => CssValidationSuccess
+            ? new SolidColorBrush(Color.FromRgb(39, 174, 96))   // Green
+            : new SolidColorBrush(Color.FromRgb(231, 76, 60));  // Red
+
         public string LblJellyfinConfig => _localizationService.GetString("lblJellyfinConfig");
         public string LblServerSettings => _localizationService.GetString("lblServerSettings");
         public string UpdateMode => _localizationService.GetString("UpdateMode");
@@ -227,6 +243,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblPlayDefaultAudioTrack => _localizationService.GetString("lblPlayDefaultAudioTrack");
         public string LbluserAutoLogin => _localizationService.GetString("lbluserAutoLogin");
         public string LblUserSettings => _localizationService.GetString("lblUserSettings");
+        public string LblLegacyApiKeySystem => _localizationService.GetString("lblLegacyApiKeySystem");
         public string LblBrowserSettings => _localizationService.GetString("lblBrowserSettings");
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
@@ -237,6 +254,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblJellyfinPassword => _localizationService.GetString("lblJellyfinPassword");
         public string LblAuthenticate => _localizationService.GetString("lblAuthenticate");
         public string LblAutoLoginSettings => _localizationService.GetString("lblAutoLoginSettings");
+        public string LblAdvancedSettings => _localizationService.GetString("lblAdvancedSettings");
         public string LblBasePathHint => _localizationService.GetString("lblBasePathHint");
         public string LblTestServer => _localizationService.GetString("lblTestServer");
 
@@ -249,9 +267,19 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblConnectionStatus => _localizationService.GetString("lblConnectionStatus");
         public string LblAutoLoginUser => _localizationService.GetString("lblAutoLoginUser");
 
+        // CSS Tab labels
+        public string LblTabCss => _localizationService.GetString("lblTabCss");
+        public string LblCssSettings => _localizationService.GetString("lblCssSettings");
+        public string LblCustomCss => _localizationService.GetString("lblCustomCss");
+        public string LblCssHint => _localizationService.GetString("lblCssHint");
+        public string LblValidateCss => _localizationService.GetString("lblValidateCss");
+        public string LblCssValidationStatus => _localizationService.GetString("lblCssValidationStatus");
+
         public bool CanLogin => ServerValidated &&
                                 !string.IsNullOrWhiteSpace(JellyfinUsername) &&
                                 !string.IsNullOrWhiteSpace(JellyfinPassword);
+
+        public bool CanValidateCss => !string.IsNullOrWhiteSpace(CustomCss) && !IsValidatingCss;
         public string TvIp => AppSettings.Default.TvIp;
 
         public JellyfinConfigViewModel(
@@ -299,6 +327,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblPlayDefaultAudioTrack));
             OnPropertyChanged(nameof(LbluserAutoLogin));
             OnPropertyChanged(nameof(LblUserSettings));
+            OnPropertyChanged(nameof(LblLegacyApiKeySystem));
             OnPropertyChanged(nameof(LblBrowserSettings));
             OnPropertyChanged(nameof(LblUseServerScripts));
             OnPropertyChanged(nameof(LblEnableDevLogs));
@@ -309,6 +338,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblJellyfinPassword));
             OnPropertyChanged(nameof(LblAuthenticate));
             OnPropertyChanged(nameof(LblAutoLoginSettings));
+            OnPropertyChanged(nameof(LblAdvancedSettings));
             OnPropertyChanged(nameof(LblBasePathHint));
             OnPropertyChanged(nameof(LblTestServer));
             // New tab and UI labels
@@ -319,6 +349,13 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblServerUrl));
             OnPropertyChanged(nameof(LblConnectionStatus));
             OnPropertyChanged(nameof(LblAutoLoginUser));
+            // CSS Tab labels
+            OnPropertyChanged(nameof(LblTabCss));
+            OnPropertyChanged(nameof(LblCssSettings));
+            OnPropertyChanged(nameof(LblCustomCss));
+            OnPropertyChanged(nameof(LblCssHint));
+            OnPropertyChanged(nameof(LblValidateCss));
+            OnPropertyChanged(nameof(LblCssValidationStatus));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -714,6 +751,154 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnCustomCssChanged(string value)
+        {
+            AppSettings.Default.CustomCss = value;
+            AppSettings.Default.Save();
+            // Reset validation status when CSS changes
+            CssValidationStatus = string.Empty;
+            CssValidationSuccess = false;
+            OnPropertyChanged(nameof(CanValidateCss));
+        }
+
+        partial void OnIsValidatingCssChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanValidateCss));
+        }
+
+        partial void OnCssValidationSuccessChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CssValidationColor));
+        }
+
+        [RelayCommand]
+        private async Task ValidateCssAsync()
+        {
+            if (string.IsNullOrWhiteSpace(CustomCss))
+            {
+                CssValidationStatus = _localizationService.GetString("lblCssEmpty");
+                CssValidationSuccess = false;
+                return;
+            }
+
+            IsValidatingCss = true;
+            CssValidationStatus = _localizationService.GetString("lblCssValidating");
+
+            try
+            {
+                // Extract @import URLs
+                var importUrls = ExtractImportUrls(CustomCss);
+                var failedUrls = new System.Collections.Generic.List<string>();
+
+                // Test each URL
+                using var httpClient = new System.Net.Http.HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+                foreach (var url in importUrls)
+                {
+                    try
+                    {
+                        var response = await httpClient.SendAsync(new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Head, url));
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            // Try GET if HEAD fails (some servers don't support HEAD)
+                            response = await httpClient.GetAsync(url);
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                failedUrls.Add(url);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        failedUrls.Add(url);
+                    }
+                }
+
+                // Basic CSS syntax validation
+                var syntaxErrors = ValidateCssSyntax(CustomCss);
+
+                if (failedUrls.Count > 0)
+                {
+                    CssValidationStatus = string.Format(_localizationService.GetString("lblCssUrlFailed"), failedUrls.Count);
+                    CssValidationSuccess = false;
+                }
+                else if (!string.IsNullOrEmpty(syntaxErrors))
+                {
+                    CssValidationStatus = syntaxErrors;
+                    CssValidationSuccess = false;
+                }
+                else if (importUrls.Count > 0)
+                {
+                    CssValidationStatus = string.Format(_localizationService.GetString("lblCssUrlsValid"), importUrls.Count);
+                    CssValidationSuccess = true;
+                }
+                else
+                {
+                    CssValidationStatus = _localizationService.GetString("lblCssSyntaxValid");
+                    CssValidationSuccess = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                CssValidationStatus = $"Error: {ex.Message}";
+                CssValidationSuccess = false;
+            }
+            finally
+            {
+                IsValidatingCss = false;
+            }
+        }
+
+        private System.Collections.Generic.List<string> ExtractImportUrls(string css)
+        {
+            var urls = new System.Collections.Generic.List<string>();
+            // Match @import url("...") or @import url('...') or @import "..." or @import '...'
+            var regex = new System.Text.RegularExpressions.Regex(
+                @"@import\s+(?:url\s*\(\s*[""']?([^""')]+)[""']?\s*\)|[""']([^""']+)[""'])",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            foreach (System.Text.RegularExpressions.Match match in regex.Matches(css))
+            {
+                var url = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+                if (!string.IsNullOrWhiteSpace(url) && Uri.TryCreate(url, UriKind.Absolute, out _))
+                {
+                    urls.Add(url.Trim());
+                }
+            }
+            return urls;
+        }
+
+        private string? ValidateCssSyntax(string css)
+        {
+            // Basic syntax validation - check for balanced braces
+            int braceCount = 0;
+            int parenCount = 0;
+
+            foreach (char c in css)
+            {
+                switch (c)
+                {
+                    case '{': braceCount++; break;
+                    case '}': braceCount--; break;
+                    case '(': parenCount++; break;
+                    case ')': parenCount--; break;
+                }
+
+                if (braceCount < 0)
+                    return _localizationService.GetString("lblCssUnmatchedBrace");
+                if (parenCount < 0)
+                    return _localizationService.GetString("lblCssUnmatchedParen");
+            }
+
+            if (braceCount != 0)
+                return _localizationService.GetString("lblCssUnmatchedBrace");
+            if (parenCount != 0)
+                return _localizationService.GetString("lblCssUnmatchedParen");
+
+            return null;
+        }
+
         partial void OnSelectedJellyfinUserChanged(JellyfinAuth? value)
         {
             if (value != null)
@@ -801,6 +986,7 @@ namespace Jellyfin2Samsung.ViewModels
             UseServerScripts = AppSettings.Default.UseServerScripts;
             EnableDevLogs = AppSettings.Default.EnableDevLogs;
             PatchYoutubePlugin = AppSettings.Default.PatchYoutubePlugin;
+            CustomCss = AppSettings.Default.CustomCss ?? string.Empty;
         }
 
         private void UpdateJellyfinAddress()

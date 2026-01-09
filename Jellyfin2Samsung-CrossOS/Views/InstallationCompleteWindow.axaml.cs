@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Jellyfin2Samsung.ViewModels;
+using System;
 
 namespace Jellyfin2Samsung;
 
@@ -9,5 +10,11 @@ public partial class InstallationCompleteWindow : Window
     {
         InitializeComponent();
         DataContext = vm;
+        vm.RequestClose += OnRequestClose;
+    }
+
+    private void OnRequestClose(object? sender, EventArgs e)
+    {
+        Close();
     }
 }

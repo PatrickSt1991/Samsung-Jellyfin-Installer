@@ -176,5 +176,20 @@
   "lblServerInputMode": "Invoermodus",
   "lblServerUrl": "Server-URL",
   "lblConnectionStatus": "Server Status",
-  "lblAutoLoginUser": "Gebruiker"
+  "lblAutoLoginUser": "Gebruiker",
+  "lblAdvancedSettings": "Geavanceerde instellingen",
+  "lblLegacyApiKeySystem": "Legacy API Key System",
+  "lblTabCss": "CSS Stijl",
+  "lblCssSettings": "Aangepaste CSS-instellingen",
+  "lblCustomCss": "Aangepaste CSS-code",
+  "lblCssHint": "Voer CSS in of gebruik @import voor externe thema's (bijv. ElegantFin, Ultrachromic)",
+  "lblValidateCss": "CSS valideren",
+  "lblCssValidationStatus": "Validatiestatus",
+  "lblCssEmpty": "Geen CSS om te valideren",
+  "lblCssValidating": "Valideren...",
+  "lblCssUrlFailed": "{0} URL('s) onbereikbaar",
+  "lblCssUrlsValid": "{0} URL('s) succesvol gevalideerd",
+  "lblCssSyntaxValid": "CSS-syntaxis geldig",
+  "lblCssUnmatchedBrace": "Ongelijke accolades { }",
+  "lblCssUnmatchedParen": "Ongelijke haakjes ( )"
 }

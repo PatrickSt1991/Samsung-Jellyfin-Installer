@@ -186,6 +186,42 @@ namespace Jellyfin2Samsung.Helpers
                 .Replace("\n", "\\n")
                 .Replace("\r", "\\r");
         }
+
+        /// <summary>
+        /// Injects custom CSS into the Jellyfin web app.
+        /// Supports both inline CSS and @import rules for external themes like ElegantFin or Ultrachromic.
+        /// </summary>
+        public async Task InjectCustomCssAsync(PackageWorkspace ws)
+        {
+            var customCss = AppSettings.Default.CustomCss;
+
+            if (string.IsNullOrWhiteSpace(customCss))
+            {
+                Trace.WriteLine("[InjectCustomCss] No custom CSS configured, skipping injection");
+                return;
+            }
+
+            string indexPath = Path.Combine(ws.Root, "www", "index.html");
+            if (!File.Exists(indexPath))
+            {
+                Trace.WriteLine("[InjectCustomCss] index.html not found");
+                return;
+            }
+
+            var html = await File.ReadAllTextAsync(indexPath);
+
+            var cssBlock = new StringBuilder();
+            cssBlock.AppendLine("<style id=\"jellyfin-custom-css\">");
+            cssBlock.AppendLine(customCss);
+            cssBlock.AppendLine("</style>");
+
+            // Inject before </head> to ensure CSS is loaded with the page
+            html = html.Replace("</head>", cssBlock + "</head>");
+
+            await File.WriteAllTextAsync(indexPath, html);
+            Trace.WriteLine("[InjectCustomCss] Custom CSS injected successfully");
+        }
+
         public async Task InjectUserSettingsAsync(PackageWorkspace ws, string[] userIds)
         {
             if (userIds == null || userIds.Length == 0) return;
