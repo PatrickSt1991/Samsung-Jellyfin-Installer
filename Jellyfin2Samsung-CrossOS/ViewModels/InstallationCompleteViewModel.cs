@@ -53,10 +53,7 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand]
         private void CloseWindow()
         {
-            if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                desktop.Shutdown();
-            }
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
 
         public event EventHandler? RequestClose;
