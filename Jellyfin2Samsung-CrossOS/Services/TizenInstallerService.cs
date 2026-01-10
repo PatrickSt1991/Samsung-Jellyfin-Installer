@@ -24,7 +24,7 @@ namespace Jellyfin2Samsung.Services
         private readonly HttpClient _httpClient;
         private readonly IDialogService _dialogService;
         private readonly AppSettings _appSettings;
-        private readonly JellyfinWebPackagePatcher _jellyfinWebPackagePatcher;
+        private readonly JellyfinPackagePatcher _jellyfinWebPackagePatcher;
         private readonly JellyfinApiClient _jellyfinApiClient;
         private readonly ProcessHelper _processHelper;
 
@@ -35,7 +35,7 @@ namespace Jellyfin2Samsung.Services
             HttpClient httpClient,
             IDialogService dialogService,
             AppSettings appSettings,
-            JellyfinWebPackagePatcher jellyfinWebPackagePatcher,
+            JellyfinPackagePatcher jellyfinWebPackagePatcher,
             JellyfinApiClient jellyfinApiClient,
             ProcessHelper processHelper)
         {

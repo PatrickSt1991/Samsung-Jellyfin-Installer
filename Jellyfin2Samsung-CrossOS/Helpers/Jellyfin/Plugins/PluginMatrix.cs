@@ -1,9 +1,10 @@
 ﻿using Jellyfin2Samsung.Models;
+using System;
 using System.Collections.Generic;
 
 namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 {
-    public class PluginMatrix
+    public static class PluginMatrix
     {
         public static readonly List<PluginMatrixEntry> Matrix =
         [
@@ -83,6 +84,19 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
                 RawRoot = "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/v0.4.5/",
                 UseBabel = true
             }
+        ];
+        public static readonly List<ServerAssetRule> ServerAssetRules = 
+        [
+            new ServerAssetRule(
+                pluginName: "GenericPluginAsset",
+                match: url => url.Contains("/plugins/", StringComparison.OrdinalIgnoreCase),
+                treatAs: ServerAssetKind.PluginAsset),
+
+            new ServerAssetRule("EditorsChoice", url => url.Contains("editorschoice", StringComparison.OrdinalIgnoreCase), ServerAssetKind.PluginAsset),
+            new ServerAssetRule("KefinTweaks", url => url.Contains("kefin", StringComparison.OrdinalIgnoreCase), ServerAssetKind.PluginAsset),
+            new ServerAssetRule("Media Bar", url => url.Contains("mediabar", StringComparison.OrdinalIgnoreCase), ServerAssetKind.PluginAsset),
+            new ServerAssetRule("Home Screen Sections", url => url.Contains("homescreensections", StringComparison.OrdinalIgnoreCase), ServerAssetKind.PluginAsset),
+            new ServerAssetRule("Jellyfin Enhanced", url => url.Contains("jellyfinenhanced", StringComparison.OrdinalIgnoreCase) || url.Contains("/JellyfinEnhanced/", StringComparison.OrdinalIgnoreCase), ServerAssetKind.PluginAsset),
         ];
 
         public static List<PluginMatrixEntry> GetMatrix() => Matrix;

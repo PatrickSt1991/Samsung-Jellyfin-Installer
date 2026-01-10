@@ -18,6 +18,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
         JellyfinApiClient api,
         PluginManager plugins)
     {
+        private readonly JellyfinApiClient _apiClient = api;
         private readonly JellyfinPluginPatcher _plugins = new(http, api, plugins);
 
         public async Task PatchIndexAsync(PackageWorkspace ws, string serverUrl)
@@ -104,7 +105,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
             if (string.IsNullOrEmpty(serverId))
             {
                 Trace.WriteLine("[InjectAutoLogin] Server ID not cached, fetching from server...");
-                var serverInfo = await _plugins.Api.GetPublicSystemInfoAsync(serverUrl);
+                var serverInfo = await _apiClient.GetPublicSystemInfoAsync(serverUrl);
                 if (serverInfo != null && !string.IsNullOrEmpty(serverInfo.Id))
                 {
                     serverId = serverInfo.Id;

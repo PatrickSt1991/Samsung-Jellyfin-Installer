@@ -22,4 +22,11 @@ namespace Jellyfin2Samsung.Models
         public List<string> HeadInjectBlocks { get; set; } = new();
         public List<string> BodyInjectBlocks { get; set; } = new();
     }
+    public enum ServerAssetKind
+    {
+        Unknown = 0,
+        PluginAsset = 1
+    }
+
+    public sealed record ServerAssetRule(string pluginName, Func<string, bool> match, ServerAssetKind treatAs);
 }

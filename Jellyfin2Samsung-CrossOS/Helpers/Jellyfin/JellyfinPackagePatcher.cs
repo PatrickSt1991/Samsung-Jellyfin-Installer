@@ -12,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Helpers.Jellyfin
 {
-    public class JellyfinWebPackagePatcher
+    public class JellyfinPackagePatcher
     {
         private readonly JellyfinIndex _indexHtml;
         private readonly JellyfinDiagnostic _diagnostic;
         private readonly FixYouTube _youTube;
         private readonly CustomCss _customCss;
 
-        public JellyfinWebPackagePatcher(HttpClient http)
+        public JellyfinPackagePatcher(HttpClient http)
         {
             var api = new JellyfinApiClient(http);
             var plugins = new PluginManager(http, api);
