@@ -1,8 +1,10 @@
 ﻿using Avalonia.Media;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Tizen.Certificate;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.Services;
@@ -20,6 +22,8 @@ namespace Jellyfin2Samsung.ViewModels
     {
         private readonly JellyfinApiClient _jellyfinApiClient;
         private readonly ILocalizationService _localizationService;
+        private readonly CertificateHelper _certificateHelper;
+        private readonly INetworkService _networkService;
 
         [ObservableProperty]
         private string? audioLanguagePreference;
@@ -35,9 +39,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string? selectedSubtitleMode;
-
-        [ObservableProperty]
-        private string jellyfinApiKey = string.Empty;
 
         [ObservableProperty]
         private string selectedUpdateMode = string.Empty;
@@ -59,6 +60,9 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private bool isAuthenticated = false;
+
+        [ObservableProperty]
+        private bool isJellyfinAdmin = false;
 
         [ObservableProperty]
         private string authenticationStatus = string.Empty;
@@ -115,12 +119,6 @@ namespace Jellyfin2Samsung.ViewModels
         private bool useServerScripts;
 
         [ObservableProperty]
-        private bool apiKeyEnabled = false;
-
-        [ObservableProperty]
-        private bool apiKeySet = false;
-
-        [ObservableProperty]
         private bool serverIpSet = false;
 
         [ObservableProperty]
@@ -142,12 +140,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private bool canOpenDebugWindow;
-        
-        [ObservableProperty]
-        private ObservableCollection<JellyfinAuth> availableJellyfinUsers = new();
-
-        [ObservableProperty]
-        private JellyfinAuth? selectedJellyfinUser;
 
         [ObservableProperty]
         private string selectedServerInputMode = "IP : Port";
@@ -155,11 +147,45 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private string jellyfinFullUrlInput = string.Empty;
 
+        // ========== Main Settings Properties (from SettingsViewModel) ==========
         [ObservableProperty]
-        private JellyfinAuth? selectedAutoLoginUser;
+        private LanguageOption? selectedLanguage;
 
         [ObservableProperty]
-        private ObservableCollection<JellyfinAuth> availableJellyfinUsersForLogin = new();
+        private ExistingCertificates? selectedCertificateObject;
+
+        [ObservableProperty]
+        private string selectedCertificate = string.Empty;
+
+        [ObservableProperty]
+        private string localIP = string.Empty;
+
+        [ObservableProperty]
+        private bool rememberCustomIP;
+
+        [ObservableProperty]
+        private bool tryOverwrite;
+
+        [ObservableProperty]
+        private bool deletePreviousInstall;
+
+        [ObservableProperty]
+        private bool forceSamsungLogin;
+
+        [ObservableProperty]
+        private bool rtlReading;
+
+        [ObservableProperty]
+        private bool openAfterInstall;
+
+        [ObservableProperty]
+        private bool keepWGTFile;
+
+        public ObservableCollection<LanguageOption> AvailableLanguages { get; }
+        public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
+        public ObservableCollection<JellyfinUser> AvailableJellyfinUsers { get; } = new();
+        public ObservableCollection<JellyfinUser> SelectedJellyfinUsers { get; }
+        // ========== End Main Settings Properties ==========
 
         public ObservableCollection<string> AvailableThemes { get; } = new()
         {
@@ -223,8 +249,6 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblServerSettings => _localizationService.GetString("lblServerSettings");
         public string UpdateMode => _localizationService.GetString("UpdateMode");
         public string ServerIP => _localizationService.GetString("ServerIP");
-        public string LblJellyfinServerApi => _localizationService.GetString("lblJellyfinServerApi");
-        public string LblJellyfinUser => _localizationService.GetString("lblJellyfinUser");
         public string LblEnableBackdrops => _localizationService.GetString("lblEnableBackdrops");
         public string LblEnableThemeSongs => _localizationService.GetString("lblEnableThemeSongs");
         public string LblEnableThemeVideos => _localizationService.GetString("lblEnableThemeVideos");
@@ -244,7 +268,6 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblPlayDefaultAudioTrack => _localizationService.GetString("lblPlayDefaultAudioTrack");
         public string LbluserAutoLogin => _localizationService.GetString("lbluserAutoLogin");
         public string LblUserSettings => _localizationService.GetString("lblUserSettings");
-        public string LblLegacyApiKeySystem => _localizationService.GetString("lblLegacyApiKeySystem");
         public string LblBrowserSettings => _localizationService.GetString("lblBrowserSettings");
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
@@ -258,6 +281,10 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblAdvancedSettings => _localizationService.GetString("lblAdvancedSettings");
         public string LblBasePathHint => _localizationService.GetString("lblBasePathHint");
         public string LblTestServer => _localizationService.GetString("lblTestServer");
+        public string LblLogout => _localizationService.GetString("lblLogout");
+        public string LblSelectUsers => _localizationService.GetString("lblSelectUsers");
+        public string LblRefreshUsers => _localizationService.GetString("lblRefreshUsers");
+        public string LblUserSelectionHint => _localizationService.GetString("lblUserSelectionHint");
 
         // New Tab and UI labels
         public string LblTabServer => _localizationService.GetString("lblTabServer");
@@ -266,7 +293,6 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblServerInputMode => _localizationService.GetString("lblServerInputMode");
         public string LblServerUrl => _localizationService.GetString("lblServerUrl");
         public string LblConnectionStatus => _localizationService.GetString("lblConnectionStatus");
-        public string LblAutoLoginUser => _localizationService.GetString("lblAutoLoginUser");
 
         // CSS Tab labels
         public string LblTabCss => _localizationService.GetString("lblTabCss");
@@ -275,6 +301,21 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblCssHint => _localizationService.GetString("lblCssHint");
         public string LblValidateCss => _localizationService.GetString("lblValidateCss");
         public string LblCssValidationStatus => _localizationService.GetString("lblCssValidationStatus");
+
+        // Main Settings Tab labels
+        public string LblTabMainSettings => _localizationService.GetString("lblTabMainSettings");
+        public string LblMainSettings => _localizationService.GetString("lblMainSettings");
+        public string LblLanguage => _localizationService.GetString("lblLanguage");
+        public string LblCertificate => _localizationService.GetString("lblCertifcate");
+        public string LblLocalIP => _localizationService.GetString("lblLocalIP");
+        public string LblTryOverwrite => _localizationService.GetString("lblTryOverwrite");
+        public string LblLaunchOnInstall => _localizationService.GetString("lblLaunchOnInstall");
+        public string LblRememberIp => _localizationService.GetString("lblRememberIp");
+        public string LblDeletePrevious => _localizationService.GetString("lblDeletePrevious");
+        public string LblForceLogin => _localizationService.GetString("lblForceLogin");
+        public string LblRTL => _localizationService.GetString("lblRTL");
+        public string LblKeepWGTFile => _localizationService.GetString("lblKeepWGTFile");
+        public string LblSettingsHeader => _localizationService.GetString("lblSettings");
 
         public bool CanLogin => ServerValidated &&
                                 !string.IsNullOrWhiteSpace(JellyfinUsername) &&
@@ -285,15 +326,45 @@ namespace Jellyfin2Samsung.ViewModels
 
         public JellyfinConfigViewModel(
             JellyfinApiClient jellyfinApiClient,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            CertificateHelper certificateHelper,
+            INetworkService networkService)
         {
             _jellyfinApiClient = jellyfinApiClient;
             _localizationService = localizationService;
+            _certificateHelper = certificateHelper;
+            _networkService = networkService;
             _localizationService.LanguageChanged += OnLanguageChanged;
+
+            // Initialize selected users collection with change tracking
+            SelectedJellyfinUsers = new ObservableCollection<JellyfinUser>();
+            SelectedJellyfinUsers.CollectionChanged += OnSelectedJellyfinUsersChanged;
+
+            // Initialize available languages collection
+            AvailableLanguages = new ObservableCollection<LanguageOption>(
+                _localizationService.AvailableLanguages
+                    .Select(code => new LanguageOption
+                    {
+                        Code = code,
+                        Name = GetLanguageDisplayName(code)
+                    })
+                    .OrderBy(lang => lang.Name)
+            );
+
             InitializeAsyncSettings();
+            InitializeMainSettings();
             UpdateServerIpStatus();
-            UpdateApiKeyStatus();
-            _ = LoadJellyfinUsersAsync();
+            _ = LoadLocalIpAsync();
+            _ = InitializeCertificatesAsync();
+        }
+
+        private void OnSelectedJellyfinUsersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            // Save selected user IDs to AppSettings as comma-separated string
+            var userIds = SelectedJellyfinUsers.Select(u => u.Id).ToArray();
+            AppSettings.Default.SelectedUserIds = string.Join(",", userIds);
+            AppSettings.Default.Save();
+            Trace.WriteLine($"[SelectedUsers] Saved {userIds.Length} user IDs: {AppSettings.Default.SelectedUserIds}");
         }
 
         private void OnLanguageChanged(object? sender, EventArgs e)
@@ -307,8 +378,6 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblServerSettings));
             OnPropertyChanged(nameof(UpdateMode));
             OnPropertyChanged(nameof(ServerIP));
-            OnPropertyChanged(nameof(LblJellyfinServerApi));
-            OnPropertyChanged(nameof(LblJellyfinUser));
             OnPropertyChanged(nameof(LblEnableBackdrops));
             OnPropertyChanged(nameof(LblEnableThemeSongs));
             OnPropertyChanged(nameof(LblEnableThemeVideos));
@@ -328,7 +397,6 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblPlayDefaultAudioTrack));
             OnPropertyChanged(nameof(LbluserAutoLogin));
             OnPropertyChanged(nameof(LblUserSettings));
-            OnPropertyChanged(nameof(LblLegacyApiKeySystem));
             OnPropertyChanged(nameof(LblBrowserSettings));
             OnPropertyChanged(nameof(LblUseServerScripts));
             OnPropertyChanged(nameof(LblEnableDevLogs));
@@ -342,6 +410,10 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblAdvancedSettings));
             OnPropertyChanged(nameof(LblBasePathHint));
             OnPropertyChanged(nameof(LblTestServer));
+            OnPropertyChanged(nameof(LblLogout));
+            OnPropertyChanged(nameof(LblSelectUsers));
+            OnPropertyChanged(nameof(LblRefreshUsers));
+            OnPropertyChanged(nameof(LblUserSelectionHint));
             // New tab and UI labels
             OnPropertyChanged(nameof(LblTabServer));
             OnPropertyChanged(nameof(LblTabPlayback));
@@ -349,7 +421,6 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblServerInputMode));
             OnPropertyChanged(nameof(LblServerUrl));
             OnPropertyChanged(nameof(LblConnectionStatus));
-            OnPropertyChanged(nameof(LblAutoLoginUser));
             // CSS Tab labels
             OnPropertyChanged(nameof(LblTabCss));
             OnPropertyChanged(nameof(LblCssSettings));
@@ -357,6 +428,20 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblCssHint));
             OnPropertyChanged(nameof(LblValidateCss));
             OnPropertyChanged(nameof(LblCssValidationStatus));
+            // Main Settings Tab labels
+            OnPropertyChanged(nameof(LblTabMainSettings));
+            OnPropertyChanged(nameof(LblMainSettings));
+            OnPropertyChanged(nameof(LblLanguage));
+            OnPropertyChanged(nameof(LblCertificate));
+            OnPropertyChanged(nameof(LblLocalIP));
+            OnPropertyChanged(nameof(LblTryOverwrite));
+            OnPropertyChanged(nameof(LblLaunchOnInstall));
+            OnPropertyChanged(nameof(LblRememberIp));
+            OnPropertyChanged(nameof(LblDeletePrevious));
+            OnPropertyChanged(nameof(LblForceLogin));
+            OnPropertyChanged(nameof(LblRTL));
+            OnPropertyChanged(nameof(LblKeepWGTFile));
+            OnPropertyChanged(nameof(LblSettingsHeader));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -389,20 +474,8 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
-        partial void OnJellyfinApiKeyChanged(string value)
-        {
-            AppSettings.Default.JellyfinApiKey = value;
-            AppSettings.Default.Save();
-
-            UpdateApiKeyStatus();
-            _ = LoadJellyfinUsersAsync();
-        }
-
         partial void OnSelectedUpdateModeChanged(string value)
         {
-            ApiKeyEnabled = !string.IsNullOrEmpty(value) &&
-                           !value.Contains("None");
-
             AppSettings.Default.ConfigUpdateMode = value;
             AppSettings.Default.Save();
         }
@@ -421,6 +494,10 @@ namespace Jellyfin2Samsung.ViewModels
         {
             OnPropertyChanged(nameof(IsServerIpPortMode));
             OnPropertyChanged(nameof(IsServerFullUrlMode));
+
+            // Save the selected mode to persist across restarts
+            AppSettings.Default.ServerInputMode = value;
+            AppSettings.Default.Save();
         }
 
         partial void OnJellyfinFullUrlInputChanged(string value)
@@ -450,17 +527,6 @@ namespace Jellyfin2Samsung.ViewModels
                 // Auto-validate the server connection
                 _ = AutoValidateServerAsync();
             }
-        }
-
-        partial void OnSelectedAutoLoginUserChanged(JellyfinAuth? value)
-        {
-            if (value != null)
-            {
-                JellyfinUsername = value.Name;
-                AppSettings.Default.JellyfinUsername = value.Name;
-                AppSettings.Default.Save();
-            }
-            OnPropertyChanged(nameof(CanLogin));
         }
 
         partial void OnJellyfinBasePathChanged(string value)
@@ -504,6 +570,13 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnIsAuthenticatedChanged(bool value)
         {
             OnPropertyChanged(nameof(AuthStatusColor));
+            LogoutCommand.NotifyCanExecuteChanged();
+            RefreshUsersCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnIsJellyfinAdminChanged(bool value)
+        {
+            RefreshUsersCommand.NotifyCanExecuteChanged();
         }
 
         partial void OnJellyfinPasswordChanged(string value)
@@ -524,13 +597,14 @@ namespace Jellyfin2Samsung.ViewModels
 
             AuthenticationStatus = "Authenticating...";
 
-            var (accessToken, userId, error) = await _jellyfinApiClient.AuthenticateAsync(JellyfinUsername, JellyfinPassword);
+            var (accessToken, userId, isAdmin, error) = await _jellyfinApiClient.AuthenticateAsync(JellyfinUsername, JellyfinPassword);
 
             if (accessToken != null && userId != null)
             {
                 AppSettings.Default.JellyfinAccessToken = accessToken;
                 AppSettings.Default.JellyfinUserId = userId;
                 AppSettings.Default.JellyfinUsername = JellyfinUsername;
+                AppSettings.Default.IsJellyfinAdmin = isAdmin;
 
                 // Fetch and store the real server ID for auto-login compatibility
                 await FetchAndStoreServerIdAsync();
@@ -538,25 +612,91 @@ namespace Jellyfin2Samsung.ViewModels
                 AppSettings.Default.Save();
 
                 IsAuthenticated = true;
-                AuthenticationStatus = "Authenticated";
+                IsJellyfinAdmin = isAdmin;
+                AuthenticationStatus = isAdmin ? "Authenticated (Admin)" : "Authenticated";
+
+                // If admin, load all Jellyfin users for multi-user selection
+                if (isAdmin)
+                {
+                    await LoadJellyfinUsersAsync();
+                }
 
                 // Auto-enable config patching if not already set
                 if (SelectedUpdateMode == "None" || string.IsNullOrEmpty(SelectedUpdateMode))
                 {
                     SelectedUpdateMode = "Server Settings";
                 }
-
-                // Reload users
-                await LoadJellyfinUsersAsync();
-
-                // Select the authenticated user
-                SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == userId);
             }
             else
             {
                 IsAuthenticated = false;
+                IsJellyfinAdmin = false;
                 AuthenticationStatus = error ?? "Failed";
             }
+        }
+
+        /// <summary>
+        /// Loads all Jellyfin users when admin is authenticated.
+        /// </summary>
+        private async Task LoadJellyfinUsersAsync()
+        {
+            try
+            {
+                var users = await _jellyfinApiClient.LoadUsersAsync();
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    AvailableJellyfinUsers.Clear();
+                    SelectedJellyfinUsers.Clear();
+
+                    foreach (var user in users)
+                    {
+                        AvailableJellyfinUsers.Add(user);
+                    }
+
+                    // Pre-select the currently authenticated user
+                    var currentUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == AppSettings.Default.JellyfinUserId);
+                    if (currentUser != null)
+                    {
+                        SelectedJellyfinUsers.Add(currentUser);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[LoadUsers] Error: {ex}");
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(IsAuthenticated))]
+        private void Logout()
+        {
+            // Clear all authentication data
+            AppSettings.Default.JellyfinAccessToken = "";
+            AppSettings.Default.JellyfinUserId = "";
+            AppSettings.Default.JellyfinServerId = "";
+            AppSettings.Default.JellyfinServerLocalAddress = "";
+            AppSettings.Default.IsJellyfinAdmin = false;
+            AppSettings.Default.Save();
+
+            // Reset UI state
+            IsAuthenticated = false;
+            IsJellyfinAdmin = false;
+            AuthenticationStatus = "Logged out";
+
+            // Clear user collections
+            AvailableJellyfinUsers.Clear();
+            SelectedJellyfinUsers.Clear();
+
+            // Notify command state changed
+            LogoutCommand.NotifyCanExecuteChanged();
+            RefreshUsersCommand.NotifyCanExecuteChanged();
+        }
+
+        [RelayCommand(CanExecute = nameof(IsJellyfinAdmin))]
+        private async Task RefreshUsersAsync()
+        {
+            await LoadJellyfinUsersAsync();
         }
 
         [RelayCommand]
@@ -900,14 +1040,6 @@ namespace Jellyfin2Samsung.ViewModels
             return null;
         }
 
-        partial void OnSelectedJellyfinUserChanged(JellyfinAuth? value)
-        {
-            if (value != null)
-            {
-                AppSettings.Default.JellyfinUserId = value.Id;
-                AppSettings.Default.Save();
-            }
-        }
         [RelayCommand(CanExecute = nameof(CanOpenDebugWindow))]
         private void OpenDebugWindow()
         {
@@ -953,17 +1085,41 @@ namespace Jellyfin2Samsung.ViewModels
             // Load base path for reverse proxy support
             JellyfinBasePath = AppSettings.Default.JellyfinBasePath ?? "";
 
+            // Load saved server input mode (default to "IP : Port" if not set)
+            var savedMode = AppSettings.Default.ServerInputMode;
+            if (!string.IsNullOrEmpty(savedMode) && AvailableServerInputModes.Contains(savedMode))
+            {
+                selectedServerInputMode = savedMode;
+                OnPropertyChanged(nameof(SelectedServerInputMode));
+                OnPropertyChanged(nameof(IsServerIpPortMode));
+                OnPropertyChanged(nameof(IsServerFullUrlMode));
+            }
+
+            // Populate JellyfinFullUrlInput from saved settings
+            var fullUrl = AppSettings.Default.JellyfinFullUrl;
+            if (!string.IsNullOrEmpty(fullUrl))
+            {
+                jellyfinFullUrlInput = fullUrl;
+                OnPropertyChanged(nameof(JellyfinFullUrlInput));
+            }
+
             // Load auto-login credentials
             JellyfinUsername = AppSettings.Default.JellyfinUsername ?? "";
             JellyfinPassword = AppSettings.Default.JellyfinPassword ?? "";
             IsAuthenticated = !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken);
+            IsJellyfinAdmin = AppSettings.Default.IsJellyfinAdmin;
             if (IsAuthenticated)
             {
-                AuthenticationStatus = "Previously authenticated";
+                AuthenticationStatus = IsJellyfinAdmin ? "Previously authenticated (Admin)" : "Previously authenticated";
+
+                // If admin was previously authenticated, load users
+                if (IsJellyfinAdmin)
+                {
+                    _ = LoadJellyfinUsersAsync();
+                }
             }
 
             SelectedUpdateMode = AppSettings.Default.ConfigUpdateMode ?? "None";
-            JellyfinApiKey = AppSettings.Default.JellyfinApiKey ?? "";
 
             SelectedTheme = AppSettings.Default.SelectedTheme ?? "dark";
             SelectedSubtitleMode = AppSettings.Default.SelectedSubtitleMode ?? "None";
@@ -1007,16 +1163,7 @@ namespace Jellyfin2Samsung.ViewModels
                 Trace.WriteLine($"Updated Jellyfin IP: {AppSettings.Default.JellyfinIP}");
                 AppSettings.Default.Save();
                 UpdateServerIpStatus();
-                UpdateApiKeyStatus();
-                _ = LoadJellyfinUsersAsync();
             }
-        }
-
-        private void UpdateApiKeyStatus()
-        {
-            ApiKeySet = !string.IsNullOrEmpty(AppSettings.Default.JellyfinIP) &&
-                        !string.IsNullOrEmpty(AppSettings.Default.JellyfinApiKey) &&
-                        AppSettings.Default.JellyfinApiKey.Length == 32;
         }
 
         private void UpdateServerIpStatus()
@@ -1025,45 +1172,6 @@ namespace Jellyfin2Samsung.ViewModels
                           !string.IsNullOrWhiteSpace(JellyfinServerIp);
         }
 
-        private async Task LoadJellyfinUsersAsync()
-        {
-            // Clear existing users first
-            AvailableJellyfinUsers.Clear();
-            AvailableJellyfinUsersForLogin.Clear();
-
-            var users = await _jellyfinApiClient.LoadUsersAsync();
-
-            foreach (var user in users)
-            {
-                AvailableJellyfinUsers.Add(user);
-                // Exclude "everyone" from login dropdown
-                if (user.Id != "everyone")
-                {
-                    AvailableJellyfinUsersForLogin.Add(user);
-                }
-            }
-
-            var savedUserId = AppSettings.Default.JellyfinUserId;
-            if (!string.IsNullOrEmpty(savedUserId))
-            {
-                SelectedJellyfinUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == savedUserId);
-                SelectedAutoLoginUser = AvailableJellyfinUsersForLogin.FirstOrDefault(u => u.Id == savedUserId);
-            }
-
-            // Auto-select if only one user
-            if (SelectedJellyfinUser == null && AvailableJellyfinUsers.Count == 1)
-                SelectedJellyfinUser = AvailableJellyfinUsers.First();
-
-            if (SelectedAutoLoginUser == null && AvailableJellyfinUsersForLogin.Count == 1)
-                SelectedAutoLoginUser = AvailableJellyfinUsersForLogin.First();
-
-            // Try to match by saved username
-            if (SelectedAutoLoginUser == null && !string.IsNullOrEmpty(AppSettings.Default.JellyfinUsername))
-            {
-                SelectedAutoLoginUser = AvailableJellyfinUsersForLogin.FirstOrDefault(
-                    u => u.Name.Equals(AppSettings.Default.JellyfinUsername, StringComparison.OrdinalIgnoreCase));
-            }
-        }
         public void OnTvIpChanged()
         {
             OnPropertyChanged(nameof(TvIp));
@@ -1071,10 +1179,178 @@ namespace Jellyfin2Samsung.ViewModels
             CanOpenDebugWindow = (!string.IsNullOrWhiteSpace(TvIp)) && EnableDevLogs;
             OpenDebugWindowCommand.NotifyCanExecuteChanged();
         }
+
+        // ========== Main Settings Methods ==========
+
+        private void InitializeMainSettings()
+        {
+            // Use current language from LocalizationService or fallback to saved setting
+            var currentLangCode = _localizationService.CurrentLanguage ?? AppSettings.Default.Language ?? "en";
+
+            SelectedLanguage = AvailableLanguages
+                .FirstOrDefault(lang => string.Equals(lang.Code, currentLangCode, StringComparison.OrdinalIgnoreCase))
+                ?? AvailableLanguages.FirstOrDefault();
+
+            RememberCustomIP = AppSettings.Default.RememberCustomIP;
+            DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
+            ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
+            RtlReading = AppSettings.Default.RTLReading;
+            LocalIP = AppSettings.Default.LocalIp ?? string.Empty;
+            TryOverwrite = AppSettings.Default.TryOverwrite;
+            OpenAfterInstall = AppSettings.Default.OpenAfterInstall;
+            KeepWGTFile = AppSettings.Default.KeepWGTFile;
+        }
+
+        private async Task LoadLocalIpAsync()
+        {
+            try
+            {
+                var ip = await _networkService.GetPrimaryOutboundIPAddressAsync();
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    LocalIP = ip ?? string.Empty;
+                    AppSettings.Default.LocalIp = ip;
+                    AppSettings.Default.Save();
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to get local IP: {ex}");
+            }
+        }
+
+        private async Task InitializeCertificatesAsync()
+        {
+            var certificates = _certificateHelper.GetAvailableCertificates(AppSettings.CertificatePath);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                foreach (var cert in certificates)
+                    AvailableCertificates.Add(cert);
+
+                var savedCertName = AppSettings.Default.Certificate;
+                ExistingCertificates? selectedCert = null;
+
+                if (!string.IsNullOrEmpty(savedCertName))
+                {
+                    selectedCert = AvailableCertificates
+                        .FirstOrDefault(c => c.Name == savedCertName);
+                }
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams");
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams (default)");
+
+                selectedCert ??= AvailableCertificates.FirstOrDefault();
+
+                if (selectedCert != null)
+                    SelectedCertificate = selectedCert.Name;
+
+                AppSettings.Default.ChosenCertificates = selectedCert;
+            });
+        }
+
+        private static string GetLanguageDisplayName(string code)
+        {
+            try
+            {
+                var name = new System.Globalization.CultureInfo(code).NativeName;
+                return string.IsNullOrEmpty(name) ? code : char.ToUpper(name[0]) + name.Substring(1);
+            }
+            catch
+            {
+                return code;
+            }
+        }
+
+        // Property changed handlers for Main Settings
+        partial void OnSelectedLanguageChanged(LanguageOption? value)
+        {
+            if (value is null)
+                return;
+
+            AppSettings.Default.Language = value.Code;
+            AppSettings.Default.Save();
+
+            // Update the global LocalizationService
+            _localizationService.SetLanguage(value.Code);
+        }
+
+        partial void OnSelectedCertificateObjectChanged(ExistingCertificates? value)
+        {
+            if (value != null)
+            {
+                SelectedCertificate = value.Name;
+                AppSettings.Default.Certificate = value.Name;
+                AppSettings.Default.Save();
+            }
+        }
+
+        partial void OnSelectedCertificateChanged(string value)
+        {
+            AppSettings.Default.Certificate = value;
+            AppSettings.Default.Save();
+
+            SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
+            AppSettings.Default.ChosenCertificates = SelectedCertificateObject;
+        }
+
+        partial void OnLocalIPChanged(string value)
+        {
+            AppSettings.Default.LocalIp = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnRememberCustomIPChanged(bool value)
+        {
+            AppSettings.Default.RememberCustomIP = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnTryOverwriteChanged(bool value)
+        {
+            AppSettings.Default.TryOverwrite = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnDeletePreviousInstallChanged(bool value)
+        {
+            AppSettings.Default.DeletePreviousInstall = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnForceSamsungLoginChanged(bool value)
+        {
+            AppSettings.Default.ForceSamsungLogin = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnRtlReadingChanged(bool value)
+        {
+            AppSettings.Default.RTLReading = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnOpenAfterInstallChanged(bool value)
+        {
+            AppSettings.Default.OpenAfterInstall = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnKeepWGTFileChanged(bool value)
+        {
+            AppSettings.Default.KeepWGTFile = value;
+            AppSettings.Default.Save();
+        }
+
+        // ========== End Main Settings Methods ==========
+
         public void Dispose()
         {
             _localizationService.LanguageChanged -= OnLanguageChanged;
-
         }
     }
 }

@@ -40,6 +40,7 @@ namespace Jellyfin2Samsung.Helpers
         public bool RTLReading { get; set; } = false;
         public string JellyfinIP { get; set; } = "";
         public string JellyfinBasePath { get; set; } = "";
+        public string ServerInputMode { get; set; } = "IP : Port";
         public string JellyfinUsername { get; set; } = "";
         public string JellyfinPassword { get; set; } = "";
         public string JellyfinAccessToken { get; set; } = "";
@@ -63,8 +64,9 @@ namespace Jellyfin2Samsung.Helpers
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
         public string ConfigUpdateMode { get; set; } = "None";
-        public string JellyfinApiKey { get; set; } = "";
         public string JellyfinUserId { get; set; } = "";
+        public bool IsJellyfinAdmin { get; set; } = false;
+        public string SelectedUserIds { get; set; } = "";  // Comma-separated list of selected user IDs for multi-user config
         public bool UserAutoLogin { get; set; } = true;
         public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";

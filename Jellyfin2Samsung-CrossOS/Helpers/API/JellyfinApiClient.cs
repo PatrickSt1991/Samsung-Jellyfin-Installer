@@ -20,48 +20,31 @@ namespace Jellyfin2Samsung.Helpers.API
             _httpClient = httpClient;
         }
 
+        /// <summary>
+        /// Checks if a valid Jellyfin configuration exists with an authenticated user.
+        /// Uses AccessToken from username/password authentication.
+        /// </summary>
         public static bool IsValidJellyfinConfiguration()
         {
             return !string.IsNullOrEmpty(AppSettings.Default.JellyfinFullUrl) &&
-                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinApiKey) &&
-                   AppSettings.Default.JellyfinApiKey.Length == 32 &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId) &&
                    IsValidUrl($"{AppSettings.Default.JellyfinFullUrl}/Users");
+        }
+
+        /// <summary>
+        /// Checks if the user has a valid authentication (AccessToken + UserId).
+        /// </summary>
+        public static bool HasValidAuthentication()
+        {
+            return !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId);
         }
 
         public static bool IsValidUrl(string url)
         {
             return Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        }
-
-        public async Task<List<JellyfinAuth>> LoadUsersAsync()
-        {
-            var users = new List<JellyfinAuth>();
-            if (!IsValidJellyfinConfiguration()) return users;
-
-            try
-            {
-                SetupHeaders();
-                using var response = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinFullUrl}/Users");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (jellyfinUsers != null)
-                        users.AddRange(jellyfinUsers);
-
-                    if (users.Count > 1)
-                        users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Error loading users: {ex}");
-            }
-
-            return users;
         }
 
         public async Task<List<JellyfinPluginInfo>> GetInstalledPluginsAsync(string serverUrl)
@@ -170,18 +153,22 @@ namespace Jellyfin2Samsung.Helpers.API
             }
         }
 
+        /// <summary>
+        /// Sets up HTTP headers for authenticated Jellyfin API requests.
+        /// Uses the AccessToken obtained from username/password authentication.
+        /// </summary>
         private void SetupHeaders()
         {
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinAccessToken}\"");
         }
 
         /// <summary>
         /// Authenticates with Jellyfin using username and password.
-        /// Returns the access token and user ID on success.
+        /// Returns the access token, user ID, and admin status on success.
         /// </summary>
-        public async Task<(string? accessToken, string? userId, string? error)> AuthenticateAsync(string username, string password)
+        public async Task<(string? accessToken, string? userId, bool isAdmin, string? error)> AuthenticateAsync(string username, string password)
         {
             try
             {
@@ -210,21 +197,76 @@ namespace Jellyfin2Samsung.Helpers.API
 
                     var accessToken = authResponse?["AccessToken"]?.GetValue<string>();
                     var userId = authResponse?["User"]?["Id"]?.GetValue<string>();
+                    var isAdmin = authResponse?["User"]?["Policy"]?["IsAdministrator"]?.GetValue<bool>() ?? false;
 
-                    return (accessToken, userId, null);
+                    Trace.WriteLine($"[Auth] User authenticated. IsAdmin: {isAdmin}");
+
+                    return (accessToken, userId, isAdmin, null);
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Trace.WriteLine($"Authentication failed: {response.StatusCode} - {errorContent}");
-                    return (null, null, $"Authentication failed: {response.StatusCode}");
+                    return (null, null, false, $"Authentication failed: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
                 Trace.WriteLine($"Authentication error: {ex}");
-                return (null, null, ex.Message);
+                return (null, null, false, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Loads all Jellyfin users. Requires admin authentication.
+        /// </summary>
+        public async Task<List<JellyfinUser>> LoadUsersAsync()
+        {
+            var users = new List<JellyfinUser>();
+            try
+            {
+                SetupHeaders();
+                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var usersUrl = $"{serverUrl}/Users";
+
+                Trace.WriteLine($"[LoadUsers] Fetching users from: {usersUrl}");
+
+                var response = await _httpClient.GetAsync(usersUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var usersArray = JsonNode.Parse(responseJson)?.AsArray();
+
+                    if (usersArray != null)
+                    {
+                        foreach (var userNode in usersArray)
+                        {
+                            var user = new JellyfinUser
+                            {
+                                Id = userNode?["Id"]?.GetValue<string>() ?? "",
+                                Name = userNode?["Name"]?.GetValue<string>() ?? ""
+                            };
+
+                            if (!string.IsNullOrEmpty(user.Id) && !string.IsNullOrEmpty(user.Name))
+                            {
+                                users.Add(user);
+                            }
+                        }
+
+                        Trace.WriteLine($"[LoadUsers] Loaded {users.Count} users");
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine($"[LoadUsers] Failed to load users: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[LoadUsers] Error loading users: {ex}");
+            }
+
+            return users;
         }
 
         /// <summary>
