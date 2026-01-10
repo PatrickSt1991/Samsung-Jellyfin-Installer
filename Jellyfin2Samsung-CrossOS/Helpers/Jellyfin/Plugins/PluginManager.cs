@@ -1,5 +1,6 @@
 ﻿using Jellyfin2Samsung.Helpers.API;
 using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using System;

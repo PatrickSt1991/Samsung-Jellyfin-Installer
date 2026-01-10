@@ -83,7 +83,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 
                 // Apply EditorsChoice patch (your existing patch class)
                 var js = await File.ReadAllTextAsync(local, Encoding.UTF8);
-                js = new PatchEditorsChoice().Patch(js);
+                js = new PatchEditorsChoice().ApplyAsync(js);
                 await File.WriteAllTextAsync(local, js, Encoding.UTF8);
 
                 string injectedSrc = $"plugin_cache/{cleanName}/{fileName}";
@@ -256,34 +256,6 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             foreach (var url in entry.FallbackUrls)
             {
                 var clean = "homescreensections";
-                var fileName = Path.GetFileName(new Uri(url).AbsolutePath);
-                var relPath = Path.Combine(clean, fileName);
-
-                var local = await ctx.PluginManager.DownloadAndTranspileAsync(url, ctx.PluginCacheDir, relPath);
-                if (local == null) continue;
-
-                var injectedSrc = $"plugin_cache/{clean}/{fileName}";
-                ctx.InjectScript($"<script src=\"{injectedSrc}\"></script>", injectedSrc);
-                break;
-            }
-        }
-    }
-
-    // ------------------------
-    // KefinTweaks (stub hook: keep your existing complex flow if you want)
-    // ------------------------
-    public sealed class KefinTweaksPatch : IJellyfinPluginPatch
-    {
-        public async Task ApplyAsync(PluginPatchContext ctx)
-        {
-            // This is intentionally minimal in this refactor: KefinTweaks logic is big.
-            // Recommended: move your existing KefinTweaks-specific workflow into this patch class.
-            //
-            // For now we just inject the main fallback file locally.
-            var entry = ctx.MatrixEntry;
-            foreach (var url in entry.FallbackUrls)
-            {
-                var clean = "kefintweaks";
                 var fileName = Path.GetFileName(new Uri(url).AbsolutePath);
                 var relPath = Path.Combine(clean, fileName);
 

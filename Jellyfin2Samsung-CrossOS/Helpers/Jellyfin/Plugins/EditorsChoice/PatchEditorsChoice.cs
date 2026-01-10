@@ -4,7 +4,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.EditorsChoice
 {
     public class PatchEditorsChoice
     {
-        public string Patch(string js)
+        public string ApplyAsync(string js)
         {
             string css = @"
 .hss-hero { 
