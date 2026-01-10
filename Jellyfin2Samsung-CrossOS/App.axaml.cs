@@ -104,11 +104,10 @@ namespace Jellyfin2Samsung
             // ViewModels
             // --------------------
             services.AddTransient<MainWindowViewModel>();
-            services.AddSingleton<SettingsViewModel>();
             services.AddTransient<InstallationCompleteViewModel>();
             services.AddTransient<InstallingWindowViewModel>();
             services.AddTransient<TvLogsViewModel>();
-            services.AddTransient<JellyfinConfigViewModel>();
+            services.AddSingleton<JellyfinConfigViewModel>();
 
             // --------------------
             // Views

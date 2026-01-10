@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL(ler) başarıyla doğrulandı",
   "lblCssSyntaxValid": "CSS söz dizimi geçerli",
   "lblCssUnmatchedBrace": "Eşleşmeyen süslü parantezler { }",
-  "lblCssUnmatchedParen": "Eşleşmeyen parantezler ( )"
+  "lblCssUnmatchedParen": "Eşleşmeyen parantezler ( )",
+  "lblTabMainSettings": "Ana",
+  "lblMainSettings": "Uygulama Ayarları"
 }

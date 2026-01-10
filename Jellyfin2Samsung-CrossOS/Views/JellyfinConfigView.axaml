@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         x:Class="Jellyfin2Samsung.JellyfinConfigView"
         x:DataType="viewModels:JellyfinConfigViewModel"
-        Title="Jellyfin Config"
-        Width="650"
-        Height="800"
+        Title="Settings"
+        Width="700"
+        Height="825"
         Background="#F5F5F5">
 
 	<Window.Styles>
@@ -43,17 +43,166 @@
                     CornerRadius="8"
                     Padding="24,16"
                     Margin="0,0,0,14">
-				<TextBlock Text="{Binding LblJellyfinConfig}"
+				<TextBlock Text="{Binding LblSettingsHeader}"
                            Foreground="White"
                            FontSize="18"
                            FontWeight="Medium"
                            HorizontalAlignment="Center"/>
 			</Border>
 
-			<!-- TabControl with 3 Tabs -->
+			<!-- TabControl with 5 Tabs -->
 			<TabControl Grid.Row="1" Padding="0">
 
-				<!-- TAB 1: Server & Auto-Login -->
+				<!-- TAB 1: Main Settings (Application Settings) -->
+				<TabItem Header="{Binding LblTabMainSettings}">
+					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
+						<StackPanel Spacing="16">
+
+							<!-- Application Settings Section -->
+							<StackPanel Spacing="12">
+								<TextBlock Text="{Binding LblMainSettings}"
+										   FontSize="15"
+										   FontWeight="SemiBold"
+										   Foreground="#2C3E50"/>
+
+								<!-- Language Section -->
+								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLanguage}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding AvailableLanguages}"
+											  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+											  HorizontalAlignment="Stretch">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Name}"/>
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</Grid>
+
+								<!-- Certificate Section -->
+								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblCertificate}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding AvailableCertificates}"
+											  SelectedItem="{Binding SelectedCertificateObject, Mode=TwoWay}"
+											  HorizontalAlignment="Stretch">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Name}"/>
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</Grid>
+
+								<!-- Local Device IP -->
+								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLocalIP}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<TextBlock Grid.Column="1"
+											   Text="{Binding LocalIP, Mode=TwoWay}"
+											   VerticalAlignment="Center"
+											   Foreground="#7F8C8D"/>
+								</Grid>
+							</StackPanel>
+
+							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+
+							<!-- Installation Options Section -->
+							<StackPanel Spacing="12">
+								<!-- Override Existing App -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblTryOverwrite}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding TryOverwrite}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Launch On Install -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLaunchOnInstall}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding OpenAfterInstall}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Remember IP -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblRememberIp}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding RememberCustomIP}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Delete Previous -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblDeletePrevious}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding DeletePreviousInstall}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Force Login -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblForceLogin}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding ForceSamsungLogin}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- RTL Reading -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblRTL}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding RtlReading}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Keep WGT File -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblKeepWGTFile}"
+											   VerticalAlignment="Center"
+											   Foreground="#34495E"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding KeepWGTFile}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+							</StackPanel>
+
+						</StackPanel>
+					</ScrollViewer>
+				</TabItem>
+
+				<!-- TAB 2: Server & Auto-Login -->
 				<TabItem Header="{Binding LblTabServer}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="16">
@@ -303,7 +452,7 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 2: Playback (Browser Settings) -->
+				<!-- TAB 3: Playback (Browser Settings) -->
 				<TabItem Header="{Binding LblTabPlayback}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
@@ -388,7 +537,7 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 3: User Settings -->
+				<!-- TAB 4: User Settings -->
 				<TabItem Header="{Binding LblTabUser}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="12">
@@ -462,7 +611,7 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 4: CSS Style -->
+				<!-- TAB 5: CSS Style -->
 				<TabItem Header="{Binding LblTabCss}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="12">

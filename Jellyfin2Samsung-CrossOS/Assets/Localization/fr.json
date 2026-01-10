@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL(s) validée(s) avec succès",
   "lblCssSyntaxValid": "Syntaxe CSS valide",
   "lblCssUnmatchedBrace": "Accolades non appariées { }",
-  "lblCssUnmatchedParen": "Parenthèses non appariées ( )"
+  "lblCssUnmatchedParen": "Parenthèses non appariées ( )",
+  "lblTabMainSettings": "Principal",
+  "lblMainSettings": "Paramètres de l'application"
 }

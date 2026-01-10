@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL('s) succesvol gevalideerd",
   "lblCssSyntaxValid": "CSS-syntaxis geldig",
   "lblCssUnmatchedBrace": "Ongelijke accolades { }",
-  "lblCssUnmatchedParen": "Ongelijke haakjes ( )"
+  "lblCssUnmatchedParen": "Ongelijke haakjes ( )",
+  "lblTabMainSettings": "Hoofd",
+  "lblMainSettings": "Toepassingsinstellingen"
 }

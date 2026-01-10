@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL(er) valideret med succes",
   "lblCssSyntaxValid": "CSS-syntaks gyldig",
   "lblCssUnmatchedBrace": "Ulige klammer { }",
-  "lblCssUnmatchedParen": "Ulige parenteser ( )"
+  "lblCssUnmatchedParen": "Ulige parenteser ( )",
+  "lblTabMainSettings": "Hoved",
+  "lblMainSettings": "Programindstillinger"
 }

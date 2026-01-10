@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL(s) erfolgreich validiert",
   "lblCssSyntaxValid": "CSS-Syntax gültig",
   "lblCssUnmatchedBrace": "Ungleiche Klammern { }",
-  "lblCssUnmatchedParen": "Ungleiche Klammern ( )"
+  "lblCssUnmatchedParen": "Ungleiche Klammern ( )",
+  "lblTabMainSettings": "Haupt",
+  "lblMainSettings": "Anwendungseinstellungen"
 }

@@ -1,8 +1,10 @@
 ﻿using Avalonia.Media;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Tizen.Certificate;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.Services;
@@ -20,6 +22,8 @@ namespace Jellyfin2Samsung.ViewModels
     {
         private readonly JellyfinApiClient _jellyfinApiClient;
         private readonly ILocalizationService _localizationService;
+        private readonly CertificateHelper _certificateHelper;
+        private readonly INetworkService _networkService;
 
         [ObservableProperty]
         private string? audioLanguagePreference;
@@ -161,6 +165,44 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private ObservableCollection<JellyfinAuth> availableJellyfinUsersForLogin = new();
 
+        // ========== Main Settings Properties (from SettingsViewModel) ==========
+        [ObservableProperty]
+        private LanguageOption? selectedLanguage;
+
+        [ObservableProperty]
+        private ExistingCertificates? selectedCertificateObject;
+
+        [ObservableProperty]
+        private string selectedCertificate = string.Empty;
+
+        [ObservableProperty]
+        private string localIP = string.Empty;
+
+        [ObservableProperty]
+        private bool rememberCustomIP;
+
+        [ObservableProperty]
+        private bool tryOverwrite;
+
+        [ObservableProperty]
+        private bool deletePreviousInstall;
+
+        [ObservableProperty]
+        private bool forceSamsungLogin;
+
+        [ObservableProperty]
+        private bool rtlReading;
+
+        [ObservableProperty]
+        private bool openAfterInstall;
+
+        [ObservableProperty]
+        private bool keepWGTFile;
+
+        public ObservableCollection<LanguageOption> AvailableLanguages { get; }
+        public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
+        // ========== End Main Settings Properties ==========
+
         public ObservableCollection<string> AvailableThemes { get; } = new()
         {
             "appletv",
@@ -276,6 +318,21 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblValidateCss => _localizationService.GetString("lblValidateCss");
         public string LblCssValidationStatus => _localizationService.GetString("lblCssValidationStatus");
 
+        // Main Settings Tab labels
+        public string LblTabMainSettings => _localizationService.GetString("lblTabMainSettings");
+        public string LblMainSettings => _localizationService.GetString("lblMainSettings");
+        public string LblLanguage => _localizationService.GetString("lblLanguage");
+        public string LblCertificate => _localizationService.GetString("lblCertifcate");
+        public string LblLocalIP => _localizationService.GetString("lblLocalIP");
+        public string LblTryOverwrite => _localizationService.GetString("lblTryOverwrite");
+        public string LblLaunchOnInstall => _localizationService.GetString("lblLaunchOnInstall");
+        public string LblRememberIp => _localizationService.GetString("lblRememberIp");
+        public string LblDeletePrevious => _localizationService.GetString("lblDeletePrevious");
+        public string LblForceLogin => _localizationService.GetString("lblForceLogin");
+        public string LblRTL => _localizationService.GetString("lblRTL");
+        public string LblKeepWGTFile => _localizationService.GetString("lblKeepWGTFile");
+        public string LblSettingsHeader => _localizationService.GetString("lblSettings");
+
         public bool CanLogin => ServerValidated &&
                                 !string.IsNullOrWhiteSpace(JellyfinUsername) &&
                                 !string.IsNullOrWhiteSpace(JellyfinPassword);
@@ -285,15 +342,34 @@ namespace Jellyfin2Samsung.ViewModels
 
         public JellyfinConfigViewModel(
             JellyfinApiClient jellyfinApiClient,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            CertificateHelper certificateHelper,
+            INetworkService networkService)
         {
             _jellyfinApiClient = jellyfinApiClient;
             _localizationService = localizationService;
+            _certificateHelper = certificateHelper;
+            _networkService = networkService;
             _localizationService.LanguageChanged += OnLanguageChanged;
+
+            // Initialize available languages collection
+            AvailableLanguages = new ObservableCollection<LanguageOption>(
+                _localizationService.AvailableLanguages
+                    .Select(code => new LanguageOption
+                    {
+                        Code = code,
+                        Name = GetLanguageDisplayName(code)
+                    })
+                    .OrderBy(lang => lang.Name)
+            );
+
             InitializeAsyncSettings();
+            InitializeMainSettings();
             UpdateServerIpStatus();
             UpdateApiKeyStatus();
             _ = LoadJellyfinUsersAsync();
+            _ = LoadLocalIpAsync();
+            _ = InitializeCertificatesAsync();
         }
 
         private void OnLanguageChanged(object? sender, EventArgs e)
@@ -357,6 +433,20 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblCssHint));
             OnPropertyChanged(nameof(LblValidateCss));
             OnPropertyChanged(nameof(LblCssValidationStatus));
+            // Main Settings Tab labels
+            OnPropertyChanged(nameof(LblTabMainSettings));
+            OnPropertyChanged(nameof(LblMainSettings));
+            OnPropertyChanged(nameof(LblLanguage));
+            OnPropertyChanged(nameof(LblCertificate));
+            OnPropertyChanged(nameof(LblLocalIP));
+            OnPropertyChanged(nameof(LblTryOverwrite));
+            OnPropertyChanged(nameof(LblLaunchOnInstall));
+            OnPropertyChanged(nameof(LblRememberIp));
+            OnPropertyChanged(nameof(LblDeletePrevious));
+            OnPropertyChanged(nameof(LblForceLogin));
+            OnPropertyChanged(nameof(LblRTL));
+            OnPropertyChanged(nameof(LblKeepWGTFile));
+            OnPropertyChanged(nameof(LblSettingsHeader));
         }
 
         partial void OnAudioLanguagePreferenceChanged(string? value)
@@ -1071,10 +1161,178 @@ namespace Jellyfin2Samsung.ViewModels
             CanOpenDebugWindow = (!string.IsNullOrWhiteSpace(TvIp)) && EnableDevLogs;
             OpenDebugWindowCommand.NotifyCanExecuteChanged();
         }
+
+        // ========== Main Settings Methods ==========
+
+        private void InitializeMainSettings()
+        {
+            // Use current language from LocalizationService or fallback to saved setting
+            var currentLangCode = _localizationService.CurrentLanguage ?? AppSettings.Default.Language ?? "en";
+
+            SelectedLanguage = AvailableLanguages
+                .FirstOrDefault(lang => string.Equals(lang.Code, currentLangCode, StringComparison.OrdinalIgnoreCase))
+                ?? AvailableLanguages.FirstOrDefault();
+
+            RememberCustomIP = AppSettings.Default.RememberCustomIP;
+            DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
+            ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
+            RtlReading = AppSettings.Default.RTLReading;
+            LocalIP = AppSettings.Default.LocalIp ?? string.Empty;
+            TryOverwrite = AppSettings.Default.TryOverwrite;
+            OpenAfterInstall = AppSettings.Default.OpenAfterInstall;
+            KeepWGTFile = AppSettings.Default.KeepWGTFile;
+        }
+
+        private async Task LoadLocalIpAsync()
+        {
+            try
+            {
+                var ip = await _networkService.GetPrimaryOutboundIPAddressAsync();
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    LocalIP = ip ?? string.Empty;
+                    AppSettings.Default.LocalIp = ip;
+                    AppSettings.Default.Save();
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to get local IP: {ex}");
+            }
+        }
+
+        private async Task InitializeCertificatesAsync()
+        {
+            var certificates = _certificateHelper.GetAvailableCertificates(AppSettings.CertificatePath);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                foreach (var cert in certificates)
+                    AvailableCertificates.Add(cert);
+
+                var savedCertName = AppSettings.Default.Certificate;
+                ExistingCertificates? selectedCert = null;
+
+                if (!string.IsNullOrEmpty(savedCertName))
+                {
+                    selectedCert = AvailableCertificates
+                        .FirstOrDefault(c => c.Name == savedCertName);
+                }
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams");
+
+                selectedCert ??= AvailableCertificates
+                        .FirstOrDefault(c => c.Name == "Jelly2Sams (default)");
+
+                selectedCert ??= AvailableCertificates.FirstOrDefault();
+
+                if (selectedCert != null)
+                    SelectedCertificate = selectedCert.Name;
+
+                AppSettings.Default.ChosenCertificates = selectedCert;
+            });
+        }
+
+        private static string GetLanguageDisplayName(string code)
+        {
+            try
+            {
+                var name = new System.Globalization.CultureInfo(code).NativeName;
+                return string.IsNullOrEmpty(name) ? code : char.ToUpper(name[0]) + name.Substring(1);
+            }
+            catch
+            {
+                return code;
+            }
+        }
+
+        // Property changed handlers for Main Settings
+        partial void OnSelectedLanguageChanged(LanguageOption? value)
+        {
+            if (value is null)
+                return;
+
+            AppSettings.Default.Language = value.Code;
+            AppSettings.Default.Save();
+
+            // Update the global LocalizationService
+            _localizationService.SetLanguage(value.Code);
+        }
+
+        partial void OnSelectedCertificateObjectChanged(ExistingCertificates? value)
+        {
+            if (value != null)
+            {
+                SelectedCertificate = value.Name;
+                AppSettings.Default.Certificate = value.Name;
+                AppSettings.Default.Save();
+            }
+        }
+
+        partial void OnSelectedCertificateChanged(string value)
+        {
+            AppSettings.Default.Certificate = value;
+            AppSettings.Default.Save();
+
+            SelectedCertificateObject = AvailableCertificates.FirstOrDefault(c => c.Name == value);
+            AppSettings.Default.ChosenCertificates = SelectedCertificateObject;
+        }
+
+        partial void OnLocalIPChanged(string value)
+        {
+            AppSettings.Default.LocalIp = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnRememberCustomIPChanged(bool value)
+        {
+            AppSettings.Default.RememberCustomIP = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnTryOverwriteChanged(bool value)
+        {
+            AppSettings.Default.TryOverwrite = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnDeletePreviousInstallChanged(bool value)
+        {
+            AppSettings.Default.DeletePreviousInstall = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnForceSamsungLoginChanged(bool value)
+        {
+            AppSettings.Default.ForceSamsungLogin = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnRtlReadingChanged(bool value)
+        {
+            AppSettings.Default.RTLReading = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnOpenAfterInstallChanged(bool value)
+        {
+            AppSettings.Default.OpenAfterInstall = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnKeepWGTFileChanged(bool value)
+        {
+            AppSettings.Default.KeepWGTFile = value;
+            AppSettings.Default.Save();
+        }
+
+        // ========== End Main Settings Methods ==========
+
         public void Dispose()
         {
             _localizationService.LanguageChanged -= OnLanguageChanged;
-
         }
     }
 }

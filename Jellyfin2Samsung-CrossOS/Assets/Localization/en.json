@@ -191,5 +191,7 @@
   "lblCssUrlsValid": "{0} URL(s) validated successfully",
   "lblCssSyntaxValid": "CSS syntax valid",
   "lblCssUnmatchedBrace": "Unmatched braces { }",
-  "lblCssUnmatchedParen": "Unmatched parentheses ( )"
+  "lblCssUnmatchedParen": "Unmatched parentheses ( )",
+  "lblTabMainSettings": "Main",
+  "lblMainSettings": "Application Settings"
 }

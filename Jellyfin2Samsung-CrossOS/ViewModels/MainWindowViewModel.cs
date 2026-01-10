@@ -10,6 +10,7 @@ using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -35,7 +36,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly DeviceHelper _deviceHelper;
         private readonly TizenApiClient _tizenApiClient;
         private readonly PackageHelper _packageHelper;
-        private readonly SettingsViewModel _settingsViewModel;
+        private readonly JellyfinConfigViewModel _settingsViewModel;
         private readonly AddLatestRelease _addLatestRelease;
         private CancellationTokenSource? _samsungLoginCts;
 
@@ -98,7 +99,7 @@ namespace Jellyfin2Samsung.ViewModels
             TizenApiClient tizenApiClient,
             PackageHelper packageHelper,
             FileHelper fileHelper,
-            SettingsViewModel settingsViewModel
+            JellyfinConfigViewModel settingsViewModel
         )
         {
             _tizenInstaller = tizenInstaller;
@@ -317,10 +318,7 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand(CanExecute = nameof(CanOpenSettings))]
         private void OpenSettings()
         {
-            var settingsWindow = new SettingsView
-            {
-                DataContext = _settingsViewModel
-            };
+            var settingsWindow = new JellyfinConfigView(_settingsViewModel);
 
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
