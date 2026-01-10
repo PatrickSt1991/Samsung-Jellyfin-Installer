@@ -20,48 +20,31 @@ namespace Jellyfin2Samsung.Helpers.API
             _httpClient = httpClient;
         }
 
+        /// <summary>
+        /// Checks if a valid Jellyfin configuration exists with an authenticated user.
+        /// Uses AccessToken from username/password authentication.
+        /// </summary>
         public static bool IsValidJellyfinConfiguration()
         {
             return !string.IsNullOrEmpty(AppSettings.Default.JellyfinFullUrl) &&
-                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinApiKey) &&
-                   AppSettings.Default.JellyfinApiKey.Length == 32 &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId) &&
                    IsValidUrl($"{AppSettings.Default.JellyfinFullUrl}/Users");
+        }
+
+        /// <summary>
+        /// Checks if the user has a valid authentication (AccessToken + UserId).
+        /// </summary>
+        public static bool HasValidAuthentication()
+        {
+            return !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
+                   !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId);
         }
 
         public static bool IsValidUrl(string url)
         {
             return Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        }
-
-        public async Task<List<JellyfinAuth>> LoadUsersAsync()
-        {
-            var users = new List<JellyfinAuth>();
-            if (!IsValidJellyfinConfiguration()) return users;
-
-            try
-            {
-                SetupHeaders();
-                using var response = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinFullUrl}/Users");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var jellyfinUsers = JsonSerializer.Deserialize<List<JellyfinAuth>>(json,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (jellyfinUsers != null)
-                        users.AddRange(jellyfinUsers);
-
-                    if (users.Count > 1)
-                        users.Add(new JellyfinAuth { Id = "everyone", Name = "Everyone" });
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Error loading users: {ex}");
-            }
-
-            return users;
         }
 
         public async Task<List<JellyfinPluginInfo>> GetInstalledPluginsAsync(string serverUrl)
@@ -170,11 +153,15 @@ namespace Jellyfin2Samsung.Helpers.API
             }
         }
 
+        /// <summary>
+        /// Sets up HTTP headers for authenticated Jellyfin API requests.
+        /// Uses the AccessToken obtained from username/password authentication.
+        /// </summary>
         private void SetupHeaders()
         {
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinApiKey}\"");
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinAccessToken}\"");
         }
 
         /// <summary>

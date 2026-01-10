@@ -327,30 +327,15 @@
 										   FontWeight="SemiBold"
 										   Foreground="#2C3E50"/>
 
-								<!-- Auto-Login User: ComboBox if API Key set, TextBox otherwise -->
+								<!-- Username -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
-											   Text="{Binding LblAutoLoginUser}"
+											   Text="{Binding LblJellyfinUsername}"
 											   Classes="label"
 											   VerticalAlignment="Center"/>
-									<!-- ComboBox when API Key is set (users are loaded) -->
-									<ComboBox Grid.Column="1"
-											  ItemsSource="{Binding AvailableJellyfinUsersForLogin}"
-											  SelectedItem="{Binding SelectedAutoLoginUser}"
-											  IsVisible="{Binding ApiKeySet}"
-											  Classes="clean"
-											  HorizontalAlignment="Stretch">
-										<ComboBox.ItemTemplate>
-											<DataTemplate>
-												<TextBlock Text="{Binding Name}"/>
-											</DataTemplate>
-										</ComboBox.ItemTemplate>
-									</ComboBox>
-									<!-- TextBox when no API Key (manual username entry) -->
 									<TextBox Grid.Column="1"
 											 Text="{Binding JellyfinUsername}"
 											 Watermark="Jellyfin username"
-											 IsVisible="{Binding !ApiKeySet}"
 											 Classes="clean"
 											 HorizontalAlignment="Stretch"/>
 								</Grid>
@@ -389,6 +374,11 @@
 												IsEnabled="{Binding CanLogin}"
 												Padding="8,4"
 												FontSize="12"/>
+										<Button Classes="secondary"
+												Content="{Binding LblLogout}"
+												Command="{Binding LogoutCommand}"
+												Padding="8,4"
+												FontSize="12"/>
 									</StackPanel>
 								</Grid>
 							</StackPanel>
@@ -421,7 +411,7 @@
 										</Button>
 										<ToggleSwitch Grid.Column="1"
 													  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
-													  IsEnabled="{Binding ApiKeySet}"/>
+													  IsEnabled="{Binding IsAuthenticated}"/>
 									</Grid>
 								</Grid>
 
@@ -433,7 +423,7 @@
 											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding UseServerScripts}"
-												  IsEnabled="{Binding ApiKeySet}"/>
+												  IsEnabled="{Binding IsAuthenticated}"/>
 								</Grid>
 
 								<!-- Fix YouTube 153 -->
@@ -443,7 +433,7 @@
 											   Classes="label"
 											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
-											IsEnabled="{Binding ApiKeyEnabled}"
+											IsEnabled="{Binding IsAuthenticated}"
 											IsChecked="{Binding PatchYoutubePlugin}"/>
 								</Grid>
 							</StackPanel>
@@ -455,7 +445,7 @@
 				<!-- TAB 3: Playback (Browser Settings) -->
 				<TabItem Header="{Binding LblTabPlayback}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
-						<StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
+						<StackPanel Spacing="12" IsEnabled="{Binding IsAuthenticated}">
 							<TextBlock Text="{Binding LblBrowserSettings}"
 									   FontSize="15"
 									   FontWeight="SemiBold"
@@ -546,66 +536,31 @@
 									   FontWeight="SemiBold"
 									   Foreground="#2C3E50"/>
 
-							<!-- These settings require API Key -->
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
+							<!-- These settings require authentication -->
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
 								<TextBlock Grid.Column="0" Text="{Binding LblAutoPlayNextEpisode}" Classes="label" VerticalAlignment="Center"/>
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoPlayNextEpisode}"/>
 							</Grid>
 
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
 								<TextBlock Grid.Column="0" Text="{Binding LblRememberAudioSelections}" Classes="label" VerticalAlignment="Center"/>
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberAudioSelections}"/>
 							</Grid>
 
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
 								<TextBlock Grid.Column="0" Text="{Binding LblRememberSubtitleSelections}" Classes="label" VerticalAlignment="Center"/>
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberSubtitleSelections}"/>
 							</Grid>
 
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
 								<TextBlock Grid.Column="0" Text="{Binding LblPlayDefaultAudioTrack}" Classes="label" VerticalAlignment="Center"/>
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding PlayDefaultAudioTrack}"/>
 							</Grid>
 
-							<!-- Enable auto login - requires Authentication (not API Key) -->
+							<!-- Enable auto login - requires Authentication -->
 							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
 								<TextBlock Grid.Column="0" Text="{Binding LbluserAutoLogin}" Classes="label" VerticalAlignment="Center"/>
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding UserAutoLogin}"/>
-							</Grid>
-
-							<!-- Legacy API Key System separator -->
-							<Border Height="1" Background="#E8E8E8" Margin="0,8"/>
-
-							<TextBlock Text="{Binding LblLegacyApiKeySystem}"
-									   FontSize="15"
-									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
-
-							<!-- API Key -->
-							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Text="{Binding LblJellyfinServerApi}" Classes="label" VerticalAlignment="Center"/>
-								<TextBox Grid.Column="1"
-										 Text="{Binding JellyfinApiKey}"
-										 IsEnabled="{Binding ApiKeyEnabled}"
-										 Classes="clean"
-										 HorizontalAlignment="Stretch"/>
-							</Grid>
-
-							<!-- Jellyfin User -->
-							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Text="{Binding LblJellyfinUser}" Classes="label" VerticalAlignment="Center"/>
-								<ComboBox Grid.Column="1"
-										  ItemsSource="{Binding AvailableJellyfinUsers}"
-										  SelectedItem="{Binding SelectedJellyfinUser}"
-										  IsEnabled="{Binding ApiKeySet}"
-										  Classes="clean"
-										  HorizontalAlignment="Stretch">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Text="{Binding Name}"/>
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
 							</Grid>
 						</StackPanel>
 					</ScrollViewer>

@@ -312,21 +312,11 @@ namespace Jellyfin2Samsung.Services
 
                 if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None") && packageUrl.Contains("jellyfin", StringComparison.OrdinalIgnoreCase))
                 {
-                    string[] userIds = [];
-
-                    if (_appSettings.JellyfinUserId == "everyone" && _appSettings.ConfigUpdateMode != "Server Settings")
-                    {
-                        var users = await _jellyfinApiClient.LoadUsersAsync();
-                        userIds = [.. users.Select(u => u.Id)];
-                    }
-                    else
-                    {
-                        userIds = [_appSettings.JellyfinUserId];
-                    }
+                    // Use the authenticated user's ID
+                    string[] userIds = [_appSettings.JellyfinUserId];
 
                     if (_appSettings.ConfigUpdateMode.Contains("Server") || _appSettings.ConfigUpdateMode.Contains("Browser") || _appSettings.ConfigUpdateMode.Contains("All"))
                         await _jellyfinWebPackagePatcher.ApplyJellyfinConfigAsync(packageUrl, userIds);
-
 
                     if (_appSettings.ConfigUpdateMode.Contains("User") || _appSettings.ConfigUpdateMode.Contains("All"))
                         await _jellyfinApiClient.UpdateUserConfigurationsAsync(userIds);
