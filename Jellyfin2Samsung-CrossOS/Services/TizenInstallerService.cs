@@ -312,14 +312,31 @@ namespace Jellyfin2Samsung.Services
 
                 if (!string.IsNullOrEmpty(_appSettings.JellyfinIP) && !_appSettings.ConfigUpdateMode.Contains("None") && packageUrl.Contains("jellyfin", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Use the authenticated user's ID
-                    string[] userIds = [_appSettings.JellyfinUserId];
+                    // If admin with multi-user selection, use SelectedUserIds; otherwise use single authenticated user
+                    string[] userIds;
+                    if (_appSettings.IsJellyfinAdmin && !string.IsNullOrEmpty(_appSettings.SelectedUserIds))
+                    {
+                        userIds = _appSettings.SelectedUserIds
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(id => id.Trim())
+                            .Where(id => !string.IsNullOrEmpty(id))
+                            .ToArray();
+                        Trace.WriteLine($"[Install] Admin mode: configuring {userIds.Length} selected users");
+                    }
+                    else
+                    {
+                        userIds = [_appSettings.JellyfinUserId];
+                        Trace.WriteLine($"[Install] Single user mode: configuring user {_appSettings.JellyfinUserId}");
+                    }
 
-                    if (_appSettings.ConfigUpdateMode.Contains("Server") || _appSettings.ConfigUpdateMode.Contains("Browser") || _appSettings.ConfigUpdateMode.Contains("All"))
-                        await _jellyfinWebPackagePatcher.ApplyJellyfinConfigAsync(packageUrl, userIds);
+                    if (userIds.Length > 0)
+                    {
+                        if (_appSettings.ConfigUpdateMode.Contains("Server") || _appSettings.ConfigUpdateMode.Contains("Browser") || _appSettings.ConfigUpdateMode.Contains("All"))
+                            await _jellyfinWebPackagePatcher.ApplyJellyfinConfigAsync(packageUrl, userIds);
 
-                    if (_appSettings.ConfigUpdateMode.Contains("User") || _appSettings.ConfigUpdateMode.Contains("All"))
-                        await _jellyfinApiClient.UpdateUserConfigurationsAsync(userIds);
+                        if (_appSettings.ConfigUpdateMode.Contains("User") || _appSettings.ConfigUpdateMode.Contains("All"))
+                            await _jellyfinApiClient.UpdateUserConfigurationsAsync(userIds);
+                    }
                 }
 
                 if (packageResign)

@@ -62,6 +62,9 @@ namespace Jellyfin2Samsung.ViewModels
         private bool isAuthenticated = false;
 
         [ObservableProperty]
+        private bool isJellyfinAdmin = false;
+
+        [ObservableProperty]
         private string authenticationStatus = string.Empty;
 
         [ObservableProperty]
@@ -180,6 +183,8 @@ namespace Jellyfin2Samsung.ViewModels
 
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
+        public ObservableCollection<JellyfinUser> AvailableJellyfinUsers { get; } = new();
+        public ObservableCollection<JellyfinUser> SelectedJellyfinUsers { get; }
         // ========== End Main Settings Properties ==========
 
         public ObservableCollection<string> AvailableThemes { get; } = new()
@@ -277,6 +282,9 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblBasePathHint => _localizationService.GetString("lblBasePathHint");
         public string LblTestServer => _localizationService.GetString("lblTestServer");
         public string LblLogout => _localizationService.GetString("lblLogout");
+        public string LblSelectUsers => _localizationService.GetString("lblSelectUsers");
+        public string LblRefreshUsers => _localizationService.GetString("lblRefreshUsers");
+        public string LblUserSelectionHint => _localizationService.GetString("lblUserSelectionHint");
 
         // New Tab and UI labels
         public string LblTabServer => _localizationService.GetString("lblTabServer");
@@ -328,6 +336,10 @@ namespace Jellyfin2Samsung.ViewModels
             _networkService = networkService;
             _localizationService.LanguageChanged += OnLanguageChanged;
 
+            // Initialize selected users collection with change tracking
+            SelectedJellyfinUsers = new ObservableCollection<JellyfinUser>();
+            SelectedJellyfinUsers.CollectionChanged += OnSelectedJellyfinUsersChanged;
+
             // Initialize available languages collection
             AvailableLanguages = new ObservableCollection<LanguageOption>(
                 _localizationService.AvailableLanguages
@@ -344,6 +356,15 @@ namespace Jellyfin2Samsung.ViewModels
             UpdateServerIpStatus();
             _ = LoadLocalIpAsync();
             _ = InitializeCertificatesAsync();
+        }
+
+        private void OnSelectedJellyfinUsersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            // Save selected user IDs to AppSettings as comma-separated string
+            var userIds = SelectedJellyfinUsers.Select(u => u.Id).ToArray();
+            AppSettings.Default.SelectedUserIds = string.Join(",", userIds);
+            AppSettings.Default.Save();
+            Trace.WriteLine($"[SelectedUsers] Saved {userIds.Length} user IDs: {AppSettings.Default.SelectedUserIds}");
         }
 
         private void OnLanguageChanged(object? sender, EventArgs e)
@@ -390,6 +411,9 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblBasePathHint));
             OnPropertyChanged(nameof(LblTestServer));
             OnPropertyChanged(nameof(LblLogout));
+            OnPropertyChanged(nameof(LblSelectUsers));
+            OnPropertyChanged(nameof(LblRefreshUsers));
+            OnPropertyChanged(nameof(LblUserSelectionHint));
             // New tab and UI labels
             OnPropertyChanged(nameof(LblTabServer));
             OnPropertyChanged(nameof(LblTabPlayback));
@@ -547,6 +571,12 @@ namespace Jellyfin2Samsung.ViewModels
         {
             OnPropertyChanged(nameof(AuthStatusColor));
             LogoutCommand.NotifyCanExecuteChanged();
+            RefreshUsersCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnIsJellyfinAdminChanged(bool value)
+        {
+            RefreshUsersCommand.NotifyCanExecuteChanged();
         }
 
         partial void OnJellyfinPasswordChanged(string value)
@@ -567,13 +597,14 @@ namespace Jellyfin2Samsung.ViewModels
 
             AuthenticationStatus = "Authenticating...";
 
-            var (accessToken, userId, error) = await _jellyfinApiClient.AuthenticateAsync(JellyfinUsername, JellyfinPassword);
+            var (accessToken, userId, isAdmin, error) = await _jellyfinApiClient.AuthenticateAsync(JellyfinUsername, JellyfinPassword);
 
             if (accessToken != null && userId != null)
             {
                 AppSettings.Default.JellyfinAccessToken = accessToken;
                 AppSettings.Default.JellyfinUserId = userId;
                 AppSettings.Default.JellyfinUsername = JellyfinUsername;
+                AppSettings.Default.IsJellyfinAdmin = isAdmin;
 
                 // Fetch and store the real server ID for auto-login compatibility
                 await FetchAndStoreServerIdAsync();
@@ -581,7 +612,14 @@ namespace Jellyfin2Samsung.ViewModels
                 AppSettings.Default.Save();
 
                 IsAuthenticated = true;
-                AuthenticationStatus = "Authenticated";
+                IsJellyfinAdmin = isAdmin;
+                AuthenticationStatus = isAdmin ? "Authenticated (Admin)" : "Authenticated";
+
+                // If admin, load all Jellyfin users for multi-user selection
+                if (isAdmin)
+                {
+                    await LoadJellyfinUsersAsync();
+                }
 
                 // Auto-enable config patching if not already set
                 if (SelectedUpdateMode == "None" || string.IsNullOrEmpty(SelectedUpdateMode))
@@ -592,7 +630,41 @@ namespace Jellyfin2Samsung.ViewModels
             else
             {
                 IsAuthenticated = false;
+                IsJellyfinAdmin = false;
                 AuthenticationStatus = error ?? "Failed";
+            }
+        }
+
+        /// <summary>
+        /// Loads all Jellyfin users when admin is authenticated.
+        /// </summary>
+        private async Task LoadJellyfinUsersAsync()
+        {
+            try
+            {
+                var users = await _jellyfinApiClient.LoadUsersAsync();
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    AvailableJellyfinUsers.Clear();
+                    SelectedJellyfinUsers.Clear();
+
+                    foreach (var user in users)
+                    {
+                        AvailableJellyfinUsers.Add(user);
+                    }
+
+                    // Pre-select the currently authenticated user
+                    var currentUser = AvailableJellyfinUsers.FirstOrDefault(u => u.Id == AppSettings.Default.JellyfinUserId);
+                    if (currentUser != null)
+                    {
+                        SelectedJellyfinUsers.Add(currentUser);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[LoadUsers] Error: {ex}");
             }
         }
 
@@ -604,14 +676,27 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.JellyfinUserId = "";
             AppSettings.Default.JellyfinServerId = "";
             AppSettings.Default.JellyfinServerLocalAddress = "";
+            AppSettings.Default.IsJellyfinAdmin = false;
             AppSettings.Default.Save();
 
             // Reset UI state
             IsAuthenticated = false;
+            IsJellyfinAdmin = false;
             AuthenticationStatus = "Logged out";
+
+            // Clear user collections
+            AvailableJellyfinUsers.Clear();
+            SelectedJellyfinUsers.Clear();
 
             // Notify command state changed
             LogoutCommand.NotifyCanExecuteChanged();
+            RefreshUsersCommand.NotifyCanExecuteChanged();
+        }
+
+        [RelayCommand(CanExecute = nameof(IsJellyfinAdmin))]
+        private async Task RefreshUsersAsync()
+        {
+            await LoadJellyfinUsersAsync();
         }
 
         [RelayCommand]
@@ -1022,9 +1107,16 @@ namespace Jellyfin2Samsung.ViewModels
             JellyfinUsername = AppSettings.Default.JellyfinUsername ?? "";
             JellyfinPassword = AppSettings.Default.JellyfinPassword ?? "";
             IsAuthenticated = !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken);
+            IsJellyfinAdmin = AppSettings.Default.IsJellyfinAdmin;
             if (IsAuthenticated)
             {
-                AuthenticationStatus = "Previously authenticated";
+                AuthenticationStatus = IsJellyfinAdmin ? "Previously authenticated (Admin)" : "Previously authenticated";
+
+                // If admin was previously authenticated, load users
+                if (IsJellyfinAdmin)
+                {
+                    _ = LoadJellyfinUsersAsync();
+                }
             }
 
             SelectedUpdateMode = AppSettings.Default.ConfigUpdateMode ?? "None";

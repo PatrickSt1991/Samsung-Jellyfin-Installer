@@ -166,9 +166,9 @@ namespace Jellyfin2Samsung.Helpers.API
 
         /// <summary>
         /// Authenticates with Jellyfin using username and password.
-        /// Returns the access token and user ID on success.
+        /// Returns the access token, user ID, and admin status on success.
         /// </summary>
-        public async Task<(string? accessToken, string? userId, string? error)> AuthenticateAsync(string username, string password)
+        public async Task<(string? accessToken, string? userId, bool isAdmin, string? error)> AuthenticateAsync(string username, string password)
         {
             try
             {
@@ -197,21 +197,76 @@ namespace Jellyfin2Samsung.Helpers.API
 
                     var accessToken = authResponse?["AccessToken"]?.GetValue<string>();
                     var userId = authResponse?["User"]?["Id"]?.GetValue<string>();
+                    var isAdmin = authResponse?["User"]?["Policy"]?["IsAdministrator"]?.GetValue<bool>() ?? false;
 
-                    return (accessToken, userId, null);
+                    Trace.WriteLine($"[Auth] User authenticated. IsAdmin: {isAdmin}");
+
+                    return (accessToken, userId, isAdmin, null);
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Trace.WriteLine($"Authentication failed: {response.StatusCode} - {errorContent}");
-                    return (null, null, $"Authentication failed: {response.StatusCode}");
+                    return (null, null, false, $"Authentication failed: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
                 Trace.WriteLine($"Authentication error: {ex}");
-                return (null, null, ex.Message);
+                return (null, null, false, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Loads all Jellyfin users. Requires admin authentication.
+        /// </summary>
+        public async Task<List<JellyfinUser>> LoadUsersAsync()
+        {
+            var users = new List<JellyfinUser>();
+            try
+            {
+                SetupHeaders();
+                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var usersUrl = $"{serverUrl}/Users";
+
+                Trace.WriteLine($"[LoadUsers] Fetching users from: {usersUrl}");
+
+                var response = await _httpClient.GetAsync(usersUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var usersArray = JsonNode.Parse(responseJson)?.AsArray();
+
+                    if (usersArray != null)
+                    {
+                        foreach (var userNode in usersArray)
+                        {
+                            var user = new JellyfinUser
+                            {
+                                Id = userNode?["Id"]?.GetValue<string>() ?? "",
+                                Name = userNode?["Name"]?.GetValue<string>() ?? ""
+                            };
+
+                            if (!string.IsNullOrEmpty(user.Id) && !string.IsNullOrEmpty(user.Name))
+                            {
+                                users.Add(user);
+                            }
+                        }
+
+                        Trace.WriteLine($"[LoadUsers] Loaded {users.Count} users");
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine($"[LoadUsers] Failed to load users: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[LoadUsers] Error loading users: {ex}");
+            }
+
+            return users;
         }
 
         /// <summary>

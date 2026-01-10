@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Unmatched braces { }",
   "lblCssUnmatchedParen": "Unmatched parentheses ( )",
   "lblTabMainSettings": "Main",
-  "lblMainSettings": "Application Settings"
+  "lblMainSettings": "Application Settings",
+  "lblRefreshUsers": "Refresh Users",
+  "lblUserSelectionHint": "Selected users will be configured during installation"
 }

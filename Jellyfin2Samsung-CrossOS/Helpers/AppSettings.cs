@@ -65,6 +65,8 @@ namespace Jellyfin2Samsung.Helpers
         public string SelectedSubtitleMode { get; set; } = "Default";
         public string ConfigUpdateMode { get; set; } = "None";
         public string JellyfinUserId { get; set; } = "";
+        public bool IsJellyfinAdmin { get; set; } = false;
+        public string SelectedUserIds { get; set; } = "";  // Comma-separated list of selected user IDs for multi-user config
         public bool UserAutoLogin { get; set; } = true;
         public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";

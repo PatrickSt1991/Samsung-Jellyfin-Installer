@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Accolades non appariées { }",
   "lblCssUnmatchedParen": "Parenthèses non appariées ( )",
   "lblTabMainSettings": "Principal",
-  "lblMainSettings": "Paramètres de l'application"
+  "lblMainSettings": "Paramètres de l'application",
+  "lblRefreshUsers": "Actualiser utilisateurs",
+  "lblUserSelectionHint": "Les utilisateurs sélectionnés seront configurés lors de l'installation"
 }

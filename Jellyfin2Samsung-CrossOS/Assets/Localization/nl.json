@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Ongelijke accolades { }",
   "lblCssUnmatchedParen": "Ongelijke haakjes ( )",
   "lblTabMainSettings": "Hoofd",
-  "lblMainSettings": "Toepassingsinstellingen"
+  "lblMainSettings": "Toepassingsinstellingen",
+  "lblRefreshUsers": "Gebruikers vernieuwen",
+  "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie"
 }

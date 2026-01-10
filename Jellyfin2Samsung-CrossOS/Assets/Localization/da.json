@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Ulige klammer { }",
   "lblCssUnmatchedParen": "Ulige parenteser ( )",
   "lblTabMainSettings": "Hoved",
-  "lblMainSettings": "Programindstillinger"
+  "lblMainSettings": "Programindstillinger",
+  "lblRefreshUsers": "Opdater brugere",
+  "lblUserSelectionHint": "Valgte brugere konfigureres under installationen"
 }

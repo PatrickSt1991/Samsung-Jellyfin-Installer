@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Ungleiche Klammern { }",
   "lblCssUnmatchedParen": "Ungleiche Klammern ( )",
   "lblTabMainSettings": "Haupt",
-  "lblMainSettings": "Anwendungseinstellungen"
+  "lblMainSettings": "Anwendungseinstellungen",
+  "lblRefreshUsers": "Benutzer aktualisieren",
+  "lblUserSelectionHint": "Ausgewählte Benutzer werden bei der Installation konfiguriert"
 }

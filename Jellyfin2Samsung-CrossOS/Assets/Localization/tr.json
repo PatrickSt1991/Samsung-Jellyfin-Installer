@@ -189,5 +189,7 @@
   "lblCssUnmatchedBrace": "Eşleşmeyen süslü parantezler { }",
   "lblCssUnmatchedParen": "Eşleşmeyen parantezler ( )",
   "lblTabMainSettings": "Ana",
-  "lblMainSettings": "Uygulama Ayarları"
+  "lblMainSettings": "Uygulama Ayarları",
+  "lblRefreshUsers": "Kullanıcıları Yenile",
+  "lblUserSelectionHint": "Seçilen kullanıcılar kurulum sırasında yapılandırılacak"
 }

@@ -9,7 +9,7 @@
         x:DataType="viewModels:JellyfinConfigViewModel"
         Title="Settings"
         Width="700"
-        Height="825"
+        Height="850"
         Background="#F5F5F5">
 
 	<Window.Styles>
@@ -379,8 +379,47 @@
 												Command="{Binding LogoutCommand}"
 												Padding="8,4"
 												FontSize="12"/>
+										<Button Classes="secondary"
+												Content="{Binding LblRefreshUsers}"
+												Command="{Binding RefreshUsersCommand}"
+												IsVisible="{Binding IsJellyfinAdmin}"
+												Padding="8,4"
+												FontSize="12"/>
 									</StackPanel>
 								</Grid>
+
+								<!-- User Selection (Admin only) -->
+								<StackPanel Spacing="8" IsVisible="{Binding IsJellyfinAdmin}">
+									<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+										<TextBlock Grid.Column="0"
+												   Text="{Binding LblSelectUsers}"
+												   Classes="label"
+												   VerticalAlignment="Top"
+												   Margin="0,8,0,0"/>
+										<ListBox Grid.Column="1"
+												 ItemsSource="{Binding AvailableJellyfinUsers}"
+												 SelectedItems="{Binding SelectedJellyfinUsers}"
+												 SelectionMode="Multiple"
+												 MaxHeight="120"
+												 Background="#FAFAFA"
+												 BorderBrush="#E0E0E0"
+												 BorderThickness="1"
+												 CornerRadius="4"
+												 Padding="4">
+											<ListBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"
+															   Padding="4,2"/>
+												</DataTemplate>
+											</ListBox.ItemTemplate>
+										</ListBox>
+									</Grid>
+									<TextBlock Text="{Binding LblUserSelectionHint}"
+											   FontSize="11"
+											   Foreground="#7F8C8D"
+											   FontStyle="Italic"
+											   Margin="180,0,0,0"/>
+								</StackPanel>
 							</StackPanel>
 
 							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
