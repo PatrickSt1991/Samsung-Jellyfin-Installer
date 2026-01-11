@@ -74,7 +74,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
 
             foreach (var url in entry.FallbackUrls)
             {
-                string cleanName = Regex.Replace(entry.Name.ToLowerInvariant(), "[^a-z0-9]", "");
+                string cleanName = RegexPatterns.PluginName.NonAlphanumeric.Replace(entry.Name.ToLowerInvariant(), "");
                 string fileName = Path.GetFileName(new Uri(url).AbsolutePath);
                 string relPath = Path.Combine(cleanName, fileName);
 

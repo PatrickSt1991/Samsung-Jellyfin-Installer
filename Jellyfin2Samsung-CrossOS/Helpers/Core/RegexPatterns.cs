@@ -157,6 +157,21 @@ namespace Jellyfin2Samsung.Helpers.Core
             public const string ScriptSrcPattern = @"<script[^>]+src=[""']([^""']+)[""'][^>]*>[\s\S]*?<\/script>";
 
             /// <summary>
+            /// Pattern to match base tag elements for replacement.
+            /// </summary>
+            public const string BaseTagPattern = @"<base[^>]+>";
+
+            /// <summary>
+            /// Pattern to rewrite local paths (src/href with /web/ prefix).
+            /// </summary>
+            public const string LocalPathsPattern = @"(src|href)=""[^""]*/web/([^""]+)""";
+
+            /// <summary>
+            /// Pattern to match Content-Security-Policy meta tags.
+            /// </summary>
+            public const string CspMetaPattern = @"<meta[^>]*Content-Security-Policy[^>]*>";
+
+            /// <summary>
             /// Pre-compiled regex for link href extraction.
             /// </summary>
             public static readonly Regex LinkHref = new(
@@ -168,6 +183,27 @@ namespace Jellyfin2Samsung.Helpers.Core
             /// </summary>
             public static readonly Regex ScriptSrc = new(
                 ScriptSrcPattern,
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            /// <summary>
+            /// Pre-compiled regex for base tag matching.
+            /// </summary>
+            public static readonly Regex BaseTag = new(
+                BaseTagPattern,
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            /// <summary>
+            /// Pre-compiled regex for local paths rewriting.
+            /// </summary>
+            public static readonly Regex LocalPaths = new(
+                LocalPathsPattern,
+                RegexOptions.Compiled);
+
+            /// <summary>
+            /// Pre-compiled regex for CSP meta tag matching.
+            /// </summary>
+            public static readonly Regex CspMeta = new(
+                CspMetaPattern,
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
@@ -313,6 +349,68 @@ namespace Jellyfin2Samsung.Helpers.Core
             public static readonly Regex ExtensionEntry = new(
                 ExtensionEntryPattern,
                 RegexOptions.Compiled | RegexOptions.Singleline);
+        }
+
+        /// <summary>
+        /// Patterns for KefinTweaks plugin patching.
+        /// </summary>
+        public static class KefinTweaks
+        {
+            /// <summary>
+            /// Pattern to detect KefinTweaks loader script reference in public.js.
+            /// </summary>
+            public const string LoaderPattern =
+                @"script\.src\s*=\s*['""]https:\/\/cdn\.jsdelivr\.net\/gh\/ranaldsgift\/KefinTweaks[^'""]+['""]";
+
+            /// <summary>
+            /// Pattern to match and replace kefinTweaksRoot configuration.
+            /// </summary>
+            public const string TweaksRootPattern =
+                @"""kefinTweaksRoot""\s*:\s*""https:\/\/cdn\.jsdelivr\.net\/gh\/ranaldsgift\/KefinTweaks@latest\/""";
+
+            /// <summary>
+            /// Pattern to extract script entries from injector.js.
+            /// </summary>
+            public const string ScriptEntryPattern = @"script\s*:\s*""([^""]+)""";
+
+            /// <summary>
+            /// Pre-compiled regex for loader detection.
+            /// </summary>
+            public static readonly Regex Loader = new(
+                LoaderPattern,
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            /// <summary>
+            /// Pre-compiled regex for tweaks root replacement.
+            /// </summary>
+            public static readonly Regex TweaksRoot = new(
+                TweaksRootPattern,
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            /// <summary>
+            /// Pre-compiled regex for script entry extraction.
+            /// </summary>
+            public static readonly Regex ScriptEntry = new(
+                ScriptEntryPattern,
+                RegexOptions.Compiled);
+        }
+
+        /// <summary>
+        /// Patterns for plugin name cleaning and normalization.
+        /// </summary>
+        public static class PluginName
+        {
+            /// <summary>
+            /// Pattern to remove non-alphanumeric characters from plugin names.
+            /// </summary>
+            public const string NonAlphanumericPattern = @"[^a-z0-9]";
+
+            /// <summary>
+            /// Pre-compiled regex for plugin name cleaning.
+            /// </summary>
+            public static readonly Regex NonAlphanumeric = new(
+                NonAlphanumericPattern,
+                RegexOptions.Compiled);
         }
     }
 }

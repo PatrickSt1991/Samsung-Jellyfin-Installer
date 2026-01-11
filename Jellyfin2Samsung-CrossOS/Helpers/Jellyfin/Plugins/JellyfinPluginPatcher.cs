@@ -95,10 +95,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             Trace.WriteLine("▶ Extracting plugin assets from server index…");
 
             // --- CSS ---
-            var cssMatches = Regex.Matches(
-                serverHtml,
-                @"<link[^>]+href=[""']([^""']+)[""'][^>]*>",
-                RegexOptions.IgnoreCase);
+            var cssMatches = RegexPatterns.Html.LinkHref.Matches(serverHtml);
 
             foreach (Match m in cssMatches)
             {
@@ -112,10 +109,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             }
 
             // --- JS ---
-            var jsMatches = Regex.Matches(
-                serverHtml,
-                @"<script[^>]+src=[""']([^""']+)[""'][^>]*>[\s\S]*?<\/script>",
-                RegexOptions.IgnoreCase);
+            var jsMatches = RegexPatterns.Html.ScriptSrc.Matches(serverHtml);
 
             foreach (Match m in jsMatches)
             {

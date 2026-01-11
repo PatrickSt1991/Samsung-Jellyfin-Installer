@@ -17,10 +17,6 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks
         private const string KefinTweaksRawRoot =
             "https://raw.githubusercontent.com/ranaldsgift/KefinTweaks/v0.4.5/";
 
-        private static readonly Regex KefinLoaderRegex =
-            new(@"script\.src\s*=\s*['""]https:\/\/cdn\.jsdelivr\.net\/gh\/ranaldsgift\/KefinTweaks[^'""]+['""]",
-                RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         public async Task ApplyAsync(PluginPatchContext ctx)
         {
             string pluginCacheDir = ctx.PluginCacheDir;
@@ -35,7 +31,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks
 
             string js = await File.ReadAllTextAsync(publicJsPath, Encoding.UTF8);
 
-            if (!KefinLoaderRegex.IsMatch(js))
+            if (!RegexPatterns.KefinTweaks.Loader.IsMatch(js))
             {
                 Trace.WriteLine("▶ KefinTweaks: loader not found, skipping.");
                 return;
@@ -67,15 +63,13 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks
             }
 
             // --- rewrite loader ---
-            js = KefinLoaderRegex.Replace(
+            js = RegexPatterns.KefinTweaks.Loader.Replace(
                 js,
                 "script.src = 'plugin_cache/kefinTweaks/kefinTweaks-plugin.js';");
 
-            js = Regex.Replace(
+            js = RegexPatterns.KefinTweaks.TweaksRoot.Replace(
                 js,
-                @"""kefinTweaksRoot""\s*:\s*""https:\/\/cdn\.jsdelivr\.net\/gh\/ranaldsgift\/KefinTweaks@latest\/""",
-                @"""kefinTweaksRoot"": ""plugin_cache/kefinTweaks/""",
-                RegexOptions.IgnoreCase);
+                @"""kefinTweaksRoot"": ""plugin_cache/kefinTweaks/""");
 
             await File.WriteAllTextAsync(publicJsPath, js, Encoding.UTF8);
 
@@ -102,7 +96,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks
         private async Task ProcessModulesAsync(PluginPatchContext ctx, string injectorPath)
         {
             string src = await File.ReadAllTextAsync(injectorPath, Encoding.UTF8);
-            var matches = Regex.Matches(src, @"script\s*:\s*""([^""]+)""");
+            var matches = RegexPatterns.KefinTweaks.ScriptEntry.Matches(src);
 
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

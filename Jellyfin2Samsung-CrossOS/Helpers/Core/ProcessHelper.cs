@@ -37,7 +37,7 @@ namespace Jellyfin2Samsung.Helpers.Core
             if (string.IsNullOrWhiteSpace(arguments))
                 return string.Empty;
 
-            var matches = System.Text.RegularExpressions.Regex.Matches(arguments, @"[\""].+?[\""]|[^ ]+");
+            var matches = RegexPatterns.CommandLine.Arguments.Matches(arguments);
 
             var firstTwo = matches.Cast<System.Text.RegularExpressions.Match>()
                                   .Take(1)
