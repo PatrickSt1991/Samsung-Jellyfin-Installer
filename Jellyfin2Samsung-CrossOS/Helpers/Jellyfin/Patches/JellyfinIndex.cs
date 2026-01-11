@@ -72,7 +72,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
                 config["servers"] = servers;
             }
 
-            var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+            var serverUrl = UrlHelper.NormalizeServerUrl(AppSettings.Default.JellyfinFullUrl);
 
             // Avoid duplicates
             if (!servers.Any(s => s?.GetValue<string>() == serverUrl))
@@ -91,7 +91,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
         {
             var accessToken = AppSettings.Default.JellyfinAccessToken;
             var userId = AppSettings.Default.JellyfinUserId;
-            var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+            var serverUrl = UrlHelper.NormalizeServerUrl(AppSettings.Default.JellyfinFullUrl);
             var serverId = AppSettings.Default.JellyfinServerId;
             var localAddress = AppSettings.Default.JellyfinServerLocalAddress;
 

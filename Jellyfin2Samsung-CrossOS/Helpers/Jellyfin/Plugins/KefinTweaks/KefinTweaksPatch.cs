@@ -1,4 +1,5 @@
-﻿using Jellyfin2Samsung.Helpers.Jellyfin.Plugins;
+﻿using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Jellyfin.Plugins;
 using Jellyfin2Samsung.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -243,10 +244,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.KefinTweaks
                     return null;
 
                 var json = File.ReadAllText(configPath);
-                var match = Regex.Match(
-                    json,
-                    @"""defaultSkin""\s*:\s*""([^""]+)""",
-                    RegexOptions.IgnoreCase);
+                var match = RegexPatterns.PluginConfig.DefaultSkin.Match(json);
 
                 return match.Success ? match.Groups[1].Value : null;
             }

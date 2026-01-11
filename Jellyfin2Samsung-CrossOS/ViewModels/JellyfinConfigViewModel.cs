@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Helpers.Tizen.Certificate;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
@@ -510,7 +511,7 @@ namespace Jellyfin2Samsung.ViewModels
                 JellyfinServerIp = uri.Host;
                 SelectedJellyfinPort = uri.IsDefaultPort ? (uri.Scheme == "https" ? "443" : "80") : uri.Port.ToString();
 
-                var path = uri.AbsolutePath.TrimEnd('/');
+                var path = UrlHelper.NormalizeServerUrl(uri.AbsolutePath);
                 if (!string.IsNullOrEmpty(path) && path != "/")
                 {
                     jellyfinBasePath = path;
@@ -541,7 +542,7 @@ namespace Jellyfin2Samsung.ViewModels
                 SelectedJellyfinPort = uri.IsDefaultPort ? (uri.Scheme == "https" ? "443" : "80") : uri.Port.ToString();
 
                 // Extract the path portion (without triggering this handler again)
-                var path = uri.AbsolutePath.TrimEnd('/');
+                var path = UrlHelper.NormalizeServerUrl(uri.AbsolutePath);
                 AppSettings.Default.JellyfinBasePath = path;
                 jellyfinBasePath = path; // Set backing field directly to avoid recursion
                 OnPropertyChanged(nameof(JellyfinBasePath));

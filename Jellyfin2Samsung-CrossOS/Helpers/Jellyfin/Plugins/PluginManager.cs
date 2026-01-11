@@ -80,7 +80,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
             {
                 try
                 {
-                    string url = serverUrl.TrimEnd('/') + rel;
+                    string url = UrlHelper.CombineUrl(serverUrl, rel);
                     Trace.WriteLine($"   → Fetch: {url}");
 
                     string js = await _httpClient.GetStringAsync(url);

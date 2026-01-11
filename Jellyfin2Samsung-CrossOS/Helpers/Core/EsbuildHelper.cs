@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,27 +13,7 @@ namespace Jellyfin2Samsung.Helpers.Core
             try
             {
                 string baseDir = AppContext.BaseDirectory;
-                string relPath;
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    relPath = Path.Combine(AppSettings.EsbuildPath, "win-x64", "esbuild.exe");
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    relPath = Path.Combine(AppSettings.EsbuildPath, "linux-x64", "esbuild");
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    relPath = Path.Combine(AppSettings.EsbuildPath, "osx-universal", "esbuild");
-                }
-                else
-                {
-                    return null;
-                }
-
-                string fullPath = Path.Combine(baseDir, relPath);
-                return File.Exists(fullPath) ? fullPath : null;
+                return PlatformService.GetEsbuildPath(Path.Combine(baseDir, AppSettings.EsbuildPath));
             }
             catch
             {
@@ -53,22 +32,22 @@ namespace Jellyfin2Samsung.Helpers.Core
                 string? esbuildPath = GetEsbuildPath();
                 if (string.IsNullOrEmpty(esbuildPath))
                 {
-                    Trace.WriteLine($"⚠ esbuild binary not found, skipping transpile for {relPathForLog ?? "unknown"}");
+                    Trace.WriteLine($"esbuild binary not found, skipping transpile for {relPathForLog ?? "unknown"}");
                     return js;
                 }
 
-                string tempRoot = Path.Combine(Path.GetTempPath(), "J2S_Esbuild");
+                string tempRoot = Path.Combine(Path.GetTempPath(), Constants.Esbuild.TempFolderName);
                 Directory.CreateDirectory(tempRoot);
 
-                string inputPath = Path.Combine(tempRoot, Guid.NewGuid().ToString("N") + ".js");
-                string outputPath = Path.Combine(tempRoot, Guid.NewGuid().ToString("N") + ".js");
+                string inputPath = Path.Combine(tempRoot, Guid.NewGuid().ToString("N") + Constants.FilePatterns.JsExtension);
+                string outputPath = Path.Combine(tempRoot, Guid.NewGuid().ToString("N") + Constants.FilePatterns.JsExtension);
 
                 await File.WriteAllTextAsync(inputPath, js, Encoding.UTF8);
 
                 var psi = new ProcessStartInfo
                 {
                     FileName = esbuildPath,
-                    Arguments = $"\"{inputPath}\" --outfile=\"{outputPath}\" --target=es2015",
+                    Arguments = $"\"{inputPath}\" --outfile=\"{outputPath}\" --target={Constants.Esbuild.TargetEs2015}",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -85,7 +64,7 @@ namespace Jellyfin2Samsung.Helpers.Core
 
                 if (proc.ExitCode != 0 || !File.Exists(outputPath))
                 {
-                    Trace.WriteLine($"⚠ esbuild failed for {relPathForLog ?? "unknown"} (exit {proc.ExitCode}): {stderr}");
+                    Trace.WriteLine($"esbuild failed for {relPathForLog ?? "unknown"} (exit {proc.ExitCode}): {stderr}");
                     return js;
                 }
 
@@ -101,12 +80,12 @@ namespace Jellyfin2Samsung.Helpers.Core
                     // ignore cleanup errors
                 }
 
-                Trace.WriteLine($"      ✓ Transpiled {relPathForLog ?? "unknown"} via esbuild");
+                Trace.WriteLine($"Transpiled {relPathForLog ?? "unknown"} via esbuild");
                 return transpiled;
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"⚠ esbuild transpile error for {relPathForLog ?? "unknown"}: {ex}");
+                Trace.WriteLine($"esbuild transpile error for {relPathForLog ?? "unknown"}: {ex}");
                 return js;
             }
         }

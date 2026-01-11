@@ -1,4 +1,5 @@
-﻿using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,7 +30,7 @@ namespace Jellyfin2Samsung.Helpers.API
             return !string.IsNullOrEmpty(AppSettings.Default.JellyfinFullUrl) &&
                    !string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
                    !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId) &&
-                   IsValidUrl($"{AppSettings.Default.JellyfinFullUrl}/Users");
+                   UrlHelper.IsValidHttpUrl($"{AppSettings.Default.JellyfinFullUrl}/Users");
         }
 
         /// <summary>
@@ -41,51 +42,40 @@ namespace Jellyfin2Samsung.Helpers.API
                    !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId);
         }
 
-        public static bool IsValidUrl(string url)
-        {
-            return Uri.TryCreate(url, UriKind.Absolute, out var uriResult)
-                   && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        }
-
         public async Task<List<JellyfinPluginInfo>> GetInstalledPluginsAsync(string serverUrl)
         {
             var list = new List<JellyfinPluginInfo>();
             try
             {
-                string url = serverUrl.TrimEnd('/') + "/Plugins";
-                Trace.WriteLine("▶ Fetching installed plugins from: " + url);
+                string url = UrlHelper.CombineUrl(serverUrl, "/Plugins");
+                Trace.WriteLine("Fetching installed plugins from: " + url);
                 var json = await _httpClient.GetStringAsync(url);
-                var parsed = JsonSerializer.Deserialize<List<JellyfinPluginInfo>>(json,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var parsed = JsonSerializer.Deserialize<List<JellyfinPluginInfo>>(json, JsonSerializerOptionsProvider.Default);
 
                 if (parsed != null)
                     list.AddRange(parsed);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("⚠ Failed to fetch /Plugins: " + ex);
+                Trace.WriteLine("Failed to fetch /Plugins: " + ex);
             }
 
             return list;
         }
+
         public async Task<JellyfinPublicSystemInfo?> GetPublicSystemInfoAsync(string serverUrl)
         {
             try
             {
-                string url = serverUrl.TrimEnd('/') + "/System/Info/Public";
-                Trace.WriteLine("▶ Fetching Jellyfin public system info from: " + url);
+                string url = UrlHelper.CombineUrl(serverUrl, "/System/Info/Public");
+                Trace.WriteLine("Fetching Jellyfin public system info from: " + url);
 
                 var json = await _httpClient.GetStringAsync(url);
-
-                var info = JsonSerializer.Deserialize<JellyfinPublicSystemInfo>(
-                    json,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return info;
+                return JsonSerializer.Deserialize<JellyfinPublicSystemInfo>(json, JsonSerializerOptionsProvider.Default);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("⚠ Failed to fetch /System/Info/Public: " + ex);
+                Trace.WriteLine("Failed to fetch /System/Info/Public: " + ex);
                 return null;
             }
         }
@@ -98,13 +88,14 @@ namespace Jellyfin2Samsung.Helpers.API
             try
             {
                 SetupHeaders();
+                var serverUrl = UrlHelper.NormalizeServerUrl(AppSettings.Default.JellyfinFullUrl);
 
                 foreach (string userId in userIds.Where(u => !string.IsNullOrWhiteSpace(u)))
                 {
                     try
                     {
                         // Fetch user info
-                        var getUserResponse = await _httpClient.GetAsync($"{AppSettings.Default.JellyfinFullUrl}/Users/{userId}");
+                        var getUserResponse = await _httpClient.GetAsync($"{serverUrl}/Users/{userId}");
                         getUserResponse.EnsureSuccessStatusCode();
                         var userJson = await getUserResponse.Content.ReadAsStringAsync();
 
@@ -114,13 +105,13 @@ namespace Jellyfin2Samsung.Helpers.API
                         userNode["EnableAutoLogin"] = AppSettings.Default.UserAutoLogin;
 
                         var userContent = new StringContent(
-                            userNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }),
+                            userNode.ToJsonString(JsonSerializerOptionsProvider.Indented),
                             Encoding.UTF8,
-                            "application/json");
+                            Constants.Api.JsonContentType);
 
                         using (userContent)
                         {
-                            var userResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinFullUrl}/Users?userId={userId}", userContent);
+                            var userResponse = await _httpClient.PostAsync($"{serverUrl}/Users?userId={userId}", userContent);
                             userResponse.EnsureSuccessStatusCode();
                         }
 
@@ -135,10 +126,10 @@ namespace Jellyfin2Samsung.Helpers.API
                             EnableNextEpisodeAutoPlay = AppSettings.Default.AutoPlayNextEpisode,
                         };
 
-                        var configJson = JsonSerializer.Serialize(userConfig, new JsonSerializerOptions { WriteIndented = true });
+                        var configJson = JsonSerializer.Serialize(userConfig, JsonSerializerOptionsProvider.Indented);
 
-                        using var configContent = new StringContent(configJson, Encoding.UTF8, "application/json");
-                        var configResponse = await _httpClient.PostAsync($"{AppSettings.Default.JellyfinFullUrl}/Users/Configuration?userId={userId}", configContent);
+                        using var configContent = new StringContent(configJson, Encoding.UTF8, Constants.Api.JsonContentType);
+                        var configResponse = await _httpClient.PostAsync($"{serverUrl}/Users/Configuration?userId={userId}", configContent);
                         configResponse.EnsureSuccessStatusCode();
                     }
                     catch (Exception userEx)
@@ -160,8 +151,9 @@ namespace Jellyfin2Samsung.Helpers.API
         private void SetupHeaders()
         {
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.0");
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"MediaBrowser Token=\"{AppSettings.Default.JellyfinAccessToken}\"");
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(Constants.Api.UserAgent);
+            _httpClient.DefaultRequestHeaders.Add("Authorization",
+                string.Format(Constants.Api.MediaBrowserAuthHeader, AppSettings.Default.JellyfinAccessToken));
         }
 
         /// <summary>
@@ -172,12 +164,11 @@ namespace Jellyfin2Samsung.Helpers.API
         {
             try
             {
-                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var serverUrl = UrlHelper.NormalizeServerUrl(AppSettings.Default.JellyfinFullUrl);
                 var authUrl = $"{serverUrl}/Users/AuthenticateByName";
 
                 _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization",
-                    "MediaBrowser Client=\"Samsung Jellyfin Installer\", Device=\"PC\", DeviceId=\"samsungjellyfin\", Version=\"1.0.0\"");
+                _httpClient.DefaultRequestHeaders.Add("X-Emby-Authorization", Constants.Api.EmbyAuthHeader);
 
                 var authPayload = new
                 {
@@ -186,7 +177,7 @@ namespace Jellyfin2Samsung.Helpers.API
                 };
 
                 var json = JsonSerializer.Serialize(authPayload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var content = new StringContent(json, Encoding.UTF8, Constants.Api.JsonContentType);
 
                 var response = await _httpClient.PostAsync(authUrl, content);
 
@@ -226,7 +217,7 @@ namespace Jellyfin2Samsung.Helpers.API
             try
             {
                 SetupHeaders();
-                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
+                var serverUrl = UrlHelper.NormalizeServerUrl(AppSettings.Default.JellyfinFullUrl);
                 var usersUrl = $"{serverUrl}/Users";
 
                 Trace.WriteLine($"[LoadUsers] Fetching users from: {usersUrl}");
@@ -276,8 +267,7 @@ namespace Jellyfin2Samsung.Helpers.API
         {
             try
             {
-                var serverUrl = AppSettings.Default.JellyfinFullUrl.TrimEnd('/');
-                var testUrl = $"{serverUrl}/System/Info/Public";
+                var testUrl = UrlHelper.CombineUrl(AppSettings.Default.JellyfinFullUrl, "/System/Info/Public");
 
                 _httpClient.DefaultRequestHeaders.Clear();
                 var response = await _httpClient.GetAsync(testUrl);

@@ -101,7 +101,7 @@ namespace Jellyfin2Samsung.Helpers
         {
             get
             {
-                var baseUrl = JellyfinIP?.TrimEnd('/') ?? "";
+                var baseUrl = Core.UrlHelper.NormalizeServerUrl(JellyfinIP);
                 var basePath = JellyfinBasePath?.Trim('/') ?? "";
 
                 if (string.IsNullOrEmpty(basePath))

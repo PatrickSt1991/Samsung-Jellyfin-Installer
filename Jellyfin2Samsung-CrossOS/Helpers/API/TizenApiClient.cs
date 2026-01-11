@@ -1,10 +1,11 @@
-﻿using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Helpers.API
@@ -13,6 +14,7 @@ namespace Jellyfin2Samsung.Helpers.API
     {
         private readonly IDialogService _dialogService;
         private readonly HttpClient _httpClient;
+
         public TizenApiClient(
             HttpClient httpClient,
             IDialogService dialogService)
@@ -25,40 +27,51 @@ namespace Jellyfin2Samsung.Helpers.API
         {
             try
             {
-                string url = $"http://{device.IpAddress}:8001/api/v2/";
+                string url = $"http://{device.IpAddress}:{Constants.Ports.SamsungTvApiPort}/api/v2/";
 
                 var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 string jsonContent = await response.Content.ReadAsStringAsync();
-                JObject jsonObject = JObject.Parse(jsonContent);
+                var jsonObject = JsonNode.Parse(jsonContent);
+
+                var deviceNode = jsonObject?["device"];
+                if (deviceNode == null)
+                {
+                    return CreateFallbackDevice(device);
+                }
 
                 return new NetworkDevice
                 {
-                    IpAddress = jsonObject["device"]?["ip"]?.ToString(),
-                    DeviceName = WebUtility.HtmlDecode(jsonObject["device"]?["name"]?.ToString()),
-                    ModelName = jsonObject["device"]?["modelName"].ToString(),
-                    Manufacturer = jsonObject["device"]?["type"]?.ToString(),
-                    DeveloperMode = jsonObject["device"]?["developerMode"]?.ToString() ?? string.Empty,
-                    DeveloperIP = jsonObject["device"]?["developerIP"]?.ToString() ?? string.Empty
+                    IpAddress = deviceNode["ip"]?.GetValue<string>() ?? device.IpAddress,
+                    DeviceName = WebUtility.HtmlDecode(deviceNode["name"]?.GetValue<string>() ?? string.Empty),
+                    ModelName = deviceNode["modelName"]?.GetValue<string>() ?? string.Empty,
+                    Manufacturer = deviceNode["type"]?.GetValue<string>() ?? string.Empty,
+                    DeveloperMode = deviceNode["developerMode"]?.GetValue<string>() ?? string.Empty,
+                    DeveloperIP = deviceNode["developerIP"]?.GetValue<string>() ?? string.Empty
                 };
             }
             catch (HttpRequestException ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Error connecting to Samsung TV at {device.IpAddress}: {ex}");
+                    $"Error connecting to Samsung TV at {device.IpAddress}: {ex.Message}");
             }
             catch (JsonException ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Error parsing JSON response: {ex}");
+                    $"Error parsing JSON response: {ex.Message}");
             }
             catch (Exception ex)
             {
                 await _dialogService.ShowErrorAsync(
-                    $"Unexpected error: {ex}");
+                    $"Unexpected error: {ex.Message}");
             }
 
+            return CreateFallbackDevice(device);
+        }
+
+        private static NetworkDevice CreateFallbackDevice(NetworkDevice device)
+        {
             return new NetworkDevice
             {
                 IpAddress = device.IpAddress,

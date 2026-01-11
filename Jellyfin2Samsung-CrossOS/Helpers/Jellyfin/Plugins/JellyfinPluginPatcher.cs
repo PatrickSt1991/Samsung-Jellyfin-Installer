@@ -72,7 +72,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
         {
             try
             {
-                var url = serverUrl.TrimEnd('/') + "/web/index.html";
+                var url = UrlHelper.CombineUrl(serverUrl, "/web/index.html");
                 Trace.WriteLine($"▶ Fetching server index.html: {url}");
 
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
@@ -219,10 +219,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
         }
         private static Uri GetAbsoluteUri(string serverUrl, string relOrAbs)
         {
-            if (Uri.IsWellFormedUriString(relOrAbs, UriKind.Absolute))
-                return new Uri(relOrAbs);
-
-            return new Uri(new Uri(serverUrl.TrimEnd('/') + "/"), relOrAbs.TrimStart('/'));
+            return UrlHelper.GetAbsoluteUri(serverUrl, relOrAbs);
         }
         private void AppendScriptOnce(StringBuilder js, string scriptTag, string src)
         {

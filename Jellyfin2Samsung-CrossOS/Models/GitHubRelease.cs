@@ -1,29 +1,29 @@
-﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text.Json.Serialization;
 
 namespace Jellyfin2Samsung.Models
 {
-
     public class GitHubRelease
     {
-        [JsonProperty("url")]
-        public string Url { get; set; }
-        [JsonProperty("name")]
-        public string Name { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; } = string.Empty;
 
-        [JsonProperty("tag_name")]
-        public string TagName { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
 
-        [JsonProperty("published_at")]
-        public string PublishedAt { get; set; }
+        [JsonPropertyName("tag_name")]
+        public string TagName { get; set; } = string.Empty;
 
-        [JsonProperty("assets")]
-        public List<Asset> Assets { get; set; } = new List<Asset>();
+        [JsonPropertyName("published_at")]
+        public string PublishedAt { get; set; } = string.Empty;
 
-        public string PrimaryDownloadUrl => Assets?.FirstOrDefault()?.DownloadUrl;
-        [JsonConstructor]
+        [JsonPropertyName("assets")]
+        public List<Asset> Assets { get; set; } = new();
+
+        [JsonIgnore]
+        public string? PrimaryDownloadUrl => Assets?.FirstOrDefault()?.DownloadUrl;
+
         public GitHubRelease()
         {
         }
@@ -31,30 +31,33 @@ namespace Jellyfin2Samsung.Models
 
     public class Asset
     {
-        [JsonProperty("name")]
-        public string FileName { get; set; }
+        [JsonPropertyName("name")]
+        public string FileName { get; set; } = string.Empty;
 
-        [JsonProperty("browser_download_url")]
-        public string DownloadUrl { get; set; }
+        [JsonPropertyName("browser_download_url")]
+        public string DownloadUrl { get; set; } = string.Empty;
 
-        [JsonProperty("size")]
+        [JsonPropertyName("size")]
         public long Size { get; set; }
 
+        [JsonIgnore]
         public string DisplayText => $"{FileName} ({FormatFileSize(Size)})";
 
-        private string FormatFileSize(long bytes)
+        private static string FormatFileSize(long bytes)
         {
-            string[] sizes = { "B", "KB", "MB", "GB" };
+            string[] sizes = ["B", "KB", "MB", "GB"];
             int order = 0;
             double len = bytes;
+
             while (len >= 1024 && order < sizes.Length - 1)
             {
                 order++;
                 len /= 1024;
             }
+
             return $"{len:0.##} {sizes[order]}";
         }
-        [JsonConstructor]
+
         public Asset()
         {
         }

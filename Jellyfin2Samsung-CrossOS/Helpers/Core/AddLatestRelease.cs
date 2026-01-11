@@ -1,9 +1,8 @@
-﻿using Jellyfin2Samsung.Models;
-using Newtonsoft.Json;
+using Jellyfin2Samsung.Models;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Helpers.Core
@@ -17,40 +16,49 @@ namespace Jellyfin2Samsung.Helpers.Core
             _httpClient = httpClient;
         }
 
-        public async Task<GitHubRelease?> GetLatestReleaseAsync(
-            string url,
-            string displayName,
-            JsonSerializerSettings settings)
+        public async Task<GitHubRelease?> GetLatestReleaseAsync(string url, string displayName)
         {
-            using var stream = await _httpClient.GetStreamAsync(url);
-            using var sr = new StreamReader(stream);
-            using var reader = new JsonTextReader(sr);
-
-            var serializer = JsonSerializer.Create(settings);
-
-            GitHubRelease? latest = null;
-
-            if (reader.Read())
+            try
             {
-                // Case 1: API returns array (normal GitHub behavior)
-                if (reader.TokenType == JsonToken.StartArray)
+                using var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                await using var stream = await response.Content.ReadAsStreamAsync();
+
+                // Try to parse as array first (normal GitHub releases endpoint)
+                try
                 {
-                    reader.Read(); // move to first element
-                    latest = serializer.Deserialize<GitHubRelease>(reader);
+                    var releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(
+                        stream,
+                        JsonSerializerOptionsProvider.Default);
+
+                    var latest = releases?.Count > 0 ? releases[0] : null;
+
+                    if (latest != null)
+                        latest.Name = displayName;
+
+                    return latest;
                 }
-                // Case 2: API returns single object
-                else if (reader.TokenType == JsonToken.StartObject)
+                catch (JsonException)
                 {
-                    latest = serializer.Deserialize<GitHubRelease>(reader);
+                    // If array parsing fails, try parsing as single object
+                    stream.Position = 0;
+
+                    var latest = await JsonSerializer.DeserializeAsync<GitHubRelease>(
+                        stream,
+                        JsonSerializerOptionsProvider.Default);
+
+                    if (latest != null)
+                        latest.Name = displayName;
+
+                    return latest;
                 }
             }
-
-            if (latest == null)
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Failed to fetch release from {url}: {ex}");
                 return null;
-
-            latest.Name = displayName;
-            return latest;
+            }
         }
-
     }
 }

@@ -66,11 +66,11 @@
 										   Foreground="#2C3E50"/>
 
 								<!-- Language Section -->
-								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblLanguage}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ComboBox Grid.Column="1"
 											  Classes="clean"
 											  ItemsSource="{Binding AvailableLanguages}"
@@ -85,11 +85,11 @@
 								</Grid>
 
 								<!-- Certificate Section -->
-								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblCertificate}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ComboBox Grid.Column="1"
 											  Classes="clean"
 											  ItemsSource="{Binding AvailableCertificates}"
@@ -104,15 +104,15 @@
 								</Grid>
 
 								<!-- Local Device IP -->
-								<Grid ColumnDefinitions="150,*" ColumnSpacing="12">
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblLocalIP}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<TextBlock Grid.Column="1"
 											   Text="{Binding LocalIP, Mode=TwoWay}"
-											   VerticalAlignment="Center"
-											   Foreground="#7F8C8D"/>
+											   Classes="subtitle"
+											   VerticalAlignment="Center"/>
 								</Grid>
 							</StackPanel>
 
@@ -124,8 +124,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblTryOverwrite}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding TryOverwrite}"
 												  VerticalAlignment="Center"/>
@@ -135,8 +135,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblLaunchOnInstall}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding OpenAfterInstall}"
 												  VerticalAlignment="Center"/>
@@ -146,8 +146,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblRememberIp}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding RememberCustomIP}"
 												  VerticalAlignment="Center"/>
@@ -157,8 +157,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblDeletePrevious}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding DeletePreviousInstall}"
 												  VerticalAlignment="Center"/>
@@ -168,8 +168,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblForceLogin}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding ForceSamsungLogin}"
 												  VerticalAlignment="Center"/>
@@ -179,8 +179,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblRTL}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding RtlReading}"
 												  VerticalAlignment="Center"/>
@@ -190,8 +190,8 @@
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
 											   Text="{Binding LblKeepWGTFile}"
-											   VerticalAlignment="Center"
-											   Foreground="#34495E"/>
+											   Classes="label"
+											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding KeepWGTFile}"
 												  VerticalAlignment="Center"/>

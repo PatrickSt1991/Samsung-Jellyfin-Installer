@@ -122,7 +122,7 @@ namespace Jellyfin2Samsung.Helpers.Core
 
         public async Task MakeExecutableAsync(string filePath)
         {
-            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            if (PlatformService.RequiresExecutablePermissions())
             {
                 try
                 {

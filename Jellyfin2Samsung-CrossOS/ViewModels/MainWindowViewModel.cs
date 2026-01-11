@@ -5,15 +5,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
 using Jellyfin2Samsung.Helpers.API;
-using Jellyfin2Samsung.Helpers.Converters;
 using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -411,36 +408,28 @@ namespace Jellyfin2Samsung.ViewModels
 
             try
             {
-                var settings = new JsonSerializerSettings
-                {
-                    MissingMemberHandling = MissingMemberHandling.Ignore,
-                    Converters = { new SingleOrArrayConverter<GitHubRelease>() }
-                };
-
-                // 1️⃣ Do ALL async / HTTP work first
                 var list = new List<GitHubRelease>();
 
                 async Task fetch(string url, string name)
                 {
-                    var release = await _addLatestRelease.GetLatestReleaseAsync(url, name, settings);
+                    var release = await _addLatestRelease.GetLatestReleaseAsync(url, name);
                     if (release != null)
                         list.Add(release);
                 }
 
-                await fetch(AppSettings.Default.ReleasesUrl, "Jellyfin");
+                await fetch(AppSettings.Default.ReleasesUrl, Constants.AppIdentifiers.JellyfinAppName);
                 await fetch(AppSettings.Default.MoonfinRelease, "Moonfin");
                 await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay");
                 await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
                 await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
 
-                // 2️⃣ ONE UI-thread update, just like your original working version
                 Releases.Clear();
                 foreach (var r in list)
                     Releases.Add(r);
 
                 Releases.Add(new GitHubRelease
                 {
-                    Name = "Custom WGT File",
+                    Name = Constants.AppIdentifiers.CustomWgtFile,
                     TagName = string.Empty,
                     PublishedAt = string.Empty,
                     Url = string.Empty,
@@ -450,7 +439,7 @@ namespace Jellyfin2Samsung.ViewModels
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
-                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex}");
+                await _dialogService.ShowErrorAsync($"{L(Constants.LocalizationKeys.FailedLoadingReleases)} {ex}");
             }
             finally
             {

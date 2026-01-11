@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Models;
 
 namespace Jellyfin2Samsung.ViewModels
@@ -64,24 +65,20 @@ namespace Jellyfin2Samsung.ViewModels
         // Remove markdown formatting like **bold**, emoji, etc.
         private static string CleanText(string input)
         {
-            var text = Regex.Replace(input, @"\*\*(.*?)\*\*", "$1");
-            text = Regex.Replace(text, @"[\u2600-\u27BF]", ""); // emoji range
+            var text = RegexPatterns.BuildInfo.MarkdownBold.Replace(input, "$1");
+            text = RegexPatterns.BuildInfo.EmojiRange.Replace(text, "");
             return text.Trim();
         }
 
         private void ParseVersionsTable(string md, ObservableCollection<BuildVersion> target)
         {
-            var match = Regex.Match(md,
-                @"## Versions\s*\n(?<table>(\|[^\n]+\n)+)",
-                RegexOptions.Multiline);
+            var match = RegexPatterns.BuildInfo.VersionsTable.Match(md);
 
             if (!match.Success) return;
 
             var table = match.Groups["table"].Value;
 
-            var rows = Regex.Matches(table,
-                @"^\|([^|]+)\|([^|]+)\|",
-                RegexOptions.Multiline);
+            var rows = RegexPatterns.BuildInfo.TableRow2Columns.Matches(table);
 
             bool headerSkipped = false;
 
@@ -110,17 +107,13 @@ namespace Jellyfin2Samsung.ViewModels
 
         private void ParseApplicationsTable(string md, ObservableCollection<BuildVersion> target)
         {
-            var match = Regex.Match(md,
-                @"\|\s*🧩 Application\s*\|\s*📝 Description\s*\|\s*🔗 Repository\s*\|\s*\n(?<table>(\|[^\n]+\n)+)",
-                RegexOptions.Multiline);
+            var match = RegexPatterns.BuildInfo.ApplicationsTable.Match(md);
 
             if (!match.Success) return;
 
             var table = match.Groups["table"].Value;
 
-            var rows = Regex.Matches(table,
-                @"^\|([^|]+)\|([^|]+)\|([^|]+)\|",
-                RegexOptions.Multiline);
+            var rows = RegexPatterns.BuildInfo.TableRow3Columns.Matches(table);
 
             bool headerSkipped = false;
 

@@ -1,14 +1,13 @@
-﻿using Avalonia.Controls;
+using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -17,13 +16,12 @@ namespace Jellyfin2Samsung.Services
 {
     public class SamsungLoginService
     {
-        private IWebHost _callbackServer;
-        private const string LoopbackHost = "localhost";
-        private const int FixedPort = 4794;
+        private IWebHost? _callbackServer;
 
-        private string _callbackUrl => $"http://{LoopbackHost}:{FixedPort}/signin/callback";
+        private string CallbackUrl =>
+            $"http://{Constants.Samsung.LoopbackHost}:{Constants.Ports.SamsungLoginCallbackPort}{Constants.Samsung.CallbackPath}";
 
-        public Action<SamsungAuth> CallbackReceived;
+        public Action<SamsungAuth>? CallbackReceived;
 
         public static Task<SamsungAuth> PerformSamsungLoginAsync()
         {
@@ -50,15 +48,15 @@ namespace Jellyfin2Samsung.Services
             await service.StartCallbackServer();
 
             string loginUrl =
-                $"https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
-                $"?locale=&clientId=v285zxnl3h" +
-                $"&redirect_uri={HttpUtility.UrlEncode(service._callbackUrl)}" +
-                $"&state=accountcheckdogeneratedstatetext" +
-                $"&tokenType=TOKEN";
+                $"{Constants.Samsung.SignInGateUrl}" +
+                $"?locale=&clientId={Constants.Samsung.OAuthClientId}" +
+                $"&redirect_uri={HttpUtility.UrlEncode(service.CallbackUrl)}" +
+                $"&state={Constants.Samsung.OAuthState}" +
+                $"&tokenType={Constants.Samsung.TokenType}";
 
             try
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = loginUrl,
                     UseShellExecute = true
@@ -84,17 +82,18 @@ namespace Jellyfin2Samsung.Services
         {
             _callbackServer = new WebHostBuilder()
                 .UseKestrel()
-                .UseUrls($"http://{LoopbackHost}:{FixedPort}")
+                .UseUrls($"http://{Constants.Samsung.LoopbackHost}:{Constants.Ports.SamsungLoginCallbackPort}")
                 .Configure(app =>
                 {
                     app.Run(async context =>
                     {
-                        if (context.Request.Path == "/signin/callback" && context.Request.Method == "POST")
+                        if (context.Request.Path == Constants.Samsung.CallbackPath &&
+                            context.Request.Method == "POST")
                         {
                             string body = await new StreamReader(context.Request.Body).ReadToEndAsync();
 
-                            string state = null;
-                            string codeEncoded = null;
+                            string? state = null;
+                            string? codeEncoded = null;
 
                             var parts = body.Split('&', StringSplitOptions.RemoveEmptyEntries);
 
@@ -119,7 +118,10 @@ namespace Jellyfin2Samsung.Services
 
                             try
                             {
-                                var auth = JsonConvert.DeserializeObject<SamsungAuth>(codeEncoded);
+                                var auth = JsonSerializer.Deserialize<SamsungAuth>(
+                                    codeEncoded,
+                                    JsonSerializerOptionsProvider.Default);
+
                                 if (auth != null)
                                 {
                                     auth.state = state;
@@ -134,7 +136,7 @@ namespace Jellyfin2Samsung.Services
                             {
                                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                                 await context.Response.WriteAsync(
-                                    $"[CallbackServer] JSON parse error: {ex}\n\nDecoded JSON:\n{codeEncoded}");
+                                    $"[CallbackServer] JSON parse error: {ex.Message}\n\nDecoded JSON:\n{codeEncoded}");
                                 return;
                             }
 
@@ -151,8 +153,8 @@ namespace Jellyfin2Samsung.Services
 
             await _callbackServer.StartAsync();
 
-            System.Diagnostics.Trace.WriteLine(
-                $"[SamsungLoginService] Bound to http://{LoopbackHost}:{FixedPort}");
+            Trace.WriteLine(
+                $"[SamsungLoginService] Bound to http://{Constants.Samsung.LoopbackHost}:{Constants.Ports.SamsungLoginCallbackPort}");
         }
 
         public async Task StopCallbackServer()
