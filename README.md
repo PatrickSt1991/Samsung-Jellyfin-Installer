@@ -87,6 +87,13 @@ chmod +x Jellyfin2Samsung
 ```
 
 ---
+## Prerequisites
+
+Before you begin, ensure your Samsung TV is in Developer Mode. This is required to install applications like Jellyfin.
+
+👉 [How to enable Developer Mode on your TV](https://github.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/wiki/FAQ#-how-to-enable-developer-mode-on-your-tv)
+
+
 ### 1. Launch the Tool  
 <img width="582" height="442" alt="image" src="https://github.com/user-attachments/assets/235ea81e-2567-402b-8631-9b65ee27ef62" />
 
