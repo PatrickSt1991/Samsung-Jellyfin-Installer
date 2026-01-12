@@ -7,7 +7,6 @@
         Width="900"
         Height="650"
         Title="Samsung TV Logs"
-        Background="#F5F5F5"
         WindowStartupLocation="CenterOwner">
 
 	<!-- ========================= -->
@@ -48,11 +47,11 @@
 	<!-- ========================= -->
 	<!-- Layout -->
 	<!-- ========================= -->
-	<Border Background="White"
+	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             Padding="16"
             CornerRadius="8"
             Margin="12"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
             BorderThickness="1">
 
 		<StackPanel Spacing="16">
@@ -61,7 +60,7 @@
 			<TextBlock Text="TV Log Output"
                        FontSize="20"
                        FontWeight="SemiBold"
-                       Foreground="#2C3E50"/>
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 			<!-- Status + Endpoint -->
 			<StackPanel Orientation="Horizontal"
@@ -83,11 +82,11 @@
 				<!-- IP:Port -->
 				<TextBlock Text="{Binding EndpointText}"
                            FontSize="12"
-                           Foreground="#555"/>
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 			</StackPanel>
 
 			<!-- Log output -->
-			<Border BorderBrush="#CCCCCC"
+			<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
                     Background="#1E1E1E"
                     CornerRadius="4"

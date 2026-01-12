@@ -49,7 +49,10 @@ namespace Jellyfin2Samsung
                 });
             }
 
-            RequestedThemeVariant = ThemeVariant.Light;
+            // Apply saved theme on startup
+            var themeService = _serviceProvider.GetRequiredService<IThemeService>();
+            themeService.ApplyTheme();
+
             base.OnFrameworkInitializationCompleted();
         }
 
@@ -68,6 +71,7 @@ namespace Jellyfin2Samsung
             services.AddSingleton<INetworkService, NetworkService>();
             services.AddSingleton<ITizenCertificateService, TizenCertificateService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
+            services.AddSingleton<IThemeService, ThemeService>();
 
             // HttpClient (configured ONCE)
             services.AddSingleton(sp =>

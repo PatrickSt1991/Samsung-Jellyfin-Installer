@@ -12,12 +12,20 @@
         Topmost="True"
         ShowInTaskbar="False"
         Title="Installing">
+
+	<Window.Styles>
+		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
+	</Window.Styles>
+
 	<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-		<Border Background="#FFF" CornerRadius="4" Padding="10" Margin="5"
-                BorderBrush="#FF000B25" BorderThickness="1" >
+		<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                CornerRadius="4" Padding="10" Margin="5"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1">
 			<StackPanel>
 				<TextBlock x:Name="StatusTextBlock"
                            Text="{Binding StatusText}"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                            FontWeight="Bold"
                            Margin="0,10"
                            HorizontalAlignment="Center"/>

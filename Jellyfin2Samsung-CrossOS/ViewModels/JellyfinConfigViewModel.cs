@@ -27,6 +27,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly ILocalizationService _localizationService;
         private readonly CertificateHelper _certificateHelper;
         private readonly INetworkService _networkService;
+        private readonly IThemeService _themeService;
 
         [ObservableProperty]
         private string? audioLanguagePreference;
@@ -169,6 +170,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool keepWGTFile;
 
+        [ObservableProperty]
+        private bool darkMode;
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
         public ObservableCollection<JellyfinUser> AvailableJellyfinUsers { get; } = new();
@@ -300,13 +304,16 @@ namespace Jellyfin2Samsung.ViewModels
             JellyfinApiClient jellyfinApiClient,
             ILocalizationService localizationService,
             CertificateHelper certificateHelper,
-            INetworkService networkService)
+            INetworkService networkService,
+            IThemeService themeService)
         {
             _jellyfinApiClient = jellyfinApiClient;
             _localizationService = localizationService;
             _certificateHelper = certificateHelper;
             _networkService = networkService;
+            _themeService = themeService;
             _localizationService.LanguageChanged += OnLanguageChanged;
+            _themeService.ThemeChanged += OnThemeChanged;
 
             // Initialize selected users collection with change tracking
             SelectedJellyfinUsers = new ObservableCollection<JellyfinUser>();
@@ -342,6 +349,11 @@ namespace Jellyfin2Samsung.ViewModels
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
             RefreshLocalizedProperties();
+        }
+
+        private void OnThemeChanged(object? sender, bool isDarkMode)
+        {
+            DarkMode = isDarkMode;
         }
 
         private void RefreshLocalizedProperties()
@@ -927,14 +939,15 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 using var http = new HttpClient();
                 var bytes = await http.GetByteArrayAsync(url);
-
                 using var ms = new System.IO.MemoryStream(bytes);
                 return new Bitmap(ms);
             }
             catch (Exception ex)
             {
                 Trace.WriteLine($"[ThemePreview] Failed to load preview: {ex.Message}");
-                return null;
+                using var http = new HttpClient();
+                var stream = await http.GetStreamAsync(url);
+                return new Bitmap(stream);
             }
         }
 
@@ -1002,7 +1015,6 @@ namespace Jellyfin2Samsung.ViewModels
                 HexColor = "#6B5B95",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Obsidian/Obsidian.css",
                 PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Obsidian/assets/preview/Obsidian.png"
-
             },
             new JellyTheme
             {
@@ -1244,6 +1256,7 @@ namespace Jellyfin2Samsung.ViewModels
             TryOverwrite = AppSettings.Default.TryOverwrite;
             OpenAfterInstall = AppSettings.Default.OpenAfterInstall;
             KeepWGTFile = AppSettings.Default.KeepWGTFile;
+            DarkMode = AppSettings.Default.DarkMode;
         }
 
         private async Task LoadLocalIpAsync()
@@ -1379,11 +1392,17 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnDarkModeChanged(bool value)
+        {
+            _themeService.SetTheme(value);
+        }
+
         // ========== End Main Settings Methods ==========
 
         public void Dispose()
         {
             _localizationService.LanguageChanged -= OnLanguageChanged;
+            _themeService.ThemeChanged -= OnThemeChanged;
         }
     }
 }

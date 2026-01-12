@@ -8,9 +8,8 @@
         x:Class="Jellyfin2Samsung.JellyfinConfigView"
         x:DataType="viewModels:JellyfinConfigViewModel"
         Title="Settings"
-        Width="700"
-        Height="850"
-        Background="#F5F5F5">
+        Width="715"
+        Height="850">
 
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -20,11 +19,11 @@
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
-	<Border Background="White"
+	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             Padding="16"
             CornerRadius="8"
             Margin="6"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
             BorderThickness="1">
 
 		<Border.Effect>
@@ -43,11 +42,33 @@
                     CornerRadius="8"
                     Padding="24,16"
                     Margin="0,0,0,14">
-				<TextBlock Text="{Binding LblSettingsHeader}"
-                           Foreground="White"
-                           FontSize="18"
-                           FontWeight="Medium"
-                           HorizontalAlignment="Center"/>
+				<Grid>
+					<TextBlock Text="{Binding LblSettingsHeader}"
+							   Foreground="White"
+							   FontSize="18"
+							   FontWeight="Medium"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"/>
+					<ToggleButton IsChecked="{Binding DarkMode}"
+								  HorizontalAlignment="Right"
+								  VerticalAlignment="Center"
+								  Background="Transparent"
+								  BorderThickness="0"
+								  Padding="4">
+						<ToggleButton.Styles>
+							<Style Selector="ToggleButton:checked">
+								<Setter Property="Background" Value="Transparent"/>
+							</Style>
+							<Style Selector="ToggleButton:pointerover">
+								<Setter Property="Background" Value="#40FFFFFF"/>
+							</Style>
+						</ToggleButton.Styles>
+						<Panel>
+							<TextBlock Text="&#x2600;" FontSize="18" Foreground="White" IsVisible="{Binding DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							<TextBlock Text="&#x1F319;" FontSize="16" Foreground="White" IsVisible="{Binding !DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Panel>
+					</ToggleButton>
+				</Grid>
 			</Border>
 
 			<!-- TabControl with 5 Tabs -->
@@ -63,7 +84,7 @@
 								<TextBlock Text="{Binding LblMainSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Language Section -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -116,7 +137,7 @@
 								</Grid>
 							</StackPanel>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<!-- Installation Options Section -->
 							<StackPanel Spacing="12">
@@ -200,7 +221,7 @@
 								<TextBlock Text="{Binding LblServerSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Server Input Mode Selection -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -296,14 +317,14 @@
 
 							</StackPanel>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<!-- Auto-Login Settings Section -->
 							<StackPanel Spacing="12">
 								<TextBlock Text="{Binding LblAutoLoginSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Username -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -379,8 +400,8 @@
 												 SelectedItems="{Binding SelectedJellyfinUsers}"
 												 SelectionMode="Multiple"
 												 MaxHeight="120"
-												 Background="#FAFAFA"
-												 BorderBrush="#E0E0E0"
+												 Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+												 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
 												 BorderThickness="1"
 												 CornerRadius="4"
 												 Padding="4">
@@ -394,20 +415,20 @@
 									</Grid>
 									<TextBlock Text="{Binding LblUserSelectionHint}"
 											   FontSize="11"
-											   Foreground="#7F8C8D"
+											   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
 											   FontStyle="Italic"
 											   Margin="180,0,0,0"/>
 								</StackPanel>
 							</StackPanel>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<!-- Advanced Settings Section -->
 							<StackPanel Spacing="12">
 								<TextBlock Text="{Binding LblAdvancedSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Dev Logs -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -466,7 +487,7 @@
 							<TextBlock Text="{Binding LblBrowserSettings}"
 									   FontSize="15"
 									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
+									   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 								<TextBlock Grid.Column="0" Text="{Binding LblEnableBackdrops}" Classes="label" VerticalAlignment="Center"/>
@@ -513,7 +534,7 @@
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipIntros}"/>
 							</Grid>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 								<TextBlock Grid.Column="0" Text="{Binding LblAudioLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
@@ -551,12 +572,12 @@
 							<TextBlock Text="{Binding LblCssSettings}"
 									   FontSize="15"
 									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
+									   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 							<!-- CSS Hint -->
 							<TextBlock Text="{Binding LblCssHint}"
 									   FontSize="12"
-									   Foreground="#7F8C8D"
+									   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
 									   TextWrapping="Wrap"/>
 
 							<!-- Custom CSS TextBox -->
@@ -602,8 +623,7 @@
 										   FontWeight="SemiBold"/>
 							</Grid>
 
-
-							<Border Height="1" Background="#E8E8E8" Margin="0,16,0,8"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,16,0,8"/>
 
 							<!-- JellyThemes Section -->
 							<StackPanel Spacing="8">
@@ -612,7 +632,7 @@
 											   Text="{Binding LblJellyThemes}"
 											   FontSize="15"
 											   FontWeight="SemiBold"
-											   Foreground="#2C3E50"/>
+											   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 									<Button Grid.Column="1"
 											Classes="secondary"
 											Command="{Binding OpenJellyThemesRepoCommand}"
@@ -627,7 +647,7 @@
 
 								<TextBlock Text="{Binding LblJellyThemesHint}"
 										   FontSize="12"
-										   Foreground="#7F8C8D"
+										   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
 										   TextWrapping="Wrap"/>
 
 								<!-- Theme Buttons -->
@@ -665,8 +685,8 @@
 								<Border
 									Margin="0,12,0,0"
 									Padding="10"
-									Background="#FAFAFA"
-									BorderBrush="#E0E0E0"
+									Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+									BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
 									BorderThickness="1"
 									CornerRadius="6"
 									IsVisible="{Binding HasSelectedJellyTheme}">
@@ -676,7 +696,7 @@
 											Text="{Binding SelectedJellyTheme.Name}"
 											FontSize="14"
 											FontWeight="SemiBold"
-											Foreground="#2C3E50"/>
+											Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 										<Image
 											Source="{Binding SelectedJellyThemePreview}"
@@ -686,7 +706,7 @@
 										<TextBlock
 											Text="Theme preview"
 											FontSize="11"
-											Foreground="#7F8C8D"/>
+											Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 									</StackPanel>
 								</Border>
 

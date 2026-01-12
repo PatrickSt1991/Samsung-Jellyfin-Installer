@@ -8,6 +8,7 @@ using Jellyfin2Samsung.Helpers.API;
 using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Services;
 using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly IDialogService _dialogService;
         private readonly INetworkService _networkService;
         private readonly ILocalizationService _localizationService;
+        private readonly IThemeService _themeService;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
         private readonly TizenApiClient _tizenApiClient;
@@ -70,6 +72,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool isSamsungLoginActive;
 
+        [ObservableProperty]
+        private bool darkMode;
+
         private string _currentStatusKey = string.Empty;
 
         private string? _downloadedPackagePath;
@@ -91,6 +96,7 @@ namespace Jellyfin2Samsung.ViewModels
             IDialogService dialogService,
             INetworkService networkService,
             ILocalizationService localizationService,
+            IThemeService themeService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
             TizenApiClient tizenApiClient,
@@ -106,12 +112,17 @@ namespace Jellyfin2Samsung.ViewModels
             _tizenApiClient = tizenApiClient;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
+            _themeService = themeService;
             _fileHelper = fileHelper;
             _settingsViewModel = settingsViewModel;
 
             _addLatestRelease = new AddLatestRelease(httpClient);
 
             _localizationService.LanguageChanged += OnLanguageChanged;
+            _themeService.ThemeChanged += OnThemeChanged;
+
+            // Initialize dark mode state from settings
+            DarkMode = AppSettings.Default.DarkMode;
         }
 
 
@@ -121,6 +132,16 @@ namespace Jellyfin2Samsung.ViewModels
 
             if (!string.IsNullOrEmpty(_currentStatusKey))
                 StatusBar = L(_currentStatusKey);
+        }
+
+        private void OnThemeChanged(object? sender, bool isDarkMode)
+        {
+            DarkMode = isDarkMode;
+        }
+
+        partial void OnDarkModeChanged(bool value)
+        {
+            _themeService.SetTheme(value);
         }
         private void SetStatus(string key)
         {
@@ -340,6 +361,7 @@ namespace Jellyfin2Samsung.ViewModels
                 await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex}");
             }
         }
+
         [RelayCommand]
         private async Task BrowseWgtAsync()
         {
@@ -584,6 +606,7 @@ namespace Jellyfin2Samsung.ViewModels
         {
             DisposeSamsungCts();
             _localizationService.LanguageChanged -= OnLanguageChanged;
+            _themeService.ThemeChanged -= OnThemeChanged;
         }
 
     }

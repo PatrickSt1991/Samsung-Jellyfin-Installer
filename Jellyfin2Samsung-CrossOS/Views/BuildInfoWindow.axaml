@@ -8,19 +8,18 @@
         MaxWidth="900"
         MinHeight="500"
         WindowStartupLocation="CenterOwner"
-        Title="Jellyfin Tizen Versions"
-        Background="#F5F5F5">
+        Title="Jellyfin Tizen Versions">
 
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 	</Window.Styles>
 
-	<Border Background="White"
+	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             Padding="16"
             CornerRadius="8"
             Margin="12"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
             BorderThickness="1">
 
 		<Border.Effect>
@@ -53,7 +52,7 @@
                            FontSize="15"/>
 			</Border>
 
-			<Border BorderBrush="#D0D0D0"
+			<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
                     Height="200">
@@ -91,7 +90,7 @@
                            FontSize="15"/>
 			</Border>
 
-			<Border BorderBrush="#D0D0D0"
+			<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
                     Height="260">

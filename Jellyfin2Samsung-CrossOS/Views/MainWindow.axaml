@@ -8,8 +8,7 @@
         Width="580"
         Height="410"
         WindowStartupLocation="CenterScreen"
-        Title="Jellyfin2Samsung"
-        Background="#F5F5F5">
+        Title="Jellyfin2Samsung">
 	<Window.Resources>
 		<helpers:TvLogStatusToBrushConverter x:Key="TvLogStatusToBrushConverter"/>
 		<helpers:StringEqualsConverter x:Key="StringEquals"/>
@@ -24,11 +23,11 @@
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
-	<Border Background="White"
+	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             Padding="16"
             CornerRadius="8"
             Margin="6"
-            BorderBrush="#E8E8E8"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
             BorderThickness="1">
 
 		<Border.Effect>
@@ -163,6 +162,26 @@
 				<Button Classes="icon" Command="{Binding OpenSettingsCommand}">
 					<fa:SymbolIcon Symbol="Settings"  Width="20" Height="20"/>
 				</Button>
+				<ToggleButton IsChecked="{Binding DarkMode}"
+							  Background="Transparent"
+							  BorderThickness="0"
+							  Width="40"
+							  Height="40"
+							  CornerRadius="20"
+							  Padding="0">
+					<ToggleButton.Styles>
+						<Style Selector="ToggleButton:checked">
+							<Setter Property="Background" Value="Transparent"/>
+						</Style>
+						<Style Selector="ToggleButton:pointerover">
+							<Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+						</Style>
+					</ToggleButton.Styles>
+					<Panel>
+						<TextBlock Text="&#x2600;" FontSize="18" IsVisible="{Binding DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						<TextBlock Text="&#x1F319;" FontSize="16" IsVisible="{Binding !DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+					</Panel>
+				</ToggleButton>
 				<Button Classes="icon"
 						IsVisible="{Binding IsSamsungLoginActive}"
 						Command="{Binding CancelSamsungLoginCommand}">
@@ -175,7 +194,7 @@
 			<!-- Clean footer -->
 			<TextBlock HorizontalAlignment="Center"
                        FontSize="11"
-                       Foreground="#95A5A6"
+                       Opacity="0.6"
                        Text="{Binding FooterText}"/>
 
 		</StackPanel>

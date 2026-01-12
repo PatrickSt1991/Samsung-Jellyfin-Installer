@@ -3,11 +3,11 @@
 	<Style Selector="TextBlock.label">
 		<Setter Property="FontSize" Value="14"/>
 		<Setter Property="FontWeight" Value="Medium"/>
-		<Setter Property="Foreground" Value="#2C3E50"/>
+		<Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 	</Style>
 
 	<Style Selector="TextBlock.subtitle">
 		<Setter Property="FontSize" Value="14"/>
-		<Setter Property="Foreground" Value="#7F8C8D"/>
+		<Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 	</Style>
 </Styles>
