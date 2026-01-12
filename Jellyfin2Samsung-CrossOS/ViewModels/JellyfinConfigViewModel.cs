@@ -926,11 +926,14 @@ namespace Jellyfin2Samsung.ViewModels
             try
             {
                 using var http = new HttpClient();
-                var stream = await http.GetStreamAsync(url);
-                return new Bitmap(stream);
+                var bytes = await http.GetByteArrayAsync(url);
+
+                using var ms = new System.IO.MemoryStream(bytes);
+                return new Bitmap(ms);
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.WriteLine($"[ThemePreview] Failed to load preview: {ex.Message}");
                 return null;
             }
         }
@@ -998,7 +1001,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Purple",
                 HexColor = "#6B5B95",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Obsidian/Obsidian.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Obsidian/assets/preview/Obsidian.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Obsidian/assets/preview/Obsidian.png"
 
             },
             new JellyTheme
@@ -1008,7 +1011,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Gold",
                 HexColor = "#D4AF37",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Solaris/Solaris.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Solaris/assets/preview/Solaris.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Solaris/assets/preview/Solaris.png"
             },
             new JellyTheme
             {
@@ -1017,7 +1020,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Cyan",
                 HexColor = "#00CED1",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Nebula/Nebula.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Nebula/assets/preview/Nebula.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Nebula/assets/preview/Nebula.png"
             },
             new JellyTheme
             {
@@ -1026,7 +1029,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Orange",
                 HexColor = "#FF6B35",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Ember/Ember.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Ember/assets/preview/Ember.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Ember/assets/preview/Ember.png"
             },
             new JellyTheme
             {
@@ -1035,7 +1038,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Black",
                 HexColor = "#1C1C1C",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Void/Void.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Void/assets/preview/Void.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Void/assets/preview/Void.png"
             },
             new JellyTheme
             {
@@ -1044,7 +1047,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Slate",
                 HexColor = "#708090",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Phantom/Phantom.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Phantom/assets/preview/Phantom.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Phantom/assets/preview/Phantom.png"
             }
         };
 
