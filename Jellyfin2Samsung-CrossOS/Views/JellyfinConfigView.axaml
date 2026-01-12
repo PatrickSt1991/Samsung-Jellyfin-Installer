@@ -202,16 +202,6 @@
 										   FontWeight="SemiBold"
 										   Foreground="#2C3E50"/>
 
-								<!-- Update Mode -->
-								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-									<TextBlock Grid.Column="0" Text="{Binding UpdateMode}" Classes="label" VerticalAlignment="Center"/>
-									<ComboBox Grid.Column="1"
-											  ItemsSource="{Binding AvailableUpdateModes}"
-											  SelectedItem="{Binding SelectedUpdateMode}"
-											  Classes="clean"
-											  HorizontalAlignment="Stretch"/>
-								</Grid>
-
 								<!-- Server Input Mode Selection -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0" Text="{Binding LblServerInputMode}" Classes="label" VerticalAlignment="Center"/>
@@ -554,46 +544,7 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 4: User Settings -->
-				<TabItem Header="{Binding LblTabUser}">
-					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
-						<StackPanel Spacing="12">
-							<TextBlock Text="{Binding LblUserSettings}"
-									   FontSize="15"
-									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
-
-							<!-- These settings require authentication -->
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LblAutoPlayNextEpisode}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoPlayNextEpisode}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LblRememberAudioSelections}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberAudioSelections}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LblRememberSubtitleSelections}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberSubtitleSelections}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LblPlayDefaultAudioTrack}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding PlayDefaultAudioTrack}"/>
-							</Grid>
-
-							<!-- Enable auto login - requires Authentication -->
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LbluserAutoLogin}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding UserAutoLogin}"/>
-							</Grid>
-						</StackPanel>
-					</ScrollViewer>
-				</TabItem>
-
-				<!-- TAB 5: CSS Style -->
+				<!-- TAB 4: CSS Style -->
 				<TabItem Header="{Binding LblTabCss}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="12">

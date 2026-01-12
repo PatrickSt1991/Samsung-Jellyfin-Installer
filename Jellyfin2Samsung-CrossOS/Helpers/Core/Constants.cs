@@ -164,18 +164,6 @@ namespace Jellyfin2Samsung.Helpers.Core
         }
 
         /// <summary>
-        /// Configuration update modes.
-        /// </summary>
-        public static class ConfigUpdateModes
-        {
-            public const string None = "None";
-            public const string Server = "Server";
-            public const string Browser = "Browser";
-            public const string User = "User";
-            public const string All = "All";
-        }
-
-        /// <summary>
         /// Random string generation character sets.
         /// </summary>
         public static class CharacterSets

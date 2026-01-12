@@ -30,34 +30,25 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin
             _customCss = new CustomCss();
         }
 
-        public async Task<InstallResult> ApplyJellyfinConfigAsync(string packagePath, string[] userIds)
+        public async Task<InstallResult> ApplyJellyfinConfigAsync(string packagePath)
         {
             using var ws = PackageWorkspace.Extract(packagePath);
 
-            if (AppSettings.Default.ConfigUpdateMode.Contains("Server") ||
-                AppSettings.Default.ConfigUpdateMode.Contains("All"))
+            // Apply server scripts (JS injection) if enabled
+            if (AppSettings.Default.UseServerScripts)
+                await _indexHtml.PatchIndexAsync(ws, AppSettings.Default.JellyfinFullUrl);
+
+            // Apply YouTube plugin patch if enabled
+            if (AppSettings.Default.PatchYoutubePlugin)
             {
-                
-                if (AppSettings.Default.UseServerScripts)
-                    await _indexHtml.PatchIndexAsync(ws, AppSettings.Default.JellyfinFullUrl);
-
-                if (AppSettings.Default.PatchYoutubePlugin)
-                {
-                    await _youTube.CorsAsync(ws);
-                    await _youTube.FixAsync(ws);
-                }
-
-                await _indexHtml.UpdateServerAddressAsync(ws);
+                await _youTube.CorsAsync(ws);
+                await _youTube.FixAsync(ws);
             }
 
-            if (AppSettings.Default.ConfigUpdateMode.Contains("Browser") ||
-                AppSettings.Default.ConfigUpdateMode.Contains("All"))
-            {
-                Trace.WriteLine("Injecting user settings into browser index.html...");
-                await _indexHtml.InjectUserSettingsAsync(ws, userIds);
-            }
+            // Always update server address
+            await _indexHtml.UpdateServerAddressAsync(ws);
 
-            // Always inject auto-login credentials if available
+            // Inject auto-login credentials if available
             if (!string.IsNullOrEmpty(AppSettings.Default.JellyfinAccessToken) &&
                 !string.IsNullOrEmpty(AppSettings.Default.JellyfinUserId))
             {
