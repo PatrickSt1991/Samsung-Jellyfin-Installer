@@ -172,24 +172,5 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Patches
             await File.WriteAllTextAsync(indexPath, html);
             Trace.WriteLine($"[InjectAutoLogin] Auto-login credentials injected successfully with server ID: {serverId}");
         }
-        //Check if InjectUserSettingsAsync is still required or if we can remove it
-        public async Task InjectUserSettingsAsync(PackageWorkspace ws, string[] userIds)
-        {
-            if (userIds == null || userIds.Length == 0) return;
-
-            string index = Path.Combine(ws.Root, "www", "index.html");
-            if (!File.Exists(index)) return;
-
-            var html = await File.ReadAllTextAsync(index);
-
-            var sb = new StringBuilder();
-            sb.AppendLine("<script>");
-            sb.AppendLine("window.JellyfinUserSettings={SelectedUsers:[");
-            sb.AppendLine(string.Join(",", userIds));
-            sb.AppendLine("]};</script>");
-
-            html = html.Replace("</body>", sb + "\n</body>");
-            await File.WriteAllTextAsync(index, html);
-        }   
     }
 }

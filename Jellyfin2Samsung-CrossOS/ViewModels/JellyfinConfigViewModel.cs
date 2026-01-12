@@ -42,9 +42,6 @@ namespace Jellyfin2Samsung.ViewModels
         private string? selectedSubtitleMode;
 
         [ObservableProperty]
-        private string selectedUpdateMode = string.Empty;
-
-        [ObservableProperty]
         private string selectedJellyfinPort = string.Empty;
 
         [ObservableProperty]
@@ -100,21 +97,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private bool skipIntros;
-
-        [ObservableProperty]
-        private bool autoPlayNextEpisode;
-
-        [ObservableProperty]
-        private bool rememberAudioSelections;
-
-        [ObservableProperty]
-        private bool rememberSubtitleSelections;
-
-        [ObservableProperty]
-        private bool playDefaultAudioTrack;
-
-        [ObservableProperty]
-        private bool userAutoLogin;
 
         [ObservableProperty]
         private bool useServerScripts;
@@ -208,18 +190,6 @@ namespace Jellyfin2Samsung.ViewModels
             "8096", "8920"
         };
 
-        public ObservableCollection<string> AvailableUpdateModes { get; } = new()
-        {
-            "None",
-            "Server Settings",
-            "Browser Settings",
-            "User Settings",
-            "Server & Browser Settings",
-            "Server & User Settings",
-            "Browser & User Settings",
-            "All Settings"
-        };
-
         public ObservableCollection<string> AvailableServerInputModes { get; } = new()
         {
             "IP : Port",
@@ -245,7 +215,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         public string LblJellyfinConfig => _localizationService.GetString("lblJellyfinConfig");
         public string LblServerSettings => _localizationService.GetString("lblServerSettings");
-        public string UpdateMode => _localizationService.GetString("UpdateMode");
         public string ServerIP => _localizationService.GetString("ServerIP");
         public string LblEnableBackdrops => _localizationService.GetString("lblEnableBackdrops");
         public string LblEnableThemeSongs => _localizationService.GetString("lblEnableThemeSongs");
@@ -260,12 +229,6 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblSubtitleLanguagePreference => _localizationService.GetString("lblSubtitleLanguagePreference");
         public string Theme => _localizationService.GetString("Theme");
         public string LblSubtitleMode => _localizationService.GetString("lblSubtitleMode");
-        public string LblAutoPlayNextEpisode => _localizationService.GetString("lblAutoPlayNextEpisode");
-        public string LblRememberAudioSelections => _localizationService.GetString("lblRememberAudioSelections");
-        public string LblRememberSubtitleSelections => _localizationService.GetString("lblRememberSubtitleSelections");
-        public string LblPlayDefaultAudioTrack => _localizationService.GetString("lblPlayDefaultAudioTrack");
-        public string LbluserAutoLogin => _localizationService.GetString("lbluserAutoLogin");
-        public string LblUserSettings => _localizationService.GetString("lblUserSettings");
         public string LblBrowserSettings => _localizationService.GetString("lblBrowserSettings");
         public string LblUseServerScripts => _localizationService.GetString("lblUseServerScripts");
         public string LblEnableDevLogs => _localizationService.GetString("lblEnableDevLogs");
@@ -287,7 +250,6 @@ namespace Jellyfin2Samsung.ViewModels
         // New Tab and UI labels
         public string LblTabServer => _localizationService.GetString("lblTabServer");
         public string LblTabPlayback => _localizationService.GetString("lblTabPlayback");
-        public string LblTabUser => _localizationService.GetString("lblTabUser");
         public string LblServerInputMode => _localizationService.GetString("lblServerInputMode");
         public string LblServerUrl => _localizationService.GetString("lblServerUrl");
         public string LblConnectionStatus => _localizationService.GetString("lblConnectionStatus");
@@ -374,7 +336,6 @@ namespace Jellyfin2Samsung.ViewModels
         {
             OnPropertyChanged(nameof(LblJellyfinConfig));
             OnPropertyChanged(nameof(LblServerSettings));
-            OnPropertyChanged(nameof(UpdateMode));
             OnPropertyChanged(nameof(ServerIP));
             OnPropertyChanged(nameof(LblEnableBackdrops));
             OnPropertyChanged(nameof(LblEnableThemeSongs));
@@ -389,12 +350,6 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblSubtitleLanguagePreference));
             OnPropertyChanged(nameof(Theme));
             OnPropertyChanged(nameof(LblSubtitleMode));
-            OnPropertyChanged(nameof(LblAutoPlayNextEpisode));
-            OnPropertyChanged(nameof(LblRememberAudioSelections));
-            OnPropertyChanged(nameof(LblRememberSubtitleSelections));
-            OnPropertyChanged(nameof(LblPlayDefaultAudioTrack));
-            OnPropertyChanged(nameof(LbluserAutoLogin));
-            OnPropertyChanged(nameof(LblUserSettings));
             OnPropertyChanged(nameof(LblBrowserSettings));
             OnPropertyChanged(nameof(LblUseServerScripts));
             OnPropertyChanged(nameof(LblEnableDevLogs));
@@ -415,7 +370,6 @@ namespace Jellyfin2Samsung.ViewModels
             // New tab and UI labels
             OnPropertyChanged(nameof(LblTabServer));
             OnPropertyChanged(nameof(LblTabPlayback));
-            OnPropertyChanged(nameof(LblTabUser));
             OnPropertyChanged(nameof(LblServerInputMode));
             OnPropertyChanged(nameof(LblServerUrl));
             OnPropertyChanged(nameof(LblConnectionStatus));
@@ -469,12 +423,6 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSelectedSubtitleModeChanged(string? value)
         {
             AppSettings.Default.SelectedSubtitleMode = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnSelectedUpdateModeChanged(string value)
-        {
-            AppSettings.Default.ConfigUpdateMode = value;
             AppSettings.Default.Save();
         }
 
@@ -617,12 +565,6 @@ namespace Jellyfin2Samsung.ViewModels
                 if (isAdmin)
                 {
                     await LoadJellyfinUsersAsync();
-                }
-
-                // Auto-enable config patching if not already set
-                if (SelectedUpdateMode == "None" || string.IsNullOrEmpty(SelectedUpdateMode))
-                {
-                    SelectedUpdateMode = "Server Settings";
                 }
             }
             else
@@ -837,36 +779,6 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSkipIntrosChanged(bool value)
         {
             AppSettings.Default.SkipIntros = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnAutoPlayNextEpisodeChanged(bool value)
-        {
-            AppSettings.Default.AutoPlayNextEpisode = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnRememberAudioSelectionsChanged(bool value)
-        {
-            AppSettings.Default.RememberAudioSelections = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnRememberSubtitleSelectionsChanged(bool value)
-        {
-            AppSettings.Default.RememberSubtitleSelections = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnPlayDefaultAudioTrackChanged(bool value)
-        {
-            AppSettings.Default.PlayDefaultAudioTrack = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnUserAutoLoginChanged(bool value)
-        {
-            AppSettings.Default.UserAutoLogin = value;
             AppSettings.Default.Save();
         }
 
@@ -1212,8 +1124,6 @@ namespace Jellyfin2Samsung.ViewModels
                 }
             }
 
-            SelectedUpdateMode = AppSettings.Default.ConfigUpdateMode ?? "None";
-
             SelectedTheme = AppSettings.Default.SelectedTheme ?? "dark";
             SelectedSubtitleMode = AppSettings.Default.SelectedSubtitleMode ?? "None";
             AudioLanguagePreference = AppSettings.Default.AudioLanguagePreference ?? "";
@@ -1228,11 +1138,6 @@ namespace Jellyfin2Samsung.ViewModels
             NextUpEnabled = AppSettings.Default.NextUpEnabled;
             EnableExternalVideoPlayers = AppSettings.Default.EnableExternalVideoPlayers;
             SkipIntros = AppSettings.Default.SkipIntros;
-            AutoPlayNextEpisode = AppSettings.Default.AutoPlayNextEpisode;
-            RememberAudioSelections = AppSettings.Default.RememberAudioSelections;
-            RememberSubtitleSelections = AppSettings.Default.RememberSubtitleSelections;
-            PlayDefaultAudioTrack = AppSettings.Default.PlayDefaultAudioTrack;
-            UserAutoLogin = AppSettings.Default.UserAutoLogin;
             UseServerScripts = AppSettings.Default.UseServerScripts;
             EnableDevLogs = AppSettings.Default.EnableDevLogs;
             PatchYoutubePlugin = AppSettings.Default.PatchYoutubePlugin;

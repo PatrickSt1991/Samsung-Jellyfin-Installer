@@ -56,17 +56,11 @@ namespace Jellyfin2Samsung.Helpers
         public bool NextUpEnabled { get; set; } = false;
         public bool EnableExternalVideoPlayers { get; set; } = false;
         public bool SkipIntros { get; set; } = false;
-        public bool AutoPlayNextEpisode { get; set; } = true;
-        public bool RememberAudioSelections { get; set; } = true;
-        public bool RememberSubtitleSelections { get; set; } = true;
-        public bool PlayDefaultAudioTrack { get; set; } = true;
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
-        public string ConfigUpdateMode { get; set; } = "None";
         public string JellyfinUserId { get; set; } = "";
         public bool IsJellyfinAdmin { get; set; } = false;
         public string SelectedUserIds { get; set; } = "";  // Comma-separated list of selected user IDs for multi-user config
-        public bool UserAutoLogin { get; set; } = true;
         public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
