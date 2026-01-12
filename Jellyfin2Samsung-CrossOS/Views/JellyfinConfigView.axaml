@@ -54,7 +54,10 @@
 								  VerticalAlignment="Center"
 								  Background="Transparent"
 								  BorderThickness="0"
-								  Padding="4">
+								  Width="40"
+								  Height="40"
+								  CornerRadius="20"
+								  Padding="0">
 						<ToggleButton.Styles>
 							<Style Selector="ToggleButton:checked">
 								<Setter Property="Background" Value="Transparent"/>
@@ -691,21 +694,36 @@
 									CornerRadius="6"
 									IsVisible="{Binding HasSelectedJellyTheme}">
 
-									<StackPanel Spacing="8">
+									<StackPanel Spacing="8" HorizontalAlignment="Center">
 										<TextBlock
 											Text="{Binding SelectedJellyTheme.Name}"
 											FontSize="14"
 											FontWeight="SemiBold"
+											HorizontalAlignment="Center"
 											Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
-										<Image
-											Source="{Binding SelectedJellyThemePreview}"
-											Stretch="Uniform"
-											MaxHeight="240"/>
+										<Button Command="{Binding OpenThemeReadmeCommand}"
+												CommandParameter="{Binding SelectedJellyTheme}"
+												Background="Transparent"
+												BorderThickness="0"
+												Padding="0"
+												HorizontalAlignment="Center"
+												Cursor="Hand">
+											<Button.Styles>
+												<Style Selector="Button:pointerover">
+													<Setter Property="Opacity" Value="0.85"/>
+												</Style>
+											</Button.Styles>
+											<Image
+												Source="{Binding SelectedJellyThemePreview}"
+												Stretch="Uniform"
+												MaxHeight="240"/>
+										</Button>
 
 										<TextBlock
 											Text="Theme preview"
 											FontSize="11"
+											HorizontalAlignment="Center"
 											Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 									</StackPanel>
 								</Border>

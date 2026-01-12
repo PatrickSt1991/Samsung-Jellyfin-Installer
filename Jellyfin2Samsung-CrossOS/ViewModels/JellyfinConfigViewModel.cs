@@ -1014,7 +1014,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Purple",
                 HexColor = "#6B5B95",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Obsidian/Obsidian.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Obsidian/assets/preview/Obsidian.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Obsidian/assets/preview/Obsidian.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Obsidian"
             },
             new JellyTheme
             {
@@ -1023,7 +1024,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Gold",
                 HexColor = "#D4AF37",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Solaris/Solaris.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Solaris/assets/preview/Solaris.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Solaris/assets/preview/Solaris.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Solaris"
             },
             new JellyTheme
             {
@@ -1032,7 +1034,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Cyan",
                 HexColor = "#00CED1",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Nebula/Nebula.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Nebula/assets/preview/Nebula.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Nebula/assets/preview/Nebula.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Nebula"
             },
             new JellyTheme
             {
@@ -1041,7 +1044,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Orange",
                 HexColor = "#FF6B35",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Ember/Ember.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Ember/assets/preview/Ember.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Ember/assets/preview/Ember.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Ember"
             },
             new JellyTheme
             {
@@ -1050,7 +1054,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Black",
                 HexColor = "#1C1C1C",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Void/Void.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Void/assets/preview/Void.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Void/assets/preview/Void.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Void"
             },
             new JellyTheme
             {
@@ -1059,7 +1064,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Slate",
                 HexColor = "#708090",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Phantom/Phantom.css",
-                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Phantom/assets/preview/Phantom.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/master/Themes/Phantom/assets/preview/Phantom.png",
+                ReadmeUrl = "https://github.com/kingchenc/JellyThemes/tree/main/Themes/Phantom"
             }
         };
 
@@ -1095,12 +1101,33 @@ namespace Jellyfin2Samsung.ViewModels
                 Trace.WriteLine($"Failed to open JellyThemes repo: {ex}");
             }
         }
+
+        [RelayCommand]
+        private void OpenThemeReadme(JellyTheme? theme)
+        {
+            if (theme == null || string.IsNullOrEmpty(theme.ReadmeUrl)) return;
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = theme.ReadmeUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to open theme readme: {ex}");
+            }
+        }
         [RelayCommand]
         private void ClearCss()
         {
             CustomCss = string.Empty;
             CssValidationStatus = string.Empty;
             CssValidationSuccess = false;
+            SelectedJellyTheme = null;
+            SelectedJellyThemePreview = null;
         }
 
         #endregion

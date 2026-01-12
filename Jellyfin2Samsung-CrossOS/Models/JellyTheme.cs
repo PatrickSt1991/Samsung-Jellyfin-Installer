@@ -36,6 +36,11 @@ namespace Jellyfin2Samsung.Models
         public string PreviewUrl { get; init; } = string.Empty;
 
         /// <summary>
+        /// GitHub README URL for this theme.
+        /// </summary>
+        public string ReadmeUrl { get; init; } = string.Empty;
+
+        /// <summary>
         /// Gets the full @import statement for this theme.
         /// </summary>
         public string CssImportStatement => $"@import url(\"{CssImportUrl}\");";
