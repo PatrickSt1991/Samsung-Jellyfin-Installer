@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "CSS-syntaxis geldig",
   "lblCssUnmatchedBrace": "Ongelijke accolades { }",
   "lblCssUnmatchedParen": "Ongelijke haakjes ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Klik op een thema om het in te voegen en automatisch te valideren. Bezoek de GitHub-repo voor previews.",
   "lblTabMainSettings": "Hoofd",
   "lblMainSettings": "Toepassingsinstellingen",
   "lblRefreshUsers": "Gebruikers vernieuwen",

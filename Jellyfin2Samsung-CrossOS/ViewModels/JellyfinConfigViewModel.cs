@@ -1041,6 +1041,101 @@ namespace Jellyfin2Samsung.ViewModels
             return null;
         }
 
+        #region JellyThemes
+
+        /// <summary>
+        /// Available JellyThemes from https://github.com/kingchenc/JellyThemes
+        /// </summary>
+        public static ObservableCollection<JellyTheme> JellyThemes { get; } = new()
+        {
+            new JellyTheme
+            {
+                Name = "Obsidian",
+                Icon = "\U0001F7E3", // Purple circle
+                ColorName = "Purple",
+                HexColor = "#6B5B95",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Obsidian/Obsidian.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Obsidian/Preview.png"
+            },
+            new JellyTheme
+            {
+                Name = "Solaris",
+                Icon = "\U0001F7E1", // Yellow circle
+                ColorName = "Gold",
+                HexColor = "#D4AF37",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Solaris/Solaris.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Solaris/Preview.png"
+            },
+            new JellyTheme
+            {
+                Name = "Nebula",
+                Icon = "\U0001F535", // Blue circle
+                ColorName = "Cyan",
+                HexColor = "#00CED1",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Nebula/Nebula.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Nebula/Preview.png"
+            },
+            new JellyTheme
+            {
+                Name = "Ember",
+                Icon = "\U0001F7E0", // Orange circle
+                ColorName = "Orange",
+                HexColor = "#FF6B35",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Ember/Ember.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Ember/Preview.png"
+            },
+            new JellyTheme
+            {
+                Name = "Void",
+                Icon = "\u26AB", // Black circle
+                ColorName = "Black",
+                HexColor = "#1C1C1C",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Void/Void.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Void/Preview.png"
+            },
+            new JellyTheme
+            {
+                Name = "Phantom",
+                Icon = "\U0001F47B", // Ghost
+                ColorName = "Slate",
+                HexColor = "#708090",
+                CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Phantom/Phantom.css",
+                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Phantom/Preview.png"
+            }
+        };
+
+        public string LblJellyThemes => _localizationService.GetString("lblJellyThemes");
+        public string LblJellyThemesHint => _localizationService.GetString("lblJellyThemesHint");
+        public const string JellyThemesRepoUrl = "https://github.com/kingchenc/JellyThemes";
+
+        [RelayCommand]
+        private async Task InsertThemeAsync(JellyTheme theme)
+        {
+            if (theme == null) return;
+
+            CustomCss = theme.CssImportStatement;
+            await ValidateCssAsync();
+        }
+
+        [RelayCommand]
+        private void OpenJellyThemesRepo()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = JellyThemesRepoUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to open JellyThemes repo: {ex}");
+            }
+        }
+
+        #endregion
+
         [RelayCommand(CanExecute = nameof(CanOpenDebugWindow))]
         private void OpenDebugWindow()
         {

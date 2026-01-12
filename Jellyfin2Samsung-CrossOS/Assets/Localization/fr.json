@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "Syntaxe CSS valide",
   "lblCssUnmatchedBrace": "Accolades non appariées { }",
   "lblCssUnmatchedParen": "Parenthèses non appariées ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Cliquez sur un thème pour l'insérer et le valider automatiquement. Visitez le dépôt GitHub pour les aperçus.",
   "lblTabMainSettings": "Principal",
   "lblMainSettings": "Paramètres de l'application",
   "lblRefreshUsers": "Actualiser utilisateurs",

@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "CSS söz dizimi geçerli",
   "lblCssUnmatchedBrace": "Eşleşmeyen süslü parantezler { }",
   "lblCssUnmatchedParen": "Eşleşmeyen parantezler ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Bir temaya tıklayarak ekleyin ve otomatik olarak doğrulayın. Önizlemeler için GitHub deposunu ziyaret edin.",
   "lblTabMainSettings": "Ana",
   "lblMainSettings": "Uygulama Ayarları",
   "lblRefreshUsers": "Kullanıcıları Yenile",

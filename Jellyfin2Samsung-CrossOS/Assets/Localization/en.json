@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "CSS syntax valid",
   "lblCssUnmatchedBrace": "Unmatched braces { }",
   "lblCssUnmatchedParen": "Unmatched parentheses ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Click a theme to insert it and auto-validate. Visit the GitHub repo for previews.",
   "lblTabMainSettings": "Main",
   "lblMainSettings": "Application Settings",
   "lblRefreshUsers": "Refresh Users",

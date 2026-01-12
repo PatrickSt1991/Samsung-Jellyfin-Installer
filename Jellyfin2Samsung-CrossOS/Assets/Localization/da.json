@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "CSS-syntaks gyldig",
   "lblCssUnmatchedBrace": "Ulige klammer { }",
   "lblCssUnmatchedParen": "Ulige parenteser ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Klik på et tema for at indsætte det og automatisk validere. Besøg GitHub-repo for forhåndsvisninger.",
   "lblTabMainSettings": "Hoved",
   "lblMainSettings": "Programindstillinger",
   "lblRefreshUsers": "Opdater brugere",

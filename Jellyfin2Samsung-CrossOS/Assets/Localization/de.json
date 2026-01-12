@@ -135,6 +135,8 @@
   "lblCssSyntaxValid": "CSS-Syntax gültig",
   "lblCssUnmatchedBrace": "Ungleiche Klammern { }",
   "lblCssUnmatchedParen": "Ungleiche Klammern ( )",
+  "lblJellyThemes": "JellyThemes",
+  "lblJellyThemesHint": "Klicken Sie auf ein Theme um es einzufügen und automatisch zu validieren. Besuchen Sie das GitHub-Repo für Vorschauen.",
   "lblTabMainSettings": "Haupt",
   "lblMainSettings": "Anwendungseinstellungen",
   "lblRefreshUsers": "Benutzer aktualisieren",

@@ -649,6 +649,66 @@
 										   VerticalAlignment="Center"
 										   FontWeight="SemiBold"/>
 							</Grid>
+
+							<Border Height="1" Background="#E8E8E8" Margin="0,16,0,8"/>
+
+							<!-- JellyThemes Section -->
+							<StackPanel Spacing="8">
+								<Grid ColumnDefinitions="*,Auto">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblJellyThemes}"
+											   FontSize="15"
+											   FontWeight="SemiBold"
+											   Foreground="#2C3E50"/>
+									<Button Grid.Column="1"
+											Classes="secondary"
+											Command="{Binding OpenJellyThemesRepoCommand}"
+											Padding="6,2"
+											FontSize="11">
+										<StackPanel Orientation="Horizontal" Spacing="4">
+											<fa:SymbolIcon Symbol="Link" Width="12" Height="12"/>
+											<TextBlock Text="GitHub JellyThemes"/>
+										</StackPanel>
+									</Button>
+								</Grid>
+
+								<TextBlock Text="{Binding LblJellyThemesHint}"
+										   FontSize="12"
+										   Foreground="#7F8C8D"
+										   TextWrapping="Wrap"/>
+
+								<!-- Theme Buttons -->
+								<ItemsControl ItemsSource="{Binding JellyThemes}" Margin="0,8,0,0">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<WrapPanel Orientation="Horizontal"/>
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Button Command="{Binding $parent[ItemsControl].((viewModels:JellyfinConfigViewModel)DataContext).InsertThemeCommand}"
+													CommandParameter="{Binding}"
+													Margin="0,0,8,8"
+													Padding="12,8"
+													CornerRadius="6"
+													Background="{Binding HexColor}"
+													Foreground="White"
+													FontWeight="SemiBold"
+													Cursor="Hand">
+												<Button.Styles>
+													<Style Selector="Button:pointerover">
+														<Setter Property="Opacity" Value="0.85"/>
+													</Style>
+												</Button.Styles>
+												<StackPanel Orientation="Horizontal" Spacing="6">
+													<TextBlock Text="{Binding Icon}" FontSize="14"/>
+													<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+												</StackPanel>
+											</Button>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>
