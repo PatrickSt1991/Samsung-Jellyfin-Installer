@@ -129,7 +129,7 @@ namespace Jellyfin2Samsung.Services
                 .ToList();
 
             var additionalIps = Enumerable.Empty<string>();
-            if (AppSettings.Default.RememberCustomIP && !string.IsNullOrEmpty(AppSettings.Default.UserCustomIP))
+            if (!string.IsNullOrEmpty(AppSettings.Default.UserCustomIP))
             {
                 try
                 {

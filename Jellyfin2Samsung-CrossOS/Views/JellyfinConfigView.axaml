@@ -142,17 +142,6 @@
 												  VerticalAlignment="Center"/>
 								</Grid>
 
-								<!-- Remember IP -->
-								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-									<TextBlock Grid.Column="0"
-											   Text="{Binding LblRememberIp}"
-											   Classes="label"
-											   VerticalAlignment="Center"/>
-									<ToggleSwitch Grid.Column="1"
-												  IsChecked="{Binding RememberCustomIP}"
-												  VerticalAlignment="Center"/>
-								</Grid>
-
 								<!-- Delete Previous -->
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
@@ -163,7 +152,6 @@
 												  IsChecked="{Binding DeletePreviousInstall}"
 												  VerticalAlignment="Center"/>
 								</Grid>
-
 								<!-- Force Login -->
 								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"

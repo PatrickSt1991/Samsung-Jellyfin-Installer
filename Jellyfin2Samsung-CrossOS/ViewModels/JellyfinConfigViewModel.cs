@@ -162,9 +162,6 @@ namespace Jellyfin2Samsung.ViewModels
         private string localIP = string.Empty;
 
         [ObservableProperty]
-        private bool rememberCustomIP;
-
-        [ObservableProperty]
         private bool tryOverwrite;
 
         [ObservableProperty]
@@ -1287,7 +1284,6 @@ namespace Jellyfin2Samsung.ViewModels
                 .FirstOrDefault(lang => string.Equals(lang.Code, currentLangCode, StringComparison.OrdinalIgnoreCase))
                 ?? AvailableLanguages.FirstOrDefault();
 
-            RememberCustomIP = AppSettings.Default.RememberCustomIP;
             DeletePreviousInstall = AppSettings.Default.DeletePreviousInstall;
             ForceSamsungLogin = AppSettings.Default.ForceSamsungLogin;
             RtlReading = AppSettings.Default.RTLReading;
@@ -1400,21 +1396,9 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
-        partial void OnRememberCustomIPChanged(bool value)
-        {
-            AppSettings.Default.RememberCustomIP = value;
-            AppSettings.Default.Save();
-        }
-
         partial void OnTryOverwriteChanged(bool value)
         {
             AppSettings.Default.TryOverwrite = value;
-            AppSettings.Default.Save();
-        }
-
-        partial void OnDeletePreviousInstallChanged(bool value)
-        {
-            AppSettings.Default.DeletePreviousInstall = value;
             AppSettings.Default.Save();
         }
 

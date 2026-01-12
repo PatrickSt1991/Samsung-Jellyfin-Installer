@@ -33,7 +33,6 @@ namespace Jellyfin2Samsung.Helpers
         // ----- User-scoped settings -----
         public string Language { get; set; } = "en";
         public string Certificate { get; set; } = "Jelly2Sams";
-        public bool RememberCustomIP { get; set; } = false;
         public bool DeletePreviousInstall { get; set; } = false;
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
