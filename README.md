@@ -40,16 +40,6 @@
 
 ---
 
-## 🧠 Who Is This For?
-
-- **Non-technical users** who just want Jellyfin on their TV
-- **Power users** who want plugin support and preconfigured installs
-- **Developers** who are tired of Tizen certificate errors
-
-If your TV runs **Tizen OS**, this tool is likely the easiest option.
-
----
-
 ## 🚀 How It Works (Short Version)
 
 Before you begin, ensure your Samsung TV is in Developer Mode. This is required to install applications like Jellyfin.
