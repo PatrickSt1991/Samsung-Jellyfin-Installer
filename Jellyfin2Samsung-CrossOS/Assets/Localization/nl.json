@@ -128,6 +128,7 @@
   "lblValidateCss": "CSS valideren",
   "lblCssValidationStatus": "Validatiestatus",
   "lblCssEmpty": "Geen CSS om te valideren",
+  "lblClearCss": "Leegmaken",
   "lblCssValidating": "Valideren...",
   "lblCssUrlFailed": "{0} URL('s) onbereikbaar",
   "lblCssUrlsValid": "{0} URL('s) succesvol gevalideerd",

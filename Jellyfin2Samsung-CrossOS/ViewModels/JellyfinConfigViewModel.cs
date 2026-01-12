@@ -1,4 +1,5 @@
 ﻿using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.ViewModels
@@ -37,6 +39,12 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private string? selectedTheme;
+
+        [ObservableProperty]
+        private JellyTheme? selectedJellyTheme;
+        
+        [ObservableProperty]
+        private Bitmap? selectedJellyThemePreview;
 
         [ObservableProperty]
         private string? selectedSubtitleMode;
@@ -229,6 +237,8 @@ namespace Jellyfin2Samsung.ViewModels
         // Computed properties for server input mode visibility
         public bool IsServerIpPortMode => SelectedServerInputMode == "IP : Port";
         public bool IsServerFullUrlMode => SelectedServerInputMode == "Full URL";
+        public bool HasSelectedJellyTheme => SelectedJellyTheme != null;
+        public bool CanClearCss => !string.IsNullOrWhiteSpace(CustomCss);
 
         // Status color properties
         public IBrush ServerStatusColor => ServerValidated
@@ -299,6 +309,8 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblCssHint => _localizationService.GetString("lblCssHint");
         public string LblValidateCss => _localizationService.GetString("lblValidateCss");
         public string LblCssValidationStatus => _localizationService.GetString("lblCssValidationStatus");
+        public string LblClearCss => _localizationService.GetString("lblClearCss");
+
 
         // Main Settings Tab labels
         public string LblTabMainSettings => _localizationService.GetString("lblTabMainSettings");
@@ -496,6 +508,11 @@ namespace Jellyfin2Samsung.ViewModels
             // Save the selected mode to persist across restarts
             AppSettings.Default.ServerInputMode = value;
             AppSettings.Default.Save();
+        }
+
+        partial void OnSelectedJellyThemeChanged(JellyTheme? value)
+        {
+            OnPropertyChanged(nameof(HasSelectedJellyTheme));
         }
 
         partial void OnJellyfinFullUrlInputChanged(string value)
@@ -898,6 +915,7 @@ namespace Jellyfin2Samsung.ViewModels
             CssValidationStatus = string.Empty;
             CssValidationSuccess = false;
             OnPropertyChanged(nameof(CanValidateCss));
+            OnPropertyChanged(nameof(CanClearCss));
         }
 
         partial void OnIsValidatingCssChanged(bool value)
@@ -988,6 +1006,22 @@ namespace Jellyfin2Samsung.ViewModels
                 IsValidatingCss = false;
             }
         }
+        private static async Task<Bitmap?> LoadPreviewAsync(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return null;
+
+            try
+            {
+                using var http = new HttpClient();
+                var stream = await http.GetStreamAsync(url);
+                return new Bitmap(stream);
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         private System.Collections.Generic.List<string> ExtractImportUrls(string css)
         {
@@ -1052,7 +1086,8 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Purple",
                 HexColor = "#6B5B95",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Obsidian/Obsidian.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Obsidian/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Obsidian/assets/preview/Obsidian.png"
+
             },
             new JellyTheme
             {
@@ -1061,7 +1096,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Gold",
                 HexColor = "#D4AF37",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Solaris/Solaris.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Solaris/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Solaris/assets/preview/Solaris.png"
             },
             new JellyTheme
             {
@@ -1070,7 +1105,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Cyan",
                 HexColor = "#00CED1",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Nebula/Nebula.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Nebula/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Nebula/assets/preview/Nebula.png"
             },
             new JellyTheme
             {
@@ -1079,7 +1114,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Orange",
                 HexColor = "#FF6B35",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Ember/Ember.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Ember/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Ember/assets/preview/Ember.png"
             },
             new JellyTheme
             {
@@ -1088,7 +1123,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Black",
                 HexColor = "#1C1C1C",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Void/Void.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Void/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Void/assets/preview/Void.png"
             },
             new JellyTheme
             {
@@ -1097,7 +1132,7 @@ namespace Jellyfin2Samsung.ViewModels
                 ColorName = "Slate",
                 HexColor = "#708090",
                 CssImportUrl = "https://cdn.jsdelivr.net/gh/kingchenc/JellyThemes@master/Themes/Phantom/Phantom.css",
-                PreviewUrl = "https://github.com/kingchenc/JellyThemes/blob/master/Themes/Phantom/Preview.png"
+                PreviewUrl = "https://raw.githubusercontent.com/kingchenc/JellyThemes/main/Themes/Phantom/assets/preview/Phantom.png"
             }
         };
 
@@ -1110,7 +1145,10 @@ namespace Jellyfin2Samsung.ViewModels
         {
             if (theme == null) return;
 
+            SelectedJellyTheme = theme;
             CustomCss = theme.CssImportStatement;
+            SelectedJellyThemePreview = await LoadPreviewAsync(theme.PreviewUrl);
+
             await ValidateCssAsync();
         }
 
@@ -1129,6 +1167,13 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 Trace.WriteLine($"Failed to open JellyThemes repo: {ex}");
             }
+        }
+        [RelayCommand]
+        private void ClearCss()
+        {
+            CustomCss = string.Empty;
+            CssValidationStatus = string.Empty;
+            CssValidationSuccess = false;
         }
 
         #endregion

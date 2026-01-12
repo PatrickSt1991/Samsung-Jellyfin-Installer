@@ -128,6 +128,7 @@
   "lblValidateCss": "Validate CSS",
   "lblCssValidationStatus": "Validation Status",
   "lblCssEmpty": "No CSS to validate",
+  "lblClearCss": "Empty",
   "lblCssValidating": "Validating...",
   "lblCssUrlFailed": "{0} URL(s) unreachable",
   "lblCssUrlsValid": "{0} URL(s) validated successfully",

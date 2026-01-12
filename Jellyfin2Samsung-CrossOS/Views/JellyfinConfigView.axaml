@@ -622,8 +622,10 @@
 									 FontFamily="Consolas, Monaco, monospace"
 									 FontSize="12"/>
 
-							<!-- Validation Button and Status -->
-							<Grid ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+							<!-- Validation, Clear Buttons and Status -->
+							<Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8" Margin="0,12,0,0">
+
+								<!-- Validate -->
 								<Button Grid.Column="0"
 										Classes="secondary"
 										Content="{Binding LblValidateCss}"
@@ -631,12 +633,24 @@
 										IsEnabled="{Binding CanValidateCss}"
 										Padding="8,4"
 										FontSize="12"/>
-								<TextBlock Grid.Column="2"
+
+								<!-- Clear -->
+								<Button Grid.Column="1"
+										Classes="secondary"
+										Content="{Binding LblClearCss}"
+										Command="{Binding ClearCssCommand}"
+										IsEnabled="{Binding CanClearCss}"
+										Padding="8,4"
+										FontSize="12"/>
+
+								<!-- Status -->
+								<TextBlock Grid.Column="3"
 										   Text="{Binding CssValidationStatus}"
 										   Foreground="{Binding CssValidationColor}"
 										   VerticalAlignment="Center"
 										   FontWeight="SemiBold"/>
 							</Grid>
+
 
 							<Border Height="1" Background="#E8E8E8" Margin="0,16,0,8"/>
 
@@ -696,6 +710,35 @@
 										</DataTemplate>
 									</ItemsControl.ItemTemplate>
 								</ItemsControl>
+								<!-- Theme Preview -->
+								<Border
+									Margin="0,12,0,0"
+									Padding="10"
+									Background="#FAFAFA"
+									BorderBrush="#E0E0E0"
+									BorderThickness="1"
+									CornerRadius="6"
+									IsVisible="{Binding HasSelectedJellyTheme}">
+
+									<StackPanel Spacing="8">
+										<TextBlock
+											Text="{Binding SelectedJellyTheme.Name}"
+											FontSize="14"
+											FontWeight="SemiBold"
+											Foreground="#2C3E50"/>
+
+										<Image
+											Source="{Binding SelectedJellyThemePreview}"
+											Stretch="Uniform"
+											MaxHeight="240"/>
+
+										<TextBlock
+											Text="Theme preview"
+											FontSize="11"
+											Foreground="#7F8C8D"/>
+									</StackPanel>
+								</Border>
+
 							</StackPanel>
 						</StackPanel>
 					</ScrollViewer>
