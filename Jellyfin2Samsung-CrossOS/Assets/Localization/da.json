@@ -132,5 +132,6 @@
   "lblTabMainSettings": "Hoved",
   "lblMainSettings": "Programindstillinger",
   "lblRefreshUsers": "Opdater brugere",
-  "lblUserSelectionHint": "Valgte brugere konfigureres under installationen"
+  "lblUserSelectionHint": "Valgte brugere konfigureres under installationen",
+  "lblYtDlpServer": "yt-dlp-tv serveradresse..."
 }

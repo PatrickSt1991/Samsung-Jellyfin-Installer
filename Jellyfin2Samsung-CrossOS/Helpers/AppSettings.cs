@@ -72,6 +72,7 @@ namespace Jellyfin2Samsung.Helpers
         public bool PatchYoutubePlugin { get; set; } = false;
         public string CustomCss { get; set; } = "";
         public bool DarkMode { get; set; } = false;
+        public string LocalYoutubeServer { get; set; } = string.Empty;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";

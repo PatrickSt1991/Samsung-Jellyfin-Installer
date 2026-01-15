@@ -477,6 +477,18 @@
 											IsEnabled="{Binding IsAuthenticated}"
 											IsChecked="{Binding PatchYoutubePlugin}"/>
 								</Grid>
+								
+								<!-- TextBox shown only when PatchYoutubePlugin == true -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+										Text="{Binding LblYtDlpServer}"
+										Classes="label"
+										VerticalAlignment="Center"
+										IsVisible="{Binding PatchYoutubePlugin}"/>
+									<TextBox Grid.Column= "1"
+										 Text="{Binding LocalYoutubeServer}"
+										 IsVisible="{Binding PatchYoutubePlugin}" />
+								</Grid>
 							</StackPanel>
 
 						</StackPanel>

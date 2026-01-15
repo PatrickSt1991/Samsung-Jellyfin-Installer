@@ -132,5 +132,6 @@
   "lblTabMainSettings": "Hoofd",
   "lblMainSettings": "Toepassingsinstellingen",
   "lblRefreshUsers": "Gebruikers vernieuwen",
-  "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie"
+  "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie",
+  "lblYtDlpServer": "yt-dlp-tv server..."
 }

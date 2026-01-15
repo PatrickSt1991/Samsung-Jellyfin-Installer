@@ -132,5 +132,6 @@
   "lblTabMainSettings": "Haupt",
   "lblMainSettings": "Anwendungseinstellungen",
   "lblRefreshUsers": "Benutzer aktualisieren",
-  "lblUserSelectionHint": "Ausgewählte Benutzer werden bei der Installation konfiguriert"
+  "lblUserSelectionHint": "Ausgewählte Benutzer werden bei der Installation konfiguriert",
+  "lblYtDlpServer": "Adresse des yt-dlp-tv-Servers..."
 }

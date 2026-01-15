@@ -1,4 +1,5 @@
 ﻿using Jellyfin2Samsung.Helpers.Core;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
                 var js = await File.ReadAllTextAsync(file);
                 if (!js.Contains("__V80__"))
                 {
+                    Debug.WriteLine(AppSettings.Default.LocalYoutubeServer);
                     string nativeCode = @"
 /* === TIZEN V114 (SIMPLE MP4 & NATIVE EXIT) === */
 (function () {
@@ -25,7 +27,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
 
     console.log('[V114] INIT: Native MP4 Player Bridge');
 
-    // Your local backend that returns the direct MP4
+    // Your local backend that returns the direct MP4 --> NEED TO USE AppSettings.Default.LocalYoutubeServer
     var API_BASE = 'http://192.168.2.195:8123'; 
     var player = null;
     var currentState = -1;

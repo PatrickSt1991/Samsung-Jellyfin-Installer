@@ -139,6 +139,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private string jellyfinFullUrlInput = string.Empty;
 
+        [ObservableProperty]
+        private string localYoutubeServer = string.Empty;
+
         // ========== Main Settings Properties (from SettingsViewModel) ==========
         [ObservableProperty]
         private LanguageOption? selectedLanguage;
@@ -227,6 +230,7 @@ namespace Jellyfin2Samsung.ViewModels
             ? new SolidColorBrush(Color.FromRgb(39, 174, 96))   // Green
             : new SolidColorBrush(Color.FromRgb(231, 76, 60));  // Red
 
+        public string LblYtDlpServer => _localizationService.GetString("lblYtDlpServer");
         public string LblJellyfinConfig => _localizationService.GetString("lblJellyfinConfig");
         public string LblServerSettings => _localizationService.GetString("lblServerSettings");
         public string ServerIP => _localizationService.GetString("ServerIP");
@@ -358,6 +362,7 @@ namespace Jellyfin2Samsung.ViewModels
 
         private void RefreshLocalizedProperties()
         {
+            OnPropertyChanged(nameof(LblYtDlpServer));
             OnPropertyChanged(nameof(LblJellyfinConfig));
             OnPropertyChanged(nameof(LblServerSettings));
             OnPropertyChanged(nameof(ServerIP));
@@ -473,6 +478,12 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSelectedJellyThemeChanged(JellyTheme? value)
         {
             OnPropertyChanged(nameof(HasSelectedJellyTheme));
+        }
+
+        partial void OnLocalYoutubeServerChanged(string value)
+        {
+            AppSettings.Default.LocalYoutubeServer = value;
+            AppSettings.Default.Save();
         }
 
         partial void OnJellyfinFullUrlInputChanged(string value)
@@ -1229,6 +1240,8 @@ namespace Jellyfin2Samsung.ViewModels
             EnableDevLogs = AppSettings.Default.EnableDevLogs;
             PatchYoutubePlugin = AppSettings.Default.PatchYoutubePlugin;
             CustomCss = AppSettings.Default.CustomCss ?? string.Empty;
+
+            LocalYoutubeServer = AppSettings.Default.LocalYoutubeServer;
 
             CanOpenDebugWindow = EnableDevLogs && !string.IsNullOrWhiteSpace(fullUrl);
             OpenDebugWindowCommand.NotifyCanExecuteChanged();
