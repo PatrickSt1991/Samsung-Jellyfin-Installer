@@ -1229,6 +1229,9 @@ namespace Jellyfin2Samsung.ViewModels
             EnableDevLogs = AppSettings.Default.EnableDevLogs;
             PatchYoutubePlugin = AppSettings.Default.PatchYoutubePlugin;
             CustomCss = AppSettings.Default.CustomCss ?? string.Empty;
+
+            CanOpenDebugWindow = EnableDevLogs && !string.IsNullOrWhiteSpace(fullUrl);
+            OpenDebugWindowCommand.NotifyCanExecuteChanged();
         }
 
         private void UpdateJellyfinAddress()

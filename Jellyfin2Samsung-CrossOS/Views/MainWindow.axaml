@@ -163,6 +163,7 @@
 					<fa:SymbolIcon Symbol="Settings"  Width="20" Height="20"/>
 				</Button>
 				<ToggleButton IsChecked="{Binding DarkMode}"
+							  Classes="primary"
 							  Background="Transparent"
 							  BorderThickness="0"
 							  Width="40"

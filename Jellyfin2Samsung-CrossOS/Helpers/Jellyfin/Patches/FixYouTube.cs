@@ -17,104 +17,139 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
                 if (!js.Contains("__V80__"))
                 {
                     string nativeCode = @"
-/* === TIZEN V80 (Iron-Clad API) === */
-(function() {
-    console.log('[NATIVE-V80] FINAL API BRIDGE');
-    var activeVideo = null;
-    var currentConfig = null;
+/* === TIZEN V114 (SIMPLE MP4 & NATIVE EXIT) === */
+(function () {
+    // Prevent double-loading
+    if (window.YT_STABLE) return;
+    window.YT_STABLE = true;
+
+    console.log('[V114] INIT: Native MP4 Player Bridge');
+
+    // Your local backend that returns the direct MP4
+    var API_BASE = 'http://192.168.2.195:8123'; 
+    var player = null;
+    var currentState = -1;
+
+    function log(m) { console.log('[V114]', m); }
+    
+    // Helper to sync state with Jellyfin
+    function setState(s) {
+        currentState = s;
+        if (player && player.onStateChange) {
+            player.onStateChange({ data: s });
+        }
+    }
 
     window.YT = {
         PlayerState: { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
-        Player: function(id, config) {
+        Player: function (id, config) {
+            player = this;
             var self = this;
-            currentConfig = config;
             var container = document.getElementById(id);
-            
+
+            // 1. Create the Video Element (Simple & Clean)
             var v = document.createElement('video');
-            v.id = 'tizen_v80_video';
-            v.src = 'https://inv.perditum.com/latest_version?id=' + config.videoId + '&itag=18&local=true';
+            v.id = 'native_mp4_player';
             v.style.cssText = 'width:100%;height:100%;background:#000;position:absolute;top:0;left:0;z-index:99999;';
             v.autoplay = true;
-            activeVideo = v;
-
-            // --- API METHODS ---
-            this.playVideo = function() { if(activeVideo) activeVideo.play(); };
-            this.pauseVideo = function() { if(activeVideo) activeVideo.pause(); };
-            this.stopVideo = function() {
-                console.log('[V80] STOPPING');
-                if(activeVideo) {
-                    activeVideo.pause(); activeVideo.src = ''; activeVideo.load(); activeVideo.remove();
-                }
-                activeVideo = null;
-                if (config.events && config.events.onStateChange) {
-                    config.events.onStateChange({ data: 0 }); 
-                }
-            };
-            this.destroy = function() { this.stopVideo(); };
+            v.controls = false; // Jellyfin handles the UI overlay
             
-            // State & Time
-            this.getPlayerState = function() { 
-                if (!activeVideo) return -1;
-                if (activeVideo.ended) return 0;
-                if (activeVideo.paused) return 2;
-                return 1;
-            };
-            this.getCurrentTime = function() { return activeVideo ? activeVideo.currentTime : 0; };
-            this.getDuration = function() { return activeVideo ? activeVideo.duration : 0; };
-            this.getVideoLoadedFraction = function() { return 1; };
-
-            // Volume
-            this.getVolume = function() { return activeVideo ? activeVideo.volume * 100 : 100; };
-            this.setVolume = function(vol) { if(activeVideo) activeVideo.volume = vol / 100; };
-            this.mute = function() { if(activeVideo) activeVideo.muted = true; };
-            this.unMute = function() { if(activeVideo) activeVideo.muted = false; };
-            this.isMuted = function() { return activeVideo ? activeVideo.muted : false; };
-
-            // Playback Rates (Jellyfin checks these)
-            this.getPlaybackRate = function() { return 1; };
-            this.setPlaybackRate = function(r) { };
-            this.getAvailablePlaybackRates = function() { return [1]; };
-            // -----------------------------
-
-            v.onended = function() { self.stopVideo(); };
-            v.onplaying = function() {
-                document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(s => s.remove());
-            };
-
             if (container) {
                 container.innerHTML = '';
                 container.appendChild(v);
             }
 
-            if (config.events && config.events.onReady) {
-                setTimeout(function() { config.events.onReady({ target: self }); }, 200);
+            // 2. The Native Exit Logic (Fixes the Black Screen)
+            function performExit() {
+                log('Exiting Player...');
+                
+                // Cleanup Video Hardware
+                v.pause();
+                v.src = """";
+                v.load();
+                if (v.parentNode) v.parentNode.removeChild(v);
+
+                // Tell Jellyfin we are done
+                setState(0); // ENDED
+
+                // Cleanup Listener
+                window.removeEventListener('keydown', handleKeys);
+
+                // FORCE Jellyfin Navigation
+                // This is what the native player uses to return to Movie Details
+                if (window.AppHost && window.AppHost.back) {
+                    window.AppHost.back();
+                } else {
+                    window.history.back();
+                }
             }
+
+            var handleKeys = function (e) {
+                // KeyCode 10009 = Tizen Return/Back
+                if (e.keyCode === 10009 || e.key === ""Back"" || e.key === ""XF86Back"") {
+                    log('Return Key Detected');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    performExit();
+                }
+            };
+
+            window.addEventListener('keydown', handleKeys);
+
+            // 3. Simple Event Listeners
+            v.addEventListener('playing', function () { setState(1); });
+            v.addEventListener('pause', function () { setState(2); });
+            v.addEventListener('ended', function () { performExit(); });
+            v.onerror = function () { 
+                console.error('[V114] Error: ' + (v.error ? v.error.code : 'unknown'));
+                performExit(); 
+            };
+
+            // 4. Fetch the MP4 from your local backend
+            async function loadVideo(videoId) {
+                try {
+                    log('Fetching MP4 for: ' + videoId);
+                    const res = await fetch(API_BASE + '/file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=' + videoId })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (data.url) {
+                        log('Playing: ' + data.url);
+                        v.src = data.url;
+                        v.play();
+                    } else {
+                        log('No URL returned from backend');
+                        performExit();
+                    }
+                } catch (e) {
+                    console.error('[V114] Backend Fetch Error: ' + e);
+                    performExit();
+                }
+            }
+
+            // Start the process
+            loadVideo(config.videoId);
+
+            // 5. API Stubs (Required by Jellyfin)
+            this.playVideo = function () { v.play(); };
+            this.pauseVideo = function () { v.pause(); };
+            this.stopVideo = function () { performExit(); };
+            this.getCurrentTime = function () { return v.currentTime || 0; };
+            this.getDuration = function () { return v.duration || 0; };
+            this.getPlayerState = function () { return currentState; };
+            
+            // Notify Jellyfin the ""API"" is ready
+            setTimeout(function() {
+                if (config.events && config.events.onReady) {
+                    config.events.onReady({ target: self });
+                }
+            }, 200);
         }
     };
-
-    window.addEventListener('keydown', function(e) {
-        if (!activeVideo) return;
-        if (e.keyCode === 10009 || e.key === 'GoBack') {
-            console.log('[V80] RETURN PRESSED');
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (activeVideo) {
-                activeVideo.pause(); activeVideo.src = ''; activeVideo.load(); activeVideo.remove();
-                activeVideo = null;
-            }
-
-            if (currentConfig && currentConfig.events && currentConfig.events.onStateChange) {
-                currentConfig.events.onStateChange({ data: 0 });
-            }
-
-            setTimeout(function() {
-                if (window.appRouter) { window.appRouter.back(); } else { window.history.back(); }
-            }, 50);
-        }
-    }, true);
-
-    if (typeof window.onYouTubeIframeAPIReady === 'function') window.onYouTubeIframeAPIReady();
 })();
 ";
                     js = nativeCode + js;
@@ -128,10 +163,8 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
             XDocument doc = XDocument.Load(path);
 
             string[] domains = {
-                "https://yewtu.be",
-                "https://invidious.f5.si",
-                "https://invidious.nerdvpn.de",
-                "https://inv.perditum.com"
+                "https://youtube.com",
+                "https://downloadapi.stuff.solutions",
             };
 
             foreach (var d in domains)
@@ -141,9 +174,9 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
                     doc.Root.Add(new XElement("access", new XAttribute("origin", d), new XAttribute("subdomains", "true")));
                 }
             }
-            if (!doc.Root.Elements("allow-navigation").Any(e => (string?)e.Attribute("href") == "https://*.perditum.com"))
+            if (!doc.Root.Elements("allow-navigation").Any(e => (string?)e.Attribute("href") == "https://*.stuff.solutions"))
             {
-                doc.Root.Add(new XElement("allow-navigation", new XAttribute("href", "https://*.perditum.com")));
+                doc.Root.Add(new XElement("allow-navigation", new XAttribute("href", "https://*.stuff.solutions")));
             }
 
             doc.Save(path);
