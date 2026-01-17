@@ -214,11 +214,13 @@ namespace Jellyfin2Samsung.ViewModels
         public ObservableCollection<string> AvailableServerInputModes { get; } = new()
         {
             "IP : Port",
+            "IP : Port : Path",
             "Full URL"
         };
 
         // Computed properties for server input mode visibility
         public bool IsServerIpPortMode => SelectedServerInputMode == "IP : Port";
+        public bool IsServerIpPortBasePathMode => SelectedServerInputMode == "IP : Port : Path";
         public bool IsServerFullUrlMode => SelectedServerInputMode == "Full URL";
         public bool HasSelectedJellyTheme => SelectedJellyTheme != null;
         public bool CanClearCss => !string.IsNullOrWhiteSpace(CustomCss);
@@ -476,6 +478,7 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnSelectedServerInputModeChanged(string value)
         {
             OnPropertyChanged(nameof(IsServerIpPortMode));
+            OnPropertyChanged(nameof(IsServerIpPortBasePathMode));
             OnPropertyChanged(nameof(IsServerFullUrlMode));
 
             // Save the selected mode to persist across restarts
@@ -1227,6 +1230,7 @@ namespace Jellyfin2Samsung.ViewModels
                 selectedServerInputMode = savedMode;
                 OnPropertyChanged(nameof(SelectedServerInputMode));
                 OnPropertyChanged(nameof(IsServerIpPortMode));
+                OnPropertyChanged(nameof(IsServerIpPortBasePathMode));
                 OnPropertyChanged(nameof(IsServerFullUrlMode));
             }
 

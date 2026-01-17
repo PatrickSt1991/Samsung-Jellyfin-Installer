@@ -279,6 +279,57 @@
 									</Grid>
 								</Grid>
 
+								<!-- Server IP:Port:BasePath Mode -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12"
+									  IsVisible="{Binding IsServerIpPortBasePathMode}">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding ServerIP}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<Grid Grid.Column="1">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" />
+											<ColumnDefinition Width="Auto" />
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="Auto" />
+											<ColumnDefinition Width="Auto" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+
+										<ComboBox Grid.Column="0"
+												  SelectedItem="{Binding SelectedJellyfinProtocol, Mode=TwoWay}"
+												  Classes="clean">
+											<x:String>http</x:String>
+											<x:String>https</x:String>
+										</ComboBox>
+
+										<TextBlock Grid.Column="1"
+												   Text="://"
+												   VerticalAlignment="Center"/>
+
+										<TextBox Grid.Column="2"
+												Text="{Binding JellyfinServerIp}"
+												Classes="clean"
+												Watermark="192.168.1.100"
+												HorizontalAlignment="Stretch"/>
+
+										<TextBlock Grid.Column="3"
+												   Text=":"
+												   VerticalAlignment="Center"/>
+
+										<AutoCompleteBox Grid.Column="4"
+												   ItemsSource="{Binding JellyfinPorts}"
+												   Text="{Binding SelectedJellyfinPort, Mode=TwoWay}"
+												   Classes="clean" />
+
+										<TextBox Grid.Column="5"
+												 Text="{Binding JellyfinBasePath}"
+												 Watermark="/jellyfin"
+												 Classes="clean"
+												 MinWidth="80"/>
+									</Grid>
+								</Grid>
+
 								<!-- Server Full URL Mode -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12"
 									  IsVisible="{Binding IsServerFullUrlMode}">
@@ -477,7 +528,7 @@
 											IsEnabled="{Binding IsAuthenticated}"
 											IsChecked="{Binding PatchYoutubePlugin}"/>
 								</Grid>
-								
+
 								<!-- TextBox shown only when PatchYoutubePlugin == true -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
