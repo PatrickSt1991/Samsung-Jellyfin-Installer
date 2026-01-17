@@ -29,10 +29,10 @@
 
 <!-- versions:start -->
 
-| Channel    | Version | Notes |
-|------------|---------|-------|
-| **Stable** | v1.8.7.0 | Recommended for most users |
-| **Beta**   | v1.8.7.5-beta | Includes new features |
+| Channel    | Version                                                             | Notes                        |
+|------------|---------------------------------------------------------------------|------------------------------|
+| **Stable** | [v2.0.0.0](https://github.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/releases/tag/v2.0.0.0)                                        | Recommended for most users   |
+| **Beta**   | [N/A](#)                                            | Includes new features        |
 
 <!-- versions:end -->
 
