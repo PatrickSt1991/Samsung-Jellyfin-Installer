@@ -16,7 +16,7 @@ namespace Jellyfin2Samsung
             string logFolder = Path.Combine(logDir, "Logs");
             Directory.CreateDirectory(logFolder);
             var dtg = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
-            var logFile = Path.Combine(logDir, $"debug_{dtg}.log");
+            var logFile = Path.Combine(logFolder, $"debug_{dtg}.log");
 
             Trace.Listeners.Add(new FileTraceListener(logFile));
             Trace.AutoFlush = true;

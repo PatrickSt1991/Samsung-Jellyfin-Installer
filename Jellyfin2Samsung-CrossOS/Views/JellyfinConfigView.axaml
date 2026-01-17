@@ -496,12 +496,14 @@
 											Classes="secondary"
 											Content="{Binding LblValidateStream}"
 											Command="{Binding TestConnectionCommand}"
+											IsVisible="{Binding PatchYoutubePlugin}"
 											Padding="8,4"
 											FontSize="12"/>
 
 										<TextBlock
 											Text="{Binding StreamValidationStatus}"
 											VerticalAlignment="Center"
+											IsVisible="{Binding PatchYoutubePlugin}"
 											Margin="6,0,0,0"/>
 
 									</StackPanel>
