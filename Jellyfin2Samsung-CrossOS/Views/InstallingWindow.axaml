@@ -18,9 +18,9 @@
 	</Window.Styles>
 
 	<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-		<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+		<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 CornerRadius="4" Padding="10" Margin="5"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+				BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1">
 			<StackPanel>
 				<TextBlock x:Name="StatusTextBlock"

@@ -47,13 +47,12 @@
 	<!-- ========================= -->
 	<!-- Layout -->
 	<!-- ========================= -->
-	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-            Padding="16"
-            CornerRadius="8"
-            Margin="12"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-            BorderThickness="1">
-
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+			Padding="16"
+			CornerRadius="8"
+			Margin="12"
+			BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+			BorderThickness="1">
 		<StackPanel Spacing="16">
 
 			<!-- Header -->

@@ -23,11 +23,11 @@
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
-	<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
             Padding="10"
             CornerRadius="8"
             Margin="20"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+		    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             BorderThickness="1">
 		<Border.Effect>
 			<DropShadowEffect BlurRadius="15"
