@@ -37,9 +37,7 @@
 		<StackPanel Spacing="14">
 			<Border Background="#2C3E50"
                     Padding="24,20"
-                    CornerRadius="8"
-                    BorderBrush="#E9ECEF"
-                    BorderThickness="1">
+                    CornerRadius="8">
 				<StackPanel Spacing="12" HorizontalAlignment="Center">
 					<TextBlock
                                Text="Jellyfin Installer for Samsung (Tizen)"
