@@ -1,7 +1,7 @@
-﻿using Fleck;
+using Fleck;
+using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Models;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -84,7 +84,7 @@ namespace Jellyfin2Samsung.Services
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), token);
+                await Task.Delay(TimeSpan.FromSeconds(Constants.Defaults.WebSocketMonitorDelaySeconds), token);
 
                 if (_connection != null || token.IsCancellationRequested)
                     return;
@@ -94,37 +94,9 @@ namespace Jellyfin2Samsung.Services
                 onMessage(
                     "[No incoming connections detected]\n" +
                     "If the TV cannot connect, your firewall may be blocking this port.\n\n" +
-                    GetFirewallHelpText(port));
+                    PlatformService.GetFirewallHelpText(port));
             }
             catch (TaskCanceledException) { }
-        }
-
-        private static string GetFirewallHelpText(int port)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return
-                    "Windows:\n" +
-                    $"  netstat -ano | findstr {port}\n\n" +
-                    $"  New-NetFirewallRule -DisplayName \"Jellyfin2Samsung Logs\" \\\n" +
-                    $"    -Direction Inbound -Protocol TCP -LocalPort {port} -Action Allow\n";
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return
-                    $"Linux:\n  sudo ufw allow {port}/tcp\n  sudo ufw reload\n";
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                return
-                    "macOS:\n" +
-                    "  System Settings → Network → Firewall → Options\n" +
-                    "  Allow incoming connections for Jellyfin2Samsung\n";
-            }
-
-            return "Ensure your firewall allows inbound TCP connections.\n";
         }
     }
 }

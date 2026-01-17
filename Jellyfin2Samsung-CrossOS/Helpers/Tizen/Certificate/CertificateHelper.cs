@@ -9,7 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Tizen.Certificate
 {
     public class CertificateHelper
     {

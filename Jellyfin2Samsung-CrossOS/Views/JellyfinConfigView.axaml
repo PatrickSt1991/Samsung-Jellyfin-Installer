@@ -7,10 +7,9 @@
         mc:Ignorable="d"
         x:Class="Jellyfin2Samsung.JellyfinConfigView"
         x:DataType="viewModels:JellyfinConfigViewModel"
-        Title="Jellyfin Config"
-        Width="650"
-        Height="800"
-        Background="#F5F5F5">
+        Title="Settings"
+        Width="715"
+        Height="850">
 
 	<Window.Styles>
 		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
@@ -20,12 +19,12 @@
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
-	<Border Background="White"
-            Padding="16"
-            CornerRadius="8"
-            Margin="6"
-            BorderBrush="#E8E8E8"
-            BorderThickness="1">
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+	Padding="16"
+	CornerRadius="8"
+	Margin="6"
+	BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+	BorderThickness="1">
 
 		<Border.Effect>
 			<DropShadowEffect BlurRadius="15" OffsetX="2" OffsetY="2" Color="#00000020" Opacity="0.15"/>
@@ -43,17 +42,179 @@
                     CornerRadius="8"
                     Padding="24,16"
                     Margin="0,0,0,14">
-				<TextBlock Text="{Binding LblJellyfinConfig}"
-                           Foreground="White"
-                           FontSize="18"
-                           FontWeight="Medium"
-                           HorizontalAlignment="Center"/>
+				<Grid>
+					<TextBlock Text="{Binding LblSettingsHeader}"
+							   Foreground="White"
+							   FontSize="18"
+							   FontWeight="Medium"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"/>
+					<ToggleButton IsChecked="{Binding DarkMode}"
+								  HorizontalAlignment="Right"
+								  VerticalAlignment="Center"
+								  Background="Transparent"
+								  BorderThickness="0"
+								  Width="40"
+								  Height="40"
+								  CornerRadius="20"
+								  Padding="0">
+						<ToggleButton.Styles>
+							<Style Selector="ToggleButton:checked">
+								<Setter Property="Background" Value="Transparent"/>
+							</Style>
+							<Style Selector="ToggleButton:pointerover">
+								<Setter Property="Background" Value="#40FFFFFF"/>
+							</Style>
+						</ToggleButton.Styles>
+						<Panel>
+							<TextBlock Text="&#x2600;" FontSize="18" Foreground="White" IsVisible="{Binding DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							<TextBlock Text="&#x1F319;" FontSize="16" Foreground="White" IsVisible="{Binding !DarkMode}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Panel>
+					</ToggleButton>
+				</Grid>
 			</Border>
 
-			<!-- TabControl with 3 Tabs -->
+			<!-- TabControl with 5 Tabs -->
 			<TabControl Grid.Row="1" Padding="0">
 
-				<!-- TAB 1: Server & Auto-Login -->
+				<!-- TAB 1: Main Settings (Application Settings) -->
+				<TabItem Header="{Binding LblTabMainSettings}">
+					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
+						<StackPanel Spacing="16">
+
+							<!-- Application Settings Section -->
+							<StackPanel Spacing="12">
+								<TextBlock Text="{Binding LblMainSettings}"
+										   FontSize="15"
+										   FontWeight="SemiBold"
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+
+								<!-- Language Section -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLanguage}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding AvailableLanguages}"
+											  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+											  HorizontalAlignment="Stretch">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Name}"/>
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</Grid>
+
+								<!-- Certificate Section -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblCertificate}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding AvailableCertificates}"
+											  SelectedItem="{Binding SelectedCertificateObject, Mode=TwoWay}"
+											  HorizontalAlignment="Stretch">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Name}"/>
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</Grid>
+
+								<!-- Local Device IP -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLocalIP}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<TextBlock Grid.Column="1"
+											   Text="{Binding LocalIP, Mode=TwoWay}"
+											   Classes="subtitle"
+											   VerticalAlignment="Center"/>
+								</Grid>
+							</StackPanel>
+
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
+
+							<!-- Installation Options Section -->
+							<StackPanel Spacing="12">
+								<!-- Override Existing App -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblTryOverwrite}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding TryOverwrite}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Launch On Install -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblLaunchOnInstall}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding OpenAfterInstall}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Delete Previous -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblDeletePrevious}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding DeletePreviousInstall}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+								<!-- Force Login -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblForceLogin}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding ForceSamsungLogin}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- RTL Reading -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblRTL}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding RtlReading}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+
+								<!-- Keep WGT File -->
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblKeepWGTFile}"
+											   Classes="label"
+											   VerticalAlignment="Center"/>
+									<ToggleSwitch Grid.Column="1"
+												  IsChecked="{Binding KeepWGTFile}"
+												  VerticalAlignment="Center"/>
+								</Grid>
+							</StackPanel>
+
+						</StackPanel>
+					</ScrollViewer>
+				</TabItem>
+
+				<!-- TAB 2: Server & Auto-Login -->
 				<TabItem Header="{Binding LblTabServer}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
 						<StackPanel Spacing="16">
@@ -63,17 +224,7 @@
 								<TextBlock Text="{Binding LblServerSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
-
-								<!-- Update Mode -->
-								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-									<TextBlock Grid.Column="0" Text="{Binding UpdateMode}" Classes="label" VerticalAlignment="Center"/>
-									<ComboBox Grid.Column="1"
-											  ItemsSource="{Binding AvailableUpdateModes}"
-											  SelectedItem="{Binding SelectedUpdateMode}"
-											  Classes="clean"
-											  HorizontalAlignment="Stretch"/>
-								</Grid>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Server Input Mode Selection -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -160,7 +311,7 @@
 										</Border>
 										<Button Classes="secondary"
 												Content="{Binding LblTestServer}"
-												Command="{Binding TestConnectionCommand}"
+												Command="{Binding TestServerCommand}"
 												IsEnabled="{Binding ServerIpSet}"
 												Padding="8,4"
 												FontSize="12"/>
@@ -169,39 +320,24 @@
 
 							</StackPanel>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<!-- Auto-Login Settings Section -->
 							<StackPanel Spacing="12">
 								<TextBlock Text="{Binding LblAutoLoginSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
-								<!-- Auto-Login User: ComboBox if API Key set, TextBox otherwise -->
+								<!-- Username -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 									<TextBlock Grid.Column="0"
-											   Text="{Binding LblAutoLoginUser}"
+											   Text="{Binding LblJellyfinUsername}"
 											   Classes="label"
 											   VerticalAlignment="Center"/>
-									<!-- ComboBox when API Key is set (users are loaded) -->
-									<ComboBox Grid.Column="1"
-											  ItemsSource="{Binding AvailableJellyfinUsersForLogin}"
-											  SelectedItem="{Binding SelectedAutoLoginUser}"
-											  IsVisible="{Binding ApiKeySet}"
-											  Classes="clean"
-											  HorizontalAlignment="Stretch">
-										<ComboBox.ItemTemplate>
-											<DataTemplate>
-												<TextBlock Text="{Binding Name}"/>
-											</DataTemplate>
-										</ComboBox.ItemTemplate>
-									</ComboBox>
-									<!-- TextBox when no API Key (manual username entry) -->
 									<TextBox Grid.Column="1"
 											 Text="{Binding JellyfinUsername}"
 											 Watermark="Jellyfin username"
-											 IsVisible="{Binding !ApiKeySet}"
 											 Classes="clean"
 											 HorizontalAlignment="Stretch"/>
 								</Grid>
@@ -240,18 +376,62 @@
 												IsEnabled="{Binding CanLogin}"
 												Padding="8,4"
 												FontSize="12"/>
+										<Button Classes="secondary"
+												Content="{Binding LblLogout}"
+												Command="{Binding LogoutCommand}"
+												Padding="8,4"
+												FontSize="12"/>
+										<Button Classes="secondary"
+												Content="{Binding LblRefreshUsers}"
+												Command="{Binding RefreshUsersCommand}"
+												IsVisible="{Binding IsJellyfinAdmin}"
+												Padding="8,4"
+												FontSize="12"/>
 									</StackPanel>
 								</Grid>
+
+								<!-- User Selection (Admin only) -->
+								<StackPanel Spacing="8" IsVisible="{Binding IsJellyfinAdmin}">
+									<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+										<TextBlock Grid.Column="0"
+												   Text="{Binding LblSelectUsers}"
+												   Classes="label"
+												   VerticalAlignment="Top"
+												   Margin="0,8,0,0"/>
+										<ListBox Grid.Column="1"
+												 ItemsSource="{Binding AvailableJellyfinUsers}"
+												 SelectedItems="{Binding SelectedJellyfinUsers}"
+												 SelectionMode="Multiple"
+												 MaxHeight="120"
+												 Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+												 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+												 BorderThickness="1"
+												 CornerRadius="4"
+												 Padding="4">
+											<ListBox.ItemTemplate>
+												<DataTemplate>
+													<TextBlock Text="{Binding Name}"
+															   Padding="4,2"/>
+												</DataTemplate>
+											</ListBox.ItemTemplate>
+										</ListBox>
+									</Grid>
+									<TextBlock Text="{Binding LblUserSelectionHint}"
+											   FontSize="11"
+											   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+											   FontStyle="Italic"
+											   Margin="180,0,0,0"/>
+								</StackPanel>
 							</StackPanel>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<!-- Advanced Settings Section -->
 							<StackPanel Spacing="12">
 								<TextBlock Text="{Binding LblAdvancedSettings}"
 										   FontSize="15"
 										   FontWeight="SemiBold"
-										   Foreground="#2C3E50"/>
+										   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 								<!-- Dev Logs -->
 								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
@@ -272,7 +452,7 @@
 										</Button>
 										<ToggleSwitch Grid.Column="1"
 													  IsChecked="{Binding EnableDevLogs, Mode=TwoWay}"
-													  IsEnabled="{Binding ApiKeySet}"/>
+													  IsEnabled="{Binding IsAuthenticated}"/>
 									</Grid>
 								</Grid>
 
@@ -284,7 +464,7 @@
 											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
 												  IsChecked="{Binding UseServerScripts}"
-												  IsEnabled="{Binding ApiKeySet}"/>
+												  IsEnabled="{Binding IsAuthenticated}"/>
 								</Grid>
 
 								<!-- Fix YouTube 153 -->
@@ -294,8 +474,38 @@
 											   Classes="label"
 											   VerticalAlignment="Center"/>
 									<ToggleSwitch Grid.Column="1"
-											IsEnabled="{Binding ApiKeyEnabled}"
+											IsEnabled="{Binding IsAuthenticated}"
 											IsChecked="{Binding PatchYoutubePlugin}"/>
+								</Grid>
+								
+								<!-- TextBox shown only when PatchYoutubePlugin == true -->
+								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+									<TextBlock Grid.Column="0"
+										Text="{Binding LblYtDlpServer}"
+										Classes="label"
+										VerticalAlignment="Center"
+										IsVisible="{Binding PatchYoutubePlugin}"/>
+									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+
+										<TextBox
+											Text="{Binding LocalYoutubeServer}"
+											Watermark="http://192.168.1.123:8123"
+											IsVisible="{Binding PatchYoutubePlugin}" />
+
+										<Button
+											Classes="secondary"
+											Content="{Binding LblValidateStream}"
+											Command="{Binding TestConnectionCommand}"
+											Padding="8,4"
+											FontSize="12"/>
+
+										<TextBlock
+											Text="{Binding StreamValidationStatus}"
+											VerticalAlignment="Center"
+											Margin="6,0,0,0"/>
+
+									</StackPanel>
+
 								</Grid>
 							</StackPanel>
 
@@ -303,14 +513,14 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 2: Playback (Browser Settings) -->
+				<!-- TAB 3: Playback (Browser Settings) -->
 				<TabItem Header="{Binding LblTabPlayback}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
-						<StackPanel Spacing="12" IsEnabled="{Binding ApiKeySet}">
+						<StackPanel Spacing="12" IsEnabled="{Binding IsAuthenticated}">
 							<TextBlock Text="{Binding LblBrowserSettings}"
 									   FontSize="15"
 									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
+									   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 								<TextBlock Grid.Column="0" Text="{Binding LblEnableBackdrops}" Classes="label" VerticalAlignment="Center"/>
@@ -357,7 +567,7 @@
 								<ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipIntros}"/>
 							</Grid>
 
-							<Border Height="1" Background="#E8E8E8" Margin="0,4"/>
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
 
 							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 								<TextBlock Grid.Column="0" Text="{Binding LblAudioLanguagePreference}" Classes="label" VerticalAlignment="Center"/>
@@ -388,80 +598,6 @@
 					</ScrollViewer>
 				</TabItem>
 
-				<!-- TAB 3: User Settings -->
-				<TabItem Header="{Binding LblTabUser}">
-					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
-						<StackPanel Spacing="12">
-							<TextBlock Text="{Binding LblUserSettings}"
-									   FontSize="15"
-									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
-
-							<!-- These settings require API Key -->
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
-								<TextBlock Grid.Column="0" Text="{Binding LblAutoPlayNextEpisode}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoPlayNextEpisode}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
-								<TextBlock Grid.Column="0" Text="{Binding LblRememberAudioSelections}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberAudioSelections}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
-								<TextBlock Grid.Column="0" Text="{Binding LblRememberSubtitleSelections}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding RememberSubtitleSelections}"/>
-							</Grid>
-
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding ApiKeySet}">
-								<TextBlock Grid.Column="0" Text="{Binding LblPlayDefaultAudioTrack}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding PlayDefaultAudioTrack}"/>
-							</Grid>
-
-							<!-- Enable auto login - requires Authentication (not API Key) -->
-							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsEnabled="{Binding IsAuthenticated}">
-								<TextBlock Grid.Column="0" Text="{Binding LbluserAutoLogin}" Classes="label" VerticalAlignment="Center"/>
-								<ToggleSwitch Grid.Column="1" IsChecked="{Binding UserAutoLogin}"/>
-							</Grid>
-
-							<!-- Legacy API Key System separator -->
-							<Border Height="1" Background="#E8E8E8" Margin="0,8"/>
-
-							<TextBlock Text="{Binding LblLegacyApiKeySystem}"
-									   FontSize="15"
-									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
-
-							<!-- API Key -->
-							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Text="{Binding LblJellyfinServerApi}" Classes="label" VerticalAlignment="Center"/>
-								<TextBox Grid.Column="1"
-										 Text="{Binding JellyfinApiKey}"
-										 IsEnabled="{Binding ApiKeyEnabled}"
-										 Classes="clean"
-										 HorizontalAlignment="Stretch"/>
-							</Grid>
-
-							<!-- Jellyfin User -->
-							<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Text="{Binding LblJellyfinUser}" Classes="label" VerticalAlignment="Center"/>
-								<ComboBox Grid.Column="1"
-										  ItemsSource="{Binding AvailableJellyfinUsers}"
-										  SelectedItem="{Binding SelectedJellyfinUser}"
-										  IsEnabled="{Binding ApiKeySet}"
-										  Classes="clean"
-										  HorizontalAlignment="Stretch">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Text="{Binding Name}"/>
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
-							</Grid>
-						</StackPanel>
-					</ScrollViewer>
-				</TabItem>
-
 				<!-- TAB 4: CSS Style -->
 				<TabItem Header="{Binding LblTabCss}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,12,12,0">
@@ -469,12 +605,12 @@
 							<TextBlock Text="{Binding LblCssSettings}"
 									   FontSize="15"
 									   FontWeight="SemiBold"
-									   Foreground="#2C3E50"/>
+									   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 							<!-- CSS Hint -->
 							<TextBlock Text="{Binding LblCssHint}"
 									   FontSize="12"
-									   Foreground="#7F8C8D"
+									   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
 									   TextWrapping="Wrap"/>
 
 							<!-- Custom CSS TextBox -->
@@ -491,8 +627,10 @@
 									 FontFamily="Consolas, Monaco, monospace"
 									 FontSize="12"/>
 
-							<!-- Validation Button and Status -->
-							<Grid ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+							<!-- Validation, Clear Buttons and Status -->
+							<Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8" Margin="0,12,0,0">
+
+								<!-- Validate -->
 								<Button Grid.Column="0"
 										Classes="secondary"
 										Content="{Binding LblValidateCss}"
@@ -500,12 +638,127 @@
 										IsEnabled="{Binding CanValidateCss}"
 										Padding="8,4"
 										FontSize="12"/>
-								<TextBlock Grid.Column="2"
+
+								<!-- Clear -->
+								<Button Grid.Column="1"
+										Classes="secondary"
+										Content="{Binding LblClearCss}"
+										Command="{Binding ClearCssCommand}"
+										IsEnabled="{Binding CanClearCss}"
+										Padding="8,4"
+										FontSize="12"/>
+
+								<!-- Status -->
+								<TextBlock Grid.Column="3"
 										   Text="{Binding CssValidationStatus}"
 										   Foreground="{Binding CssValidationColor}"
 										   VerticalAlignment="Center"
 										   FontWeight="SemiBold"/>
 							</Grid>
+
+							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,16,0,8"/>
+
+							<!-- JellyThemes Section -->
+							<StackPanel Spacing="8">
+								<Grid ColumnDefinitions="*,Auto">
+									<TextBlock Grid.Column="0"
+											   Text="{Binding LblJellyThemes}"
+											   FontSize="15"
+											   FontWeight="SemiBold"
+											   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+									<Button Grid.Column="1"
+											Classes="secondary"
+											Command="{Binding OpenJellyThemesRepoCommand}"
+											Padding="6,2"
+											FontSize="11">
+										<StackPanel Orientation="Horizontal" Spacing="4">
+											<fa:SymbolIcon Symbol="Link" Width="12" Height="12"/>
+											<TextBlock Text="GitHub JellyThemes"/>
+										</StackPanel>
+									</Button>
+								</Grid>
+
+								<TextBlock Text="{Binding LblJellyThemesHint}"
+										   FontSize="12"
+										   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+										   TextWrapping="Wrap"/>
+
+								<!-- Theme Buttons -->
+								<ItemsControl ItemsSource="{Binding JellyThemes}" Margin="0,8,0,0">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<WrapPanel Orientation="Horizontal"/>
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Button Command="{Binding $parent[ItemsControl].((viewModels:JellyfinConfigViewModel)DataContext).InsertThemeCommand}"
+													CommandParameter="{Binding}"
+													Margin="0,0,8,8"
+													Padding="12,8"
+													CornerRadius="6"
+													Background="{Binding HexColor}"
+													Foreground="White"
+													FontWeight="SemiBold"
+													Cursor="Hand">
+												<Button.Styles>
+													<Style Selector="Button:pointerover">
+														<Setter Property="Opacity" Value="0.85"/>
+													</Style>
+												</Button.Styles>
+												<StackPanel Orientation="Horizontal" Spacing="6">
+													<TextBlock Text="{Binding Icon}" FontSize="14"/>
+													<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+												</StackPanel>
+											</Button>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+								<!-- Theme Preview -->
+								<Border
+									Margin="0,12,0,0"
+									Padding="10"
+									Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+									BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+									BorderThickness="1"
+									CornerRadius="6"
+									IsVisible="{Binding HasSelectedJellyTheme}">
+
+									<StackPanel Spacing="8" HorizontalAlignment="Center">
+										<TextBlock
+											Text="{Binding SelectedJellyTheme.Name}"
+											FontSize="14"
+											FontWeight="SemiBold"
+											HorizontalAlignment="Center"
+											Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+
+										<Button Command="{Binding OpenThemeReadmeCommand}"
+												CommandParameter="{Binding SelectedJellyTheme}"
+												Background="Transparent"
+												BorderThickness="0"
+												Padding="0"
+												HorizontalAlignment="Center"
+												Cursor="Hand">
+											<Button.Styles>
+												<Style Selector="Button:pointerover">
+													<Setter Property="Opacity" Value="0.85"/>
+												</Style>
+											</Button.Styles>
+											<Image
+												Source="{Binding SelectedJellyThemePreview}"
+												Stretch="Uniform"
+												MaxHeight="240"/>
+										</Button>
+
+										<TextBlock
+											Text="Theme preview"
+											FontSize="11"
+											HorizontalAlignment="Center"
+											Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+									</StackPanel>
+								</Border>
+
+							</StackPanel>
 						</StackPanel>
 					</ScrollViewer>
 				</TabItem>

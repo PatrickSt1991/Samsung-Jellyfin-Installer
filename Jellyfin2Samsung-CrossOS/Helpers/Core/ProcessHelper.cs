@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Core
 {
     public class ProcessHelper
     {
@@ -37,7 +37,7 @@ namespace Jellyfin2Samsung.Helpers
             if (string.IsNullOrWhiteSpace(arguments))
                 return string.Empty;
 
-            var matches = System.Text.RegularExpressions.Regex.Matches(arguments, @"[\""].+?[\""]|[^ ]+");
+            var matches = RegexPatterns.CommandLine.Arguments.Matches(arguments);
 
             var firstTwo = matches.Cast<System.Text.RegularExpressions.Match>()
                                   .Take(1)
@@ -71,7 +71,8 @@ namespace Jellyfin2Samsung.Helpers
             if (string.IsNullOrEmpty(sanitizedArguments))
                 sanitizedArguments = "unknown";
 
-            string logFilePath = Path.Combine(exeDir, $"process_{sanitizedArguments}_{timestamp}.log");
+            string logFolder = Path.Combine(exeDir, "Logs");
+            string logFilePath = Path.Combine(logFolder, $"process_{sanitizedArguments}_{timestamp}.log");
 
             try
             {
@@ -122,7 +123,7 @@ namespace Jellyfin2Samsung.Helpers
 
         public async Task MakeExecutableAsync(string filePath)
         {
-            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            if (PlatformService.RequiresExecutablePermissions())
             {
                 try
                 {

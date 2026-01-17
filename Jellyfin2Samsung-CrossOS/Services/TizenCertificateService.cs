@@ -1,5 +1,7 @@
 ﻿using Jellyfin2Samsung.Extensions;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Tizen.Certificate;
 using Jellyfin2Samsung.Interfaces;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;
@@ -290,7 +292,7 @@ namespace Jellyfin2Samsung.Services
             }
 
             // --- Optional sanity check ---
-            if (OperatingSystem.IsWindows())
+            if (PlatformService.IsWindows)
             {
                 try
                 {
@@ -318,10 +320,7 @@ namespace Jellyfin2Samsung.Services
         }
         private static X509KeyStorageFlags GetX509KeyStorageFlags()
         {
-            if (OperatingSystem.IsWindows())
-                return X509KeyStorageFlags.EphemeralKeySet;
-
-            return X509KeyStorageFlags.PersistKeySet;
+            return PlatformService.GetX509KeyStorageFlags();
         }
     }
 }

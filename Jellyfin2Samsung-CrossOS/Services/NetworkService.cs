@@ -1,4 +1,5 @@
 ﻿using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Core;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Models;
 using System;
@@ -19,8 +20,6 @@ namespace Jellyfin2Samsung.Services
     {
         private readonly ITizenInstallerService _tizenInstaller;
         private static readonly HttpClient _httpClient = new HttpClient();
-        private const int tvPort = 26101;
-        private const int scanTimeoutMs = 1000;
 
         public NetworkService(ITizenInstallerService tizenInstaller)
         {
@@ -36,13 +35,13 @@ namespace Jellyfin2Samsung.Services
         {
             try
             {
-                using var cts = new CancellationTokenSource(scanTimeoutMs);
+                using var cts = new CancellationTokenSource(Constants.Defaults.NetworkScanTimeoutMs);
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cts.Token, cancellationToken);
 
-                if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
+                if (await IsPortOpenAsync(ip, Constants.Ports.TizenDevPort, linkedCts.Token))
                 {
-                    if (await IsPortOpenAsync(ip, 8001, linkedCts.Token))
+                    if (await IsPortOpenAsync(ip, Constants.Ports.SamsungTvApiPort, linkedCts.Token))
                     {
                         var manufacturer = await GetManufacturerFromIp(ip);
                         var device = new NetworkDevice
@@ -87,10 +86,10 @@ namespace Jellyfin2Samsung.Services
                     {
                         try
                         {
-                            using var cts = new CancellationTokenSource(scanTimeoutMs);
+                            using var cts = new CancellationTokenSource(Constants.Defaults.NetworkScanTimeoutMs);
                             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                                 cts.Token, cancellationToken);
-                            if (await IsPortOpenAsync(ip, tvPort, linkedCts.Token))
+                            if (await IsPortOpenAsync(ip, Constants.Ports.TizenDevPort, linkedCts.Token))
                             {
                                 var manufacturer = await GetManufacturerFromIp(ip);
                                 var device = new NetworkDevice
@@ -111,7 +110,7 @@ namespace Jellyfin2Samsung.Services
                         catch { /* Ignore scan failures */ }
                     })));
 
-            Trace.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {tvPort} open.");
+            Trace.WriteLine($"Scan complete! Found {foundDevices.Count} devices with port {Constants.Ports.TizenDevPort} open.");
             return foundDevices;
         }
         public IEnumerable<IPAddress> GetRelevantLocalIPs(bool virtualScan = false)
@@ -130,7 +129,7 @@ namespace Jellyfin2Samsung.Services
                 .ToList();
 
             var additionalIps = Enumerable.Empty<string>();
-            if (AppSettings.Default.RememberCustomIP && !string.IsNullOrEmpty(AppSettings.Default.UserCustomIP))
+            if (!string.IsNullOrEmpty(AppSettings.Default.UserCustomIP))
             {
                 try
                 {
@@ -186,7 +185,7 @@ namespace Jellyfin2Samsung.Services
 
         private static async Task<string?> GetMacAddressFromIp(string ipAddress)
         {
-            string arpArgs = OperatingSystem.IsWindows() ? $"-a {ipAddress}" : $"-n {ipAddress}";
+            string arpArgs = PlatformService.GetArpArguments(ipAddress);
 
             try
             {
@@ -206,7 +205,7 @@ namespace Jellyfin2Samsung.Services
                 string output = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync();
 
-                var match = Regex.Match(output, @"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})");
+                var match = RegexPatterns.Network.MacAddress.Match(output);
                 return match.Success ? match.Value : null;
             }
             catch

@@ -10,7 +10,6 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         SizeToContent="WidthAndHeight"
-        Background="#F5F5F5"
 		ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1">
@@ -24,11 +23,11 @@
 		<StyleInclude Source="avares://Jellyfin2Samsung/Styles/ComboBoxes.axaml"/>
 	</Window.Styles>
 
-	<Border Background="White"
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
             Padding="10"
             CornerRadius="8"
             Margin="20"
-            BorderBrush="#E8E8E8"
+		    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             BorderThickness="1">
 		<Border.Effect>
 			<DropShadowEffect BlurRadius="15"
@@ -50,14 +49,14 @@
                        TextWrapping="Wrap"
                        FontSize="16"
                        TextAlignment="Center"
-                       Foreground="#2C3E50"
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                        FontWeight="Medium"/>
 
 			<!-- Extra Info -->
 			<TextBlock Text="{Binding EasyRight}"
                        TextWrapping="Wrap"
                        TextAlignment="Center"
-                       Foreground="#7F8C8D"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                        FontSize="14"/>
 
 			<!-- Action Buttons -->

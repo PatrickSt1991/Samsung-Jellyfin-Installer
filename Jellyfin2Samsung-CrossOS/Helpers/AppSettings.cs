@@ -33,13 +33,13 @@ namespace Jellyfin2Samsung.Helpers
         // ----- User-scoped settings -----
         public string Language { get; set; } = "en";
         public string Certificate { get; set; } = "Jelly2Sams";
-        public bool RememberCustomIP { get; set; } = false;
         public bool DeletePreviousInstall { get; set; } = false;
         public string UserCustomIP { get; set; } = "";
         public bool ForceSamsungLogin { get; set; } = false;
         public bool RTLReading { get; set; } = false;
         public string JellyfinIP { get; set; } = "";
         public string JellyfinBasePath { get; set; } = "";
+        public string ServerInputMode { get; set; } = "IP : Port";
         public string JellyfinUsername { get; set; } = "";
         public string JellyfinPassword { get; set; } = "";
         public string JellyfinAccessToken { get; set; } = "";
@@ -56,16 +56,11 @@ namespace Jellyfin2Samsung.Helpers
         public bool NextUpEnabled { get; set; } = false;
         public bool EnableExternalVideoPlayers { get; set; } = false;
         public bool SkipIntros { get; set; } = false;
-        public bool AutoPlayNextEpisode { get; set; } = true;
-        public bool RememberAudioSelections { get; set; } = true;
-        public bool RememberSubtitleSelections { get; set; } = true;
-        public bool PlayDefaultAudioTrack { get; set; } = true;
         public string SelectedTheme { get; set; } = "dark";
         public string SelectedSubtitleMode { get; set; } = "Default";
-        public string ConfigUpdateMode { get; set; } = "None";
-        public string JellyfinApiKey { get; set; } = "";
         public string JellyfinUserId { get; set; } = "";
-        public bool UserAutoLogin { get; set; } = true;
+        public bool IsJellyfinAdmin { get; set; } = false;
+        public string SelectedUserIds { get; set; } = "";  // Comma-separated list of selected user IDs for multi-user config
         public string DistributorsEndpoint_V1 { get; set; } = "https://svdca.samsungqbe.com/apis/v1/distributors";
         public string DistributorsEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/distributors";
         public string AuthorEndpoint_V3 { get; set; } = "https://svdca.samsungqbe.com/apis/v3/authors";
@@ -76,13 +71,16 @@ namespace Jellyfin2Samsung.Helpers
         public bool KeepWGTFile { get; set; } = false;
         public bool PatchYoutubePlugin { get; set; } = false;
         public string CustomCss { get; set; } = "";
+        public bool DarkMode { get; set; } = false;
+        public string LocalYoutubeServer { get; set; } = string.Empty;
 
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.7.5-beta";
+        public string AppVersion { get; set; } = "v2.0.0.0";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
+        public string JellyfinAvReleaseFork { get; set; } = "https://api.github.com/repos/asamahy/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";
         public string CommunityRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-community-packages/releases";
         public string MoonfinRelease { get; set; } = "https://api.github.com/repos/Moonfin-Client/Tizen/releases";
@@ -99,7 +97,7 @@ namespace Jellyfin2Samsung.Helpers
         {
             get
             {
-                var baseUrl = JellyfinIP?.TrimEnd('/') ?? "";
+                var baseUrl = Core.UrlHelper.NormalizeServerUrl(JellyfinIP);
                 var basePath = JellyfinBasePath?.Trim('/') ?? "";
 
                 if (string.IsNullOrEmpty(basePath))

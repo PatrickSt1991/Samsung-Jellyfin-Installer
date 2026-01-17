@@ -2,15 +2,31 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
+using Avalonia.Markup.Xaml.Styling;
 using System.Threading.Tasks;
 using System;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung;
+using Jellyfin2Samsung.Helpers;
 
 namespace Jellyfin2Samsung.Services
 {
     public class DialogService : IDialogService
     {
+        private static IBrush GetThemeBrush(string resourceKey, bool isDarkMode)
+        {
+            var themeVariant = isDarkMode ? ThemeVariant.Dark : ThemeVariant.Light;
+            if (Application.Current?.TryFindResource(resourceKey, themeVariant, out var resource) == true && resource is IBrush brush)
+            {
+                return brush;
+            }
+            // Ultimate fallback
+            return resourceKey.Contains("Background")
+                ? (isDarkMode ? Brushes.Black : Brushes.White)
+                : (isDarkMode ? Brushes.White : Brushes.Black);
+        }
+
         private Window? GetMainWindow()
         {
             if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
@@ -27,6 +43,9 @@ namespace Jellyfin2Samsung.Services
             string yesText = "Yes",
             string noText = "No")
         {
+            // Get theme from AppSettings
+            var isDarkMode = AppSettings.Default.DarkMode;
+
             var dialog = new Window
             {
                 Title = title,
@@ -35,10 +54,21 @@ namespace Jellyfin2Samsung.Services
                 MaxWidth = 600,
                 CanResize = false,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = Brushes.White,
                 CornerRadius = new CornerRadius(12),
                 SizeToContent = SizeToContent.Height, // dynamic height
+                RequestedThemeVariant = isDarkMode ? ThemeVariant.Dark : ThemeVariant.Light
             };
+
+            // Apply FluentTheme
+            dialog.Styles.Add(new StyleInclude(new Uri("avares://Jellyfin2Samsung"))
+            {
+                Source = new Uri("avares://Avalonia.Themes.Fluent/FluentTheme.xaml")
+            });
+
+            // Get colors from theme resources (same as main UI)
+            var backgroundBrush = GetThemeBrush("SystemControlBackgroundAltHighBrush", isDarkMode);
+            var foregroundBrush = GetThemeBrush("SystemControlForegroundBaseHighBrush", isDarkMode);
+            dialog.Background = backgroundBrush;
 
             var mainPanel = new StackPanel
             {
@@ -52,6 +82,7 @@ namespace Jellyfin2Samsung.Services
                 Text = title,
                 FontSize = 18,
                 FontWeight = FontWeight.Bold,
+                Foreground = foregroundBrush,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 10)
             });
@@ -117,10 +148,14 @@ namespace Jellyfin2Samsung.Services
         public async Task ShowMessageAsync(string title, string message)
         {
             var window = GetMainWindow();
+            var isDarkMode = AppSettings.Default.DarkMode;
+            var foregroundBrush = GetThemeBrush("SystemControlForegroundBaseHighBrush", isDarkMode);
+
             var dialog = CreateStyledDialog(title, new TextBlock
             {
                 Text = message,
                 TextWrapping = TextWrapping.Wrap,
+                Foreground = foregroundBrush,
                 FontSize = 14,
                 Margin = new Thickness(0, 5, 0, 0)
             });
@@ -149,11 +184,14 @@ namespace Jellyfin2Samsung.Services
         {
             var window = owner ?? GetMainWindow();
             var tcs = new TaskCompletionSource<bool>();
+            var isDarkMode = AppSettings.Default.DarkMode;
+            var foregroundBrush = GetThemeBrush("SystemControlForegroundBaseHighBrush", isDarkMode);
 
             var dialog = CreateStyledDialog(title, new TextBlock
             {
                 Text = message,
                 TextWrapping = TextWrapping.Wrap,
+                Foreground = foregroundBrush,
                 FontSize = 14,
                 Margin = new Thickness(0, 5, 0, 0)
             }, showButtons: true, tcs: tcs, yesText: yesText, noText: noText);

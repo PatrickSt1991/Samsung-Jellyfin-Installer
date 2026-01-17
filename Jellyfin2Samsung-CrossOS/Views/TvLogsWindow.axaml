@@ -1,13 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:Jellyfin2Samsung.ViewModels"
-        xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers"
+        xmlns:helpers="clr-namespace:Jellyfin2Samsung.Helpers.Converters"
         x:Class="Jellyfin2Samsung.Views.TvLogsWindow"
         x:DataType="viewModels:TvLogsViewModel"
         Width="900"
         Height="650"
         Title="Samsung TV Logs"
-        Background="#F5F5F5"
         WindowStartupLocation="CenterOwner">
 
 	<!-- ========================= -->
@@ -48,20 +47,19 @@
 	<!-- ========================= -->
 	<!-- Layout -->
 	<!-- ========================= -->
-	<Border Background="White"
-            Padding="16"
-            CornerRadius="8"
-            Margin="12"
-            BorderBrush="#E8E8E8"
-            BorderThickness="1">
-
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+			Padding="16"
+			CornerRadius="8"
+			Margin="12"
+			BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+			BorderThickness="1">
 		<StackPanel Spacing="16">
 
 			<!-- Header -->
 			<TextBlock Text="TV Log Output"
                        FontSize="20"
                        FontWeight="SemiBold"
-                       Foreground="#2C3E50"/>
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
 
 			<!-- Status + Endpoint -->
 			<StackPanel Orientation="Horizontal"
@@ -83,11 +81,11 @@
 				<!-- IP:Port -->
 				<TextBlock Text="{Binding EndpointText}"
                            FontSize="12"
-                           Foreground="#555"/>
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 			</StackPanel>
 
 			<!-- Log output -->
-			<Border BorderBrush="#CCCCCC"
+			<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
                     Background="#1E1E1E"
                     CornerRadius="4"

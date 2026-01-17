@@ -5,6 +5,12 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Jellyfin2Samsung.Extensions;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Jellyfin;
+using Jellyfin2Samsung.Helpers.Jellyfin.Plugins;
+using Jellyfin2Samsung.Helpers.Tizen.Certificate;
+using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.Services;
 using Jellyfin2Samsung.ViewModels;
@@ -35,7 +41,6 @@ namespace Jellyfin2Samsung
             {
                 DisableAvaloniaDataAnnotationValidation();
 
-                // Always use Dispatcher.Post for cross-platform safety
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -44,7 +49,10 @@ namespace Jellyfin2Samsung
                 });
             }
 
-            RequestedThemeVariant = ThemeVariant.Light;
+            // Apply saved theme on startup
+            var themeService = _serviceProvider.GetRequiredService<IThemeService>();
+            themeService.ApplyTheme();
+
             base.OnFrameworkInitializationCompleted();
         }
 
@@ -54,20 +62,41 @@ namespace Jellyfin2Samsung
 
             var settings = AppSettings.Load();
 
-            // Services
+            // --------------------
+            // Core services
+            // --------------------
             services.AddSingleton(settings);
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<ILocalizationService, LocalizationService>();
             services.AddSingleton<INetworkService, NetworkService>();
             services.AddSingleton<ITizenCertificateService, TizenCertificateService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
-            services.AddSingleton<SamsungLoginService>();
-            services.AddSingleton<HttpClient>();
-            services.AddSingleton<JellyfinApiClient>();
-            services.AddSingleton<PluginManager>();
-            services.AddSingleton<JellyfinWebPackagePatcher>();
+            services.AddSingleton<IThemeService, ThemeService>();
 
-            // Other Helpers
+            // HttpClient (configured ONCE)
+            services.AddSingleton(sp =>
+            {
+                var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
+
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+
+
+                return client;
+            });
+
+            services.AddSingleton<SamsungLoginService>();
+            services.AddSingleton<JellyfinApiClient>();
+            services.AddSingleton<TizenApiClient>();
+            services.AddSingleton<PluginManager>();
+            services.AddSingleton<JellyfinPackagePatcher>();
+
+            // --------------------
+            // Helpers
+            // --------------------
             services.AddSingleton<DeviceHelper>();
             services.AddSingleton<PackageHelper>();
             services.AddSingleton<CertificateHelper>();
@@ -75,22 +104,35 @@ namespace Jellyfin2Samsung
             services.AddSingleton<ProcessHelper>();
             services.AddSingleton<TvLogService>();
 
+            // --------------------
             // ViewModels
-            services.AddSingleton<MainWindowViewModel>();
-            services.AddSingleton<SettingsViewModel>();
+            // --------------------
+            services.AddTransient<MainWindowViewModel>();
             services.AddTransient<InstallationCompleteViewModel>();
             services.AddTransient<InstallingWindowViewModel>();
             services.AddTransient<TvLogsViewModel>();
-            services.AddTransient<TvLogsWindow>();
-            services.AddTransient<JellyfinConfigViewModel>();
+            services.AddSingleton<JellyfinConfigViewModel>();
 
+            // --------------------
             // Views
+            // --------------------
             services.AddSingleton(provider =>
             {
-                return new MainWindow
+                var vm = provider.GetRequiredService<MainWindowViewModel>();
+
+                var window = new MainWindow
                 {
-                    DataContext = provider.GetRequiredService<MainWindowViewModel>()
+                    DataContext = vm
                 };
+
+                // IMPORTANT: prevent memory leak
+                window.Closed += (_, _) =>
+                {
+                    if (vm is IDisposable d)
+                        d.Dispose();
+                };
+
+                return window;
             });
 
             services.AddTransient(provider =>
@@ -114,11 +156,13 @@ namespace Jellyfin2Samsung
                 return new InstallationCompleteWindow(vm);
             });
 
-            // Build and assign service provider
+            // --------------------
+            // Build provider
+            // --------------------
             _serviceProvider = services.BuildServiceProvider();
             Services = _serviceProvider;
 
-            // Set localization service globally
+            // Localization bootstrap
             var localizationService = _serviceProvider.GetRequiredService<ILocalizationService>();
             LocalizationExtensions.SetLocalizationService(localizationService);
         }
@@ -126,7 +170,9 @@ namespace Jellyfin2Samsung
         private void DisableAvaloniaDataAnnotationValidation()
         {
             var dataValidationPluginsToRemove =
-                BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+                BindingPlugins.DataValidators
+                    .OfType<DataAnnotationsValidationPlugin>()
+                    .ToArray();
 
             foreach (var plugin in dataValidationPluginsToRemove)
                 BindingPlugins.DataValidators.Remove(plugin);

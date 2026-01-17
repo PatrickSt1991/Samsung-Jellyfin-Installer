@@ -9,18 +9,21 @@
         x:Class="Jellyfin2Samsung.IpInputDialog"
         x:DataType="viewModels:IpInputDialogViewModel"
         Width="420"
-        Height="220"
+        Height="250"
 		Title="{Binding Title}"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        Background="White"
         CornerRadius="12">
 
-	<Border Background="White"
+	<Window.Styles>
+		<StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml"/>
+	</Window.Styles>
+
+	<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
             Padding="20"
             CornerRadius="12"
             Margin="10"
-            BorderBrush="#E5E7EB"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             BorderThickness="1">
 		<Border.Effect>
 			<DropShadowEffect BlurRadius="20"
@@ -36,12 +39,13 @@
 			<TextBlock Text="{Binding Title}"
                        FontSize="18"
                        FontWeight="Bold"
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,0,0,10"/>
 
 			<!-- Message -->
 			<TextBlock Text="{Binding Message}"
-                       Foreground="#111827"
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                        FontSize="14"
                        TextWrapping="Wrap"
                        Margin="0,0,0,8"/>
@@ -49,9 +53,8 @@
 			<!-- IP Input -->
 			<TextBox Text="{Binding EnteredIp}"
                      Watermark="Enter IP address..."
-                     CaretBrush="Black"
                      SelectionBrush="#2563eb"
-                     BorderBrush="#9CA3AF"
+                     BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                      CornerRadius="8"
                      Padding="8"
                      FontSize="14"

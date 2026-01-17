@@ -4,10 +4,14 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.API;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Helpers.Tizen.Devices;
 using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Services;
 using Jellyfin2Samsung.Models;
+using Jellyfin2Samsung.Views;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,17 +24,19 @@ using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.ViewModels
 {
-    public partial class MainWindowViewModel : ViewModelBase
+    public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         private readonly ITizenInstallerService _tizenInstaller;
         private readonly IDialogService _dialogService;
         private readonly INetworkService _networkService;
         private readonly ILocalizationService _localizationService;
-        private readonly HttpClient _httpClient;
+        private readonly IThemeService _themeService;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
+        private readonly TizenApiClient _tizenApiClient;
         private readonly PackageHelper _packageHelper;
-        private readonly SettingsViewModel _settingsViewModel;
+        private readonly JellyfinConfigViewModel _settingsViewModel;
+        private readonly AddLatestRelease _addLatestRelease;
         private CancellationTokenSource? _samsungLoginCts;
 
         [ObservableProperty]
@@ -66,6 +72,9 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool isSamsungLoginActive;
 
+        [ObservableProperty]
+        private bool darkMode;
+
         private string _currentStatusKey = string.Empty;
 
         private string? _downloadedPackagePath;
@@ -87,24 +96,35 @@ namespace Jellyfin2Samsung.ViewModels
             IDialogService dialogService,
             INetworkService networkService,
             ILocalizationService localizationService,
+            IThemeService themeService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
+            TizenApiClient tizenApiClient,
             PackageHelper packageHelper,
-            FileHelper fileHelper
-            )
+            FileHelper fileHelper,
+            JellyfinConfigViewModel settingsViewModel
+        )
         {
             _tizenInstaller = tizenInstaller;
             _dialogService = dialogService;
             _networkService = networkService;
-            _httpClient = httpClient;
             _deviceHelper = deviceHelper;
+            _tizenApiClient = tizenApiClient;
             _packageHelper = packageHelper;
             _localizationService = localizationService;
+            _themeService = themeService;
             _fileHelper = fileHelper;
-            _settingsViewModel = App.Services.GetRequiredService<SettingsViewModel>();
+            _settingsViewModel = settingsViewModel;
+
+            _addLatestRelease = new AddLatestRelease(httpClient);
 
             _localizationService.LanguageChanged += OnLanguageChanged;
+            _themeService.ThemeChanged += OnThemeChanged;
+
+            // Initialize dark mode state from settings
+            DarkMode = AppSettings.Default.DarkMode;
         }
+
 
         private void OnLanguageChanged(object? sender, EventArgs e)
         {
@@ -112,6 +132,16 @@ namespace Jellyfin2Samsung.ViewModels
 
             if (!string.IsNullOrEmpty(_currentStatusKey))
                 StatusBar = L(_currentStatusKey);
+        }
+
+        private void OnThemeChanged(object? sender, bool isDarkMode)
+        {
+            DarkMode = isDarkMode;
+        }
+
+        partial void OnDarkModeChanged(bool value)
+        {
+            _themeService.SetTheme(value);
         }
         private void SetStatus(string key)
         {
@@ -267,6 +297,11 @@ namespace Jellyfin2Samsung.ViewModels
                         progress => Dispatcher.UIThread.Post(() => StatusBar = progress),
                         onSamsungLoginStarted: OnSamsungLoginStarted);
 
+
+                    foreach (var customPath in customPaths)
+                        if (!AppSettings.Default.KeepWGTFile)
+                            _packageHelper.CleanupDownloadedPackage(customPath);
+
                     AppSettings.Default.CustomWgtPath = null;
                     AppSettings.Default.Save();
                 }
@@ -306,10 +341,7 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand(CanExecute = nameof(CanOpenSettings))]
         private void OpenSettings()
         {
-            var settingsWindow = new SettingsView
-            {
-                DataContext = _settingsViewModel
-            };
+            var settingsWindow = new JellyfinConfigView(_settingsViewModel);
 
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
@@ -334,6 +366,7 @@ namespace Jellyfin2Samsung.ViewModels
                 await _dialogService.ShowErrorAsync($"Failed to open build info window: {ex}");
             }
         }
+
         [RelayCommand]
         private async Task BrowseWgtAsync()
         {
@@ -399,175 +432,49 @@ namespace Jellyfin2Samsung.ViewModels
         private async Task LoadReleasesAsync()
         {
             IsLoading = true;
-            Releases.Clear();
 
             try
             {
-                var settings = new JsonSerializerSettings
+                var list = new List<GitHubRelease>();
+
+                async Task fetch(string url, string name)
                 {
-                    MissingMemberHandling = MissingMemberHandling.Ignore
-                };
-
-                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SamsungJellyfinInstaller/1.1");
-                var response = await _httpClient.GetStringAsync(AppSettings.Default.ReleasesUrl);
-
-                var allReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(response, settings)?
-                    .OrderByDescending(r => r.PublishedAt)
-                    .Take(5);
-
-                if (allReleases != null)
-                    foreach (var release in allReleases)
-                    {
-                        Releases.Add(new GitHubRelease
-                        {
-                            Name = $"Jellyfin - {release.Name}",
-                            Assets = release.Assets,
-                            PublishedAt = release.PublishedAt,
-                            TagName = release.TagName,
-                            Url = release.Url
-                        });
-                    }
-
-                var moonfinResponse = await _httpClient.GetStringAsync(AppSettings.Default.MoonfinRelease);
-                List<GitHubRelease> moonfinReleases;
-
-                if (moonfinResponse.TrimStart().StartsWith("["))
-                {
-                    moonfinReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(moonfinResponse, settings);
-                }
-                else if (moonfinResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(moonfinResponse, settings);
-                    moonfinReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    moonfinReleases = new List<GitHubRelease>();
+                    var release = await _addLatestRelease.GetLatestReleaseAsync(url, name);
+                    if (release != null)
+                        list.Add(release);
                 }
 
-                moonfinReleases = moonfinReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-                foreach (var moonfinRelease in moonfinReleases)
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Moonfin",
-                        Assets = moonfinRelease.Assets,
-                        PublishedAt = moonfinRelease.PublishedAt,
-                        TagName = moonfinRelease.TagName,
-                        Url = moonfinRelease.Url
-                    });
+                await fetch(AppSettings.Default.ReleasesUrl, Constants.AppIdentifiers.JellyfinAppName);
+                await fetch(AppSettings.Default.MoonfinRelease, "Moonfin");
+                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay");
+                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay - 10.10z SmartHub");
+                await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
+                await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
 
-                /* av release */
-                var avResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinAvRelease);
+                Releases.Clear();
+                foreach (var r in list)
+                    Releases.Add(r);
 
-                List<GitHubRelease> avReleases;
-                if (avResponse.TrimStart().StartsWith("["))
-                {
-                    avReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(avResponse, settings);
-                }
-                else if (avResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(avResponse, settings);
-                    avReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    avReleases = new List<GitHubRelease>();
-                }
-
-                avReleases = avReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var avRelease in avReleases)
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Jellyfin AVPlay",
-                        Assets = avRelease.Assets,
-                        PublishedAt = avRelease.PublishedAt,
-                        TagName = avRelease.TagName,
-                        Url = avRelease.Url
-                    });
-
-                /* Legacy */
-                var legacyResponse = await _httpClient.GetStringAsync(AppSettings.Default.JellyfinLegacy);
-
-                List<GitHubRelease> legacyReleases;
-                if (legacyResponse.TrimStart().StartsWith("["))
-                {
-                    legacyReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(legacyResponse, settings);
-                }
-                else if (legacyResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(legacyResponse, settings);
-                    legacyReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    legacyReleases = new List<GitHubRelease>();
-                }
-
-                legacyReleases = legacyReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var legacyRelease in legacyReleases)
-                {
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Jellyfin Legacy",
-                        Assets = legacyRelease.Assets,
-                        PublishedAt = legacyRelease.PublishedAt,
-                        TagName = legacyRelease.TagName,
-                        Url = legacyRelease.Url
-                    });
-                }
-
-                var communityResponse = await _httpClient.GetStringAsync(AppSettings.Default.CommunityRelease);
-                List<GitHubRelease> communityReleases;
-                if(communityResponse.TrimStart().StartsWith("["))
-                {
-                    communityReleases = JsonConvert.DeserializeObject<List<GitHubRelease>>(communityResponse, settings);
-                }
-                else if (communityResponse.TrimStart().StartsWith("{"))
-                {
-                    var single = JsonConvert.DeserializeObject<GitHubRelease>(communityResponse, settings);
-                    communityReleases = single != null ? new List<GitHubRelease> { single } : new List<GitHubRelease>();
-                }
-                else
-                {
-                    communityReleases = new List<GitHubRelease>();
-                }
-
-                communityReleases = communityReleases.OrderByDescending(r => r.PublishedAt).Take(1).ToList();
-
-                foreach (var communityRelease in communityReleases)
-                {
-                    Releases.Add(new GitHubRelease
-                    {
-                        Name = $"Tizen Community",
-                        Assets = communityRelease.Assets,
-                        PublishedAt = communityRelease.PublishedAt,
-                        TagName = communityRelease.TagName,
-                        Url = communityRelease.Url
-                    });
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                await _dialogService.ShowErrorAsync($"{L("FailedLoadingReleases")} {ex}");
-            }
-            finally
-            {
                 Releases.Add(new GitHubRelease
                 {
-                    Name = "Custom WGT File",
+                    Name = Constants.AppIdentifiers.CustomWgtFile,
                     TagName = string.Empty,
                     PublishedAt = string.Empty,
                     Url = string.Empty,
                     Assets = new List<Asset>()
                 });
-
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                await _dialogService.ShowErrorAsync($"{L(Constants.LocalizationKeys.FailedLoadingReleases)} {ex}");
+            }
+            finally
+            {
                 IsLoading = false;
             }
         }
+
 
         private async Task LoadDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
         {
@@ -666,7 +573,7 @@ namespace Jellyfin2Samsung.ViewModels
                 return;
             }
 
-            var samsungDevice = await _deviceHelper.GetDeveloperInfoAsync(device);
+            var samsungDevice = await _tizenApiClient.GetDeveloperInfoAsync(device);
 
             if (samsungDevice != null)
             {
@@ -684,10 +591,6 @@ namespace Jellyfin2Samsung.ViewModels
                 await _dialogService.ShowErrorAsync(L("InvalidDeviceIp"));
             }
         }
-        public void Dispose()
-        {
-            _localizationService.LanguageChanged -= OnLanguageChanged;
-        }
         partial void OnIsSamsungLoginActiveChanged(bool value)
         {
             CancelSamsungLoginCommand.NotifyCanExecuteChanged();
@@ -698,6 +601,18 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 IsSamsungLoginActive = true;
             });
+        }
+        private void DisposeSamsungCts()
+        {
+            _samsungLoginCts?.Cancel();
+            _samsungLoginCts?.Dispose();
+            _samsungLoginCts = null;
+        }
+        public void Dispose()
+        {
+            DisposeSamsungCts();
+            _localizationService.LanguageChanged -= OnLanguageChanged;
+            _themeService.ThemeChanged -= OnThemeChanged;
         }
 
     }

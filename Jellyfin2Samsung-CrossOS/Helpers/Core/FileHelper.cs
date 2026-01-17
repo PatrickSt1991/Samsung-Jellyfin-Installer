@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Core
 {
     public class FileHelper
     {
@@ -56,9 +56,9 @@ namespace Jellyfin2Samsung.Helpers
                     var baseName = Path.GetFileNameWithoutExtension(originalPath);
                     var extension = Path.GetExtension(originalPath);
 
-                    var random = new Random();
-                    const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                    var randomSuffix = new string(Enumerable.Range(0, 4).Select(_ => chars[random.Next(chars.Length)]).ToArray());
+                    var randomSuffix = new string(Enumerable.Range(0, 4)
+                        .Select(_ => Constants.CharacterSets.Alpha[Random.Shared.Next(Constants.CharacterSets.Alpha.Length)])
+                        .ToArray());
 
                     var newFileName = $"{baseName}{randomSuffix}{extension}";
                     var newFilePath = Path.Combine(directory ?? Environment.CurrentDirectory, newFileName);
@@ -76,11 +76,8 @@ namespace Jellyfin2Samsung.Helpers
         public List<ExtensionEntry> ParseExtensions(string output)
         {
             var extensions = new List<ExtensionEntry>();
-            var regex = new Regex(
-                @"Index\s*:\s*(\d+)\s+Name\s*:\s*(.*?)\s+Repository\s*:\s*.*?\s+Id\s*:\s*.*?\s+Vendor\s*:\s*.*?\s+Description\s*:\s*.*?\s+Default\s*:\s*.*?\s+Activate\s*:\s*(true|false)",
-                RegexOptions.Singleline);
 
-            foreach (Match match in regex.Matches(output))
+            foreach (Match match in RegexPatterns.Extension.ExtensionEntry.Matches(output))
             {
                 extensions.Add(new ExtensionEntry
                 {
@@ -112,13 +109,7 @@ namespace Jellyfin2Samsung.Helpers
             using (var reader = new StreamReader(configEntry.Open(), Encoding.UTF8))
                 configContent = await reader.ReadToEndAsync();
 
-            // Regex to extract the package prefix before .Jellyfin
-            var regex = new Regex(
-                @"<tizen:application\s+id=""(?<pkg>[A-Za-z0-9]+)\.Jellyfin""\s+package=""\k<pkg>""",
-                RegexOptions.Multiline
-            );
-
-            var match = regex.Match(configContent);
+            var match = RegexPatterns.WgtConfig.TizenApplicationId.Match(configContent);
             return match.Success ? match.Groups["pkg"].Value : null;
         }
         public static async Task<bool> ModifyWgtPackageId(string wgtPath)
@@ -149,10 +140,8 @@ namespace Jellyfin2Samsung.Helpers
                     configContent = await reader.ReadToEndAsync();
 
                 // Replace old package ID with the new one
-                var regex = new Regex(
-                    $@"<tizen:application\s+id=""{oldPkg}\.Jellyfin""\s+package=""{oldPkg}""",
-                    RegexOptions.Multiline
-                );
+                var pattern = RegexPatterns.WgtConfig.CreatePackageIdReplacePattern(oldPkg);
+                var regex = new Regex(pattern, RegexOptions.Multiline);
 
                 var newConfig = regex.Replace(configContent, m =>
                     m.Value.Replace(oldPkg, newPkg)
@@ -171,11 +160,9 @@ namespace Jellyfin2Samsung.Helpers
         }
         private static string GenerateRandomString(int length)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            var random = new Random();
             var sb = new StringBuilder(length);
             for (int i = 0; i < length; i++)
-                sb.Append(chars[random.Next(chars.Length)]);
+                sb.Append(Constants.CharacterSets.AlphaNumeric[Random.Shared.Next(Constants.CharacterSets.AlphaNumeric.Length)]);
             return sb.ToString();
         }
     }

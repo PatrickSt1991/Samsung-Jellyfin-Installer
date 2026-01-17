@@ -4,7 +4,7 @@ using Jellyfin2Samsung.Models;
 using System;
 using System.Globalization;
 
-namespace Jellyfin2Samsung.Helpers
+namespace Jellyfin2Samsung.Helpers.Converters
 {
     public class TvLogStatusToBrushConverter : IValueConverter
     {
