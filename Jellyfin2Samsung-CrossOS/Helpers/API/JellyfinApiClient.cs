@@ -197,14 +197,12 @@ namespace Jellyfin2Samsung.Helpers.API
         }
 
         /// <summary>
-        /// Tests if the current server URL is reachable by checking the public system info endpoint.
+        /// Tests if the current server URL is reachable by checking the parameter url endpoint.
         /// </summary>
-        public async Task<bool> TestServerConnectionAsync()
+        public async Task<bool> TestServerConnectionAsync(string testUrl)
         {
             try
             {
-                var testUrl = UrlHelper.CombineUrl(AppSettings.Default.JellyfinFullUrl, "/System/Info/Public");
-
                 _httpClient.DefaultRequestHeaders.Clear();
                 var response = await _httpClient.GetAsync(testUrl);
                 return response.IsSuccessStatusCode;

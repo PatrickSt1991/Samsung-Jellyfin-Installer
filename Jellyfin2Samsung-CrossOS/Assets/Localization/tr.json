@@ -133,5 +133,6 @@
   "lblMainSettings": "Uygulama Ayarları",
   "lblRefreshUsers": "Kullanıcıları Yenile",
   "lblUserSelectionHint": "Seçilen kullanıcılar kurulum sırasında yapılandırılacak",
-  "lblYtDlpServer": "yt-dlp-tv sunucu adresini"
+  "lblYtDlpServer": "Yerel yayın sunucusu",
+  "lblValidateStream": "Sunucuyu Doğrula"
 }

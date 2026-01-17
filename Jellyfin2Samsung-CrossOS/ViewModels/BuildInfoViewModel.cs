@@ -53,6 +53,12 @@ namespace Jellyfin2Samsung.ViewModels
                     Description = "Includes AVPlay video player patches for better Samsung TV compatibility"
                 });
 
+                JellyfinVersions.Add(new BuildVersion
+                {
+                    FileName = "AVPlay 10.10.z - SmartHub",
+                    Description = "Includes AVPlay video player patches for better Samsung TV compatibility for10.10.z SmartHub variant"
+                });
+
                 // Parse community apps
                 ParseApplicationsTable(communityMd, CommunityApps);
             }

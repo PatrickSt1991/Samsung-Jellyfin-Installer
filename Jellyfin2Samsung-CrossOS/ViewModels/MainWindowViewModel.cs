@@ -297,6 +297,11 @@ namespace Jellyfin2Samsung.ViewModels
                         progress => Dispatcher.UIThread.Post(() => StatusBar = progress),
                         onSamsungLoginStarted: OnSamsungLoginStarted);
 
+
+                    foreach (var customPath in customPaths)
+                        if (!AppSettings.Default.KeepWGTFile)
+                            _packageHelper.CleanupDownloadedPackage(customPath);
+
                     AppSettings.Default.CustomWgtPath = null;
                     AppSettings.Default.Save();
                 }
@@ -442,6 +447,7 @@ namespace Jellyfin2Samsung.ViewModels
                 await fetch(AppSettings.Default.ReleasesUrl, Constants.AppIdentifiers.JellyfinAppName);
                 await fetch(AppSettings.Default.MoonfinRelease, "Moonfin");
                 await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay");
+                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay - 10.10z SmartHub");
                 await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
                 await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
 

@@ -133,5 +133,6 @@
   "lblMainSettings": "Programindstillinger",
   "lblRefreshUsers": "Opdater brugere",
   "lblUserSelectionHint": "Valgte brugere konfigureres under installationen",
-  "lblYtDlpServer": "yt-dlp-tv serveradresse..."
+  "lblYtDlpServer": "Lokal streamingserver",
+  "lblValidateStream": "Valider server"
 }

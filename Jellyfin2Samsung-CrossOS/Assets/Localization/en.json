@@ -133,5 +133,6 @@
   "lblMainSettings": "Application Settings",
   "lblRefreshUsers": "Refresh Users",
   "lblUserSelectionHint": "Selected users will be configured during installation",
-  "lblYtDlpServer": "yt-dlp-tv server address..."
+  "lblYtDlpServer": "Local streaming server",
+  "lblValidateStream":  "Validate Server"
 }

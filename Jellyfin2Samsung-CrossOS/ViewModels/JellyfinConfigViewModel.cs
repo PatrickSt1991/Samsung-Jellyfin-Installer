@@ -81,6 +81,12 @@ namespace Jellyfin2Samsung.ViewModels
         private bool serverValidated = false;
 
         [ObservableProperty]
+        private bool streamValidated = false;
+
+        [ObservableProperty]
+        private string streamValidationStatus = string.Empty;
+
+        [ObservableProperty]
         private bool enableBackdrops;
 
         [ObservableProperty]
@@ -264,6 +270,7 @@ namespace Jellyfin2Samsung.ViewModels
         public string LblSelectUsers => _localizationService.GetString("lblSelectUsers");
         public string LblRefreshUsers => _localizationService.GetString("lblRefreshUsers");
         public string LblUserSelectionHint => _localizationService.GetString("lblUserSelectionHint");
+        public string LblValidateStream => _localizationService.GetString("lblValidateStream");
 
         // New Tab and UI labels
         public string LblTabServer => _localizationService.GetString("lblTabServer");
@@ -396,6 +403,7 @@ namespace Jellyfin2Samsung.ViewModels
             OnPropertyChanged(nameof(LblSelectUsers));
             OnPropertyChanged(nameof(LblRefreshUsers));
             OnPropertyChanged(nameof(LblUserSelectionHint));
+            OnPropertyChanged(nameof(LblValidateStream));
             // New tab and UI labels
             OnPropertyChanged(nameof(LblTabServer));
             OnPropertyChanged(nameof(LblTabPlayback));
@@ -682,11 +690,34 @@ namespace Jellyfin2Samsung.ViewModels
         [RelayCommand]
         private async Task TestConnectionAsync()
         {
+            StreamValidated = false;
+            StreamValidationStatus = "Validating...";
+
+            var testUrl = UrlHelper.CombineUrl(LocalYoutubeServer, "/health");
+            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync(testUrl);
+
+            if (isReachable)
+            {
+                StreamValidated = true;
+                StreamValidationStatus = "✓ Connected";
+            }
+            else
+            {
+                StreamValidated = false;
+                StreamValidationStatus = "✕ Unreachable";
+            }
+        }
+
+
+        [RelayCommand]
+        private async Task TestServerAsync()
+        {
             ServerConnectionStatus = "Testing...";
             ServerValidated = false;
             OnPropertyChanged(nameof(CanLogin));
 
-            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync();
+            var testUrl = UrlHelper.CombineUrl(AppSettings.Default.JellyfinFullUrl, "/System/Info/Public");
+            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync(testUrl);
 
             if (isReachable)
             {
@@ -753,7 +784,8 @@ namespace Jellyfin2Samsung.ViewModels
             ServerConnectionStatus = "Validating...";
             ServerValidated = false;
 
-            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync();
+            var testUrl = UrlHelper.CombineUrl(AppSettings.Default.JellyfinFullUrl, "/System/Info/Public");
+            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync(testUrl);
 
             if (isReachable)
             {

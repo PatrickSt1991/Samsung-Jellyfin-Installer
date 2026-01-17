@@ -133,5 +133,6 @@
   "lblMainSettings": "Anwendungseinstellungen",
   "lblRefreshUsers": "Benutzer aktualisieren",
   "lblUserSelectionHint": "Ausgewählte Benutzer werden bei der Installation konfiguriert",
-  "lblYtDlpServer": "Adresse des yt-dlp-tv-Servers..."
+  "lblYtDlpServer": "Lokaler Streaming-Server",
+  "lblValidateStream": "Server validieren"
 }

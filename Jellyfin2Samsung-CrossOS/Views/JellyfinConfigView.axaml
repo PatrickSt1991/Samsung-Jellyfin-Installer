@@ -311,7 +311,7 @@
 										</Border>
 										<Button Classes="secondary"
 												Content="{Binding LblTestServer}"
-												Command="{Binding TestConnectionCommand}"
+												Command="{Binding TestServerCommand}"
 												IsEnabled="{Binding ServerIpSet}"
 												Padding="8,4"
 												FontSize="12"/>
@@ -485,9 +485,27 @@
 										Classes="label"
 										VerticalAlignment="Center"
 										IsVisible="{Binding PatchYoutubePlugin}"/>
-									<TextBox Grid.Column= "1"
-										 Text="{Binding LocalYoutubeServer}"
-										 IsVisible="{Binding PatchYoutubePlugin}" />
+									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+
+										<TextBox
+											Text="{Binding LocalYoutubeServer}"
+											Watermark="http://192.168.1.123:8123"
+											IsVisible="{Binding PatchYoutubePlugin}" />
+
+										<Button
+											Classes="secondary"
+											Content="{Binding LblValidateStream}"
+											Command="{Binding TestConnectionCommand}"
+											Padding="8,4"
+											FontSize="12"/>
+
+										<TextBlock
+											Text="{Binding StreamValidationStatus}"
+											VerticalAlignment="Center"
+											Margin="6,0,0,0"/>
+
+									</StackPanel>
+
 								</Grid>
 							</StackPanel>
 

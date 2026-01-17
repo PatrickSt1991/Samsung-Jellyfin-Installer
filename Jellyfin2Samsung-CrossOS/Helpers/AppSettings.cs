@@ -77,9 +77,10 @@ namespace Jellyfin2Samsung.Helpers
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v1.8.7.5-beta";
+        public string AppVersion { get; set; } = "v2.0.0.0";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
+        public string JellyfinAvReleaseFork { get; set; } = "https://api.github.com/repos/asamahy/tizen-jellyfin-avplay/releases";
         public string JellyfinLegacy { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases/tags/2024-10-27-1821";
         public string CommunityRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-community-packages/releases";
         public string MoonfinRelease { get; set; } = "https://api.github.com/repos/Moonfin-Client/Tizen/releases";

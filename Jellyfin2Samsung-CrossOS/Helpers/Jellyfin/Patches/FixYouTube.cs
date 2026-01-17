@@ -1,5 +1,4 @@
 ﻿using Jellyfin2Samsung.Helpers.Core;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,112 +15,232 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Fixes
             {
                 var js = await File.ReadAllTextAsync(file);
 
-                if (!js.Contains("__NATIVE_STABLE_V1__"))
-                {
-                    string nativeCode = @"
-/* === TIZEN NATIVE MP4 BRIDGE (STABLE V1) === */
-(function() {
+                var apiBase = AppSettings.Default.LocalYoutubeServer.TrimEnd('/');
+
+                if (js.Contains("__NATIVE_STABLE_V1__"))
+                    continue;
+                string nativeCode = $@"
+/* === TIZEN NATIVE MP4 BRIDGE (STABLE V1.4) === */
+(function () {{
     if (window.__NATIVE_STABLE_V1__) return;
     window.__NATIVE_STABLE_V1__ = true;
 
-    const log = (m) => console.log('[NATIVE-FIX] ' + m);
-    const API_BASE = 'http://192.168.2.195:8123';
-    
-    window.YT = {
-        PlayerState: { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
-        Player: function(id, config) {
-            log('Constructor: Initializing for ' + config.videoId);
-            const self = this;
-            const container = document.getElementById(id);
-            
-            // Create the video element
-            const v = document.createElement('video');
-            v.style.cssText = 'width:100%;height:100%;background:#000;position:absolute;top:0;left:0;z-index:99999;';
+    var API_BASE = '{apiBase}';
+
+    function jfLog() {{
+        try {{
+            console.log('[YT-NATIVE]', Array.prototype.join.call(arguments, ' '));
+        }} catch (e) {{}}
+    }}
+
+    window.YT = {{
+        PlayerState: {{
+            UNSTARTED: -1,
+            ENDED: 0,
+            PLAYING: 1,
+            PAUSED: 2,
+            BUFFERING: 3,
+            CUED: 5
+        }},
+
+        Player: function (id, config) {{
+            jfLog('YT.Player ctor', id, config && config.videoId);
+
+            var self = this;
+            var container = document.getElementById(id);
+
+            var muted = false;
+            var volume = 100;
+            var destroyed = false;
+            var backHandled = false;
+            var started = false;
+
+            var v = document.createElement('video');
+            v.style.cssText =
+                'width:100%;height:100%;background:#000;' +
+                'position:absolute;top:0;left:0;';
             v.autoplay = true;
-            
-            if (container) {
+            v.setAttribute('playsinline', 'playsinline');
+
+            if (container) {{
                 container.innerHTML = '';
                 container.appendChild(v);
-            }
+            }}
 
-            // --- JELLYFIN COMPATIBLE METHODS ---
-            // We define these so Jellyfin can call THEM to close the player
-            this.playVideo = () => v.play();
-            this.pauseVideo = () => v.pause();
-            this.stopVideo = () => {
-                log('Jellyfin requested STOP');
-                v.pause();
-                v.src = '';
-                v.load();
-                v.remove();
-            };
-            this.destroy = () => this.stopVideo();
-            this.getCurrentTime = () => v.currentTime || 0;
-            this.getDuration = () => v.duration || 0;
-            this.getPlayerState = () => v.paused ? 2 : 1;
+            function emitState(state) {{
+                if (config && config.events && config.events.onStateChange) {{
+                    try {{
+                        config.events.onStateChange({{ data: state }});
+                    }} catch (e) {{}}
+                }}
+            }}
 
-            // Handle hardware back button BY EMULATING A STOP
-            // This prevents the freeze because we let Jellyfin handle the 'Back'
-            const onKeyDown = (e) => {
-                if (e.keyCode === 10009 || e.key === 'Back') {
-                    log('Back Button -> Triggering natural exit');
-                    // Don't call history.back() here! 
-                    // Let the event bubble up so Jellyfin's own router catches it.
-                    self.stopVideo();
-                }
-            };
-            window.addEventListener('keydown', onKeyDown, { once: true });
+            /* === Jellyfin-required API === */
+            this.setSize = function () {{}};
 
-            v.onplaying = () => {
-                log('Playing: Hiding Spinners');
-                document.querySelectorAll('.docspinner, .mdl-spinner, .dialogContainer').forEach(s => s.remove());
-            };
+            this.playVideo = function () {{
+                jfLog('playVideo');
+                try {{ v.play(); }} catch (e) {{}}
+            }};
 
-            v.onended = () => {
-                log('Video Ended');
-                if (config.events && config.events.onStateChange) config.events.onStateChange({ data: 0 });
-            };
+            this.pauseVideo = function () {{
+                jfLog('pauseVideo');
+                try {{ v.pause(); }} catch (e) {{}}
+            }};
 
-            // Fetch the URL
-            fetch(API_BASE + '/file', {
+            this.stopVideo = function () {{
+                jfLog('stopVideo');
+                try {{ v.pause(); }} catch (e) {{}}
+                try {{ v.removeAttribute('src'); }} catch (e) {{}}
+                try {{ v.load(); }} catch (e) {{}}
+            }};
+
+            this.destroy = function () {{
+                if (destroyed) return;
+                destroyed = true;
+
+                jfLog('destroy');
+
+                try {{ window.removeEventListener('keydown', onKeyDown, true); }} catch (e) {{}}
+                try {{ self.stopVideo(); }} catch (e) {{}}
+
+                try {{
+                    v.onplaying =
+                    v.onpause =
+                    v.onended =
+                    v.oncanplay =
+                    v.onerror = null;
+                }} catch (e) {{}}
+
+                try {{ v.remove(); }} catch (e) {{}}
+            }};
+
+            this.seekTo = function (s) {{
+                jfLog('seekTo', s);
+                try {{ v.currentTime = s; }} catch (e) {{}}
+            }};
+
+            this.getCurrentTime = function () {{ return v.currentTime || 0; }};
+            this.getDuration = function () {{ return v.duration || 0; }};
+
+            this.getPlayerState = function () {{
+                if (v.ended) return YT.PlayerState.ENDED;
+                if (v.paused) return YT.PlayerState.PAUSED;
+                return YT.PlayerState.PLAYING;
+            }};
+
+            this.setVolume = function (val) {{
+                volume = val;
+                try {{
+                    v.volume = Math.max(0, Math.min(1, val / 100));
+                }} catch (e) {{}}
+            }};
+
+            this.getVolume = function () {{ return volume; }};
+            this.mute = function () {{ muted = true; try {{ v.muted = true; }} catch (e) {{}} }};
+            this.unMute = function () {{ muted = false; try {{ v.muted = false; }} catch (e) {{}} }};
+            this.isMuted = function () {{ return muted; }};
+
+            /* === Drive Jellyfin state machine === */
+            v.onplaying = function () {{
+                jfLog('video playing');
+                if (!started) {{
+                    started = true;
+                    emitState(YT.PlayerState.PLAYING);
+                }}
+            }};
+
+            v.onpause = function () {{
+                jfLog('video paused');
+                emitState(YT.PlayerState.PAUSED);
+            }};
+
+            v.onended = function () {{
+                jfLog('video ended naturally');
+                emitState(YT.PlayerState.ENDED);
+            }};
+
+            v.onerror = function () {{
+                jfLog('video error');
+            }};
+
+            /* === Start only when playable === */
+            v.oncanplay = function () {{
+                if (destroyed) return;
+                jfLog('canplay -> starting playback');
+                try {{ v.play(); }} catch (e) {{}}
+            }};
+
+            /* === BACK key: PAUSE ONLY (delegate stop to Jellyfin) === */
+            function onKeyDown(e) {{
+                if (backHandled || destroyed) return;
+
+                if (e && (e.keyCode === 10009 || e.key === 'Back')) {{
+                    backHandled = true;
+                    jfLog('BACK key (pause only)');
+
+                    try {{ if (e.preventDefault) e.preventDefault(); }} catch (e1) {{}}
+                    try {{ if (e.stopPropagation) e.stopPropagation(); }} catch (e2) {{}}
+
+                    emitState(YT.PlayerState.PAUSED);
+
+                    try {{ window.removeEventListener('keydown', onKeyDown, true); }} catch (e3) {{}}
+                }}
+            }}
+            window.addEventListener('keydown', onKeyDown, true);
+
+            /* === Fetch local MP4 === */
+            jfLog('fetching mp4');
+            fetch(API_BASE + '/file', {{
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=' + config.videoId })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.url) {
-                    log('Setting SRC: ' + data.url);
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    url: 'https://www.youtube.com/watch?v=' +
+                        (config ? config.videoId : '')
+                }})
+            }})
+            .then(function (r) {{ return r.json(); }})
+            .then(function (data) {{
+                jfLog('fetch result', data && data.url);
+                if (destroyed) return;
+
+                if (data && data.url) {{
                     v.src = data.url;
-                }
-            })
-            .catch(e => log('Fetch error: ' + e));
+                }}
+            }})
+            .catch(function (err) {{
+                jfLog('fetch error', err);
+            }});
 
-            if (config.events && config.events.onReady) {
-                setTimeout(() => config.events.onReady({ target: self }), 100);
-            }
-        }
-    };
+            if (config && config.events && config.events.onReady) {{
+                jfLog('onReady');
+                try {{
+                    config.events.onReady({{ target: self }});
+                }} catch (e) {{}}
+            }}
+        }}
+    }};
 
-    if (typeof window.onYouTubeIframeAPIReady === 'function') {
-        window.onYouTubeIframeAPIReady();
-    }
-})();
+    // IMPORTANT:
+    // Do NOT call onYouTubeIframeAPIReady here.
+    // Jellyfin will invoke it when appropriate.
+}})();
 ";
-                    js = nativeCode + js;
-                    await File.WriteAllTextAsync(file, js);
-                }
+
+
+                js = nativeCode + js;
+                await File.WriteAllTextAsync(file, js);
             }
         }
-
         public async Task CorsAsync(PackageWorkspace ws)
         {
+            var apiBase = AppSettings.Default.LocalYoutubeServer.TrimEnd('/');
             string path = Path.Combine(ws.Root, "config.xml");
             XDocument doc = XDocument.Load(path);
 
             string[] domains = {
                 "https://youtube.com",
-                "http://192.168.2.195:8123", // Added your local server explicitly
+                apiBase
             };
 
             foreach (var d in domains)

@@ -133,5 +133,6 @@
   "lblMainSettings": "Toepassingsinstellingen",
   "lblRefreshUsers": "Gebruikers vernieuwen",
   "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie",
-  "lblYtDlpServer": "yt-dlp-tv server..."
+  "lblYtDlpServer": "Lokale streaming server",
+  "lblValidateStream": "Valideer de server"
 }

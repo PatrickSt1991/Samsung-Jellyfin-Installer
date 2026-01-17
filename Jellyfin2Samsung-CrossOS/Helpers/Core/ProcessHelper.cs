@@ -71,7 +71,8 @@ namespace Jellyfin2Samsung.Helpers.Core
             if (string.IsNullOrEmpty(sanitizedArguments))
                 sanitizedArguments = "unknown";
 
-            string logFilePath = Path.Combine(exeDir, $"process_{sanitizedArguments}_{timestamp}.log");
+            string logFolder = Path.Combine(exeDir, "Logs");
+            string logFilePath = Path.Combine(logFolder, $"process_{sanitizedArguments}_{timestamp}.log");
 
             try
             {
