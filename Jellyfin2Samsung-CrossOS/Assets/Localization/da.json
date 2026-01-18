@@ -135,5 +135,17 @@
   "lblUserSelectionHint": "Valgte brugere konfigureres under installationen",
   "lblYtDlpServer": "Lokal streamingserver",
   "lblValidateStream": "Valider server",
-  "subnetMismatch": "Enhederne er i forskellige undernetværk (netværk)"
+  "subnetMismatch": "Enhederne er i forskellige undernetværk (netværk)",
+  "UpdateAvailable": "Opdatering tilgængelig",
+  "UpdateCurrentVersion": "Nuværende version:",
+  "UpdateLatestVersion": "Nyeste version:",
+  "UpdateReleaseNotes": "Udgivelsesnoter:",
+  "UpdateManual": "Åbn udgivelser",
+  "UpdateAutomatic": "Opdater nu",
+  "UpdateSkip": "Spring denne version over",
+  "UpdateDownloading": "Downloader opdatering...",
+  "UpdateApplying": "Anvender opdatering",
+  "UpdateApplyingMessage": "Applikationen genstarter for at fuldføre opdateringen.",
+  "UpdateError": "Opdatering mislykkedes",
+  "UpdateCheckFailed": "Kunne ikke tjekke for opdateringer"
 }

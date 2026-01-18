@@ -135,5 +135,17 @@
   "lblUserSelectionHint": "Les utilisateurs sélectionnés seront configurés lors de l'installation",
   "lblYtDlpServer": "Serveur de streaming local",
   "lblValidateStream": "Valider le serveur",
-  "subnetMismatch": "Les appareils se trouvent dans différents sous-réseaux (réseau)."
+  "subnetMismatch": "Les appareils se trouvent dans différents sous-réseaux (réseau).",
+  "UpdateAvailable": "Mise à jour disponible",
+  "UpdateCurrentVersion": "Version actuelle:",
+  "UpdateLatestVersion": "Dernière version:",
+  "UpdateReleaseNotes": "Notes de version:",
+  "UpdateManual": "Ouvrir les versions",
+  "UpdateAutomatic": "Mettre à jour",
+  "UpdateSkip": "Ignorer cette version",
+  "UpdateDownloading": "Téléchargement...",
+  "UpdateApplying": "Application de la mise à jour",
+  "UpdateApplyingMessage": "L'application va redémarrer pour terminer la mise à jour.",
+  "UpdateError": "Échec de la mise à jour",
+  "UpdateCheckFailed": "Échec de la vérification des mises à jour"
 }

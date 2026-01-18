@@ -1,0 +1,515 @@
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Interfaces;
+using Jellyfin2Samsung.Models;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace Jellyfin2Samsung.Services
+{
+    /// <summary>
+    /// Service for checking and applying application updates via GitHub.
+    /// Uses the Atom feed endpoint to avoid API rate limiting.
+    /// </summary>
+    public class UpdaterService : IUpdaterService
+    {
+        private readonly HttpClient _httpClient;
+        private const string RepoOwner = "Jellyfin2Samsung";
+        private const string RepoName = "Samsung-Jellyfin-Installer";
+        private const string AtomFeedUrl = $"https://github.com/{RepoOwner}/{RepoName}/releases.atom";
+        private const string ReleasesApiUrl = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
+
+        public string ReleasesPageUrl => $"https://github.com/{RepoOwner}/{RepoName}/releases";
+        public string CurrentVersion => AppSettings.Default.AppVersion;
+
+        public UpdaterService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        /// <inheritdoc />
+        public async Task<UpdateCheckResult> CheckForUpdateAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // First try Atom feed (no rate limit)
+                var atomResult = await CheckViaAtomFeedAsync(cancellationToken);
+                if (atomResult.IsSuccess && atomResult.IsUpdateAvailable)
+                {
+                    // Get download URL from API (only if update available)
+                    await EnrichWithDownloadUrlAsync(atomResult, cancellationToken);
+                }
+                return atomResult;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Update check failed: {ex}");
+                return UpdateCheckResult.Failed($"Failed to check for updates: {ex.Message}", CurrentVersion);
+            }
+        }
+
+        private async Task<UpdateCheckResult> CheckViaAtomFeedAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, AtomFeedUrl);
+                request.Headers.Accept.ParseAdd("application/atom+xml");
+
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var atomXml = await response.Content.ReadAsStringAsync(cancellationToken);
+                var latestEntry = ParseAtomFeed(atomXml);
+
+                if (latestEntry == null)
+                {
+                    return UpdateCheckResult.NoUpdateAvailable(CurrentVersion);
+                }
+
+                var latestVersion = latestEntry.TagName;
+                var isUpdateAvailable = IsVersionGreater(latestVersion, CurrentVersion);
+
+                return new UpdateCheckResult
+                {
+                    IsUpdateAvailable = isUpdateAvailable,
+                    CurrentVersion = CurrentVersion,
+                    LatestVersion = latestVersion,
+                    ReleaseTitle = latestEntry.Title,
+                    ReleaseNotes = StripHtml(latestEntry.Content),
+                    ReleasesPageUrl = latestEntry.Link,
+                    PublishedAt = latestEntry.Updated
+                };
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Atom feed check failed: {ex}");
+                return UpdateCheckResult.Failed($"Failed to parse release feed: {ex.Message}", CurrentVersion);
+            }
+        }
+
+        private GitHubAtomEntry? ParseAtomFeed(string atomXml)
+        {
+            try
+            {
+                var doc = XDocument.Parse(atomXml);
+                XNamespace atom = "http://www.w3.org/2005/Atom";
+
+                var entry = doc.Descendants(atom + "entry").FirstOrDefault();
+                if (entry == null)
+                    return null;
+
+                return new GitHubAtomEntry
+                {
+                    Id = entry.Element(atom + "id")?.Value ?? string.Empty,
+                    Title = entry.Element(atom + "title")?.Value ?? string.Empty,
+                    Updated = DateTime.TryParse(entry.Element(atom + "updated")?.Value, out var updated) ? updated : null,
+                    Link = entry.Element(atom + "link")?.Attribute("href")?.Value ?? string.Empty,
+                    Content = entry.Element(atom + "content")?.Value ?? string.Empty,
+                    AuthorName = entry.Element(atom + "author")?.Element(atom + "name")?.Value ?? string.Empty
+                };
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to parse Atom feed: {ex}");
+                return null;
+            }
+        }
+
+        private async Task EnrichWithDownloadUrlAsync(UpdateCheckResult result, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, ReleasesApiUrl);
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    // API rate limited or error - user can still use manual download
+                    Trace.WriteLine($"GitHub API returned {response.StatusCode}, download URL unavailable");
+                    return;
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (!root.TryGetProperty("assets", out var assets))
+                    return;
+
+                var platformSuffix = GetPlatformSuffix();
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    if (!asset.TryGetProperty("name", out var nameElement))
+                        continue;
+
+                    var name = nameElement.GetString() ?? string.Empty;
+
+                    // Match platform-specific archive
+                    if (name.Contains(platformSuffix, StringComparison.OrdinalIgnoreCase) &&
+                        (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                         name.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (asset.TryGetProperty("browser_download_url", out var urlElement))
+                        {
+                            result.DownloadUrl = urlElement.GetString();
+                            return;
+                        }
+                    }
+                }
+
+                // Fallback: try to find any zip file
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    if (!asset.TryGetProperty("name", out var nameElement))
+                        continue;
+
+                    var name = nameElement.GetString() ?? string.Empty;
+                    if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (asset.TryGetProperty("browser_download_url", out var urlElement))
+                        {
+                            result.DownloadUrl = urlElement.GetString();
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to get download URL: {ex}");
+                // Not critical - user can still download manually
+            }
+        }
+
+        private static string GetPlatformSuffix()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return "win";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return "linux";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return "osx";
+
+            return "win"; // Default fallback
+        }
+
+        /// <inheritdoc />
+        public async Task<string> DownloadUpdateAsync(
+            string downloadUrl,
+            IProgress<int>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "Jellyfin2Samsung_Update");
+            Directory.CreateDirectory(tempDir);
+
+            var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
+            var downloadPath = Path.Combine(tempDir, fileName);
+
+            // Clean up old downloads
+            if (File.Exists(downloadPath))
+                File.Delete(downloadPath);
+
+            using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+            var downloadedBytes = 0L;
+
+            await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            await using var fileStream = new FileStream(downloadPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+            var buffer = new byte[8192];
+            int bytesRead;
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken)) > 0)
+            {
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                downloadedBytes += bytesRead;
+
+                if (totalBytes > 0)
+                {
+                    var percentage = (int)((downloadedBytes * 100) / totalBytes);
+                    progress?.Report(percentage);
+                }
+            }
+
+            progress?.Report(100);
+            return downloadPath;
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> ApplyUpdateAsync(string downloadedFilePath, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var appDir = AppContext.BaseDirectory;
+                var updateDir = Path.Combine(Path.GetTempPath(), "Jellyfin2Samsung_Update", "extracted");
+                var backupDir = Path.Combine(Path.GetTempPath(), "Jellyfin2Samsung_Update", "backup");
+
+                // Clean extraction directory
+                if (Directory.Exists(updateDir))
+                    Directory.Delete(updateDir, true);
+                Directory.CreateDirectory(updateDir);
+
+                // Extract update
+                if (downloadedFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    ZipFile.ExtractToDirectory(downloadedFilePath, updateDir);
+                }
+                else
+                {
+                    throw new NotSupportedException("Only ZIP archives are supported for automatic updates.");
+                }
+
+                // Find the actual application directory (might be in a subfolder)
+                var extractedAppDir = FindApplicationDirectory(updateDir);
+                if (extractedAppDir == null)
+                {
+                    throw new InvalidOperationException("Could not find application files in the update package.");
+                }
+
+                // Create update script
+                var scriptPath = CreateUpdateScript(extractedAppDir, appDir, backupDir);
+
+                // Launch the update script and exit
+                LaunchUpdateScript(scriptPath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to apply update: {ex}");
+                throw;
+            }
+        }
+
+        private string? FindApplicationDirectory(string extractedDir)
+        {
+            // Check if the main executable is directly in the extracted directory
+            var exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "Jellyfin2Samsung.exe"
+                : "Jellyfin2Samsung";
+
+            if (File.Exists(Path.Combine(extractedDir, exeName)))
+                return extractedDir;
+
+            // Check subdirectories
+            foreach (var subDir in Directory.GetDirectories(extractedDir))
+            {
+                if (File.Exists(Path.Combine(subDir, exeName)))
+                    return subDir;
+
+                // Check one level deeper
+                foreach (var subSubDir in Directory.GetDirectories(subDir))
+                {
+                    if (File.Exists(Path.Combine(subSubDir, exeName)))
+                        return subSubDir;
+                }
+            }
+
+            return null;
+        }
+
+        private string CreateUpdateScript(string sourceDir, string targetDir, string backupDir)
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var scriptExtension = isWindows ? ".bat" : ".sh";
+            var scriptPath = Path.Combine(Path.GetTempPath(), $"jellyfin2samsung_update{scriptExtension}");
+
+            var exeName = isWindows ? "Jellyfin2Samsung.exe" : "Jellyfin2Samsung";
+            var processId = Environment.ProcessId;
+
+            string scriptContent;
+
+            if (isWindows)
+            {
+                scriptContent = $@"@echo off
+chcp 65001 > nul
+echo Waiting for application to close...
+:waitloop
+tasklist /FI ""PID eq {processId}"" 2>NUL | find /I ""{processId}"" >NUL
+if not errorlevel 1 (
+    timeout /t 1 /nobreak > nul
+    goto waitloop
+)
+
+echo Creating backup...
+if exist ""{backupDir}"" rmdir /s /q ""{backupDir}""
+mkdir ""{backupDir}""
+xcopy ""{targetDir}\*"" ""{backupDir}\"" /E /H /Y /Q
+
+echo Installing update...
+xcopy ""{sourceDir}\*"" ""{targetDir}\"" /E /H /Y /Q
+
+echo Starting application...
+start """" ""{Path.Combine(targetDir, exeName)}""
+
+echo Cleaning up...
+timeout /t 2 /nobreak > nul
+rmdir /s /q ""{Path.Combine(Path.GetTempPath(), "Jellyfin2Samsung_Update")}""
+
+del ""%~f0""
+";
+            }
+            else
+            {
+                scriptContent = $@"#!/bin/bash
+echo ""Waiting for application to close...""
+while kill -0 {processId} 2>/dev/null; do
+    sleep 1
+done
+
+echo ""Creating backup...""
+rm -rf ""{backupDir}""
+mkdir -p ""{backupDir}""
+cp -r ""{targetDir}/""* ""{backupDir}/""
+
+echo ""Installing update...""
+cp -rf ""{sourceDir}/""* ""{targetDir}/""
+chmod +x ""{Path.Combine(targetDir, exeName)}""
+
+echo ""Starting application...""
+nohup ""{Path.Combine(targetDir, exeName)}"" &
+
+echo ""Cleaning up...""
+sleep 2
+rm -rf ""{Path.Combine(Path.GetTempPath(), "Jellyfin2Samsung_Update")}""
+rm -- ""$0""
+";
+            }
+
+            File.WriteAllText(scriptPath, scriptContent);
+
+            if (!isWindows)
+            {
+                // Make script executable on Unix
+                Process.Start("chmod", $"+x \"{scriptPath}\"")?.WaitForExit();
+            }
+
+            return scriptPath;
+        }
+
+        private void LaunchUpdateScript(string scriptPath)
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+            var startInfo = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                CreateNoWindow = !isWindows, // Show window on Windows for user feedback
+                WindowStyle = isWindows ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden
+            };
+
+            if (isWindows)
+            {
+                startInfo.FileName = "cmd.exe";
+                startInfo.Arguments = $"/c \"{scriptPath}\"";
+            }
+            else
+            {
+                startInfo.FileName = "/bin/bash";
+                startInfo.Arguments = scriptPath;
+            }
+
+            Process.Start(startInfo);
+        }
+
+        /// <inheritdoc />
+        public void OpenReleasesPage()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = ReleasesPageUrl,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to open releases page: {ex}");
+            }
+        }
+
+        private static bool IsVersionGreater(string latestVersion, string currentVersion)
+        {
+            // Clean version strings
+            var latestClean = CleanVersionString(latestVersion);
+            var currentClean = CleanVersionString(currentVersion);
+
+            if (Version.TryParse(latestClean, out var latest) &&
+                Version.TryParse(currentClean, out var current))
+            {
+                return latest > current;
+            }
+
+            // Fallback to string comparison
+            return string.Compare(latestClean, currentClean, StringComparison.OrdinalIgnoreCase) > 0;
+        }
+
+        private static string CleanVersionString(string version)
+        {
+            if (string.IsNullOrEmpty(version))
+                return "0.0.0";
+
+            // Remove 'v' prefix
+            var cleaned = version.TrimStart('v', 'V');
+
+            // Remove suffixes like -beta, -alpha, -rc
+            var dashIndex = cleaned.IndexOf('-');
+            if (dashIndex > 0)
+                cleaned = cleaned.Substring(0, dashIndex);
+
+            return cleaned;
+        }
+
+        private static string StripHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return string.Empty;
+
+            // Simple HTML stripping - replace common tags
+            var text = html
+                .Replace("<br>", "\n")
+                .Replace("<br/>", "\n")
+                .Replace("<br />", "\n")
+                .Replace("</p>", "\n")
+                .Replace("</li>", "\n")
+                .Replace("<li>", "• ");
+
+            // Remove all remaining HTML tags
+            while (text.Contains('<') && text.Contains('>'))
+            {
+                var start = text.IndexOf('<');
+                var end = text.IndexOf('>', start);
+                if (end > start)
+                    text = text.Remove(start, end - start + 1);
+                else
+                    break;
+            }
+
+            // Decode common HTML entities
+            text = text
+                .Replace("&nbsp;", " ")
+                .Replace("&amp;", "&")
+                .Replace("&lt;", "<")
+                .Replace("&gt;", ">")
+                .Replace("&quot;", "\"")
+                .Replace("&#39;", "'");
+
+            // Clean up whitespace
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            return string.Join("\n", lines.Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)));
+        }
+    }
+}

@@ -72,6 +72,8 @@ namespace Jellyfin2Samsung
             services.AddSingleton<ITizenCertificateService, TizenCertificateService>();
             services.AddSingleton<ITizenInstallerService, TizenInstallerService>();
             services.AddSingleton<IThemeService, ThemeService>();
+            services.AddSingleton<IUpdaterService, UpdaterService>();
+            services.AddSingleton<IUpdateDialogService, UpdateDialogService>();
 
             // HttpClient (configured ONCE)
             services.AddSingleton(sp =>

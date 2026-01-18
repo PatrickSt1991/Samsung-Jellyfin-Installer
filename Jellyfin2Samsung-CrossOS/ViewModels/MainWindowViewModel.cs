@@ -28,6 +28,8 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly INetworkService _networkService;
         private readonly ILocalizationService _localizationService;
         private readonly IThemeService _themeService;
+        private readonly IUpdaterService _updaterService;
+        private readonly IUpdateDialogService _updateDialogService;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
         private readonly TizenApiClient _tizenApiClient;
@@ -94,6 +96,8 @@ namespace Jellyfin2Samsung.ViewModels
             INetworkService networkService,
             ILocalizationService localizationService,
             IThemeService themeService,
+            IUpdaterService updaterService,
+            IUpdateDialogService updateDialogService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
             TizenApiClient tizenApiClient,
@@ -110,6 +114,8 @@ namespace Jellyfin2Samsung.ViewModels
             _packageHelper = packageHelper;
             _localizationService = localizationService;
             _themeService = themeService;
+            _updaterService = updaterService;
+            _updateDialogService = updateDialogService;
             _fileHelper = fileHelper;
             _settingsViewModel = settingsViewModel;
 
@@ -216,6 +222,9 @@ namespace Jellyfin2Samsung.ViewModels
         {
             try
             {
+                // Check for updates first (non-blocking, runs in background)
+                _ = CheckForUpdatesAsync();
+
                 SetStatus("CheckingTizenSdb");
 
                 string tizenSdb = await _tizenInstaller.EnsureTizenSdbAvailable();
@@ -237,6 +246,109 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 SetStatus("InitializationFailed");
                 await _dialogService.ShowErrorAsync($"{L("InitializationFailed")} {ex}");
+            }
+        }
+
+        private async Task CheckForUpdatesAsync()
+        {
+            // Skip if update check is disabled
+            if (!AppSettings.Default.CheckForUpdatesOnStartup)
+                return;
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(Constants.Updater.UpdateCheckTimeoutSeconds));
+                var updateResult = await _updaterService.CheckForUpdateAsync(cts.Token);
+
+                if (!updateResult.IsSuccess || !updateResult.IsUpdateAvailable)
+                    return;
+
+                // Skip if user previously skipped this version
+                if (updateResult.LatestVersion == AppSettings.Default.SkippedUpdateVersion)
+                    return;
+
+                // Show update dialog on UI thread
+                await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    var choice = await _updateDialogService.ShowUpdateAvailableDialogAsync(updateResult);
+
+                    switch (choice)
+                    {
+                        case UpdateDialogChoice.Manual:
+                            _updaterService.OpenReleasesPage();
+                            break;
+
+                        case UpdateDialogChoice.Automatic:
+                            await PerformAutomaticUpdateAsync(updateResult);
+                            break;
+
+                        case UpdateDialogChoice.Skip:
+                            AppSettings.Default.SkippedUpdateVersion = updateResult.LatestVersion;
+                            AppSettings.Default.Save();
+                            break;
+
+                        case UpdateDialogChoice.Cancel:
+                        default:
+                            // Do nothing
+                            break;
+                    }
+                });
+
+                // Update last check time
+                AppSettings.Default.LastUpdateCheck = DateTime.UtcNow;
+                AppSettings.Default.Save();
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout - silently ignore
+                Trace.WriteLine("Update check timed out");
+            }
+            catch (Exception ex)
+            {
+                // Don't show errors for update check failures - it's not critical
+                Trace.WriteLine($"Update check failed: {ex}");
+            }
+        }
+
+        private async Task PerformAutomaticUpdateAsync(Models.UpdateCheckResult updateResult)
+        {
+            if (string.IsNullOrEmpty(updateResult.DownloadUrl))
+            {
+                await _updateDialogService.ShowUpdateErrorAsync(L("UpdateError"));
+                return;
+            }
+
+            try
+            {
+                // Download update
+                var progress = new Progress<int>(p =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        StatusBar = $"{L("UpdateDownloading")} {p}%";
+                    });
+                });
+
+                StatusBar = L("UpdateDownloading");
+                var downloadedPath = await _updaterService.DownloadUpdateAsync(updateResult.DownloadUrl, progress);
+
+                // Apply update
+                await _updateDialogService.ShowApplyingUpdateMessageAsync();
+                var success = await _updaterService.ApplyUpdateAsync(downloadedPath);
+
+                if (success)
+                {
+                    // Exit application - update script will restart it
+                    if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Automatic update failed: {ex}");
+                await _updateDialogService.ShowUpdateErrorAsync(ex.Message);
             }
         }
 

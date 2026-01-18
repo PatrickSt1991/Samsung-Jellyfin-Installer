@@ -135,5 +135,17 @@
   "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie",
   "lblYtDlpServer": "Lokale streaming server",
   "lblValidateStream": "Valideer de server",
-  "subnetMismatch": "De apparaten bevinden zich in verschillende subnetten (netwerken)."
+  "subnetMismatch": "De apparaten bevinden zich in verschillende subnetten (netwerken).",
+  "UpdateAvailable": "Update beschikbaar",
+  "UpdateCurrentVersion": "Huidige versie:",
+  "UpdateLatestVersion": "Nieuwste versie:",
+  "UpdateReleaseNotes": "Release-opmerkingen:",
+  "UpdateManual": "Releases openen",
+  "UpdateAutomatic": "Nu bijwerken",
+  "UpdateSkip": "Deze versie overslaan",
+  "UpdateDownloading": "Update downloaden...",
+  "UpdateApplying": "Update toepassen",
+  "UpdateApplyingMessage": "De applicatie wordt opnieuw gestart om de update te voltooien.",
+  "UpdateError": "Update mislukt",
+  "UpdateCheckFailed": "Controle op updates mislukt"
 }
