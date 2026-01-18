@@ -248,6 +248,7 @@ namespace Jellyfin2Samsung.Services
 
                 // Step 3: Handle certificate selection/generation
                 var certificateResult = await HandleCertificateAsync(
+                    tvIpAddress,
                     deviceInfo,
                     packageUrl,
                     progress,
@@ -382,6 +383,7 @@ namespace Jellyfin2Samsung.Services
         #region Certificate Handling
 
         private async Task<CertificateResult> HandleCertificateAsync(
+            string tvIpAddress,
             DeviceInfo deviceInfo,
             string packageUrl,
             ProgressCallback? progress,
@@ -483,7 +485,7 @@ namespace Jellyfin2Samsung.Services
                     ? Constants.Defaults.HomeDeveloperPath
                     : deviceInfo.SdkToolPath;
 
-                await AllowPermitInstall(tvIpAddress: deviceInfo.Duid, deviceProfilePath, targetPath);
+                await AllowPermitInstall(tvIpAddress, deviceProfilePath, targetPath);
             }
 
             return new CertificateResult
