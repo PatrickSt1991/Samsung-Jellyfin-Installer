@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Jellyfin2Samsung.ViewModels;

@@ -27,7 +27,7 @@ namespace Jellyfin2Samsung.Services
         private readonly IDialogService _dialogService;
 
         public TizenCertificateService(
-            HttpClient httpClient, 
+            HttpClient httpClient,
             IDialogService dialogService)
         {
             _httpClient = httpClient;
@@ -146,7 +146,7 @@ namespace Jellyfin2Samsung.Services
 
         // Simplified Http Post for Author CSR
         private async Task<byte[]> PostAuthorCsrAsync(byte[] csrData, string accessToken, string userId)
-        {       
+        {
             var request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.AuthorEndpoint_V3);
             var content = new MultipartFormDataContent
             {
@@ -198,7 +198,7 @@ namespace Jellyfin2Samsung.Services
             };
 
             var v3Request = new HttpRequestMessage(HttpMethod.Post, AppSettings.Default.DistributorsEndpoint_V3);
-            v3Request.Content = v3Content; 
+            v3Request.Content = v3Content;
             var v3Response = await _httpClient.SendAsync(v3Request);
 
             if (!v3Response.IsSuccessStatusCode)

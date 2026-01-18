@@ -1,14 +1,13 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.Input;
+using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Helpers.Core;
+using Jellyfin2Samsung.Models;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Jellyfin2Samsung.Helpers;
-using Jellyfin2Samsung.Helpers.Core;
-using Jellyfin2Samsung.Models;
 
 namespace Jellyfin2Samsung.ViewModels
 {

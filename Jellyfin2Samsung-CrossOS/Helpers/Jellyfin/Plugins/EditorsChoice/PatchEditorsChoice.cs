@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.EditorsChoice
+﻿namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins.EditorsChoice
 {
     public class PatchEditorsChoice
     {

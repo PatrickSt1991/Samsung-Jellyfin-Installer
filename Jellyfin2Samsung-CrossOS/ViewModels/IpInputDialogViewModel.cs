@@ -31,6 +31,6 @@ namespace Jellyfin2Samsung.ViewModels
 
         private void OnOk() => _close(true);
 
-        private void OnCancel() => _close(false);        
+        private void OnCancel() => _close(false);
     }
 }

@@ -1,6 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jellyfin2Samsung.Interfaces;
 using System;

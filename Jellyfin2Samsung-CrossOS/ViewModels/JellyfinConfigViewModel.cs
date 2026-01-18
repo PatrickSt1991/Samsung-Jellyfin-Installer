@@ -43,7 +43,7 @@ namespace Jellyfin2Samsung.ViewModels
 
         [ObservableProperty]
         private JellyTheme? selectedJellyTheme;
-        
+
         [ObservableProperty]
         private Bitmap? selectedJellyThemePreview;
 

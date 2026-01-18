@@ -31,25 +31,25 @@ namespace Jellyfin2Samsung.Helpers.Tizen.Certificate
             if (!Directory.Exists(certificateFolders))
                 return certificates;
 
-            
-                var p12Files = Directory.GetFiles(
-                    certificateFolders,
-                    "author.p12",
-                    SearchOption.AllDirectories);
 
-                foreach(var p12Path in p12Files)
-                {
-                    var directory = Path.GetDirectoryName(p12Path);
-                    if (directory == null)
-                        continue;
+            var p12Files = Directory.GetFiles(
+                certificateFolders,
+                "author.p12",
+                SearchOption.AllDirectories);
 
-                    var passwordPath = Path.Combine(directory, "password.txt");
-                    if (!File.Exists(passwordPath))
-                        continue;
+            foreach (var p12Path in p12Files)
+            {
+                var directory = Path.GetDirectoryName(p12Path);
+                if (directory == null)
+                    continue;
 
-                    var password = File.ReadAllText(passwordPath).Trim();
-                    if (string.IsNullOrWhiteSpace(password))
-                        continue;
+                var passwordPath = Path.Combine(directory, "password.txt");
+                if (!File.Exists(passwordPath))
+                    continue;
+
+                var password = File.ReadAllText(passwordPath).Trim();
+                if (string.IsNullOrWhiteSpace(password))
+                    continue;
                 try
                 {
                     var cert = new X509Certificate2(

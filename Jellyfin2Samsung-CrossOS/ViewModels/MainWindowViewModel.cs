@@ -78,7 +78,7 @@ namespace Jellyfin2Samsung.ViewModels
         private string L(string key) => _localizationService.GetString(key);
 
         public bool EnableDevicesInput => !IsLoadingDevices;
-        public string LblRelease =>  _localizationService.GetString("lblRelease");
+        public string LblRelease => _localizationService.GetString("lblRelease");
         public string LblVersion => _localizationService.GetString("lblVersion");
         public string LblSelectTv => _localizationService.GetString("lblSelectTv");
         public string DownloadAndInstall => _localizationService.GetString("DownloadAndInstall");
@@ -225,7 +225,7 @@ namespace Jellyfin2Samsung.ViewModels
                     SetStatus("FailedTizenSdb");
                     return;
                 }
-                
+
                 ProcessHelper.KillSdbServers();
 
                 await LoadReleasesAsync();
@@ -328,7 +328,7 @@ namespace Jellyfin2Samsung.ViewModels
                             _samsungLoginCts = null;
                         }
 
-                        if(!AppSettings.Default.KeepWGTFile)
+                        if (!AppSettings.Default.KeepWGTFile)
                             _packageHelper.CleanupDownloadedPackage(downloadPath);
                     }
                 }
@@ -552,8 +552,8 @@ namespace Jellyfin2Samsung.ViewModels
                 return;
 
             var dialog = new IpInputDialog();
-            
-                
+
+
             string? ip = await dialog.ShowDialogAsync(desktop.MainWindow);
 
             if (string.IsNullOrWhiteSpace(ip))
