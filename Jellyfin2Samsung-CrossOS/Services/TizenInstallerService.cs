@@ -156,23 +156,34 @@ namespace Jellyfin2Samsung.Services
 
         public async Task<string> DownloadTizenSdbAsync(string version = null)
         {
-            var json = await _httpClient.GetStringAsync(AppSettings.Default.TizenSdb);
-            var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json, JsonSerializerOptionsProvider.Default);
-            var firstRelease = releases?.FirstOrDefault();
+            try
+            {
+                var json = await _httpClient.GetStringAsync(AppSettings.Default.TizenSdb);
+                var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json, JsonSerializerOptionsProvider.Default);
+                var firstRelease = releases?.FirstOrDefault();
 
-            if (firstRelease == null)
-                throw new InvalidOperationException("No releases found");
+                if (firstRelease == null)
+                    throw new InvalidOperationException("No releases found");
 
-            string nameMatch = PlatformService.GetAssetPlatformIdentifier();
+                string nameMatch = PlatformService.GetAssetPlatformIdentifier();
 
-            var matchedAsset = firstRelease.Assets.FirstOrDefault(a =>
-                !string.IsNullOrEmpty(a.FileName) &&
-                a.FileName.Contains(nameMatch, StringComparison.OrdinalIgnoreCase));
+                var matchedAsset = firstRelease.Assets.FirstOrDefault(a =>
+                    !string.IsNullOrEmpty(a.FileName) &&
+                    a.FileName.Contains(nameMatch, StringComparison.OrdinalIgnoreCase));
 
-            if (matchedAsset == null)
-                throw new InvalidOperationException($"No matching asset found for {nameMatch}");
+                if (matchedAsset == null)
+                    throw new InvalidOperationException($"No matching asset found for {nameMatch}");
 
-            return await DownloadPackageAsync(matchedAsset.DownloadUrl);
+                return await DownloadPackageAsync(matchedAsset.DownloadUrl);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new TimeoutException(
+                    "GitHub rate limit reached while checking for Tizen SDB.\n\n" +
+                    "Please try again later.",
+                    ex
+                );
+            }
         }
 
         public async Task<string> DownloadPackageAsync(string downloadUrl)

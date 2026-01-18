@@ -134,5 +134,6 @@
   "lblRefreshUsers": "Kullanıcıları Yenile",
   "lblUserSelectionHint": "Seçilen kullanıcılar kurulum sırasında yapılandırılacak",
   "lblYtDlpServer": "Yerel yayın sunucusu",
-  "lblValidateStream": "Sunucuyu Doğrula"
+  "lblValidateStream": "Sunucuyu Doğrula",
+  "subnetMismatch": "Cihazlar farklı alt ağlarda (ağda) bulunmaktadır."
 }

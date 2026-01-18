@@ -134,5 +134,6 @@
   "lblRefreshUsers": "Opdater brugere",
   "lblUserSelectionHint": "Valgte brugere konfigureres under installationen",
   "lblYtDlpServer": "Lokal streamingserver",
-  "lblValidateStream": "Valider server"
+  "lblValidateStream": "Valider server",
+  "subnetMismatch": "Enhederne er i forskellige undernetværk (netværk)"
 }

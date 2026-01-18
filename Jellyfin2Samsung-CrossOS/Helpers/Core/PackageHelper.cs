@@ -47,6 +47,20 @@ namespace Jellyfin2Samsung.Helpers.Core
 
             bool ipMismatch = !localIps.Contains(selectedDevice.DeveloperIP) && !string.IsNullOrEmpty(selectedDevice.DeveloperIP);
 
+            if (!string.IsNullOrEmpty(AppSettings.Default.LocalIp) 
+                && !string.IsNullOrEmpty(selectedDevice.DeveloperIP) 
+                && _networkService.IsDifferentSubnet(AppSettings.Default.LocalIp, selectedDevice.DeveloperIP))
+            {
+                bool continueExecution =
+                    await _dialogService.ShowConfirmationAsync(
+                        "Subnet Mismatch",
+                        "subnetMismatch".Localized(),
+                        "keyContinue".Localized(),
+                        "keyStop".Localized());
+
+                if (!continueExecution)
+                    return false;
+            }
 
             if (string.IsNullOrEmpty(packagePath) || !File.Exists(packagePath))
             {

@@ -134,5 +134,6 @@
   "lblRefreshUsers": "Gebruikers vernieuwen",
   "lblUserSelectionHint": "Geselecteerde gebruikers worden geconfigureerd tijdens de installatie",
   "lblYtDlpServer": "Lokale streaming server",
-  "lblValidateStream": "Valideer de server"
+  "lblValidateStream": "Valideer de server",
+  "subnetMismatch": "De apparaten bevinden zich in verschillende subnetten (netwerken)."
 }

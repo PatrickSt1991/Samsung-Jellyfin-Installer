@@ -275,6 +275,20 @@ namespace Jellyfin2Samsung.Services
                 return null;
             });
         }
+        public bool IsDifferentSubnet(string ip1, string ip2)
+        {
+            if (!IPAddress.TryParse(ip1, out var a) ||
+                !IPAddress.TryParse(ip2, out var b))
+                return false; // or true, depending on how strict you want to be
+
+            var aBytes = a.GetAddressBytes();
+            var bBytes = b.GetAddressBytes();
+
+            // /24 subnet → first 3 octets must match
+            return aBytes[0] != bBytes[0]
+                || aBytes[1] != bBytes[1]
+                || aBytes[2] != bBytes[2];
+        }
 
 
     }

@@ -134,5 +134,6 @@
   "lblRefreshUsers": "Refresh Users",
   "lblUserSelectionHint": "Selected users will be configured during installation",
   "lblYtDlpServer": "Local streaming server",
-  "lblValidateStream":  "Validate Server"
+  "lblValidateStream": "Validate Server",
+  "subnetMismatch": "Devices are in different subnets (network)"
 }
