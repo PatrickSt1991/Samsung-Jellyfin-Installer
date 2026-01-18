@@ -43,27 +43,20 @@ jobs:
           echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
 
       # --------------------------------------------------
-      # Decide whether to skip beta release (GATE)
+      # Decide whether to skip beta release (ONLY if stable exists)
       # --------------------------------------------------
       - name: Decide whether to skip beta release
         shell: bash
         run: |
           SKIP=false
 
-          # Check latest stable
           STABLE_TAG=$(git tag \
             | grep -E '^v[0-9]+(\.[0-9]+){1,3}$' \
             | sort -V \
             | tail -n 1)
 
           if [ -n "$STABLE_TAG" ] && [ "${STABLE_TAG#v}" = "$VERSION" ]; then
-            echo "ℹ️ Stable version $STABLE_TAG already exists"
-            SKIP=true
-          fi
-
-          # Check existing beta
-          if git tag --list | grep -qx "$VERSION_TAG"; then
-            echo "ℹ️ Beta version $VERSION_TAG already exists"
+            echo "ℹ️ Stable version $STABLE_TAG already exists — beta disabled"
             SKIP=true
           fi
 
@@ -133,7 +126,7 @@ jobs:
           dotnet-version: 8.0.x
 
       # --------------------------------------------------
-      # Publish
+      # Publish (Linux runner, cross-compile)
       # --------------------------------------------------
       - name: Publish Windows
         if: env.SKIP_RELEASE != 'true'
@@ -166,7 +159,7 @@ jobs:
             -o publish/linux-x64
 
       # --------------------------------------------------
-      # Package artifacts
+      # Package artifacts (clean layout)
       # --------------------------------------------------
       - name: Package artifacts
         if: env.SKIP_RELEASE != 'true'
@@ -183,14 +176,15 @@ jobs:
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
 
       # --------------------------------------------------
-      # Create GitHub Pre-Release
+      # Create or Update GitHub Pre-Release (mutable beta)
       # --------------------------------------------------
-      - name: Create GitHub Pre-Release
+      - name: Create or Update GitHub Pre-Release
         if: env.SKIP_RELEASE != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION_TAG }}
           name: ${{ env.VERSION_TAG }}
           prerelease: true
+          replace_existing_artifacts: true
           files: dist/*
           body_path: RELEASE_NOTES.md
