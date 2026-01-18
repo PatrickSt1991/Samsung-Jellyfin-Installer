@@ -1,0 +1,157 @@
+name: Beta Pre-Release
+
+on:
+  push:
+    branches: [beta]
+
+permissions:
+  contents: write
+
+env:
+  PRODUCT_NAME: Jellyfin2Samsung
+  PROJECT_DIR: Jellyfin2Samsung-CrossOS
+  CONFIGURATION: Release
+
+jobs:
+  beta-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------------------------------
+      # Checkout (full history needed for changelog & tags)
+      # --------------------------------------------------
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --------------------------------------------------
+      # Extract version from AppSettings.cs (pure Linux tools)
+      # --------------------------------------------------
+      - name: Extract version
+        shell: bash
+        run: |
+          VERSION=$(curl -fsSL \
+            https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/refs/heads/beta/Jellyfin2Samsung-CrossOS/Helpers/AppSettings.cs \
+            | grep -oE 'v[0-9]+(\.[0-9]+){1,3}')
+
+          if [ -z "$VERSION" ]; then
+            echo "❌ Failed to extract version"
+            exit 1
+          fi
+
+          echo "VERSION=${VERSION#v}" >> $GITHUB_ENV
+          echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
+
+      # --------------------------------------------------
+      # Skip if this beta version already exists
+      # --------------------------------------------------
+      - name: Skip if version already released
+        shell: bash
+        run: |
+          if git tag --list | grep -q "^${VERSION_TAG}$"; then
+            echo "ℹ️ ${VERSION_TAG} already exists — skipping"
+            exit 0
+          fi
+
+      # --------------------------------------------------
+      # Generate changelog from commits
+      # --------------------------------------------------
+      - name: Generate changelog
+        shell: bash
+        run: |
+          LAST_TAG=$(git tag --sort=-creatordate | grep beta | head -n 1)
+
+          if [ -z "$LAST_TAG" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="$LAST_TAG..HEAD"
+          fi
+
+          {
+            echo "## ✅ What's New & Improved"
+            git log $RANGE --pretty=format:"- %s"
+          } > CHANGELOG.md
+
+      # --------------------------------------------------
+      # Setup .NET SDK
+      # --------------------------------------------------
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # --------------------------------------------------
+      # Publish (Linux runner, cross-compile)
+      # --------------------------------------------------
+      - name: Publish Windows
+        run: |
+          dotnet publish \
+            -c $CONFIGURATION \
+            -r win-x64 \
+            -p:SelfContained=true \
+            -p:UseAppHost=true \
+            -o publish/win-x64
+
+      - name: Publish macOS
+        run: |
+          dotnet publish \
+            -c $CONFIGURATION \
+            -r osx-x64 \
+            -p:SelfContained=true \
+            -p:UseAppHost=true \
+            -o publish/osx-x64
+
+      - name: Publish Linux
+        run: |
+          dotnet publish \
+            -c $CONFIGURATION \
+            -r linux-x64 \
+            -p:SelfContained=true \
+            -p:UseAppHost=true \
+            -o publish/linux-x64
+
+      # --------------------------------------------------
+      # Package artifacts (tar / zip — Linux native)
+      # --------------------------------------------------
+      - name: Package artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+
+          zip -r "dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" publish/win-x64
+          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz"   -C publish/osx-x64 .
+          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
+
+      # --------------------------------------------------
+      # Create GitHub Pre-Release
+      # --------------------------------------------------
+      - name: Create GitHub Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: ${{ env.VERSION_TAG }}
+          prerelease: true
+          files: dist/*
+          body: |
+            ## 📦 [${{ env.VERSION_TAG }}] – $(date +'%Y-%m-%d')
+
+            $(cat CHANGELOG.md)
+
+            ---
+
+            ⚠️ **Disclaimer — Platform Support Status**
+
+            | Platform | Status | Notes |
+            |----------|--------|-------|
+            | 🍎 macOS | ⚠️ Beta | CI-built |
+            | 🐧 Linux | ⚠️ Beta | CI-built |
+            | 🪟 Windows | ⚠️ Beta | CI-built |
+
+            ---
+
+            ### 🛡️ Security Notice  
+            Antivirus warnings may occur and are likely **false positives**.
+
+            ---
+
+            ### 🙌 Thanks for testing **Samsung Jellyfin Installer (Beta)**  
+            💬 Feedback welcome via GitHub issues & discussions.
