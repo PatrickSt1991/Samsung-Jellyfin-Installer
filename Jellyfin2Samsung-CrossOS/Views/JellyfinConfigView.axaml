@@ -779,7 +779,7 @@
 
 									<StackPanel Spacing="8" HorizontalAlignment="Center">
 										<TextBlock
-											Text="{Binding SelectedJellyTheme.Name}"
+											Text="{Binding SelectedJellyTheme.Name, FallbackValue=''}"
 											FontSize="14"
 											FontWeight="SemiBold"
 											HorizontalAlignment="Center"
