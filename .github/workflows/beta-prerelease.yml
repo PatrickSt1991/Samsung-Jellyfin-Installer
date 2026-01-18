@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       # --------------------------------------------------
-      # Extract version from AppSettings.cs (pure Linux tools)
+      # Extract version from AppSettings.cs
       # --------------------------------------------------
       - name: Extract version
         shell: bash
@@ -43,9 +43,28 @@ jobs:
           echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
 
       # --------------------------------------------------
-      # Skip if this beta version already exists
+      # Skip if stable version already exists
       # --------------------------------------------------
-      - name: Skip if version already released
+      - name: Skip if stable version already exists
+        shell: bash
+        run: |
+          STABLE_TAG=$(git tag \
+            | grep -E '^v[0-9]+(\.[0-9]+){1,3}$' \
+            | sort -V \
+            | tail -n 1)
+
+          if [ -n "$STABLE_TAG" ]; then
+            STABLE_VERSION="${STABLE_TAG#v}"
+            if [ "$STABLE_VERSION" = "$VERSION" ]; then
+              echo "ℹ️ Stable version $STABLE_TAG already exists — skipping beta"
+              exit 0
+            fi
+          fi
+
+      # --------------------------------------------------
+      # Skip if beta version already exists
+      # --------------------------------------------------
+      - name: Skip if beta already released
         shell: bash
         run: |
           if git tag --list | grep -q "^${VERSION_TAG}$"; then
@@ -54,7 +73,7 @@ jobs:
           fi
 
       # --------------------------------------------------
-      # Generate changelog from commits
+      # Generate changelog
       # --------------------------------------------------
       - name: Generate changelog
         shell: bash
@@ -71,6 +90,40 @@ jobs:
             echo "## ✅ What's New & Improved"
             git log $RANGE --pretty=format:"- %s"
           } > CHANGELOG.md
+
+      # --------------------------------------------------
+      # Prepare release notes (date + changelog)
+      # --------------------------------------------------
+      - name: Prepare release notes
+        shell: bash
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+
+          {
+            echo "## 📦 [${VERSION_TAG}] – ${DATE}"
+            echo ""
+            cat CHANGELOG.md
+            echo ""
+            echo "---"
+            echo ""
+            echo "⚠️ **Disclaimer — Platform Support Status**"
+            echo ""
+            echo "| Platform | Status | Notes |"
+            echo "|----------|--------|-------|"
+            echo "| 🍎 macOS | ⚠️ Beta | CI-built |"
+            echo "| 🐧 Linux | ⚠️ Beta | CI-built |"
+            echo "| 🪟 Windows | ⚠️ Beta | CI-built |"
+            echo ""
+            echo "---"
+            echo ""
+            echo "### 🛡️ Security Notice"
+            echo "Antivirus warnings may occur and are likely **false positives**."
+            echo ""
+            echo "---"
+            echo ""
+            echo "### 🙌 Thanks for testing **Samsung Jellyfin Installer (Beta)**"
+            echo "💬 Feedback welcome via GitHub issues & discussions."
+          } > RELEASE_NOTES.md
 
       # --------------------------------------------------
       # Setup .NET SDK
@@ -110,14 +163,18 @@ jobs:
             -o publish/linux-x64
 
       # --------------------------------------------------
-      # Package artifacts (tar / zip — Linux native)
+      # Package artifacts (clean layout)
       # --------------------------------------------------
       - name: Package artifacts
         shell: bash
         run: |
           mkdir -p dist
 
-          zip -r "dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" publish/win-x64
+          (
+            cd publish/win-x64
+            zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .
+          )
+
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz"   -C publish/osx-x64 .
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
 
@@ -131,27 +188,4 @@ jobs:
           name: ${{ env.VERSION_TAG }}
           prerelease: true
           files: dist/*
-          body: |
-            ## 📦 [${{ env.VERSION_TAG }}] – $(date +'%Y-%m-%d')
-
-            $(cat CHANGELOG.md)
-
-            ---
-
-            ⚠️ **Disclaimer — Platform Support Status**
-
-            | Platform | Status | Notes |
-            |----------|--------|-------|
-            | 🍎 macOS | ⚠️ Beta | CI-built |
-            | 🐧 Linux | ⚠️ Beta | CI-built |
-            | 🪟 Windows | ⚠️ Beta | CI-built |
-
-            ---
-
-            ### 🛡️ Security Notice  
-            Antivirus warnings may occur and are likely **false positives**.
-
-            ---
-
-            ### 🙌 Thanks for testing **Samsung Jellyfin Installer (Beta)**  
-            💬 Feedback welcome via GitHub issues & discussions.
+          body_path: RELEASE_NOTES.md
