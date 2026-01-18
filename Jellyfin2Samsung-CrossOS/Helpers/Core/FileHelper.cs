@@ -1,6 +1,5 @@
 ﻿using Avalonia.Platform.Storage;
 using Jellyfin2Samsung.Models;
-using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +23,7 @@ namespace Jellyfin2Samsung.Helpers.Core
             {
                 new("WGT Files")
                 {
-                    Patterns = wgtItem 
+                    Patterns = wgtItem
                 },
                 new("TPK Files")
                 {
@@ -32,7 +31,7 @@ namespace Jellyfin2Samsung.Helpers.Core
                 },
                 new("All Supported Files")
                 {
-                    Patterns = allItem 
+                    Patterns = allItem
                 }
             };
 

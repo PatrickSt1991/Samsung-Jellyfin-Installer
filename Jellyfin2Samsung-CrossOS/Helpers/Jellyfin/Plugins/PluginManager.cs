@@ -130,7 +130,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
                 return null;
             }
         }
-        
+
         public async Task<byte[]?> DownloadBytesAsync(string url)
         {
             try

@@ -1,5 +1,4 @@
 ﻿using Jellyfin2Samsung.Helpers.Core;
-using Jellyfin2Samsung.Helpers.Jellyfin.Plugins;
 using Jellyfin2Samsung.Interfaces;
 using System;
 using System.Collections.Generic;

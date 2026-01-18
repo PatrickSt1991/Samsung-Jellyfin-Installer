@@ -1,14 +1,13 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Avalonia.Markup.Xaml.Styling;
-using System.Threading.Tasks;
-using System;
-using Jellyfin2Samsung.Interfaces;
-using Jellyfin2Samsung;
 using Jellyfin2Samsung.Helpers;
+using Jellyfin2Samsung.Interfaces;
+using System;
+using System.Threading.Tasks;
 
 namespace Jellyfin2Samsung.Services
 {

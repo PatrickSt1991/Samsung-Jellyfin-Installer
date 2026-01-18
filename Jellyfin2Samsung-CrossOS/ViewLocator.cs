@@ -1,7 +1,7 @@
-using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Jellyfin2Samsung.ViewModels;
+using System;
 
 namespace Jellyfin2Samsung
 {

@@ -5,7 +5,6 @@ using Jellyfin2Samsung.Models;
 using Jellyfin2Samsung.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -47,8 +46,8 @@ namespace Jellyfin2Samsung.Helpers.Core
 
             bool ipMismatch = !localIps.Contains(selectedDevice.DeveloperIP) && !string.IsNullOrEmpty(selectedDevice.DeveloperIP);
 
-            if (!string.IsNullOrEmpty(AppSettings.Default.LocalIp) 
-                && !string.IsNullOrEmpty(selectedDevice.DeveloperIP) 
+            if (!string.IsNullOrEmpty(AppSettings.Default.LocalIp)
+                && !string.IsNullOrEmpty(selectedDevice.DeveloperIP)
                 && _networkService.IsDifferentSubnet(AppSettings.Default.LocalIp, selectedDevice.DeveloperIP))
             {
                 bool continueExecution =
@@ -95,7 +94,7 @@ namespace Jellyfin2Samsung.Helpers.Core
 
             if (ipMismatch)
             {
-                bool continueExecution = await _dialogService.ShowConfirmationAsync("IP Mismatch","DeveloperIPMismatch".Localized(), "keyContinue".Localized(), "keyStop".Localized());
+                bool continueExecution = await _dialogService.ShowConfirmationAsync("IP Mismatch", "DeveloperIPMismatch".Localized(), "keyContinue".Localized(), "keyStop".Localized());
                 if (!continueExecution)
                     return false;
             }

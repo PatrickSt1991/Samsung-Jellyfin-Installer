@@ -85,7 +85,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin.Plugins
                 UseBabel = true
             }
         ];
-        public static readonly List<ServerAssetRule> ServerAssetRules = 
+        public static readonly List<ServerAssetRule> ServerAssetRules =
         [
             new ServerAssetRule(
                 pluginName: "GenericPluginAsset",

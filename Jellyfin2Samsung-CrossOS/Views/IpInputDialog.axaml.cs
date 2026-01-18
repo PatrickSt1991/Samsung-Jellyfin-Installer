@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Jellyfin2Samsung;
 using Jellyfin2Samsung.Interfaces;
 using Jellyfin2Samsung.ViewModels;
 using Microsoft.Extensions.DependencyInjection;

@@ -21,7 +21,7 @@ namespace Jellyfin2Samsung.Helpers.Tizen.Devices
             _tizenApiClient = tizenApiClient;
         }
 
-        
+
 
         public async Task<List<NetworkDevice>> ScanForDevicesAsync(CancellationToken cancellationToken = default, bool virtualScan = false)
         {
