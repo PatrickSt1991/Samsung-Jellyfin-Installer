@@ -136,22 +136,26 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Download icon
+      - name: Download SVG icon
         shell: bash
         run: |
           curl -fsSL \
-            https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/beta/jellyfin.ico \
-            -o jellyfin.ico
+            https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/master/jellyfin-tizen-logo.svg \
+            -o jellyfin.svg
 
-      - name: Convert ICO to ICNS
+      - name: Convert SVG to ICNS
+        shell: bash
         run: |
+          magick jellyfin.svg -background none -resize 1024x1024 jellyfin.png
+
           mkdir icon.iconset
-          sips -z 16 16     jellyfin.ico --out icon.iconset/icon_16x16.png
-          sips -z 32 32     jellyfin.ico --out icon.iconset/icon_16x16@2x.png
-          sips -z 128 128   jellyfin.ico --out icon.iconset/icon_128x128.png
-          sips -z 256 256   jellyfin.ico --out icon.iconset/icon_128x128@2x.png
-          sips -z 512 512   jellyfin.ico --out icon.iconset/icon_512x512.png
-          sips -z 1024 1024 jellyfin.ico --out icon.iconset/icon_512x512@2x.png
+          sips -z 16 16     jellyfin.png --out icon.iconset/icon_16x16.png
+          sips -z 32 32     jellyfin.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 128 128   jellyfin.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256   jellyfin.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 512 512   jellyfin.png --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 jellyfin.png --out icon.iconset/icon_512x512@2x.png
+
           iconutil -c icns icon.iconset -o jellyfin.icns
 
       - name: Publish macOS binary
