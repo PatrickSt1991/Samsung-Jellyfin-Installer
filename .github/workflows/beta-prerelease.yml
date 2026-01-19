@@ -137,9 +137,11 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Download icon
-        run: curl -fsSL \
-          https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/beta/jellyfin.ico \
-          -o jellyfin.ico
+        shell: bash
+        run: |
+          curl -fsSL \
+            https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/beta/jellyfin.ico \
+            -o jellyfin.ico
 
       - name: Convert ICO to ICNS
         run: |
