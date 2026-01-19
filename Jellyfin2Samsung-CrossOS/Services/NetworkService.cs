@@ -246,34 +246,6 @@ namespace Jellyfin2Samsung.Services
             Array.Reverse(parts);
             return string.Join(".", parts);
         }
-        public async Task<string?> GetPrimaryOutboundIPAddressAsync()
-        {
-            return await Task.Run(() =>
-            {
-                foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
-                {
-                    var ipProps = ni.GetIPProperties();
-
-                    var gateway = ipProps.GatewayAddresses
-                        .FirstOrDefault(g =>
-                            g.Address.AddressFamily == AddressFamily.InterNetwork &&
-                            !IPAddress.IsLoopback(g.Address));
-
-                    if (gateway != null)
-                    {
-                        var ipv4 = ipProps.UnicastAddresses
-                            .FirstOrDefault(ua =>
-                                ua.Address.AddressFamily == AddressFamily.InterNetwork &&
-                                !IPAddress.IsLoopback(ua.Address));
-
-                        if (ipv4 != null)
-                            return ipv4.Address.ToString();
-                    }
-                }
-
-                return null;
-            });
-        }
         public bool IsDifferentSubnet(string ip1, string ip2)
         {
             if (!IPAddress.TryParse(ip1, out var a) ||
@@ -288,7 +260,35 @@ namespace Jellyfin2Samsung.Services
                 || aBytes[1] != bBytes[1]
                 || aBytes[2] != bBytes[2];
         }
+        public Task<IReadOnlyList<NetworkInterfaceOption>> GetNetworkInterfaceOptionsAsync()
+        {
+            return Task.Run(() =>
+            {
+                var result = new List<NetworkInterfaceOption>();
 
+                foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus != OperationalStatus.Up)
+                        continue;
 
+                    foreach (var ua in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ua.Address.AddressFamily != AddressFamily.InterNetwork)
+                            continue;
+
+                        if (IPAddress.IsLoopback(ua.Address))
+                            continue;
+
+                        result.Add(new NetworkInterfaceOption
+                        {
+                            Name = ni.Name,
+                            IpAddress = ua.Address.ToString()
+                        });
+                    }
+                }
+
+                return (IReadOnlyList<NetworkInterfaceOption>)result;
+            });
+        }
     }
 }

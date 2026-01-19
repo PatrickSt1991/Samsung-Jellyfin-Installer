@@ -15,7 +15,7 @@ namespace Jellyfin2Samsung.Interfaces
         string GetLocalIPAddress();
         string InvertIPAddress(string ipAddress);
         Task<string?> GetManufacturerFromIp(string ipAddress);
-        Task<string?> GetPrimaryOutboundIPAddressAsync();
         bool IsDifferentSubnet(string ip1, string ip2);
+        Task<IReadOnlyList<NetworkInterfaceOption>> GetNetworkInterfaceOptionsAsync();
     }
 }

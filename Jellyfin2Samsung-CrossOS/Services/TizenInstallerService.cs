@@ -259,7 +259,8 @@ namespace Jellyfin2Samsung.Services
                     return certificateResult.InstallResult;
 
                 // Step 4: Apply Jellyfin configuration if needed
-                await ApplyConfigurationAsync(packageUrl, progress);
+                if (packageUrl.Contains(Constants.AppIdentifiers.JellyfinAppName, StringComparison.OrdinalIgnoreCase))
+                    await ApplyConfigurationAsync(packageUrl, progress);
 
                 // Step 5: Resign package if needed
                 if (certificateResult.RequiresResign)
@@ -506,9 +507,6 @@ namespace Jellyfin2Samsung.Services
         {
             // Only apply configuration if JellyfinIP is set and this is a Jellyfin package
             if (string.IsNullOrEmpty(_appSettings.JellyfinIP))
-                return;
-
-            if (!packageUrl.Contains(Constants.AppIdentifiers.JellyfinAppName, StringComparison.OrdinalIgnoreCase))
                 return;
 
             // Apply server settings via JS injection

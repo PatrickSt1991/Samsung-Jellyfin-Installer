@@ -133,11 +133,15 @@
 											   Text="{Binding LblLocalIP}"
 											   Classes="label"
 											   VerticalAlignment="Center"/>
-									<TextBlock Grid.Column="1"
-											   Text="{Binding LocalIP, Mode=TwoWay}"
-											   Classes="subtitle"
-											   VerticalAlignment="Center"/>
+
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding NetworkInterfaces}"
+											  SelectedItem="{Binding SelectedNetworkInterface, Mode=TwoWay}"
+											  DisplayMemberBinding="{Binding DisplayText}"
+											  HorizontalAlignment="Stretch"/>
 								</Grid>
+
 							</StackPanel>
 
 							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
