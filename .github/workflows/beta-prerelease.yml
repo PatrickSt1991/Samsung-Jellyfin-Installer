@@ -16,17 +16,16 @@ jobs:
   beta-release:
     runs-on: ubuntu-latest
 
+    outputs:
+      SKIP_RELEASE: ${{ env.SKIP_RELEASE }}
+      VERSION: ${{ env.VERSION }}
+      VERSION_TAG: ${{ env.VERSION_TAG }}
+
     steps:
-      # --------------------------------------------------
-      # Checkout (full history needed for changelog & tags)
-      # --------------------------------------------------
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # --------------------------------------------------
-      # Extract version from AppSettings.cs
-      # --------------------------------------------------
       - name: Extract version
         shell: bash
         run: |
@@ -42,9 +41,6 @@ jobs:
           echo "VERSION=${VERSION#v}" >> $GITHUB_ENV
           echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
 
-      # --------------------------------------------------
-      # Decide whether to skip beta release (ONLY if stable exists)
-      # --------------------------------------------------
       - name: Decide whether to skip beta release
         shell: bash
         run: |
@@ -62,35 +58,21 @@ jobs:
 
           echo "SKIP_RELEASE=$SKIP" >> "$GITHUB_ENV"
 
-      # --------------------------------------------------
-      # Generate changelog
-      # --------------------------------------------------
       - name: Generate changelog
         if: env.SKIP_RELEASE != 'true'
-        shell: bash
         run: |
           LAST_TAG=$(git tag --sort=-creatordate | grep beta | head -n 1)
-
-          if [ -z "$LAST_TAG" ]; then
-            RANGE="HEAD"
-          else
-            RANGE="$LAST_TAG..HEAD"
-          fi
+          RANGE="${LAST_TAG:+$LAST_TAG..HEAD}"
 
           {
             echo "## ✅ What's New & Improved"
-            git log $RANGE --pretty=format:"- %s"
+            git log ${RANGE:-HEAD} --pretty=format:"- %s"
           } > CHANGELOG.md
 
-      # --------------------------------------------------
-      # Prepare release notes
-      # --------------------------------------------------
       - name: Prepare release notes
         if: env.SKIP_RELEASE != 'true'
-        shell: bash
         run: |
           DATE=$(date +'%Y-%m-%d')
-
           {
             echo "## 📦 [${VERSION_TAG}] – ${DATE}"
             echo ""
@@ -98,86 +80,39 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "⚠️ **Disclaimer — Platform Support Status**"
-            echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
-            echo "| 🍎 macOS | ⚠️ Beta | CI-built |"
+            echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Native app |"
+            echo "| 🍎 macOS (CLI) | ⚠️ Beta | Tarball |"
             echo "| 🐧 Linux | ⚠️ Beta | CI-built |"
             echo "| 🪟 Windows | ⚠️ Beta | CI-built |"
-            echo ""
-            echo "---"
-            echo ""
-            echo "### 🛡️ Security Notice"
-            echo "Antivirus warnings may occur and are likely **false positives**."
-            echo ""
-            echo "---"
-            echo ""
-            echo "### 🙌 Thanks for testing **Samsung Jellyfin Installer (Beta)**"
-            echo "💬 Feedback welcome via GitHub issues & discussions."
           } > RELEASE_NOTES.md
 
-      # --------------------------------------------------
-      # Setup .NET SDK
-      # --------------------------------------------------
       - uses: actions/setup-dotnet@v4
         if: env.SKIP_RELEASE != 'true'
         with:
           dotnet-version: 8.0.x
 
-      # --------------------------------------------------
-      # Publish (Linux runner, cross-compile)
-      # --------------------------------------------------
       - name: Publish Windows
         if: env.SKIP_RELEASE != 'true'
-        run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r win-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/win-x64
+        run: dotnet publish -c Release -r win-x64 -p:SelfContained=true -o publish/win-x64
 
-      - name: Publish macOS
+      - name: Publish macOS CLI
         if: env.SKIP_RELEASE != 'true'
-        run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r osx-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/osx-x64
+        run: dotnet publish -c Release -r osx-x64 -p:SelfContained=true -o publish/osx-x64
 
       - name: Publish Linux
         if: env.SKIP_RELEASE != 'true'
-        run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r linux-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/linux-x64
+        run: dotnet publish -c Release -r linux-x64 -p:SelfContained=true -o publish/linux-x64
 
-      # --------------------------------------------------
-      # Package artifacts (clean layout)
-      # --------------------------------------------------
       - name: Package artifacts
         if: env.SKIP_RELEASE != 'true'
-        shell: bash
         run: |
           mkdir -p dist
-
-          (
-            cd publish/win-x64
-            zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .
-          )
-
+          (cd publish/win-x64 && zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .)
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz"   -C publish/osx-x64 .
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
 
-      # --------------------------------------------------
-      # Create or Update GitHub Pre-Release (mutable beta)
-      # --------------------------------------------------
       - name: Create or Update GitHub Pre-Release
         if: env.SKIP_RELEASE != 'true'
         uses: softprops/action-gh-release@v2
@@ -188,3 +123,84 @@ jobs:
           replace_existing_artifacts: true
           files: dist/*
           body_path: RELEASE_NOTES.md
+
+  macos-app:
+    runs-on: macos-latest
+    needs: beta-release
+    if: needs.beta-release.outputs.SKIP_RELEASE != 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Download icon
+        run: curl -fsSL \
+          https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/beta/jellyfin.ico \
+          -o jellyfin.ico
+
+      - name: Convert ICO to ICNS
+        run: |
+          mkdir icon.iconset
+          sips -z 16 16     jellyfin.ico --out icon.iconset/icon_16x16.png
+          sips -z 32 32     jellyfin.ico --out icon.iconset/icon_16x16@2x.png
+          sips -z 128 128   jellyfin.ico --out icon.iconset/icon_128x128.png
+          sips -z 256 256   jellyfin.ico --out icon.iconset/icon_128x128@2x.png
+          sips -z 512 512   jellyfin.ico --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 jellyfin.ico --out icon.iconset/icon_512x512@2x.png
+          iconutil -c icns icon.iconset -o jellyfin.icns
+
+      - name: Publish macOS binary
+        run: dotnet publish -c Release -r osx-x64 -p:SelfContained=true -o publish/osx-app
+
+      - name: Create .app bundle
+        run: |
+          APP_NAME="Jellyfin2Samsung"
+          APP_DIR="${APP_NAME}.app/Contents"
+
+          mkdir -p "$APP_DIR/MacOS" "$APP_DIR/Resources"
+          cp publish/osx-app/${APP_NAME} "$APP_DIR/MacOS/${APP_NAME}"
+          cp jellyfin.icns "$APP_DIR/Resources/"
+          chmod +x "$APP_DIR/MacOS/${APP_NAME}"
+
+          cat > "$APP_DIR/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>${APP_NAME}</string>
+            <key>CFBundleExecutable</key><string>${APP_NAME}</string>
+            <key>CFBundleIconFile</key><string>jellyfin</string>
+            <key>CFBundleIdentifier</key><string>org.jellyfin.${APP_NAME}</string>
+            <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Ad-hoc codesign
+        run: codesign --deep --force --sign - Jellyfin2Samsung.app
+
+      - name: Create DMG
+        run: |
+          APP_NAME="Jellyfin2Samsung"
+          DMG_NAME="${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg"
+
+          mkdir -p dist dmg
+          cp -R "${APP_NAME}.app" dmg/
+
+          hdiutil create \
+            -volname "${APP_NAME}" \
+            -srcfolder dmg \
+            -ov \
+            -format UDZO \
+            "dist/${DMG_NAME}"
+
+      - name: Upload macOS artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.beta-release.outputs.VERSION_TAG }}
+          files: dist/*
