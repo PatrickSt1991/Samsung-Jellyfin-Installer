@@ -46,13 +46,9 @@ jobs:
         run: |
           SKIP=false
 
-          STABLE_TAG=$(git tag \
-            | grep -E '^v[0-9]+(\.[0-9]+){1,3}$' \
-            | sort -V \
-            | tail -n 1)
+          STABLE_TAG=$(git tag | grep -E '^v[0-9]+(\.[0-9]+){1,3}$' | sort -V | tail -n 1)
 
           if [ -n "$STABLE_TAG" ] && [ "${STABLE_TAG#v}" = "$VERSION" ]; then
-            echo "ℹ️ Stable version $STABLE_TAG already exists — beta disabled"
             SKIP=true
           fi
 
@@ -78,11 +74,9 @@ jobs:
             echo ""
             cat CHANGELOG.md
             echo ""
-            echo "---"
-            echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
-            echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Native app |"
+            echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Universal |"
             echo "| 🍎 macOS (CLI) | ⚠️ Beta | Tarball |"
             echo "| 🐧 Linux | ⚠️ Beta | CI-built |"
             echo "| 🪟 Windows | ⚠️ Beta | CI-built |"
@@ -110,7 +104,7 @@ jobs:
         run: |
           mkdir -p dist
           (cd publish/win-x64 && zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .)
-          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz"   -C publish/osx-x64 .
+          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz" -C publish/osx-x64 .
           tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
 
       - name: Create or Update GitHub Pre-Release
@@ -136,6 +130,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # ---------------- ICON + DMG BACKGROUND ----------------
       - name: Download SVG icon
         shell: bash
         run: |
@@ -143,33 +138,54 @@ jobs:
             https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/master/jellyfin-tizen-logo.svg \
             -o jellyfin.svg
 
-      - name: Convert SVG to ICNS
+      - name: Generate icons
         shell: bash
         run: |
-          magick jellyfin.svg -background none -resize 1024x1024 jellyfin.png
-
+          # Render SVG to PNG using native macOS tools
+          sips -s format png jellyfin.svg --out jellyfin.png
+          sips -z 1024 1024 jellyfin.png --out jellyfin.png
+      
+          # DMG background
+          sips -s format png jellyfin.svg --out dmg-background.png
+          sips -z 600 400 dmg-background.png --out dmg-background.png
+      
           mkdir icon.iconset
-          sips -z 16 16     jellyfin.png --out icon.iconset/icon_16x16.png
-          sips -z 32 32     jellyfin.png --out icon.iconset/icon_16x16@2x.png
-          sips -z 128 128   jellyfin.png --out icon.iconset/icon_128x128.png
-          sips -z 256 256   jellyfin.png --out icon.iconset/icon_128x128@2x.png
-          sips -z 512 512   jellyfin.png --out icon.iconset/icon_512x512.png
+          sips -z 16 16 jellyfin.png --out icon.iconset/icon_16x16.png
+          sips -z 32 32 jellyfin.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 128 128 jellyfin.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256 jellyfin.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 512 512 jellyfin.png --out icon.iconset/icon_512x512.png
           sips -z 1024 1024 jellyfin.png --out icon.iconset/icon_512x512@2x.png
-
+      
           iconutil -c icns icon.iconset -o jellyfin.icns
 
-      - name: Publish macOS binary
-        run: dotnet publish -c Release -r osx-x64 -p:SelfContained=true -o publish/osx-app
 
+      # ---------------- UNIVERSAL BUILD ----------------
+      - name: Publish macOS ARM64
+        run: dotnet publish -c Release -r osx-arm64 -p:SelfContained=true -o publish/osx-arm64
+
+      - name: Publish macOS Intel
+        run: dotnet publish -c Release -r osx-x64 -p:SelfContained=true -o publish/osx-x64
+
+      - name: Create universal binary
+        shell: bash
+        run: |
+          lipo -create \
+            publish/osx-arm64/Jellyfin2Samsung \
+            publish/osx-x64/Jellyfin2Samsung \
+            -output Jellyfin2Samsung
+          chmod +x Jellyfin2Samsung
+
+      # ---------------- .APP ----------------
       - name: Create .app bundle
+        shell: bash
         run: |
           APP_NAME="Jellyfin2Samsung"
           APP_DIR="${APP_NAME}.app/Contents"
 
           mkdir -p "$APP_DIR/MacOS" "$APP_DIR/Resources"
-          cp publish/osx-app/${APP_NAME} "$APP_DIR/MacOS/${APP_NAME}"
+          cp Jellyfin2Samsung "$APP_DIR/MacOS/${APP_NAME}"
           cp jellyfin.icns "$APP_DIR/Resources/"
-          chmod +x "$APP_DIR/MacOS/${APP_NAME}"
 
           cat > "$APP_DIR/Info.plist" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -187,20 +203,24 @@ jobs:
           </plist>
           EOF
 
-      - name: Ad-hoc codesign
+      - name: Codesign
         run: codesign --deep --force --sign - Jellyfin2Samsung.app
 
+      # ---------------- DMG ----------------
       - name: Create DMG
+        shell: bash
         run: |
           APP_NAME="Jellyfin2Samsung"
           DMG_NAME="${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg"
 
-          mkdir -p dist dmg
-          cp -R "${APP_NAME}.app" dmg/
+          mkdir -p dist dmg-root/.background
+          cp -R "${APP_NAME}.app" dmg-root/
+          cp dmg-background.png dmg-root/.background/background.png
+          ln -s /Applications dmg-root/Applications
 
           hdiutil create \
             -volname "${APP_NAME}" \
-            -srcfolder dmg \
+            -srcfolder dmg-root \
             -ov \
             -format UDZO \
             "dist/${DMG_NAME}"
