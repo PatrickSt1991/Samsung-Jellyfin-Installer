@@ -207,17 +207,18 @@ jobs:
         run: codesign --deep --force --sign - Jellyfin2Samsung.app
 
       # ---------------- DMG ----------------
-      - name: Create DMG
+      - name: Create DMG (safe)
         shell: bash
         run: |
           APP_NAME="Jellyfin2Samsung"
           DMG_NAME="${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg"
-
-          mkdir -p dist dmg-root/.background
+      
+          rm -rf dmg-root dist
+          mkdir -p dmg-root dist
+      
           cp -R "${APP_NAME}.app" dmg-root/
-          cp dmg-background.png dmg-root/.background/background.png
           ln -s /Applications dmg-root/Applications
-
+      
           hdiutil create \
             -volname "${APP_NAME}" \
             -srcfolder dmg-root \
