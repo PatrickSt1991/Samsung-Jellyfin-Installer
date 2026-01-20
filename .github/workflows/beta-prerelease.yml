@@ -160,11 +160,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fuse
 
-          mkdir -p AppDir/usr/bin AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/bin
 
           cp publish/linux-x64/Jellyfin2Samsung AppDir/usr/bin/
           chmod +x AppDir/usr/bin/Jellyfin2Samsung
-          cp jellyfin.png AppDir/usr/share/icons/hicolor/256x256/apps/jellyfin2samsung.png
+          cp jellyfin.png AppDir/jellyfin2samsung.png
 
           cat > AppDir/jellyfin2samsung.desktop <<EOF
           [Desktop Entry]
