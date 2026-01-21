@@ -47,6 +47,34 @@ jobs:
           [ "${STABLE#v}" = "$VERSION" ] && SKIP=true
           echo "SKIP_RELEASE=$SKIP" >> $GITHUB_ENV
 
+      # ---------------- RELEASE NOTES ----------------
+      - name: Generate changelog
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          LAST_TAG=$(git tag --sort=-creatordate | grep beta | head -n 1)
+          RANGE="${LAST_TAG:+$LAST_TAG..HEAD}"
+          {
+            echo "## ✅ What's New & Improved"
+            git log ${RANGE:-HEAD} --pretty=format:"- %s"
+          } > CHANGELOG.md
+
+      - name: Prepare release notes
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          {
+            echo "## 📦 [${VERSION_TAG}] – ${DATE}"
+            echo ""
+            cat CHANGELOG.md
+            echo ""
+            echo "| Platform | Status | Notes |"
+            echo "|----------|--------|-------|"
+            echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Universal |"
+            echo "| 🍎 macOS (CLI) | ⚠️ Beta | Universal tar.gz |"
+            echo "| 🐧 Linux | ⚠️ Beta | tar.gz / .deb / AppImage |"
+            echo "| 🪟 Windows | ⚠️ Beta | CI-built |"
+          } > RELEASE_NOTES.md
+
       - uses: actions/setup-dotnet@v4
         if: env.SKIP_RELEASE != 'true'
         with:
@@ -156,6 +184,7 @@ jobs:
           tag_name: ${{ env.VERSION_TAG }}
           prerelease: true
           files: dist/*
+          body_path: RELEASE_NOTES.md
 
 # ======================================================
 # MACOS (UNIVERSAL CLI + APP + DMG)
