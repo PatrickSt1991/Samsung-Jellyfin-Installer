@@ -67,6 +67,7 @@ jobs:
             echo ""
             cat CHANGELOG.md
             echo ""
+            echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
             echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Universal |"
