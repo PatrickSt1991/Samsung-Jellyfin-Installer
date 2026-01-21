@@ -120,7 +120,7 @@ jobs:
           dpkg-deb --build $PKG
           mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
 
-      # ---------------- APPIMAGE (FIXED – NO FUSE) ----------------
+      # ---------------- APPIMAGE (NO FUSE) ----------------
       - name: Build AppImage
         if: env.SKIP_RELEASE != 'true'
         run: |
@@ -142,8 +142,6 @@ jobs:
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
             -o appimagetool.AppImage
           chmod +x appimagetool.AppImage
-
-          # Extract instead of executing (no FUSE required)
           ./appimagetool.AppImage --appimage-extract
 
           ARCH=x86_64 \
@@ -200,6 +198,14 @@ jobs:
           lipo -create arm/Jellyfin2Samsung x64/Jellyfin2Samsung \
             -output Jellyfin2Samsung
           chmod +x Jellyfin2Samsung
+
+      # -------- macOS CLI TAR (UNIVERSAL) --------
+      - name: Package macOS CLI tarball
+        run: |
+          mkdir -p dist
+          tar -czf \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-universal.tar.gz \
+            Jellyfin2Samsung
 
       - name: Create .app
         run: |
