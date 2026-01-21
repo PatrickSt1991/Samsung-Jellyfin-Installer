@@ -120,7 +120,7 @@ jobs:
           dpkg-deb --build $PKG
           mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
 
-      # ---------------- APPIMAGE ----------------
+      # ---------------- APPIMAGE (FIXED – NO FUSE) ----------------
       - name: Build AppImage
         if: env.SKIP_RELEASE != 'true'
         run: |
@@ -140,9 +140,15 @@ jobs:
 
           curl -fsSL \
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
-            -o appimagetool
-          chmod +x appimagetool
-          ./appimagetool AppDir \
+            -o appimagetool.AppImage
+          chmod +x appimagetool.AppImage
+
+          # Extract instead of executing (no FUSE required)
+          ./appimagetool.AppImage --appimage-extract
+
+          ARCH=x86_64 \
+          squashfs-root/AppRun \
+            AppDir \
             dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
 
       # ---------------- RELEASE ----------------
@@ -167,7 +173,6 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # ICON
       - name: macOS icon
         run: |
           sips -s format png jellyfin-tizen-logo.svg --out jellyfin.png
@@ -180,7 +185,6 @@ jobs:
           done
           iconutil -c icns icon.iconset -o jellyfin.icns
 
-      # BUILD BOTH ARCHS
       - name: macOS ARM64
         run: |
           dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
@@ -191,14 +195,12 @@ jobs:
           dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
             -c Release -r osx-x64 -p:SelfContained=true -o x64
 
-      # UNIVERSAL
       - name: Universal binary
         run: |
           lipo -create arm/Jellyfin2Samsung x64/Jellyfin2Samsung \
             -output Jellyfin2Samsung
           chmod +x Jellyfin2Samsung
 
-      # APP
       - name: Create .app
         run: |
           APP=Jellyfin2Samsung.app/Contents
@@ -209,7 +211,6 @@ jobs:
       - name: Codesign
         run: codesign --deep --force --sign - Jellyfin2Samsung.app
 
-      # DMG
       - name: Create DMG
         run: |
           mkdir dmg dist
