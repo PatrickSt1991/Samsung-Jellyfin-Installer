@@ -84,7 +84,7 @@ namespace Jellyfin2Samsung.Services
                     CurrentVersion = CurrentVersion,
                     LatestVersion = latestVersion,
                     ReleaseTitle = latestEntry.Title,
-                    ReleaseNotes = StripHtml(latestEntry.Content),
+                    ReleaseNotes = HtmlUtils.StripHtml(HtmlUtils.RemoveMarkdownTable(latestEntry.Content)),
                     ReleasesPageUrl = latestEntry.Link,
                     PublishedAt = latestEntry.Updated
                 };
@@ -103,7 +103,15 @@ namespace Jellyfin2Samsung.Services
                 var doc = XDocument.Parse(atomXml);
                 XNamespace atom = "http://www.w3.org/2005/Atom";
 
-                var entry = doc.Descendants(atom + "entry").FirstOrDefault();
+                // Get all entries and filter out beta/pre-releases
+                var entry = doc.Descendants(atom + "entry").FirstOrDefault(e =>
+                {
+                    var title = e.Element(atom + "title")?.Value ?? string.Empty;
+
+                    // Filter out entries with beta
+                    return !title.Contains("beta", StringComparison.OrdinalIgnoreCase);
+                });
+
                 if (entry == null)
                     return null;
 
@@ -471,45 +479,6 @@ rm -- ""$0""
                 cleaned = cleaned.Substring(0, dashIndex);
 
             return cleaned;
-        }
-
-        private static string StripHtml(string html)
-        {
-            if (string.IsNullOrEmpty(html))
-                return string.Empty;
-
-            // Simple HTML stripping - replace common tags
-            var text = html
-                .Replace("<br>", "\n")
-                .Replace("<br/>", "\n")
-                .Replace("<br />", "\n")
-                .Replace("</p>", "\n")
-                .Replace("</li>", "\n")
-                .Replace("<li>", "• ");
-
-            // Remove all remaining HTML tags
-            while (text.Contains('<') && text.Contains('>'))
-            {
-                var start = text.IndexOf('<');
-                var end = text.IndexOf('>', start);
-                if (end > start)
-                    text = text.Remove(start, end - start + 1);
-                else
-                    break;
-            }
-
-            // Decode common HTML entities
-            text = text
-                .Replace("&nbsp;", " ")
-                .Replace("&amp;", "&")
-                .Replace("&lt;", "<")
-                .Replace("&gt;", ">")
-                .Replace("&quot;", "\"")
-                .Replace("&#39;", "'");
-
-            // Clean up whitespace
-            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            return string.Join("\n", lines.Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)));
         }
     }
 }
