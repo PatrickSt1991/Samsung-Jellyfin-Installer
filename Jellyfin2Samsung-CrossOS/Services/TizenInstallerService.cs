@@ -552,6 +552,7 @@ namespace Jellyfin2Samsung.Services
                 {
                     _appSettings.TryOverwrite = false;
                     _appSettings.ForceSamsungLogin = true;
+                    _appSettings.DeletePreviousInstall = true;
                     return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress, onSamsungLoginStarted);
                 }
 

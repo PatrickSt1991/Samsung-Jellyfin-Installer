@@ -1476,6 +1476,12 @@ namespace Jellyfin2Samsung.ViewModels
             AppSettings.Default.Save();
         }
 
+        partial void OnDeletePreviousInstallChanged(bool value)
+        {
+            AppSettings.Default.DeletePreviousInstall = value;
+            AppSettings.Default.Save();
+        }
+
         partial void OnRtlReadingChanged(bool value)
         {
             AppSettings.Default.RTLReading = value;
