@@ -218,8 +218,10 @@ jobs:
         run: codesign --deep --force --sign - Jellyfin2Samsung.app
 
       - name: Create DMG
+        shell: bash
         run: |
-          mkdir dmg dist
+          rm -rf dmg
+          mkdir -p dmg dist
           cp -R Jellyfin2Samsung.app dmg/
           ln -s /Applications dmg/Applications
           hdiutil create \
