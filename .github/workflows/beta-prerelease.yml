@@ -35,11 +35,12 @@ jobs:
           VERSION=$(grep -oE 'v[0-9]+(\.[0-9]+){1,3}' \
             Jellyfin2Samsung-CrossOS/Helpers/AppSettings.cs)
 
-          [ -z "$VERSION" ] && exit 1
+          if [ -z "$VERSION" ]; then exit 1; fi
           echo "VERSION=${VERSION#v}" >> $GITHUB_ENV
           echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
 
       - name: Decide skip
+        shell: bash
         run: |
           SKIP=false
           STABLE=$(git tag | grep -E '^v[0-9]' | sort -V | tail -n1)
@@ -56,7 +57,10 @@ jobs:
         if: env.SKIP_RELEASE != 'true'
         run: |
           dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
-            -c Release -r win-x64 -p:SelfContained=true -o publish/win-x64
+            -c Release -r win-x64 -p:SelfContained=true \
+            -o publish/win-x64
+
+          mkdir -p dist
           (cd publish/win-x64 && zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .)
 
       # ---------------- LINUX ----------------
@@ -64,8 +68,11 @@ jobs:
         if: env.SKIP_RELEASE != 'true'
         run: |
           dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
-            -c Release -r linux-x64 -p:SelfContained=true -o publish/linux-x64
-          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
+            -c Release -r linux-x64 -p:SelfContained=true \
+            -o publish/linux-x64
+
+          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" \
+            -C publish/linux-x64 .
 
       # ---------------- LINUX ICON ----------------
       - name: Linux icon
@@ -73,20 +80,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y librsvg2-bin
-          rsvg-convert -w 256 -h 256 jellyfin-tizen-logo.svg -o jellyfin.png
+          rsvg-convert -w 256 -h 256 \
+            jellyfin-tizen-logo.svg -o jellyfin.png
 
       # ---------------- DEB ----------------
       - name: Build .deb
         if: env.SKIP_RELEASE != 'true'
         run: |
           sudo apt-get install -y dpkg-dev
-          PKG=deb/opt/jellyfin2samsung
-          mkdir -p $PKG deb/usr/share/{applications,icons/hicolor/256x256/apps}
-          cp publish/linux-x64/Jellyfin2Samsung $PKG/
-          chmod +x $PKG/Jellyfin2Samsung
-          cp jellyfin.png deb/usr/share/icons/hicolor/256x256/apps/jellyfin2samsung.png
 
-          cat > deb/usr/share/applications/jellyfin2samsung.desktop <<EOF
+          PKG=deb
+          mkdir -p $PKG/opt/jellyfin2samsung \
+                   $PKG/usr/share/{applications,icons/hicolor/256x256/apps}
+
+          cp publish/linux-x64/Jellyfin2Samsung \
+             $PKG/opt/jellyfin2samsung/
+          chmod +x $PKG/opt/jellyfin2samsung/Jellyfin2Samsung
+          cp jellyfin.png \
+             $PKG/usr/share/icons/hicolor/256x256/apps/jellyfin2samsung.png
+
+          cat > $PKG/usr/share/applications/jellyfin2samsung.desktop <<EOF
           [Desktop Entry]
           Name=Jellyfin2Samsung
           Exec=/opt/jellyfin2samsung/Jellyfin2Samsung
@@ -95,8 +108,8 @@ jobs:
           Categories=Utility;
           EOF
 
-          mkdir -p deb/DEBIAN
-          cat > deb/DEBIAN/control <<EOF
+          mkdir -p $PKG/DEBIAN
+          cat > $PKG/DEBIAN/control <<EOF
           Package: jellyfin2samsung
           Version: ${VERSION}
           Architecture: amd64
@@ -104,8 +117,8 @@ jobs:
           Description: Jellyfin Samsung Installer
           EOF
 
-          dpkg-deb --build deb
-          mv deb.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
+          dpkg-deb --build $PKG
+          mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
 
       # ---------------- APPIMAGE ----------------
       - name: Build AppImage
@@ -125,9 +138,12 @@ jobs:
           Categories=Utility;
           EOF
 
-          curl -fsSL https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -o appimagetool
+          curl -fsSL \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -o appimagetool
           chmod +x appimagetool
-          ./appimagetool AppDir dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
+          ./appimagetool AppDir \
+            dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
 
       # ---------------- RELEASE ----------------
       - uses: softprops/action-gh-release@v2
@@ -138,7 +154,7 @@ jobs:
           files: dist/*
 
 # ======================================================
-# MACOS (UNIVERSAL GUI + CLI)
+# MACOS (UNIVERSAL CLI + APP + DMG)
 # ======================================================
   macos-app:
     runs-on: macos-latest
@@ -152,9 +168,11 @@ jobs:
           dotnet-version: 8.0.x
 
       # ICON
-      - run: |
+      - name: macOS icon
+        run: |
           sips -s format png jellyfin-tizen-logo.svg --out jellyfin.png
           sips -z 1024 1024 jellyfin.png --out jellyfin.png
+
           mkdir icon.iconset
           for s in 16 32 128 256 512; do
             sips -z $s $s jellyfin.png --out icon.iconset/icon_${s}x${s}.png
@@ -163,29 +181,45 @@ jobs:
           iconutil -c icns icon.iconset -o jellyfin.icns
 
       # BUILD BOTH ARCHS
-      - run: dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj -c Release -r osx-arm64 -p:SelfContained=true -o arm
-      - run: dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj -c Release -r osx-x64   -p:SelfContained=true -o x64
+      - name: macOS ARM64
+        run: |
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r osx-arm64 -p:SelfContained=true -o arm
+
+      - name: macOS Intel
+        run: |
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r osx-x64 -p:SelfContained=true -o x64
 
       # UNIVERSAL
-      - run: |
-          lipo -create arm/Jellyfin2Samsung x64/Jellyfin2Samsung -output Jellyfin2Samsung
+      - name: Universal binary
+        run: |
+          lipo -create arm/Jellyfin2Samsung x64/Jellyfin2Samsung \
+            -output Jellyfin2Samsung
           chmod +x Jellyfin2Samsung
 
       # APP
-      - run: |
+      - name: Create .app
+        run: |
           APP=Jellyfin2Samsung.app/Contents
           mkdir -p $APP/{MacOS,Resources}
           cp Jellyfin2Samsung $APP/MacOS/
           cp jellyfin.icns $APP/Resources/
 
-      - run: codesign --deep --force --sign - Jellyfin2Samsung.app
+      - name: Codesign
+        run: codesign --deep --force --sign - Jellyfin2Samsung.app
 
       # DMG
-      - run: |
+      - name: Create DMG
+        run: |
           mkdir dmg dist
           cp -R Jellyfin2Samsung.app dmg/
           ln -s /Applications dmg/Applications
-          hdiutil create -volname Jellyfin2Samsung -srcfolder dmg -format UDZO dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg
+          hdiutil create \
+            -volname Jellyfin2Samsung \
+            -srcfolder dmg \
+            -format UDZO \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg
 
       - uses: softprops/action-gh-release@v2
         with:
