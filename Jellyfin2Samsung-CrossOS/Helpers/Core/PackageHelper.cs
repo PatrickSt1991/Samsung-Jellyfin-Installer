@@ -21,9 +21,10 @@ namespace Jellyfin2Samsung.Helpers.Core
         private readonly IDialogService _dialogService = dialogService;
         private readonly INetworkService _networkService = networkService;
 
-        public async Task<string?> DownloadReleaseAsync(GitHubRelease release, Asset selectedAsset, ProgressCallback? progress = null)
+        public async Task<string?> DownloadReleaseAsync(GitHubRelease release, Asset? selectedAsset, ProgressCallback? progress = null)
         {
             if (release?.PrimaryDownloadUrl == null) return null;
+            if (selectedAsset?.DownloadUrl == null) return null;
 
             try
             {
@@ -38,8 +39,10 @@ namespace Jellyfin2Samsung.Helpers.Core
                 return null;
             }
         }
-        public async Task<bool> InstallPackageAsync(string packagePath, NetworkDevice selectedDevice, CancellationToken cancellationToken, ProgressCallback? progress = null, Action? onSamsungLoginStarted = null)
+        public async Task<bool> InstallPackageAsync(string? packagePath, NetworkDevice selectedDevice, CancellationToken cancellationToken, ProgressCallback? progress = null, Action? onSamsungLoginStarted = null)
         {
+            if(selectedDevice.DeveloperIP == null) return false;
+
             var localIps = _networkService.GetRelevantLocalIPs()
                               .Select(ip => ip.ToString())
                               .ToList();
@@ -141,8 +144,10 @@ namespace Jellyfin2Samsung.Helpers.Core
                 return false;
             }
         }
-        public async Task<bool> InstallCustomPackagesAsync(string[] packagePaths, NetworkDevice device, CancellationToken cancellationToken, Action<string> onProgress, Action? onSamsungLoginStarted = null)
+        public async Task<bool> InstallCustomPackagesAsync(string[] packagePaths, NetworkDevice? device, CancellationToken cancellationToken, Action<string> onProgress, Action? onSamsungLoginStarted = null)
         {
+            if (device == null) return false;
+
             onProgress("UsingCustomWGT".Localized());
 
             var allSuccessful = true;

@@ -30,6 +30,9 @@ namespace Jellyfin2Samsung.Helpers.Tizen.Devices
 
             foreach (NetworkDevice device in networkDevices)
             {
+                // Check for cancellation before processing each device
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (await _networkService.IsPortOpenAsync(device.IpAddress, 8001, cancellationToken))
                 {
                     try

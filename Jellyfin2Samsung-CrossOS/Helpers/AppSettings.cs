@@ -74,10 +74,15 @@ namespace Jellyfin2Samsung.Helpers
         public bool DarkMode { get; set; } = false;
         public string LocalYoutubeServer { get; set; } = string.Empty;
 
+        // ----- Updater settings -----
+        public bool CheckForUpdatesOnStartup { get; set; } = true;
+        public string SkippedUpdateVersion { get; set; } = string.Empty;
+        public DateTime? LastUpdateCheck { get; set; } = null;
+
         // ----- Application-scoped settings (readonly at runtime) -----
         public string ReleasesUrl { get; set; } = "https://api.github.com/repos/jeppevinkel/jellyfin-tizen-builds/releases";
         public string AuthorEndpoint { get; set; } = "https://dev.tizen.samsung.com/apis/v2/authors";
-        public string AppVersion { get; set; } = "v2.0.0.0";
+        public string AppVersion { get; set; } = "v2.0.0.1-beta";
         public string TizenSdb { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-sdb/releases";
         public string JellyfinAvRelease { get; set; } = "https://api.github.com/repos/PatrickSt1991/tizen-jellyfin-avplay/releases";
         public string JellyfinAvReleaseFork { get; set; } = "https://api.github.com/repos/asamahy/tizen-jellyfin-avplay/releases";

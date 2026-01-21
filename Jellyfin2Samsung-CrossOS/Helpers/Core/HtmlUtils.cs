@@ -1,4 +1,8 @@
-﻿namespace Jellyfin2Samsung.Helpers.Core
+﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace Jellyfin2Samsung.Helpers.Core
 {
     public static class HtmlUtils
     {
@@ -9,12 +13,10 @@
 
             return html.Replace("<head>", "<head><base href=\".\">");
         }
-
         public static string RewriteLocalPaths(string html)
         {
             return RegexPatterns.Html.LocalPaths.Replace(html, "$1=\"$2\"");
         }
-
         public static string CleanAndApplyCsp(string html)
         {
             html = RegexPatterns.Html.CspMeta.Replace(html, "");
@@ -38,6 +40,53 @@
                 .Replace("\"", "\\\"")
                 .Replace("\n", "\\n")
                 .Replace("\r", "\\r");
+        }
+        public static string RemoveMarkdownTable(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return html;
+
+            var tablePattern = @"(\|[^\n]+\|\s*\n)+";
+
+            return Regex.Replace(html, tablePattern, string.Empty, RegexOptions.Multiline);
+        }
+        public static string StripHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return string.Empty;
+
+            // Simple HTML stripping - replace common tags
+            var text = html
+                .Replace("<br>", "\n")
+                .Replace("<br/>", "\n")
+                .Replace("<br />", "\n")
+                .Replace("</p>", "\n")
+                .Replace("</li>", "\n")
+                .Replace("<li>", "• ");
+
+            // Remove all remaining HTML tags
+            while (text.Contains('<') && text.Contains('>'))
+            {
+                var start = text.IndexOf('<');
+                var end = text.IndexOf('>', start);
+                if (end > start)
+                    text = text.Remove(start, end - start + 1);
+                else
+                    break;
+            }
+
+            // Decode common HTML entities
+            text = text
+                .Replace("&nbsp;", " ")
+                .Replace("&amp;", "&")
+                .Replace("&lt;", "<")
+                .Replace("&gt;", ">")
+                .Replace("&quot;", "\"")
+                .Replace("&#39;", "'");
+
+            // Clean up whitespace
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            return string.Join("\n", lines.Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)));
         }
     }
 }

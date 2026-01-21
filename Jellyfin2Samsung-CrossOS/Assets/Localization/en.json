@@ -135,5 +135,17 @@
   "lblUserSelectionHint": "Selected users will be configured during installation",
   "lblYtDlpServer": "Local streaming server",
   "lblValidateStream": "Validate Server",
-  "subnetMismatch": "Devices are in different subnets (network)"
+  "subnetMismatch": "Devices are in different subnets (network)",
+  "UpdateAvailable": "Update Available",
+  "UpdateCurrentVersion": "Current version:",
+  "UpdateLatestVersion": "Latest version:",
+  "UpdateReleaseNotes": "Release notes:",
+  "UpdateManual": "Open Releases",
+  "UpdateAutomatic": "Update Now",
+  "UpdateSkip": "Skip this version",
+  "UpdateDownloading": "Downloading update...",
+  "UpdateApplying": "Applying Update",
+  "UpdateApplyingMessage": "The application will restart to complete the update.",
+  "UpdateError": "Update failed",
+  "UpdateCheckFailed": "Failed to check for updates"
 }

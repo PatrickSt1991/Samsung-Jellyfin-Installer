@@ -13,145 +13,254 @@ env:
   CONFIGURATION: Release
 
 jobs:
+# ======================================================
+# RELEASE + WINDOWS + LINUX
+# ======================================================
   beta-release:
     runs-on: ubuntu-latest
 
+    outputs:
+      SKIP_RELEASE: ${{ env.SKIP_RELEASE }}
+      VERSION: ${{ env.VERSION }}
+      VERSION_TAG: ${{ env.VERSION_TAG }}
+
     steps:
-      # --------------------------------------------------
-      # Checkout (full history needed for changelog & tags)
-      # --------------------------------------------------
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # --------------------------------------------------
-      # Extract version from AppSettings.cs (pure Linux tools)
-      # --------------------------------------------------
       - name: Extract version
         shell: bash
         run: |
-          VERSION=$(curl -fsSL \
-            https://raw.githubusercontent.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/refs/heads/beta/Jellyfin2Samsung-CrossOS/Helpers/AppSettings.cs \
-            | grep -oE 'v[0-9]+(\.[0-9]+){1,3}')
+          VERSION=$(grep -oE 'v[0-9]+(\.[0-9]+){1,3}' \
+            Jellyfin2Samsung-CrossOS/Helpers/AppSettings.cs)
 
-          if [ -z "$VERSION" ]; then
-            echo "❌ Failed to extract version"
-            exit 1
-          fi
-
+          if [ -z "$VERSION" ]; then exit 1; fi
           echo "VERSION=${VERSION#v}" >> $GITHUB_ENV
           echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
 
-      # --------------------------------------------------
-      # Skip if this beta version already exists
-      # --------------------------------------------------
-      - name: Skip if version already released
+      - name: Decide skip
         shell: bash
         run: |
-          if git tag --list | grep -q "^${VERSION_TAG}$"; then
-            echo "ℹ️ ${VERSION_TAG} already exists — skipping"
-            exit 0
-          fi
+          SKIP=false
+          STABLE=$(git tag | grep -E '^v[0-9]' | sort -V | tail -n1)
+          [ "${STABLE#v}" = "$VERSION" ] && SKIP=true
+          echo "SKIP_RELEASE=$SKIP" >> $GITHUB_ENV
 
-      # --------------------------------------------------
-      # Generate changelog from commits
-      # --------------------------------------------------
+      # ---------------- RELEASE NOTES ----------------
       - name: Generate changelog
-        shell: bash
+        if: env.SKIP_RELEASE != 'true'
         run: |
           LAST_TAG=$(git tag --sort=-creatordate | grep beta | head -n 1)
-
-          if [ -z "$LAST_TAG" ]; then
-            RANGE="HEAD"
-          else
-            RANGE="$LAST_TAG..HEAD"
-          fi
-
+          RANGE="${LAST_TAG:+$LAST_TAG..HEAD}"
           {
             echo "## ✅ What's New & Improved"
-            git log $RANGE --pretty=format:"- %s"
+            git log ${RANGE:-HEAD} --pretty=format:"- %s"
           } > CHANGELOG.md
 
-      # --------------------------------------------------
-      # Setup .NET SDK
-      # --------------------------------------------------
+      - name: Prepare release notes
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          {
+            echo "## 📦 [${VERSION_TAG}] – ${DATE}"
+            echo ""
+            cat CHANGELOG.md
+            echo ""
+            echo ""
+            echo "| Platform | Status | Notes |"
+            echo "|----------|--------|-------|"
+            echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | Universal |"
+            echo "| 🍎 macOS (CLI) | ⚠️ Beta | Universal tar.gz |"
+            echo "| 🐧 Linux | ⚠️ Beta | tar.gz / .deb / AppImage |"
+            echo "| 🪟 Windows | ⚠️ Beta | CI-built |"
+          } > RELEASE_NOTES.md
+
+      - uses: actions/setup-dotnet@v4
+        if: env.SKIP_RELEASE != 'true'
+        with:
+          dotnet-version: 8.0.x
+
+      # ---------------- WINDOWS ----------------
+      - name: Build Windows
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r win-x64 -p:SelfContained=true \
+            -o publish/win-x64
+
+          mkdir -p dist
+          (cd publish/win-x64 && zip -r "../../dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" .)
+
+      # ---------------- LINUX ----------------
+      - name: Build Linux
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r linux-x64 -p:SelfContained=true \
+            -o publish/linux-x64
+
+          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" \
+            -C publish/linux-x64 .
+
+      # ---------------- LINUX ICON ----------------
+      - name: Linux icon
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 256 -h 256 \
+            jellyfin-tizen-logo.svg -o jellyfin.png
+
+      # ---------------- DEB ----------------
+      - name: Build .deb
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          sudo apt-get install -y dpkg-dev
+
+          PKG=deb
+          mkdir -p $PKG/opt/jellyfin2samsung \
+                   $PKG/usr/share/{applications,icons/hicolor/256x256/apps}
+
+          cp publish/linux-x64/Jellyfin2Samsung \
+             $PKG/opt/jellyfin2samsung/
+          chmod +x $PKG/opt/jellyfin2samsung/Jellyfin2Samsung
+          cp jellyfin.png \
+             $PKG/usr/share/icons/hicolor/256x256/apps/jellyfin2samsung.png
+
+          cat > $PKG/usr/share/applications/jellyfin2samsung.desktop <<EOF
+          [Desktop Entry]
+          Name=Jellyfin2Samsung
+          Exec=/opt/jellyfin2samsung/Jellyfin2Samsung
+          Icon=jellyfin2samsung
+          Type=Application
+          Categories=Utility;
+          EOF
+
+          mkdir -p $PKG/DEBIAN
+          cat > $PKG/DEBIAN/control <<EOF
+          Package: jellyfin2samsung
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: Jellyfin
+          Description: Jellyfin Samsung Installer
+          EOF
+
+          dpkg-deb --build $PKG
+          mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
+
+      # ---------------- APPIMAGE (NO FUSE) ----------------
+      - name: Build AppImage
+        if: env.SKIP_RELEASE != 'true'
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp publish/linux-x64/Jellyfin2Samsung AppDir/usr/bin/
+          chmod +x AppDir/usr/bin/Jellyfin2Samsung
+          cp jellyfin.png AppDir/jellyfin2samsung.png
+
+          cat > AppDir/jellyfin2samsung.desktop <<EOF
+          [Desktop Entry]
+          Name=Jellyfin2Samsung
+          Exec=Jellyfin2Samsung
+          Icon=jellyfin2samsung
+          Type=Application
+          Categories=Utility;
+          EOF
+
+          curl -fsSL \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -o appimagetool.AppImage
+          chmod +x appimagetool.AppImage
+          ./appimagetool.AppImage --appimage-extract
+
+          ARCH=x86_64 \
+          squashfs-root/AppRun \
+            AppDir \
+            dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
+
+      # ---------------- RELEASE ----------------
+      - uses: softprops/action-gh-release@v2
+        if: env.SKIP_RELEASE != 'true'
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          prerelease: true
+          files: dist/*
+          body_path: RELEASE_NOTES.md
+
+# ======================================================
+# MACOS (UNIVERSAL CLI + APP + DMG)
+# ======================================================
+  macos-app:
+    runs-on: macos-latest
+    needs: beta-release
+    if: needs.beta-release.outputs.SKIP_RELEASE != 'true'
+
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      # --------------------------------------------------
-      # Publish (Linux runner, cross-compile)
-      # --------------------------------------------------
-      - name: Publish Windows
+      - name: macOS icon
         run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r win-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/win-x64
+          sips -s format png jellyfin-tizen-logo.svg --out jellyfin.png
+          sips -z 1024 1024 jellyfin.png --out jellyfin.png
 
-      - name: Publish macOS
+          mkdir icon.iconset
+          for s in 16 32 128 256 512; do
+            sips -z $s $s jellyfin.png --out icon.iconset/icon_${s}x${s}.png
+            sips -z $((s*2)) $((s*2)) jellyfin.png --out icon.iconset/icon_${s}x${s}@2x.png
+          done
+          iconutil -c icns icon.iconset -o jellyfin.icns
+
+      - name: macOS ARM64
         run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r osx-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/osx-x64
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r osx-arm64 -p:SelfContained=true -o arm
 
-      - name: Publish Linux
+      - name: macOS Intel
         run: |
-          dotnet publish \
-            -c $CONFIGURATION \
-            -r linux-x64 \
-            -p:SelfContained=true \
-            -p:UseAppHost=true \
-            -o publish/linux-x64
+          dotnet publish Jellyfin2Samsung-CrossOS/Jellyfin2Samsung.csproj \
+            -c Release -r osx-x64 -p:SelfContained=true -o x64
 
-      # --------------------------------------------------
-      # Package artifacts (tar / zip — Linux native)
-      # --------------------------------------------------
-      - name: Package artifacts
-        shell: bash
+      - name: Universal binary
+        run: |
+          lipo -create arm/Jellyfin2Samsung x64/Jellyfin2Samsung \
+            -output Jellyfin2Samsung
+          chmod +x Jellyfin2Samsung
+
+      # -------- macOS CLI TAR (UNIVERSAL) --------
+      - name: Package macOS CLI tarball
         run: |
           mkdir -p dist
+          tar -czf \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-universal.tar.gz \
+            Jellyfin2Samsung
 
-          zip -r "dist/${PRODUCT_NAME}-${VERSION_TAG}-win-x64.zip" publish/win-x64
-          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-osx-x64.tar.gz"   -C publish/osx-x64 .
-          tar -czf "dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.tar.gz" -C publish/linux-x64 .
+      - name: Create .app
+        run: |
+          APP=Jellyfin2Samsung.app/Contents
+          mkdir -p $APP/{MacOS,Resources}
+          cp Jellyfin2Samsung $APP/MacOS/
+          cp jellyfin.icns $APP/Resources/
 
-      # --------------------------------------------------
-      # Create GitHub Pre-Release
-      # --------------------------------------------------
-      - name: Create GitHub Pre-Release
-        uses: softprops/action-gh-release@v2
+      - name: Codesign
+        run: codesign --deep --force --sign - Jellyfin2Samsung.app
+
+      - name: Create DMG
+        shell: bash
+        run: |
+          rm -rf dmg
+          mkdir -p dmg dist
+          cp -R Jellyfin2Samsung.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create \
+            -volname Jellyfin2Samsung \
+            -srcfolder dmg \
+            -format UDZO \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos.dmg
+
+      - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION_TAG }}
-          name: ${{ env.VERSION_TAG }}
-          prerelease: true
+          tag_name: ${{ needs.beta-release.outputs.VERSION_TAG }}
           files: dist/*
-          body: |
-            ## 📦 [${{ env.VERSION_TAG }}] – $(date +'%Y-%m-%d')
-
-            $(cat CHANGELOG.md)
-
-            ---
-
-            ⚠️ **Disclaimer — Platform Support Status**
-
-            | Platform | Status | Notes |
-            |----------|--------|-------|
-            | 🍎 macOS | ⚠️ Beta | CI-built |
-            | 🐧 Linux | ⚠️ Beta | CI-built |
-            | 🪟 Windows | ⚠️ Beta | CI-built |
-
-            ---
-
-            ### 🛡️ Security Notice  
-            Antivirus warnings may occur and are likely **false positives**.
-
-            ---
-
-            ### 🙌 Thanks for testing **Samsung Jellyfin Installer (Beta)**  
-            💬 Feedback welcome via GitHub issues & discussions.

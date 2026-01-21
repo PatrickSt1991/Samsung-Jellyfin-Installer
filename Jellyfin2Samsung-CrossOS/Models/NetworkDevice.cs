@@ -32,4 +32,12 @@
         public string Name = "";
         public bool Activated;
     }
+    public class NetworkInterfaceOption
+    {
+        public string Name { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+
+        public string DisplayText => $"{Name} - {IpAddress}";
+    }
+
 }

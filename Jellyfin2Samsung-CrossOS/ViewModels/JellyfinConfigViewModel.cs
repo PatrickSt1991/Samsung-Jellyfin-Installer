@@ -182,10 +182,14 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool darkMode;
 
+        [ObservableProperty]
+        private NetworkInterfaceOption? selectedNetworkInterface;
+
         public ObservableCollection<LanguageOption> AvailableLanguages { get; }
         public ObservableCollection<ExistingCertificates> AvailableCertificates { get; } = new();
         public ObservableCollection<JellyfinUser> AvailableJellyfinUsers { get; } = new();
         public ObservableCollection<JellyfinUser> SelectedJellyfinUsers { get; }
+        public ObservableCollection<NetworkInterfaceOption> NetworkInterfaces { get; } = new();
         // ========== End Main Settings Properties ==========
 
         public ObservableCollection<string> AvailableThemes { get; } = new()
@@ -346,7 +350,7 @@ namespace Jellyfin2Samsung.ViewModels
             InitializeAsyncSettings();
             InitializeMainSettings();
             UpdateServerIpStatus();
-            _ = LoadLocalIpAsync();
+            _ = LoadNetworkInterfacesAsync();
             _ = InitializeCertificatesAsync();
         }
 
@@ -1338,24 +1342,32 @@ namespace Jellyfin2Samsung.ViewModels
             DarkMode = AppSettings.Default.DarkMode;
         }
 
-        private async Task LoadLocalIpAsync()
+        private async Task LoadNetworkInterfacesAsync()
         {
             try
             {
-                var ip = await _networkService.GetPrimaryOutboundIPAddressAsync();
+                var interfaces = await _networkService.GetNetworkInterfaceOptionsAsync();
 
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    LocalIP = ip ?? string.Empty;
-                    AppSettings.Default.LocalIp = ip;
-                    AppSettings.Default.Save();
+                    NetworkInterfaces.Clear();
+
+                    foreach (var ni in interfaces)
+                        NetworkInterfaces.Add(ni);
+
+                    // Restore previous selection if possible
+                    SelectedNetworkInterface =
+                        NetworkInterfaces.FirstOrDefault(i =>
+                            i.IpAddress == AppSettings.Default.LocalIp)
+                        ?? NetworkInterfaces.FirstOrDefault();
                 });
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Failed to get local IP: {ex}");
+                Trace.WriteLine($"Failed to load network interfaces: {ex}");
             }
         }
+
 
         private async Task InitializeCertificatesAsync()
         {
@@ -1402,6 +1414,17 @@ namespace Jellyfin2Samsung.ViewModels
                 return code;
             }
         }
+
+        partial void OnSelectedNetworkInterfaceChanged(NetworkInterfaceOption? value)
+        {
+            if (value == null)
+                return;
+
+            LocalIP = value.IpAddress;
+            AppSettings.Default.LocalIp = value.IpAddress;
+            AppSettings.Default.Save();
+        }
+
 
         // Property changed handlers for Main Settings
         partial void OnSelectedLanguageChanged(LanguageOption? value)
@@ -1450,6 +1473,12 @@ namespace Jellyfin2Samsung.ViewModels
         partial void OnForceSamsungLoginChanged(bool value)
         {
             AppSettings.Default.ForceSamsungLogin = value;
+            AppSettings.Default.Save();
+        }
+
+        partial void OnDeletePreviousInstallChanged(bool value)
+        {
+            AppSettings.Default.DeletePreviousInstall = value;
             AppSettings.Default.Save();
         }
 

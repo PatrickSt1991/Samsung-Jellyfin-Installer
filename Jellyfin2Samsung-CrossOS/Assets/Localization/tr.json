@@ -135,5 +135,17 @@
   "lblUserSelectionHint": "Seçilen kullanıcılar kurulum sırasında yapılandırılacak",
   "lblYtDlpServer": "Yerel yayın sunucusu",
   "lblValidateStream": "Sunucuyu Doğrula",
-  "subnetMismatch": "Cihazlar farklı alt ağlarda (ağda) bulunmaktadır."
+  "subnetMismatch": "Cihazlar farklı alt ağlarda (ağda) bulunmaktadır.",
+  "UpdateAvailable": "Güncelleme mevcut",
+  "UpdateCurrentVersion": "Mevcut sürüm:",
+  "UpdateLatestVersion": "Son sürüm:",
+  "UpdateReleaseNotes": "Sürüm notları:",
+  "UpdateManual": "Sürümleri aç",
+  "UpdateAutomatic": "Şimdi güncelle",
+  "UpdateSkip": "Bu sürümü atla",
+  "UpdateDownloading": "Güncelleme indiriliyor...",
+  "UpdateApplying": "Güncelleme uygulanıyor",
+  "UpdateApplyingMessage": "Güncellemeyi tamamlamak için uygulama yeniden başlatılacak.",
+  "UpdateError": "Güncelleme başarısız",
+  "UpdateCheckFailed": "Güncelleme kontrolü başarısız"
 }

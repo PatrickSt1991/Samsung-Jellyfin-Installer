@@ -133,11 +133,15 @@
 											   Text="{Binding LblLocalIP}"
 											   Classes="label"
 											   VerticalAlignment="Center"/>
-									<TextBlock Grid.Column="1"
-											   Text="{Binding LocalIP, Mode=TwoWay}"
-											   Classes="subtitle"
-											   VerticalAlignment="Center"/>
+
+									<ComboBox Grid.Column="1"
+											  Classes="clean"
+											  ItemsSource="{Binding NetworkInterfaces}"
+											  SelectedItem="{Binding SelectedNetworkInterface, Mode=TwoWay}"
+											  DisplayMemberBinding="{Binding DisplayText}"
+											  HorizontalAlignment="Stretch"/>
 								</Grid>
+
 							</StackPanel>
 
 							<Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,4"/>
@@ -560,6 +564,8 @@
 									</StackPanel>
 
 								</Grid>
+								<!-- Spacer -->
+								<Border Height="24"/>
 							</StackPanel>
 
 						</StackPanel>
@@ -779,7 +785,7 @@
 
 									<StackPanel Spacing="8" HorizontalAlignment="Center">
 										<TextBlock
-											Text="{Binding SelectedJellyTheme.Name}"
+											Text="{Binding SelectedJellyTheme.Name, FallbackValue=''}"
 											FontSize="14"
 											FontWeight="SemiBold"
 											HorizontalAlignment="Center"

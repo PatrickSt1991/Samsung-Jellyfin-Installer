@@ -76,7 +76,7 @@ namespace Jellyfin2Samsung.Services
                 return TizenSdbPath;
             }
 
-            string downloadedFile = await DownloadTizenSdbAsync(latestVersion);
+            string downloadedFile = await DownloadTizenSdbAsync();
 
             if (existingFile != null && File.Exists(existingFile))
             {
@@ -154,27 +154,22 @@ namespace Jellyfin2Samsung.Services
             }
         }
 
-        public async Task<string> DownloadTizenSdbAsync(string version = null)
+        public async Task<string> DownloadTizenSdbAsync()
         {
             try
             {
                 var json = await _httpClient.GetStringAsync(AppSettings.Default.TizenSdb);
                 var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json, JsonSerializerOptionsProvider.Default);
-                var firstRelease = releases?.FirstOrDefault();
-
-                if (firstRelease == null)
-                    throw new InvalidOperationException("No releases found");
-
+                var firstRelease = (releases?.FirstOrDefault()) ?? throw new InvalidOperationException("No releases found");
                 string nameMatch = PlatformService.GetAssetPlatformIdentifier();
 
                 var matchedAsset = firstRelease.Assets.FirstOrDefault(a =>
                     !string.IsNullOrEmpty(a.FileName) &&
                     a.FileName.Contains(nameMatch, StringComparison.OrdinalIgnoreCase));
 
-                if (matchedAsset == null)
-                    throw new InvalidOperationException($"No matching asset found for {nameMatch}");
-
-                return await DownloadPackageAsync(matchedAsset.DownloadUrl);
+                return matchedAsset == null
+                    ? throw new InvalidOperationException($"No matching asset found for {nameMatch}")
+                    : await DownloadPackageAsync(matchedAsset.DownloadUrl);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {
@@ -248,6 +243,7 @@ namespace Jellyfin2Samsung.Services
 
                 // Step 3: Handle certificate selection/generation
                 var certificateResult = await HandleCertificateAsync(
+                    tvIpAddress,
                     deviceInfo,
                     packageUrl,
                     progress,
@@ -258,7 +254,8 @@ namespace Jellyfin2Samsung.Services
                     return certificateResult.InstallResult;
 
                 // Step 4: Apply Jellyfin configuration if needed
-                await ApplyConfigurationAsync(packageUrl, progress);
+                if (packageUrl.Contains(Constants.AppIdentifiers.JellyfinAppName, StringComparison.OrdinalIgnoreCase))
+                    await ApplyConfigurationAsync(packageUrl, progress);
 
                 // Step 5: Resign package if needed
                 if (certificateResult.RequiresResign)
@@ -382,6 +379,7 @@ namespace Jellyfin2Samsung.Services
         #region Certificate Handling
 
         private async Task<CertificateResult> HandleCertificateAsync(
+            string tvIpAddress,
             DeviceInfo deviceInfo,
             string packageUrl,
             ProgressCallback? progress,
@@ -483,7 +481,7 @@ namespace Jellyfin2Samsung.Services
                     ? Constants.Defaults.HomeDeveloperPath
                     : deviceInfo.SdkToolPath;
 
-                await AllowPermitInstall(tvIpAddress: deviceInfo.Duid, deviceProfilePath, targetPath);
+                await AllowPermitInstall(tvIpAddress, deviceProfilePath, targetPath);
             }
 
             return new CertificateResult
@@ -504,9 +502,6 @@ namespace Jellyfin2Samsung.Services
         {
             // Only apply configuration if JellyfinIP is set and this is a Jellyfin package
             if (string.IsNullOrEmpty(_appSettings.JellyfinIP))
-                return;
-
-            if (!packageUrl.Contains(Constants.AppIdentifiers.JellyfinAppName, StringComparison.OrdinalIgnoreCase))
                 return;
 
             // Apply server settings via JS injection
@@ -552,6 +547,7 @@ namespace Jellyfin2Samsung.Services
                 {
                     _appSettings.TryOverwrite = false;
                     _appSettings.ForceSamsungLogin = true;
+                    _appSettings.DeletePreviousInstall = true;
                     return await InstallPackageAsync(packageUrl, tvIpAddress, cancellationToken, progress, onSamsungLoginStarted);
                 }
 

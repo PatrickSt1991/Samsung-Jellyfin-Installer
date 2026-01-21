@@ -28,6 +28,8 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly INetworkService _networkService;
         private readonly ILocalizationService _localizationService;
         private readonly IThemeService _themeService;
+        private readonly IUpdaterService _updaterService;
+        private readonly IUpdateDialogService _updateDialogService;
         private readonly FileHelper _fileHelper;
         private readonly DeviceHelper _deviceHelper;
         private readonly TizenApiClient _tizenApiClient;
@@ -35,6 +37,7 @@ namespace Jellyfin2Samsung.ViewModels
         private readonly JellyfinConfigViewModel _settingsViewModel;
         private readonly AddLatestRelease _addLatestRelease;
         private CancellationTokenSource? _samsungLoginCts;
+        private CancellationTokenSource? _initializationCts;
 
         [ObservableProperty]
         private ObservableCollection<GitHubRelease> releases = new ObservableCollection<GitHubRelease>();
@@ -94,6 +97,8 @@ namespace Jellyfin2Samsung.ViewModels
             INetworkService networkService,
             ILocalizationService localizationService,
             IThemeService themeService,
+            IUpdaterService updaterService,
+            IUpdateDialogService updateDialogService,
             HttpClient httpClient,
             DeviceHelper deviceHelper,
             TizenApiClient tizenApiClient,
@@ -110,6 +115,8 @@ namespace Jellyfin2Samsung.ViewModels
             _packageHelper = packageHelper;
             _localizationService = localizationService;
             _themeService = themeService;
+            _updaterService = updaterService;
+            _updateDialogService = updateDialogService;
             _fileHelper = fileHelper;
             _settingsViewModel = settingsViewModel;
 
@@ -214,8 +221,17 @@ namespace Jellyfin2Samsung.ViewModels
 
         public async Task InitializeAsync()
         {
+            // Create a new CTS for initialization that can be cancelled when update dialog shows
+            _initializationCts?.Cancel();
+            _initializationCts?.Dispose();
+            _initializationCts = new CancellationTokenSource();
+            var token = _initializationCts.Token;
+
             try
             {
+                // Check for updates first (non-blocking, runs in background)
+                _ = CheckForUpdatesAsync();
+
                 SetStatus("CheckingTizenSdb");
 
                 string tizenSdb = await _tizenInstaller.EnsureTizenSdbAvailable();
@@ -228,15 +244,169 @@ namespace Jellyfin2Samsung.ViewModels
 
                 ProcessHelper.KillSdbServers();
 
-                await LoadReleasesAsync();
+                await LoadReleasesAsync(token);
+                token.ThrowIfCancellationRequested();
+
                 SetStatus("ScanningNetwork");
-                await LoadDevicesAsync();
+                await LoadDevicesAsync(token);
                 CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
+            }
+            catch (OperationCanceledException)
+            {
+                // Initialization was cancelled (likely due to update dialog)
+                Trace.WriteLine("Initialization cancelled");
             }
             catch (Exception ex)
             {
                 SetStatus("InitializationFailed");
                 await _dialogService.ShowErrorAsync($"{L("InitializationFailed")} {ex}");
+            }
+        }
+
+        private async Task CheckForUpdatesAsync()
+        {
+            // Skip if update check is disabled
+            if (!AppSettings.Default.CheckForUpdatesOnStartup)
+                return;
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(Constants.Updater.UpdateCheckTimeoutSeconds));
+                var updateResult = await _updaterService.CheckForUpdateAsync(cts.Token);
+
+                if (!updateResult.IsSuccess || !updateResult.IsUpdateAvailable)
+                    return;
+
+                // Skip if user previously skipped this version
+                if (updateResult.LatestVersion == AppSettings.Default.SkippedUpdateVersion)
+                    return;
+
+                // Cancel initialization tasks (network scan, release loading) before showing dialog
+                // This prevents the UI from freezing while background tasks continue
+                _initializationCts?.Cancel();
+
+                // Show update dialog on UI thread
+                await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    var choice = await _updateDialogService.ShowUpdateAvailableDialogAsync(updateResult);
+
+                    switch (choice)
+                    {
+                        case UpdateDialogChoice.Manual:
+                            _updaterService.OpenReleasesPage();
+                            // Resume initialization after user sees the releases page
+                            _ = ResumeInitializationAsync();
+                            break;
+
+                        case UpdateDialogChoice.Automatic:
+                            await PerformAutomaticUpdateAsync(updateResult);
+                            // No resume needed - app will restart
+                            break;
+
+                        case UpdateDialogChoice.Skip:
+                            AppSettings.Default.SkippedUpdateVersion = updateResult.LatestVersion;
+                            AppSettings.Default.Save();
+                            // Resume initialization after user skips
+                            _ = ResumeInitializationAsync();
+                            break;
+
+                        case UpdateDialogChoice.Cancel:
+                        default:
+                            // Resume initialization after user cancels
+                            _ = ResumeInitializationAsync();
+                            break;
+                    }
+                });
+
+                // Update last check time
+                AppSettings.Default.LastUpdateCheck = DateTime.UtcNow;
+                AppSettings.Default.Save();
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout - silently ignore
+                Trace.WriteLine("Update check timed out");
+            }
+            catch (Exception ex)
+            {
+                // Don't show errors for update check failures - it's not critical
+                Trace.WriteLine($"Update check failed: {ex}");
+            }
+        }
+
+        private async Task PerformAutomaticUpdateAsync(Models.UpdateCheckResult updateResult)
+        {
+            if (string.IsNullOrEmpty(updateResult.DownloadUrl))
+            {
+                await _updateDialogService.ShowUpdateErrorAsync(L("UpdateError"));
+                return;
+            }
+
+            try
+            {
+                // Download update
+                var progress = new Progress<int>(p =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        StatusBar = $"{L("UpdateDownloading")} {p}%";
+                    });
+                });
+
+                StatusBar = L("UpdateDownloading");
+                var downloadedPath = await _updaterService.DownloadUpdateAsync(updateResult.DownloadUrl, progress);
+
+                // Apply update
+                await _updateDialogService.ShowApplyingUpdateMessageAsync();
+                var success = await _updaterService.ApplyUpdateAsync(downloadedPath);
+
+                if (success)
+                {
+                    // Exit application - update script will restart it
+                    if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Automatic update failed: {ex}");
+                await _updateDialogService.ShowUpdateErrorAsync(ex.Message);
+            }
+        }
+
+        private async Task ResumeInitializationAsync()
+        {
+            // Create a new CTS for the resumed initialization
+            _initializationCts?.Dispose();
+            _initializationCts = new CancellationTokenSource();
+            var token = _initializationCts.Token;
+
+            try
+            {
+                // Only load releases and devices if they haven't been loaded yet
+                if (!Releases.Any())
+                {
+                    await LoadReleasesAsync(token);
+                    token.ThrowIfCancellationRequested();
+                }
+
+                if (!AvailableDevices.Any(d => d.IpAddress != L("lblOther")))
+                {
+                    SetStatus("ScanningNetwork");
+                    await LoadDevicesAsync(token);
+                }
+
+                CustomWgtPath = AppSettings.Default.CustomWgtPath ?? "";
+            }
+            catch (OperationCanceledException)
+            {
+                Trace.WriteLine("Resumed initialization cancelled");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Resumed initialization failed: {ex}");
             }
         }
 
@@ -299,11 +469,14 @@ namespace Jellyfin2Samsung.ViewModels
                         if (!AppSettings.Default.KeepWGTFile)
                             _packageHelper.CleanupDownloadedPackage(customPath);
 
-                    AppSettings.Default.CustomWgtPath = null;
+                    AppSettings.Default.CustomWgtPath = string.Empty;
                     AppSettings.Default.Save();
                 }
                 else
                 {
+
+                    if(SelectedRelease == null || SelectedDevice == null)
+                        return;
 
                     string? downloadPath = await _packageHelper.DownloadReleaseAsync(
                         SelectedRelease,
@@ -426,7 +599,7 @@ namespace Jellyfin2Samsung.ViewModels
         }
 
 
-        private async Task LoadReleasesAsync()
+        private async Task LoadReleasesAsync(CancellationToken cancellationToken = default)
         {
             IsLoading = true;
 
@@ -436,6 +609,7 @@ namespace Jellyfin2Samsung.ViewModels
 
                 async Task fetch(string url, string name)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var release = await _addLatestRelease.GetLatestReleaseAsync(url, name);
                     if (release != null)
                         list.Add(release);
@@ -447,6 +621,8 @@ namespace Jellyfin2Samsung.ViewModels
                 await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay - 10.10z SmartHub");
                 await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
                 await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 Releases.Clear();
                 foreach (var r in list)
@@ -460,6 +636,10 @@ namespace Jellyfin2Samsung.ViewModels
                     Url = string.Empty,
                     Assets = new List<Asset>()
                 });
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw to be handled by caller
             }
             catch (Exception ex)
             {
@@ -526,6 +706,10 @@ namespace Jellyfin2Samsung.ViewModels
                             SelectedDevice = previousDevice;
                     }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw to be handled by caller
             }
             catch (Exception ex)
             {
@@ -608,8 +792,16 @@ namespace Jellyfin2Samsung.ViewModels
         public void Dispose()
         {
             DisposeSamsungCts();
+            DisposeInitializationCts();
             _localizationService.LanguageChanged -= OnLanguageChanged;
             _themeService.ThemeChanged -= OnThemeChanged;
+        }
+
+        private void DisposeInitializationCts()
+        {
+            _initializationCts?.Cancel();
+            _initializationCts?.Dispose();
+            _initializationCts = null;
         }
 
     }

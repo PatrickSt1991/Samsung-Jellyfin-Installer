@@ -175,6 +175,19 @@ namespace Jellyfin2Samsung.Helpers.Core
         }
 
         /// <summary>
+        /// Updater related constants.
+        /// </summary>
+        public static class Updater
+        {
+            public const string RepoOwner = "Jellyfin2Samsung";
+            public const string RepoName = "Samsung-Jellyfin-Installer";
+            public const string AtomFeedUrl = "https://github.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/releases.atom";
+            public const string ReleasesPageUrl = "https://github.com/Jellyfin2Samsung/Samsung-Jellyfin-Installer/releases";
+            public const string LatestReleaseApiUrl = "https://api.github.com/repos/Jellyfin2Samsung/Samsung-Jellyfin-Installer/releases/latest";
+            public const int UpdateCheckTimeoutSeconds = 10;
+        }
+
+        /// <summary>
         /// Localization keys used for status messages.
         /// </summary>
         public static class LocalizationKeys
@@ -209,6 +222,20 @@ namespace Jellyfin2Samsung.Helpers.Core
             public const string InvalidDeviceIp = "InvalidDeviceIp";
             public const string LblOther = "lblOther";
             public const string IpNotListed = "IpNotListed";
+
+            // Updater localization keys
+            public const string UpdateAvailable = "UpdateAvailable";
+            public const string UpdateCurrentVersion = "UpdateCurrentVersion";
+            public const string UpdateLatestVersion = "UpdateLatestVersion";
+            public const string UpdateReleaseNotes = "UpdateReleaseNotes";
+            public const string UpdateManual = "UpdateManual";
+            public const string UpdateAutomatic = "UpdateAutomatic";
+            public const string UpdateSkip = "UpdateSkip";
+            public const string UpdateDownloading = "UpdateDownloading";
+            public const string UpdateApplying = "UpdateApplying";
+            public const string UpdateApplyingMessage = "UpdateApplyingMessage";
+            public const string UpdateError = "UpdateError";
+            public const string UpdateCheckFailed = "UpdateCheckFailed";
         }
 
         /// <summary>
