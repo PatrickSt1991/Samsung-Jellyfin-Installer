@@ -76,7 +76,7 @@ namespace Jellyfin2Samsung.Services
                 return TizenSdbPath;
             }
 
-            string downloadedFile = await DownloadTizenSdbAsync(latestVersion);
+            string downloadedFile = await DownloadTizenSdbAsync();
 
             if (existingFile != null && File.Exists(existingFile))
             {
@@ -154,27 +154,22 @@ namespace Jellyfin2Samsung.Services
             }
         }
 
-        public async Task<string> DownloadTizenSdbAsync(string version = null)
+        public async Task<string> DownloadTizenSdbAsync()
         {
             try
             {
                 var json = await _httpClient.GetStringAsync(AppSettings.Default.TizenSdb);
                 var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(json, JsonSerializerOptionsProvider.Default);
-                var firstRelease = releases?.FirstOrDefault();
-
-                if (firstRelease == null)
-                    throw new InvalidOperationException("No releases found");
-
+                var firstRelease = (releases?.FirstOrDefault()) ?? throw new InvalidOperationException("No releases found");
                 string nameMatch = PlatformService.GetAssetPlatformIdentifier();
 
                 var matchedAsset = firstRelease.Assets.FirstOrDefault(a =>
                     !string.IsNullOrEmpty(a.FileName) &&
                     a.FileName.Contains(nameMatch, StringComparison.OrdinalIgnoreCase));
 
-                if (matchedAsset == null)
-                    throw new InvalidOperationException($"No matching asset found for {nameMatch}");
-
-                return await DownloadPackageAsync(matchedAsset.DownloadUrl);
+                return matchedAsset == null
+                    ? throw new InvalidOperationException($"No matching asset found for {nameMatch}")
+                    : await DownloadPackageAsync(matchedAsset.DownloadUrl);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {

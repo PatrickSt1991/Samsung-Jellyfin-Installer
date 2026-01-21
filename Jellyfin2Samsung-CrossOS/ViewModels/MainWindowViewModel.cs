@@ -469,11 +469,14 @@ namespace Jellyfin2Samsung.ViewModels
                         if (!AppSettings.Default.KeepWGTFile)
                             _packageHelper.CleanupDownloadedPackage(customPath);
 
-                    AppSettings.Default.CustomWgtPath = null;
+                    AppSettings.Default.CustomWgtPath = string.Empty;
                     AppSettings.Default.Save();
                 }
                 else
                 {
+
+                    if(SelectedRelease == null || SelectedDevice == null)
+                        return;
 
                     string? downloadPath = await _packageHelper.DownloadReleaseAsync(
                         SelectedRelease,
