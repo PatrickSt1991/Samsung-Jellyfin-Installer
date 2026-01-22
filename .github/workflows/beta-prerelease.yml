@@ -62,7 +62,7 @@ jobs:
             echo ""
             cat CHANGELOG.md
             echo ""
-            Echo ""
+            echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
             echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | ARM64 + Intel |"
