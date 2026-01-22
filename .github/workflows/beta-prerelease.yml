@@ -136,7 +136,7 @@ jobs:
           dpkg-deb --build $PKG
           mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
 
-      # ---------------- APPIMAGE (NO FUSE) ----------------
+      # ---------------- APPIMAGE ----------------
       - name: Build AppImage
         run: |
           mkdir -p AppDir/usr/bin
@@ -174,7 +174,7 @@ jobs:
           body_path: RELEASE_NOTES.md
 
 # ======================================================
-# MACOS (OPTION A – PER-ARCH APPS)
+# MACOS (PER-ARCH CLI + APP + DMG)
 # ======================================================
   macos-app:
     runs-on: macos-latest
@@ -185,6 +185,19 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+
+      # ---------------- ICON ----------------
+      - name: macOS icon
+        run: |
+          sips -s format png jellyfin-tizen-logo.svg --out jellyfin.png
+          sips -z 1024 1024 jellyfin.png --out jellyfin.png
+
+          mkdir icon.iconset
+          for s in 16 32 128 256 512; do
+            sips -z $s $s jellyfin.png --out icon.iconset/icon_${s}x${s}.png
+            sips -z $((s*2)) $((s*2)) jellyfin.png --out icon.iconset/icon_${s}x${s}@2x.png
+          done
+          iconutil -c icns icon.iconset -o jellyfin.icns
 
       # ---------------- ARM64 ----------------
       - name: macOS ARM64 publish
@@ -198,6 +211,40 @@ jobs:
             dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-arm64.tar.gz \
             -C publish/osx-arm64 .
 
+          APP=Jellyfin2Samsung-arm64.app/Contents
+          mkdir -p $APP/MacOS $APP/Resources
+          cp -R publish/osx-arm64/* $APP/MacOS/
+          chmod +x $APP/MacOS/Jellyfin2Samsung
+          cp jellyfin.icns $APP/Resources/
+
+          cat > $APP/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+          </dict>
+          </plist>
+          EOF
+
+          codesign --deep --force --sign - Jellyfin2Samsung-arm64.app
+
+          rm -rf dmg-arm64
+          mkdir -p dmg-arm64
+          cp -R Jellyfin2Samsung-arm64.app dmg-arm64/Jellyfin2Samsung.app
+          ln -s /Applications dmg-arm64/Applications
+          hdiutil create \
+            -volname Jellyfin2Samsung \
+            -srcfolder dmg-arm64 \
+            -format UDZO \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-arm64.dmg
+
       # ---------------- INTEL ----------------
       - name: macOS Intel publish
         run: |
@@ -208,6 +255,40 @@ jobs:
           tar -czf \
             dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-x64.tar.gz \
             -C publish/osx-x64 .
+
+          APP=Jellyfin2Samsung-x64.app/Contents
+          mkdir -p $APP/MacOS $APP/Resources
+          cp -R publish/osx-x64/* $APP/MacOS/
+          chmod +x $APP/MacOS/Jellyfin2Samsung
+          cp jellyfin.icns $APP/Resources/
+
+          cat > $APP/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+          </dict>
+          </plist>
+          EOF
+
+          codesign --deep --force --sign - Jellyfin2Samsung-x64.app
+
+          rm -rf dmg-x64
+          mkdir -p dmg-x64
+          cp -R Jellyfin2Samsung-x64.app dmg-x64/Jellyfin2Samsung.app
+          ln -s /Applications dmg-x64/Applications
+          hdiutil create \
+            -volname Jellyfin2Samsung \
+            -srcfolder dmg-x64 \
+            -format UDZO \
+            dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-x64.dmg
 
       - uses: softprops/action-gh-release@v2
         with:
