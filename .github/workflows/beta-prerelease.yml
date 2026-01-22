@@ -149,7 +149,7 @@ jobs:
           dpkg-deb --build $PKG
           mv $PKG.deb dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.deb
 
-      # ---------------- APPIMAGE (NO FUSE) ----------------
+      # ---------------- APPIMAGE ----------------
       - name: Build AppImage
         if: env.SKIP_RELEASE != 'true'
         run: |
@@ -237,11 +237,19 @@ jobs:
             dist/${PRODUCT_NAME}-${{ needs.beta-release.outputs.VERSION_TAG }}-macos-universal.tar.gz \
             Jellyfin2Samsung
 
-      - name: Create .app
+      # -------- FIXED .APP BUNDLE --------
+      - name: Create .app (with dependencies)
         run: |
           APP=Jellyfin2Samsung.app/Contents
           mkdir -p $APP/{MacOS,Resources}
-          cp Jellyfin2Samsung $APP/MacOS/
+
+          # Copy full publish output (dylibs, Assets, etc.)
+          cp -R x64/* $APP/MacOS/
+
+          # Replace executable with universal binary
+          cp Jellyfin2Samsung $APP/MacOS/Jellyfin2Samsung
+          chmod +x $APP/MacOS/Jellyfin2Samsung
+
           cp jellyfin.icns $APP/Resources/
 
       - name: Codesign
