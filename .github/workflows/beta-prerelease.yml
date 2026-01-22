@@ -145,6 +145,22 @@ jobs:
           chmod +x $APP/MacOS/Jellyfin2Samsung
           cp jellyfin.icns $APP/Resources/
 
+          cat > $APP/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+          </dict>
+          </plist>
+          EOF
+
       - name: Codesign ARM64 app
         run: codesign --deep --force --sign - Jellyfin2Samsung-arm64.app
 
@@ -174,6 +190,22 @@ jobs:
           cp -R publish/osx-x64/* $APP/MacOS/
           chmod +x $APP/MacOS/Jellyfin2Samsung
           cp jellyfin.icns $APP/Resources/
+
+          cat > $APP/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
+            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+          </dict>
+          </plist>
+          EOF
 
       - name: Codesign Intel app
         run: codesign --deep --force --sign - Jellyfin2Samsung-x64.app
