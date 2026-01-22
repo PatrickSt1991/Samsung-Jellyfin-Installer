@@ -62,6 +62,7 @@ jobs:
             echo ""
             cat CHANGELOG.md
             echo ""
+            Echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
             echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | ARM64 + Intel |"
@@ -129,7 +130,7 @@ jobs:
           Package: jellyfin2samsung
           Version: ${VERSION}
           Architecture: amd64
-          Maintainer: Jellyfin
+          Maintainer: Jellyfin2Samsung 
           Description: Jellyfin Samsung Installer
           EOF
 
@@ -225,7 +226,7 @@ jobs:
           <dict>
             <key>CFBundleName</key><string>Jellyfin2Samsung</string>
             <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
-            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleIdentifier</key><string>org.madebypatrick.jellyfin2samsung</string>
             <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>11.0</string>
@@ -270,7 +271,7 @@ jobs:
           <dict>
             <key>CFBundleName</key><string>Jellyfin2Samsung</string>
             <key>CFBundleExecutable</key><string>Jellyfin2Samsung</string>
-            <key>CFBundleIdentifier</key><string>org.jellyfin.jellyfin2samsung</string>
+            <key>CFBundleIdentifier</key><string>org.madebypatrick.jellyfin2samsung</string>
             <key>CFBundleVersion</key><string>${{ needs.beta-release.outputs.VERSION }}</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>11.0</string>
