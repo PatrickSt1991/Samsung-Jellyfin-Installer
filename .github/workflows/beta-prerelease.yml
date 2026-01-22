@@ -37,7 +37,7 @@ jobs:
 
           if [ -z "$VERSION" ]; then exit 1; fi
           echo "VERSION=${VERSION#v}-beta" >> $GITHUB_ENV
-          echo "VERSION_TAG=${VERSION}-beta" >> $GITHUB_ENV
+          echo "VERSION_TAG=${VERSION}" >> $GITHUB_ENV
 
       - name: Decide skip
         shell: bash
