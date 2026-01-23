@@ -170,10 +170,14 @@ namespace Jellyfin2Samsung.ViewModels
             AvailableAssets = value != null
                 ? new ObservableCollection<Asset>(value.Assets)
                 : new ObservableCollection<Asset>();
-            SelectedAsset = AvailableAssets.FirstOrDefault();
+
+            SelectedAsset =
+                AvailableAssets.FirstOrDefault(a => a.IsDefault)
+                ?? AvailableAssets.FirstOrDefault();
 
             RefreshCanExecuteChanged();
         }
+
         partial void OnSelectedAssetChanged(Asset? value)
         {
             RefreshCanExecuteChanged();
