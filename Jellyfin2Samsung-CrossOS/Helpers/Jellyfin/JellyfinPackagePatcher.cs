@@ -17,6 +17,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin
         private readonly JellyfinIndex _indexHtml;
         private readonly JellyfinDiagnostic _diagnostic;
         private readonly FixYouTube _youTube;
+        private readonly YouTubeWebService _youtubeService;
         private readonly CustomCss _customCss;
 
         public JellyfinPackagePatcher(HttpClient http)
@@ -27,6 +28,7 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin
             _indexHtml = new JellyfinIndex(http, api, plugins);
             _diagnostic = new JellyfinDiagnostic();
             _youTube = new FixYouTube();
+            _youtubeService = new YouTubeWebService();
             _customCss = new CustomCss();
         }
 
@@ -42,7 +44,10 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin
             if (AppSettings.Default.PatchYoutubePlugin)
             {
                 await _youTube.CorsAsync(ws);
-                await _youTube.FixAsync(ws);
+                await _youTube.PatchPluginAsync(ws);
+                //await _youtubeService.UpdateCorsAsync(ws);
+                //await _youtubeService.CreatePackageJsonAsync(ws);
+                //await _youtubeService.CreateYouTubeResolverAsync(ws);
             }
 
             // Always update server address
