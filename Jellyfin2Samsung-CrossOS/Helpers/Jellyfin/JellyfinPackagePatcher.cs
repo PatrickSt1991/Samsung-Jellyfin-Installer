@@ -43,11 +43,10 @@ namespace Jellyfin2Samsung.Helpers.Jellyfin
             // Apply YouTube plugin patch if enabled
             if (AppSettings.Default.PatchYoutubePlugin)
             {
-                await _youTube.CorsAsync(ws);
+                //await _youTube.CorsAsync(ws);
                 await _youTube.PatchPluginAsync(ws);
-                //await _youtubeService.UpdateCorsAsync(ws);
-                //await _youtubeService.CreatePackageJsonAsync(ws);
-                //await _youtubeService.CreateYouTubeResolverAsync(ws);
+                await _youtubeService.UpdateCorsAsync(ws);
+                await _youtubeService.CreateYouTubeResolverAsync(ws);
             }
 
             // Always update server address
