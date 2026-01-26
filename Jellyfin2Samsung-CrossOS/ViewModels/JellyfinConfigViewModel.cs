@@ -83,8 +83,6 @@ namespace Jellyfin2Samsung.ViewModels
         [ObservableProperty]
         private bool streamValidated = false;
 
-        [ObservableProperty]
-        private string streamValidationStatus = string.Empty;
 
         [ObservableProperty]
         private bool enableBackdrops;
@@ -693,28 +691,6 @@ namespace Jellyfin2Samsung.ViewModels
         {
             await LoadJellyfinUsersAsync();
         }
-
-        [RelayCommand]
-        private async Task TestConnectionAsync()
-        {
-            StreamValidated = false;
-            StreamValidationStatus = "Validating...";
-
-            var testUrl = UrlHelper.CombineUrl(LocalYoutubeServer, "/health");
-            var isReachable = await _jellyfinApiClient.TestServerConnectionAsync(testUrl);
-
-            if (isReachable)
-            {
-                StreamValidated = true;
-                StreamValidationStatus = "✓ Connected";
-            }
-            else
-            {
-                StreamValidated = false;
-                StreamValidationStatus = "✕ Unreachable";
-            }
-        }
-
 
         [RelayCommand]
         private async Task TestServerAsync()

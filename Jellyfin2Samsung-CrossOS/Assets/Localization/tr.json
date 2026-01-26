@@ -133,8 +133,6 @@
   "lblMainSettings": "Uygulama Ayarları",
   "lblRefreshUsers": "Kullanıcıları Yenile",
   "lblUserSelectionHint": "Seçilen kullanıcılar kurulum sırasında yapılandırılacak",
-  "lblYtDlpServer": "Yerel yayın sunucusu",
-  "lblValidateStream": "Sunucuyu Doğrula",
   "subnetMismatch": "Cihazlar farklı alt ağlarda (ağda) bulunmaktadır.",
   "UpdateAvailable": "Güncelleme mevcut",
   "UpdateCurrentVersion": "Mevcut sürüm:",
