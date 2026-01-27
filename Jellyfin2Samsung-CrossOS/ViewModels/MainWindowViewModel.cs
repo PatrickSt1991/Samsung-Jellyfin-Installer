@@ -611,20 +611,21 @@ namespace Jellyfin2Samsung.ViewModels
             {
                 var list = new List<GitHubRelease>();
 
-                async Task fetch(string url, string name)
+                async Task fetch(string url, string prefix, string name, int take = 1)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var release = await _addLatestRelease.GetLatestReleaseAsync(url, name);
-                    if (release != null)
-                        list.Add(release);
+
+                    var release = await _addLatestRelease.GetReleasesAsync(url, prefix, name, take);
+                    if (release.Count > 0)
+                        list.AddRange(release);
                 }
 
-                await fetch(AppSettings.Default.ReleasesUrl, Constants.AppIdentifiers.JellyfinAppName);
-                await fetch(AppSettings.Default.MoonfinRelease, "Moonfin");
-                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay");
-                await fetch(AppSettings.Default.JellyfinAvRelease, "Jellyfin - AVPlay - 10.10z SmartHub");
-                await fetch(AppSettings.Default.JellyfinLegacy, "Jellyfin - Legacy");
-                await fetch(AppSettings.Default.CommunityRelease, "Tizen Community");
+                await fetch(AppSettings.Default.ReleasesUrl, "Jellyfin - ", string.Empty, 5);
+                await fetch(AppSettings.Default.MoonfinRelease, string.Empty, "Moonfin", 1);
+                await fetch(AppSettings.Default.JellyfinAvRelease, string.Empty, "Jellyfin - AVPlay", 1);
+                await fetch(AppSettings.Default.JellyfinAvRelease, string.Empty, "Jellyfin - AVPlay - 10.10z SmartHub", 1);
+                await fetch(AppSettings.Default.JellyfinLegacy, string.Empty, "Jellyfin - Legacy", 1);
+                await fetch(AppSettings.Default.CommunityRelease, string.Empty, "Tizen Community", 1);
 
                 cancellationToken.ThrowIfCancellationRequested();
 

@@ -16,49 +16,59 @@ namespace Jellyfin2Samsung.Helpers.Core
             _httpClient = httpClient;
         }
 
-        public async Task<GitHubRelease?> GetLatestReleaseAsync(string url, string displayName)
+        public async Task<List<GitHubRelease>> GetReleasesAsync(string url, string prefix, string displayName, int take = 1)
         {
+            if (take < 1) take = 1;
+
             try
             {
                 using var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
-                await using var stream = await response.Content.ReadAsStreamAsync();
+                var json = await response.Content.ReadAsStringAsync();
 
-                // Try to parse as array first (normal GitHub releases endpoint)
                 try
                 {
-                    var releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(
-                        stream,
+                    var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(
+                        json,
                         JsonSerializerOptionsProvider.Default);
 
-                    var latest = releases?.Count > 0 ? releases[0] : null;
+                    if (releases == null || releases.Count == 0)
+                        return new List<GitHubRelease>();
 
-                    if (latest != null)
-                        latest.Name = displayName;
+                    var result = releases.Count > take ? releases.GetRange(0, take) : releases;
 
-                    return latest;
+                    foreach (var r in result)
+                    {
+                        r.Name = string.IsNullOrWhiteSpace(displayName)
+                            ? $"{prefix}{r.Name}"
+                            : displayName;
+                    }
+
+                    return result;
                 }
                 catch (JsonException)
                 {
-                    // If array parsing fails, try parsing as single object
-                    stream.Position = 0;
-
-                    var latest = await JsonSerializer.DeserializeAsync<GitHubRelease>(
-                        stream,
+                    var latest = JsonSerializer.Deserialize<GitHubRelease>(
+                        json,
                         JsonSerializerOptionsProvider.Default);
 
-                    if (latest != null)
-                        latest.Name = displayName;
+                    if (latest == null)
+                        return new List<GitHubRelease>();
 
-                    return latest;
+                    latest.Name = string.IsNullOrWhiteSpace(displayName)
+                        ? $"{prefix}{latest.Name}"
+                        : displayName;
+
+                    return new List<GitHubRelease> { latest };
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.WriteLine($"Failed to fetch release from {url}: {ex}");
-                return null;
+                return new List<GitHubRelease>();
             }
         }
+
     }
 }
