@@ -62,7 +62,6 @@ jobs:
             echo ""
             cat CHANGELOG.md
             echo ""
-            echo ""
             echo "| Platform | Status | Notes |"
             echo "|----------|--------|-------|"
             echo "| 🍎 macOS (.app + dmg) | ⚠️ Beta | ARM64 + Intel |"
@@ -164,7 +163,7 @@ jobs:
             AppDir \
             dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
 
-      # ---------------- RELEASE ----------------
+      # ---------------- RELEASE (UPDATE SAME TAG EVERY COMMIT) ----------------
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION_TAG }}
@@ -173,6 +172,7 @@ jobs:
           overwrite_files: true
           files: dist/*
           body_path: RELEASE_NOTES.md
+          overwrite_files: true
 
 # ======================================================
 # MACOS (PER-ARCH CLI + APP + DMG)
