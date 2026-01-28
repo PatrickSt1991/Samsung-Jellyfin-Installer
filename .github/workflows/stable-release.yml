@@ -61,13 +61,16 @@ jobs:
           echo "VERSION=${VERSION#v}" >> "$GITHUB_OUTPUT"
           echo "VERSION_TAG=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      # ---------------- GUARD: do not recreate existing stable release ----------------
-      - name: Skip if stable release already exists
+      # --------------------------------------------------
+      # Guard (but do NOT exit): update assets if exists
+      # --------------------------------------------------
+      - name: Stable release exists? (allow updating assets)
         shell: bash
         run: |
           if git tag --list | grep -qx "$VERSION_TAG"; then
-            echo "ℹ️ Stable release $VERSION_TAG already exists — skipping"
-            exit 0
+            echo "ℹ️ Stable release $VERSION_TAG already exists — will update assets"
+          else
+            echo "ℹ️ Stable release $VERSION_TAG does not exist — will create it"
           fi
 
       # ---------------- CHANGELOG (from last stable tag) ----------------
@@ -206,8 +209,8 @@ jobs:
             AppDir \
             dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
 
-      # ---------------- CREATE STABLE RELEASE (linux/windows first) ----------------
-      - name: Create GitHub Release (stable)
+      # ---------------- CREATE/UPDATE STABLE RELEASE (linux/windows first) ----------------
+      - name: Create/Update GitHub Release (stable)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION_TAG }}
@@ -337,7 +340,8 @@ jobs:
             dist/${PRODUCT_NAME}-${{ needs.stable-release.outputs.VERSION_TAG }}-macos-x64.dmg
 
       # ---------------- UPLOAD MACOS ASSETS TO SAME STABLE RELEASE ----------------
-      - uses: softprops/action-gh-release@v2
+      - name: Upload macOS assets to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.stable-release.outputs.VERSION_TAG }}
           name: ${{ needs.stable-release.outputs.VERSION_TAG }}
