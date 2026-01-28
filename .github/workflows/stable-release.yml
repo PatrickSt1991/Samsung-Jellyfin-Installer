@@ -5,6 +5,18 @@ on:
     branches: [master]
     types: [closed]
 
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build (branch/tag/SHA). Default: master"
+        required: false
+        default: "master"
+      allow_existing_release:
+        description: "If true, update assets even when the stable tag already exists"
+        required: false
+        type: boolean
+        default: true
+
 permissions:
   contents: write
 
@@ -19,9 +31,11 @@ jobs:
 # ======================================================
   stable-release:
     if: |
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'master' &&
-      github.event.pull_request.head.ref == 'beta'
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       github.event.pull_request.base.ref == 'master' &&
+       github.event.pull_request.head.ref == 'beta') ||
+      (github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     outputs:
@@ -32,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
 
       # ---------------- VERSION (NO -beta allowed) ----------------
       - name: Validate AppVersion (must be stable)
@@ -62,7 +77,7 @@ jobs:
           echo "VERSION_TAG=${VERSION}" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------
-      # Guard (but do NOT exit): update assets if exists
+      # Guard (log-only): create or update assets
       # --------------------------------------------------
       - name: Stable release exists? (allow updating assets)
         shell: bash
@@ -71,6 +86,18 @@ jobs:
             echo "ℹ️ Stable release $VERSION_TAG already exists — will update assets"
           else
             echo "ℹ️ Stable release $VERSION_TAG does not exist — will create it"
+          fi
+
+      # --------------------------------------------------
+      # Optional: in manual runs, allow user to DISABLE updating an existing release
+      # --------------------------------------------------
+      - name: Stop if release exists and manual updating is disabled
+        if: github.event_name == 'workflow_dispatch' && inputs.allow_existing_release == false
+        shell: bash
+        run: |
+          if git tag --list | grep -qx "$VERSION_TAG"; then
+            echo "ℹ️ Release $VERSION_TAG already exists and allow_existing_release=false — exiting"
+            exit 0
           fi
 
       # ---------------- CHANGELOG (from last stable tag) ----------------
@@ -209,7 +236,7 @@ jobs:
             AppDir \
             dist/${PRODUCT_NAME}-${VERSION_TAG}-linux-x64.AppImage
 
-      # ---------------- CREATE/UPDATE STABLE RELEASE (linux/windows first) ----------------
+      # ---------------- CREATE/UPDATE STABLE RELEASE ----------------
       - name: Create/Update GitHub Release (stable)
         uses: softprops/action-gh-release@v2
         with:
@@ -230,6 +257,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
 
       - uses: actions/setup-dotnet@v4
         with:
