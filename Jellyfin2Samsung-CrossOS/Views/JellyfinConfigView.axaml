@@ -533,37 +533,6 @@
 											IsChecked="{Binding PatchYoutubePlugin}"/>
 								</Grid>
 
-								<!-- TextBox shown only when PatchYoutubePlugin == true -->
-								<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
-									<TextBlock Grid.Column="0"
-										Text="{Binding LblYtDlpServer}"
-										Classes="label"
-										VerticalAlignment="Center"
-										IsVisible="{Binding PatchYoutubePlugin}"/>
-									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-
-										<TextBox
-											Text="{Binding LocalYoutubeServer}"
-											Watermark="http://192.168.1.123:8123"
-											IsVisible="{Binding PatchYoutubePlugin}" />
-
-										<Button
-											Classes="secondary"
-											Content="{Binding LblValidateStream}"
-											Command="{Binding TestConnectionCommand}"
-											IsVisible="{Binding PatchYoutubePlugin}"
-											Padding="8,4"
-											FontSize="12"/>
-
-										<TextBlock
-											Text="{Binding StreamValidationStatus}"
-											VerticalAlignment="Center"
-											IsVisible="{Binding PatchYoutubePlugin}"
-											Margin="6,0,0,0"/>
-
-									</StackPanel>
-
-								</Grid>
 								<!-- Spacer -->
 								<Border Height="24"/>
 							</StackPanel>

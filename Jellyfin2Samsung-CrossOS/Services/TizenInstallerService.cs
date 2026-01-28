@@ -500,8 +500,13 @@ namespace Jellyfin2Samsung.Services
 
         private async Task ApplyConfigurationAsync(string packageUrl, ProgressCallback? progress)
         {
-            // Only apply configuration if JellyfinIP is set and this is a Jellyfin package
             if (string.IsNullOrEmpty(_appSettings.JellyfinIP))
+                return;
+
+            var name = Path.GetFileName(packageUrl);
+            var isJellyfinPackage = name.Contains("jellyfin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isJellyfinPackage)
                 return;
 
             // Apply server settings via JS injection

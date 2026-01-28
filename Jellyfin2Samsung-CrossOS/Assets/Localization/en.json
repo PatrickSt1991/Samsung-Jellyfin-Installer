@@ -133,8 +133,6 @@
   "lblMainSettings": "Application Settings",
   "lblRefreshUsers": "Refresh Users",
   "lblUserSelectionHint": "Selected users will be configured during installation",
-  "lblYtDlpServer": "Local streaming server",
-  "lblValidateStream": "Validate Server",
   "subnetMismatch": "Devices are in different subnets (network)",
   "UpdateAvailable": "Update Available",
   "UpdateCurrentVersion": "Current version:",

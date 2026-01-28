@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -39,6 +40,10 @@ namespace Jellyfin2Samsung.Models
 
         [JsonPropertyName("size")]
         public long Size { get; set; }
+
+        [JsonIgnore]
+        public bool IsDefault => FileName.Equals("Jellyfin.wgt", StringComparison.OrdinalIgnoreCase);
+
 
         [JsonIgnore]
         public string DisplayText => $"{FileName} ({FormatFileSize(Size)})";
